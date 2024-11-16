@@ -8,11 +8,14 @@ on:
 jobs:
   scrape:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     
     steps:
     - uses: actions/checkout@v3
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
+        persist-credentials: true
     
     - name: Setup Node.js
       uses: actions/setup-node@v3
@@ -38,4 +41,6 @@ jobs:
         git add scraper/package*.json
         git status
         git diff --quiet && git diff --staged --quiet || git commit -m "Actualizar botes y dependencias [skip ci]"
-        git push
+        git push origin main
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
