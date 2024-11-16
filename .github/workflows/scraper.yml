@@ -2,8 +2,8 @@ name: Scraper Loterías
 
 on:
   schedule:
-    - cron: '0 6,18 * * *'  # Ejecutar dos veces al día: 6 AM y 6 PM UTC
-  workflow_dispatch:        # Permite ejecución manual
+    - cron: '0 6,18 * * *'
+  workflow_dispatch:
 
 jobs:
   scrape:
@@ -21,22 +21,9 @@ jobs:
         
     - name: Install dependencies
       run: |
-        npm install axios cheerio
+        npm init -y
+        npm install axios
         npm install -D typescript@4.9.5 ts-node@10.9.1 @types/node
-        
-    - name: Create package.json if not exists
-      run: |
-        if [ ! -f package.json ]; then
-          echo '{
-            "name": "scraper-loterias",
-            "version": "1.0.0",
-            "type": "commonjs",
-            "scripts": {
-              "build": "tsc",
-              "start": "ts-node src/scripts/scraper.ts"
-            }
-          }' > package.json
-        fi
         
     - name: Create tsconfig.json
       run: |
@@ -49,15 +36,19 @@ jobs:
             "strict": true,
             "esModuleInterop": true,
             "skipLibCheck": true,
-            "forceConsistentCasingInFileNames": true
+            "forceConsistentCasingInFileNames": true,
+            "allowJs": true
           },
           "include": ["src/**/*"],
           "exclude": ["node_modules"]
         }' > tsconfig.json
         
-    - name: Compile and Run
+    - name: Compile TypeScript
       run: |
-        npm run build
+        ./node_modules/.bin/tsc
+        
+    - name: Run scraper
+      run: |
         node dist/scripts/scraper.js
       
     - name: Commit and push if changes
