@@ -61,6 +61,7 @@ jobs:
         
     - name: Run scraper
       run: |
+        mkdir -p src/assets
         cd scraper
         npx ts-node scraper.ts
       

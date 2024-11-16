@@ -92,24 +92,28 @@ async function scrapeBotes() {
 
         console.log('Botes encontrados:', botes);
 
-        const outputPath = path.join(process.cwd(), 'src', 'assets', 'botes.json');
+        // Crear directorio si no existe
+        const assetsDir = path.join(process.cwd(), '..', 'src', 'assets');
+        if (!fs.existsSync(assetsDir)) {
+            fs.mkdirSync(assetsDir, { recursive: true });
+        }
+
+        // Escribir archivo
+        const outputPath = path.join(assetsDir, 'botes.json');
         fs.writeFileSync(outputPath, JSON.stringify(botes, null, 2));
         
-        console.log('Botes actualizados correctamente');
+        console.log('Botes actualizados correctamente en:', outputPath);
         
-    } catch (err: unknown) {
-        if (err instanceof Error) {
-            const error = err as Error & { response?: AxiosErrorResponse };
-            if (axios.isAxiosError(error)) {
-                console.error('Error de red:', error.message);
-                if (error.response) {
-                    console.error('Datos del error:', error.response.data);
-                }
-            } else {
-                console.error('Error inesperado:', error.message);
+    } catch (error: unknown) {
+        if (axios.isAxiosError(error)) {
+            console.error('Error de red:', error.message);
+            if (error.response) {
+                console.error('Datos del error:', error.response.data);
             }
+        } else if (error instanceof Error) {
+            console.error('Error inesperado:', error.message);
         } else {
-            console.error('Error desconocido');
+            console.error('Error desconocido:', error);
         }
         process.exit(1);
     }
