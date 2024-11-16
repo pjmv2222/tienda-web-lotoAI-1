@@ -30,16 +30,24 @@ jobs:
           "compilerOptions": {
             "target": "es2018",
             "module": "commonjs",
+            "outDir": "./dist",
+            "rootDir": "./src",
             "strict": true,
             "esModuleInterop": true,
             "skipLibCheck": true,
             "forceConsistentCasingInFileNames": true
-          }
+          },
+          "include": ["src/**/*"],
+          "exclude": ["node_modules"]
         }' > tsconfig.json
+        
+    - name: Compile TypeScript
+      run: |
+        npx tsc
         
     - name: Run scraper
       run: |
-        npx ts-node --project tsconfig.json src/scripts/scraper.ts
+        node dist/scripts/scraper.js
       
     - name: Commit and push if changes
       run: |
