@@ -19,49 +19,14 @@ jobs:
       with:
         node-version: '16'
         
-    - name: Create scraper package.json
+    - name: Install dependencies
       run: |
         cd scraper
-        echo '{
-          "name": "scraper-loterias",
-          "version": "1.0.0",
-          "type": "commonjs",
-          "dependencies": {
-            "axios": "^1.6.7"
-          },
-          "devDependencies": {
-            "typescript": "^4.9.5",
-            "ts-node": "^10.9.1",
-            "@types/node": "^20.11.0"
-          }
-        }' > package.json
-        
-    - name: Create scraper tsconfig
-      run: |
-        cd scraper
-        echo '{
-          "compilerOptions": {
-            "target": "es2018",
-            "module": "commonjs",
-            "outDir": "./dist",
-            "rootDir": ".",
-            "strict": true,
-            "esModuleInterop": true,
-            "skipLibCheck": true,
-            "forceConsistentCasingInFileNames": true
-          },
-          "include": ["./**/*"],
-          "exclude": ["node_modules", "dist"]
-        }' > tsconfig.json
-        
-    - name: Install scraper dependencies
-      run: |
-        cd scraper
-        npm install
+        npm install axios
+        npm install -D typescript@4.9.5 ts-node@10.9.1 @types/node
         
     - name: Run scraper
       run: |
-        mkdir -p src/assets
         cd scraper
         npx ts-node scraper.ts
       
@@ -70,5 +35,7 @@ jobs:
         git config --global user.name 'GitHub Action'
         git config --global user.email 'action@github.com'
         git add src/assets/botes.json
-        git diff --quiet && git diff --staged --quiet || git commit -m "Actualizar botes [skip ci]"
+        git add scraper/package*.json
+        git status
+        git diff --quiet && git diff --staged --quiet || git commit -m "Actualizar botes y dependencias [skip ci]"
         git push
