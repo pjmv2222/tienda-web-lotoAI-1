@@ -1,28 +1,20 @@
 // src/scripts/scraper.ts
 
-const axios = require('axios');
-const fs = require('fs');
-const path = require('path');
+import axios from 'axios';
+import * as fs from 'fs';
+import * as path from 'path';
 
 interface Botes {
     primitiva: string;
     bonoloto: string;
     euromillones: string;
     gordo: string;
-    [key: string]: string;
 }
 
 interface Sorteo {
     game_id: string;
     premio_bote: string;
     estado: string;
-}
-
-interface AxiosError {
-    message: string;
-    response?: {
-        data: any;
-    };
 }
 
 function formatearBote(monto: string): string {
@@ -37,7 +29,7 @@ function formatearBote(monto: string): string {
     return cantidad.toLocaleString('es-ES');
 }
 
-async function scrapeBotes() {
+async function scrapeBotes(): Promise<void> {
     try {
         console.log('Iniciando scraping...');
         
@@ -83,37 +75,36 @@ async function scrapeBotes() {
                 });
         }
 
-        (Object.keys(botes) as Array<keyof Botes>).forEach(key => {
-            if (!botes[key]) {
-                botes[key] = "0";
+        Object.keys(botes).forEach(key => {
+            if (!botes[key as keyof Botes]) {
+                botes[key as keyof Botes] = '0';
             }
         });
 
         console.log('Botes encontrados:', botes);
 
-        const assetsDir = path.join(process.cwd(), '..', 'src', 'assets');
+        const assetsDir = path.join(__dirname, '..', 'src', 'assets');
+        console.log('Directorio de assets:', assetsDir);
+        
         if (!fs.existsSync(assetsDir)) {
+            console.log('Creando directorio de assets...');
             fs.mkdirSync(assetsDir, { recursive: true });
         }
 
         const outputPath = path.join(assetsDir, 'botes.json');
+        console.log('Guardando archivo en:', outputPath);
         fs.writeFileSync(outputPath, JSON.stringify(botes, null, 2));
         
         console.log('Botes actualizados correctamente en:', outputPath);
         
-    } catch (err: unknown) {
-        if (err instanceof Error) {
-            const error = err as Error & { response?: { data: any } };
-            if (axios.isAxiosError(error)) {
-                console.error('Error de red:', error.message);
-                if (error.response) {
-                    console.error('Datos del error:', error.response.data);
-                }
-            } else {
-                console.error('Error inesperado:', error.message);
+    } catch (error) {
+        if (axios.isAxiosError(error)) {
+            console.error('Error de red:', error.message);
+            if (error.response) {
+                console.error('Datos del error:', error.response.data);
             }
         } else {
-            console.error('Error desconocido');
+            console.error('Error inesperado:', error);
         }
         process.exit(1);
     }
