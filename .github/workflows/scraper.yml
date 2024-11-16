@@ -21,11 +21,25 @@ jobs:
         
     - name: Install dependencies
       run: |
-        npm install axios
+        npm install axios cheerio
         npm install -D typescript ts-node @types/node
         
+    - name: Create tsconfig.json
+      run: |
+        echo '{
+          "compilerOptions": {
+            "target": "es2018",
+            "module": "commonjs",
+            "strict": true,
+            "esModuleInterop": true,
+            "skipLibCheck": true,
+            "forceConsistentCasingInFileNames": true
+          }
+        }' > tsconfig.json
+        
     - name: Run scraper
-      run: npx ts-node src/scripts/scraper.ts
+      run: |
+        npx ts-node --project tsconfig.json src/scripts/scraper.ts
       
     - name: Commit and push if changes
       run: |
