@@ -17,12 +17,26 @@ jobs:
     - name: Setup Node.js
       uses: actions/setup-node@v3
       with:
-        node-version: '18'
+        node-version: '16'
         
     - name: Install dependencies
       run: |
         npm install axios cheerio
-        npm install -D typescript ts-node @types/node
+        npm install -D typescript@4.9.5 ts-node@10.9.1 @types/node
+        
+    - name: Create package.json if not exists
+      run: |
+        if [ ! -f package.json ]; then
+          echo '{
+            "name": "scraper-loterias",
+            "version": "1.0.0",
+            "type": "commonjs",
+            "scripts": {
+              "build": "tsc",
+              "start": "ts-node src/scripts/scraper.ts"
+            }
+          }' > package.json
+        fi
         
     - name: Create tsconfig.json
       run: |
@@ -41,12 +55,9 @@ jobs:
           "exclude": ["node_modules"]
         }' > tsconfig.json
         
-    - name: Compile TypeScript
+    - name: Compile and Run
       run: |
-        npx tsc
-        
-    - name: Run scraper
-      run: |
+        npm run build
         node dist/scripts/scraper.js
       
     - name: Commit and push if changes
