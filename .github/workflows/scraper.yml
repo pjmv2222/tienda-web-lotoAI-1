@@ -1,0 +1,37 @@
+name: Scraper Loterías
+
+on:
+  schedule:
+    - cron: '0 6 * * *'  # Ejecutar a las 6 AM UTC
+  workflow_dispatch:      # Permite ejecución manual
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        
+    - name: Install dependencies
+      run: npm install
+        
+    - name: Compile TypeScript
+      run: |
+        npm install -g typescript
+        tsc src/scripts/scraper.ts --outDir dist/scripts --esModuleInterop true
+        
+    - name: Run scraper
+      run: node dist/scripts/scraper.js
+      
+    - name: Commit and push if changes
+      run: |
+        git config --global user.name 'GitHub Action'
+        git config --global user.email 'action@github.com'
+        git add src/assets/botes.json
+        git diff --quiet && git diff --staged --quiet || git commit -m "Actualizar botes [skip ci]"
+        git push
