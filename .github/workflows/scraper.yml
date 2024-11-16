@@ -21,35 +21,31 @@ jobs:
         
     - name: Install dependencies
       run: |
-        npm init -y
         npm install axios
         npm install -D typescript@4.9.5 ts-node@10.9.1 @types/node
         
-    - name: Create tsconfig.json
+    - name: Create scraper tsconfig
       run: |
         echo '{
           "compilerOptions": {
             "target": "es2018",
             "module": "commonjs",
-            "outDir": "./dist",
-            "rootDir": "./src",
+            "outDir": "./dist-scraper",
+            "rootDir": "./src/scripts",
             "strict": true,
             "esModuleInterop": true,
             "skipLibCheck": true,
             "forceConsistentCasingInFileNames": true,
-            "allowJs": true
+            "experimentalDecorators": true
           },
-          "include": ["src/**/*"],
-          "exclude": ["node_modules"]
-        }' > tsconfig.json
+          "include": ["src/scripts/**/*"],
+          "exclude": ["src/app/**/*", "node_modules"]
+        }' > scraper-tsconfig.json
         
-    - name: Compile TypeScript
+    - name: Compile and Run Scraper
       run: |
-        ./node_modules/.bin/tsc
-        
-    - name: Run scraper
-      run: |
-        node dist/scripts/scraper.js
+        npx tsc -p scraper-tsconfig.json
+        node dist-scraper/scraper.js
       
     - name: Commit and push if changes
       run: |
