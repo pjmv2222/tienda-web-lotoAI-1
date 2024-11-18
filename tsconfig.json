@@ -2,15 +2,13 @@
 /* To learn more about Angular compiler options: https://angular.dev/reference/configs/angular-compiler-options. */
 {
   "compilerOptions": {
-    "target": "es2018",
-    "module": "commonjs",
-    "outDir": "./dist",
-    "rootDir": "./src",
+    "moduleResolution": "node",
+    "target": "ES2022",
+    "module": "ES2022",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "allowJs": true
+    "forceConsistentCasingInFileNames": true
   },
   "angularCompilerOptions": {
     "strictTemplates": true,

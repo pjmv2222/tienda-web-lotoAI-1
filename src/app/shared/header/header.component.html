@@ -4,11 +4,14 @@
     </div>
     <div class="juegos-container">
         <ul class="modulo-menu-juegos">
-            <li *ngFor="let juego of ['euromillones', 'primitiva', 'bonoloto', 'gordoPrimitiva', 'euroDreams', 'loteriaNacional']" class="item-menu-juegos {{juego}}">
+            <li *ngFor="let juego of ['euromillones', 'primitiva', 'bonoloto', 'gordoPrimitiva', 'lototurf', 'euroDreams', 'loteriaNacional']" class="item-menu-juegos {{juego}}">
                 <a href="#" class="link-cabecera-juego" [title]="'JUGAR ' + juego.toUpperCase()">
                     <img class="logotipo-juego-cabecera web" [src]="getImageUrl(juego)" [alt]="juego">
-                    <p class="bote-juego" *ngIf="botes[juego]" [innerHTML]="formatearBote(botes[juego])"></p>
-                    <p class="bote-juego" *ngIf="!botes[juego]">Cargando...</p>
+                    <div class="bote-juego" *ngIf="botes[juego]">
+                        <div class="valor">{{ formatearBote(botes[juego]).split('\n')[0] }}</div>
+                        <div class="formato">{{ formatearBote(botes[juego]).split('\n')[1] }}</div>
+                    </div>
+                    <div class="bote-juego" *ngIf="!botes[juego]">Cargando...</div>
                 </a>
             </li>
         </ul>
@@ -26,6 +29,5 @@
                 <option value="va">Valencià</option>
             </select>
         </div>
-        <span>{{ formatearBote(algunValor) }}</span>
     </div>
 </header>
