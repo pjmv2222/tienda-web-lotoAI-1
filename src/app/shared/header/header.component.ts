@@ -1,4 +1,4 @@
-import { Component, OnInit, PLATFORM_ID, ChangeDetectorRef, inject } from '@angular/core';
+import { Component, OnInit, PLATFORM_ID, ChangeDetectorRef, inject, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { BotesService } from '../../services/botes.service';
 
@@ -7,7 +7,8 @@ import { BotesService } from '../../services/botes.service';
   templateUrl: './header.component.html',
   styleUrls: ['./header.component.css'],
   standalone: true,
-  imports: [CommonModule]
+  imports: [CommonModule],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class HeaderComponent implements OnInit {
   private platformId = inject(PLATFORM_ID);

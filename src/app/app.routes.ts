@@ -1,10 +1,22 @@
 import { Routes } from '@angular/router';
-import { ProductListComponent } from './products/product-list/product-list.component';
-import { ProductDetailComponent } from './products/product-detail/product-detail.component';
-import { CartComponent } from './cart/cart.component';
 
 export const routes: Routes = [
-  { path: '', component: ProductListComponent },
-  { path: 'producto/:id', component: ProductDetailComponent },
-  { path: 'carrito', component: CartComponent },
+  { 
+    path: '', 
+    redirectTo: 'home', 
+    pathMatch: 'full' 
+  },
+  { 
+    path: 'home',
+    loadComponent: () => import('./pages/home/home.component').then(m => m.HomeComponent)
+  },
+  { 
+    path: 'conocenos',
+    loadComponent: () => import('./pages/conocenos/conocenos.component').then(m => m.ConocenosComponent)
+  },
+  // ... otras rutas ...
+  { 
+    path: '**', 
+    redirectTo: 'home' 
+  }
 ];
