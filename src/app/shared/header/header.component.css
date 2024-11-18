@@ -20,77 +20,200 @@ html, body, div, span, h1, h2, h3, h4, h5, h6, p, a, img, ul, li, form, label {
 
 /* Estilos de cabecera */
 header.modulo-cabecera {
+    width: 100%;
+    background-color: #fff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin: 0;
+    padding: 0;
+    position: relative;
+}
+
+/* Estilos para la división superior */
+.cabecera-superior {
     display: flex;
-    flex-wrap: wrap;
     justify-content: space-between;
     align-items: center;
-    padding: 10px;
-    background-color: #f0f0f0;
-    width: 100%;
-    box-sizing: border-box;
+    padding: 1rem 2rem;
+    border-bottom: 1px solid #eee;
 }
 
 .logo-container {
     flex: 0 0 auto;
-    margin-right: 10px;
+    display: flex;
+    align-items: center;
+    margin-top: -25px;
 }
 
 .logo {
-    max-height: 80px;
+    height: 120px;
     width: auto;
+    object-fit: contain;
+    margin: -20px 0;
+    transform: translateY(-10px);
+}
+
+.user-actions {
+    display: flex;
+    align-items: flex-start;
+    gap: 2rem;
+}
+
+.login-container {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.inputs-row {
+    display: flex;
+    gap: 1rem;
+}
+
+.login-input {
+    padding: 8px 12px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    width: 180px;
+}
+
+.forgot-password {
+    display: flex;
+    gap: 1rem;
+    font-size: 12px;
+}
+
+.forgot-password a {
+    color: #0066cc;
+    text-decoration: none;
+}
+
+.forgot-password a:hover {
+    text-decoration: underline;
+}
+
+.buttons-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.icon-entrar {
+    height: 24px;
+    width: auto;
+    margin-right: 4px;
+}
+
+.btn-entrar {
+    padding: 8px 16px;
+    background-color: #0066cc;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.btn-registro {
+    padding: 8px 16px;
+    background-color: #ff6600;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.idioma-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.idioma-container label {
+    font-size: 14px;
+    color: #666;
+}
+
+#changeLanguage {
+    padding: 6px 12px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+/* Estilos para la división inferior */
+.cabecera-inferior {
+    padding: 0;
+    background: #fff;
+    width: 100%;
+    margin: 0;
 }
 
 .juegos-container {
-    flex: 1;
-    overflow-x: auto;
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
 }
 
+/* Mantener los estilos existentes para los juegos */
 .modulo-menu-juegos {
     display: flex;
+    justify-content: space-between;
     list-style: none;
     padding: 0;
     margin: 0;
-    justify-content: space-around;
-    flex-wrap: wrap;
+    width: 100%;
 }
 
 .item-menu-juegos {
-    flex: 0 1 calc(14.28% - 10px); /* Para 7 elementos por fila */
-    margin: 5px;
+    flex: 1;
     text-align: center;
+    border-right: 1px solid #eee;
+    padding: 15px 10px;
+}
+
+.item-menu-juegos:last-child {
+    border-right: none;
 }
 
 .link-cabecera-juego {
+    text-decoration: none;
     display: flex;
     flex-direction: column;
     align-items: center;
-    text-decoration: none;
-    color: inherit;
+    gap: 10px;
 }
 
-.link-cabecera-juego img {
-    height: 40px;
-    width: auto;
-    margin-bottom: 5px;
+.logotipo-juego-cabecera {
+    width: 100px;
+    height: auto;
+    margin-bottom: 15px;
 }
 
 .bote-juego {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 4px;
-    margin-top: 8px;
+    width: 100%;
 }
 
-.bote-juego .valor {
-    font-size: 16px;
+.valor {
+    font-size: 28px;
     font-weight: bold;
+    color: #333;
     line-height: 1.2;
 }
 
-.bote-juego .formato {
-    font-size: 12px;
+.formato {
+    font-size: 14px;
+    color: #666;
+    text-transform: uppercase;
     line-height: 1.2;
+    margin-top: 5px;
 }
 
 .miles {
@@ -98,16 +221,9 @@ header.modulo-cabecera {
     display: block;
 }
 
-.user-actions {
-    display: flex;
-    align-items: center;
-    margin-top: 10px;
-}
-
 .btn-entrar, .btn-registro {
-    padding: 8px 12px;
-    margin-left: 10px;
-    font-size: 14px;
+    padding: 0.8rem 1.5rem;
+    font-size: 1rem;
     color: white;
     background-color: #007bff; /* Color de fondo azul, puedes ajustarlo según tus preferencias */
     border: none;
@@ -295,4 +411,116 @@ body, html {
 
 .ocultar-papelera-elige8-sencilla {
     display: none !important;
+}
+
+/* Estilos específicos para cada juego */
+.euromillones { background-color: #f8f8f8; }
+.primitiva { background-color: #f9f9f9; }
+.bonoloto { background-color: #f8f8f8; }
+.gordoPrimitiva { background-color: #f9f9f9; }
+.euroDreams { background-color: #f8f8f8; }
+.loteriaNacional { background-color: #f8f8f8; }
+.lototurf { background-color: #f8f8f8; }
+
+/* Colores específicos para cada juego */
+.euromillones .valor,
+.euromillones .formato {
+    color: #00348D; /* Azul oscuro para Euromillones */
+}
+
+.primitiva .valor,
+.primitiva .formato {
+    color: #2E7D32; /* Verde para La Primitiva */
+}
+
+.bonoloto .valor,
+.bonoloto .formato {
+    color: #558B2F; /* Verde oliva para Bonoloto */
+}
+
+.gordoPrimitiva .valor,
+.gordoPrimitiva .formato {
+    color: #C62828; /* Rojo para El Gordo */
+}
+
+.euroDreams .valor,
+.euroDreams .formato {
+    color: #6A1B9A; /* Morado para EuroDreams */
+}
+
+.loteriaNacional .valor,
+.loteriaNacional .formato {
+    color: #0277BD; /* Azul claro para Lotería Nacional */
+}
+
+.lototurf .valor,
+.lototurf .formato {
+    color: #EF6C00; /* Naranja para Lototurf */
+}
+
+/* Ajuste para el valor cuando incluye el símbolo € */
+.valor[data-currency="true"] {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Efecto hover para mejorar la interactividad */
+.item-menu-juegos:hover {
+    background-color: rgba(0,0,0,0.02);
+}
+
+.item-menu-juegos:hover .valor,
+.item-menu-juegos:hover .formato {
+    opacity: 0.9;
+}
+
+.idioma-selector select {
+    padding: 0.8rem;
+    font-size: 1rem;
+}
+
+:host {
+    position: relative;
+}
+
+.header-line-container {
+    display: flex;
+    width: 100%;
+    height: 3px;
+    position: absolute;
+    bottom: 0;
+}
+
+.header-line-segment {
+    height: 100%;
+    flex: 1;
+}
+
+.line-blue {
+    background-color: #00348D;  /* Color de Euromillones */
+}
+
+.line-green {
+    background-color: #2E7D32;  /* Color de Primitiva */
+}
+
+.line-brown {
+    background-color: #558B2F;  /* Color de Bonoloto */
+}
+
+.line-red {
+    background-color: #C62828;  /* Color de El Gordo */
+}
+
+.line-orange {
+    background-color: #EF6C00;  /* Color de Lototurf */
+}
+
+.line-purple {
+    background-color: #6A1B9A;  /* Color de EuroDreams */
+}
+
+.line-cyan {
+    background-color: #0277BD;  /* Color de Lotería Nacional */
 }

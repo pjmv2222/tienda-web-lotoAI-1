@@ -1,33 +1,70 @@
 <header class="modulo-cabecera">
-    <div class="logo-container">
-        <img src="/assets/img/lotoIA-LOGO.jpg" alt="LotoIA Logo" class="logo">
-    </div>
-    <div class="juegos-container">
-        <ul class="modulo-menu-juegos">
-            <li *ngFor="let juego of ['euromillones', 'primitiva', 'bonoloto', 'gordoPrimitiva', 'lototurf', 'euroDreams', 'loteriaNacional']" class="item-menu-juegos {{juego}}">
-                <a href="#" class="link-cabecera-juego" [title]="'JUGAR ' + juego.toUpperCase()">
-                    <img class="logotipo-juego-cabecera web" [src]="getImageUrl(juego)" [alt]="juego">
-                    <div class="bote-juego" *ngIf="botes[juego]">
-                        <div class="valor">{{ formatearBote(botes[juego]).split('\n')[0] }}</div>
-                        <div class="formato">{{ formatearBote(botes[juego]).split('\n')[1] }}</div>
-                    </div>
-                    <div class="bote-juego" *ngIf="!botes[juego]">Cargando...</div>
-                </a>
-            </li>
-        </ul>
-    </div>
-    <div class="user-actions">
-        <button class="btn-entrar">Entrar</button>
-        <button class="btn-registro">REGISTRO</button>
-        <div class="idioma-selector">
-            <select id="changeLanguage" name="changeLanguage">
-                <option value="es" selected>Castellano</option>
-                <option value="ca">Català</option>
-                <option value="en">English</option>
-                <option value="eu">Euskera</option>
-                <option value="gl">Galego</option>
-                <option value="va">Valencià</option>
-            </select>
+    <!-- División superior -->
+    <div class="cabecera-superior">
+        <div class="logo-container">
+            <img src="/assets/img/lotoIA-LOGO.jpg" alt="LotoIA Logo" class="logo">
         </div>
+        <div class="user-actions">
+            <div class="login-container">
+                <div class="input-group">
+                    <div class="inputs-row">
+                        <input type="text" placeholder="Correo electrónico o NIF/NIE" class="login-input">
+                        <input type="password" placeholder="••••••••••••" class="login-input">
+                    </div>
+                    <div class="forgot-password">
+                        <a href="#">¿Has olvidado tu contraseña?</a>
+                        <a href="#">Solicitar una nueva</a>
+                    </div>
+                </div>
+                <div class="buttons-group">
+                    <img src="/assets/img/boton_entrar.png" alt="Icono entrar" class="icon-entrar">
+                    <button class="btn-entrar">Entrar</button>
+                    <button class="btn-registro">REGISTRO</button>
+                </div>
+            </div>
+            <div class="idioma-container">
+                <label for="changeLanguage">Idioma</label>
+                <select id="changeLanguage" name="changeLanguage">
+                    <option value="es" selected>Castellano</option>
+                    <option value="ca">Català</option>
+                    <option value="en">English</option>
+                    <option value="eu">Euskera</option>
+                    <option value="gl">Galego</option>
+                    <option value="va">Valencià</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- División inferior -->
+    <div class="cabecera-inferior">
+        <div class="juegos-container">
+            <ul class="modulo-menu-juegos">
+                <li *ngFor="let juego of ['euromillones', 'primitiva', 'bonoloto', 'gordoPrimitiva', 'lototurf', 'euroDreams', 'loteriaNacional']" 
+                    class="item-menu-juegos {{juego}}">
+                    <a href="#" class="link-cabecera-juego" [title]="'JUGAR ' + juego.toUpperCase()">
+                        <img class="logotipo-juego-cabecera web" [src]="getImageUrl(juego)" [alt]="juego">
+                        <div class="bote-juego" *ngIf="botes[juego] && formatearBote(botes[juego]).trim()">
+                            <div class="valor" [attr.data-currency]="botes[juego].esEuros">
+                                {{ formatearBote(botes[juego]).split('\n')[0] }}
+                            </div>
+                            <div class="formato">
+                                {{ botes[juego].esEuros ? formatearBote(botes[juego]).split('\n')[1] : 'MILLONES' }}
+                            </div>
+                        </div>
+                        <div class="bote-juego" *ngIf="!botes[juego]">Cargando...</div>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+    <div class="header-line-container">
+        <div class="header-line-segment line-blue"></div>
+        <div class="header-line-segment line-green"></div>
+        <div class="header-line-segment line-brown"></div>
+        <div class="header-line-segment line-red"></div>
+        <div class="header-line-segment line-orange"></div>
+        <div class="header-line-segment line-purple"></div>
+        <div class="header-line-segment line-cyan"></div>
     </div>
 </header>

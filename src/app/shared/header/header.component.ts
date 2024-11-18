@@ -4,10 +4,10 @@ import { BotesService } from '../../services/botes.service';
 
 @Component({
   selector: 'app-header',
-  standalone: true,
-  imports: [CommonModule],
   templateUrl: './header.component.html',
-  styleUrls: ['./header.component.css']
+  styleUrls: ['./header.component.css'],
+  standalone: true,
+  imports: [CommonModule]
 })
 export class HeaderComponent implements OnInit {
   private platformId = inject(PLATFORM_ID);
@@ -119,21 +119,21 @@ export class HeaderComponent implements OnInit {
   }
 
   formatearBote(boteData: any): string {
-    if (!boteData) return '0\n';
+    if (!boteData || (boteData.bote === 0 && !boteData.esEuros)) return '\n';
     
     let valorFormateado;
     if (boteData.esEuros) {
-      // Para EuroDreams y Lotería Nacional
       valorFormateado = new Intl.NumberFormat('es-ES', {
         minimumFractionDigits: 0,
         maximumFractionDigits: 0
       }).format(boteData.bote) + '€';
     } else {
-      // Para juegos con MILLONES, mostrando un decimal
       const valor = parseFloat(boteData.bote.toString());
+      if (valor === 0) return '\n';
+      
       valorFormateado = new Intl.NumberFormat('es-ES', {
-        minimumFractionDigits: 1, // Siempre mostrar 1 decimal
-        maximumFractionDigits: 1  // Máximo 1 decimal
+        minimumFractionDigits: 1,
+        maximumFractionDigits: 1
       }).format(valor);
     }
 
