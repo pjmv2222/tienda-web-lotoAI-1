@@ -11,7 +11,7 @@ const port = process.env.PORT || 3000;
 // Configurar CORS
 const corsOptions = {
   origin: NODE_ENV === 'production' 
-    ? 'https://loto-ia.com' 
+    ? 'https://piensasolutions.com/tienda' 
     : 'http://localhost:4200',
   optionsSuccessStatus: 200
 };

@@ -20,7 +20,7 @@ interface User {
 })
 export class AuthService {
   private apiUrl = environment.production 
-    ? 'https://api.loto-ia.com' 
+    ? 'https://tu-backend-render.onrender.com/api'
     : 'http://localhost:3000';
   private userSubject = new BehaviorSubject<any>(null);
   public user$ = this.userSubject.asObservable();
