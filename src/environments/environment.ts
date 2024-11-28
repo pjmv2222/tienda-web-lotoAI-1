@@ -1,6 +1,7 @@
 // src/environments/environment.ts
 export const environment = {
   production: false,
-  apiUrl: 'assets/'  // URL local
+  apiUrl: 'http://localhost:3000/api',
+  // otras configuraciones de desarrollo
 };
 
