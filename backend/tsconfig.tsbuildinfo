@@ -1,0 +1,1 @@
+{"root":["./src/dev.config.ts","./src/index.ts","./src/server.ts","./src/config/database.ts","./src/config/dev.config.ts","./src/config/prod.config.ts","./src/controllers/auth.controller.ts","./src/controllers/product.controller.ts","./src/models/product.model.ts","./src/models/user.model.ts","./src/routes/auth.routes.ts","./src/routes/product.routes.ts"],"version":"5.7.2"}

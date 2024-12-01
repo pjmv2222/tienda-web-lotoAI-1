@@ -17,12 +17,24 @@ export function app(): express.Express {
   server.set('view engine', 'html');
   server.set('views', browserDistFolder);
 
-  // Example Express Rest API endpoints
-  // server.get('/api/**', (req, res) => { });
-  // Serve static files from /browser
-  server.get('**', express.static(browserDistFolder, {
+  // Logging middleware para debug
+  server.use((req, res, next) => {
+    console.log('Request URL:', req.url);
+    next();
+  });
+
+  // Servir archivos estáticos desde /browser con configuración específica
+  server.use(express.static(browserDistFolder, {
     maxAge: '1y',
-    index: 'index.html',
+    index: false, // Importante: deshabilitar index para evitar conflictos
+    etag: true,
+    lastModified: true
+  }));
+
+  // Servir assets específicamente
+  server.use('/assets', express.static(join(browserDistFolder, 'assets'), {
+    maxAge: '1y',
+    etag: true
   }));
 
   // All regular routes use the Angular engine
@@ -51,6 +63,7 @@ function run(): void {
   const server = app();
   server.listen(port, () => {
     console.log(`Node Express server listening on http://localhost:${port}`);
+    console.log(`Serving static files from: ${resolve(dirname(fileURLToPath(import.meta.url)), '../browser')}`);
   });
 }
 
