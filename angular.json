@@ -10,24 +10,65 @@
       "prefix": "app",
       "architect": {
         "build": {
-          "builder": "@angular-devkit/build-angular:browser",
+          "builder": "@angular-devkit/build-angular:application",
           "options": {
-            "outputPath": "dist/tienda-web-loto-ai/browser",
+            "outputPath": "dist/tienda-web-loto-ai",
             "index": "src/index.html",
-            "main": "src/main.ts",
+            "browser": "src/main.ts",
+            "server": "src/main.server.ts",
+            "prerender": true,
+            "ssr": {
+              "entry": "server.ts"
+            },
             "polyfills": ["zone.js"],
-            "tsConfig": "tsconfig.app.json"
-          }
+            "tsConfig": "tsconfig.app.json",
+            "assets": [
+              "src/favicon.ico",
+              "src/assets"
+            ],
+            "styles": [
+              "src/styles.css"
+            ],
+            "scripts": []
+          },
+          "configurations": {
+            "production": {
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "2mb",
+                  "maximumError": "5mb"
+                }
+              ],
+              "outputHashing": "all"
+            },
+            "development": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true
+            }
+          },
+          "defaultConfiguration": "production"
         },
-        "server": {
-          "builder": "@angular-devkit/build-angular:server",
+        "serve": {
+          "builder": "@angular-devkit/build-angular:dev-server",
           "options": {
-            "outputPath": "dist/tienda-web-loto-ai/server",
-            "main": "server.ts",
-            "tsConfig": "tsconfig.server.json"
-          }
+            "buildTarget": "tienda-web-loto-ai:build:development"
+          },
+          "configurations": {
+            "production": {
+              "buildTarget": "tienda-web-loto-ai:build:production"
+            },
+            "development": {
+              "buildTarget": "tienda-web-loto-ai:build:development"
+            }
+          },
+          "defaultConfiguration": "development"
         }
       }
     }
+  },
+  "cli": {
+    "analytics": "c1ed9937-960d-419f-9ca0-1ef2e4205d41"
   }
 }
