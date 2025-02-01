@@ -9,6 +9,9 @@ interface Botes {
     bonoloto: string;
     euromillones: string;
     gordo: string;
+    eurodreams: string;
+    loterianacional: string;
+    lototurf: string;
 }
 
 interface Sorteo {
@@ -18,12 +21,18 @@ interface Sorteo {
 }
 
 function formatearBote(monto: string): string {
-    const cantidad = parseInt(monto);
+    const cantidad = parseFloat(monto);
     if (cantidad >= 1000000) {
-        const millones = Math.floor(cantidad / 1000000);
+        const millones = (cantidad / 1000000).toLocaleString('es-ES', { 
+            minimumFractionDigits: 1,
+            maximumFractionDigits: 1 
+        });
         return `${millones} MILLONES`;
     } else if (cantidad >= 1000) {
-        const miles = (cantidad / 1000).toLocaleString('es-ES', { maximumFractionDigits: 0 });
+        const miles = (cantidad / 1000).toLocaleString('es-ES', { 
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2 
+        });
         return `${miles} MIL`;
     }
     return cantidad.toLocaleString('es-ES');
@@ -96,7 +105,10 @@ async function scrapeBotes(): Promise<void> {
             primitiva: '',
             bonoloto: '',
             euromillones: '',
-            gordo: ''
+            gordo: '',
+            eurodreams: '',
+            loterianacional: '',
+            lototurf: ''
         };
 
         if (Array.isArray(dataResponse.data)) {
@@ -112,7 +124,7 @@ async function scrapeBotes(): Promise<void> {
                             console.log('Primitiva actualizada:', premio);
                             break;
                         case 'BONO':
-                            botes.bonoloto = premio;
+                            botes.bonoloto = premio || '0';
                             console.log('Bonoloto actualizada:', premio);
                             break;
                         case 'EMIL':
@@ -122,6 +134,18 @@ async function scrapeBotes(): Promise<void> {
                         case 'ELGR':
                             botes.gordo = premio;
                             console.log('Gordo actualizado:', premio);
+                            break;
+                        case 'EUDR':
+                            botes.eurodreams = '20.000€/mes x 30 años';
+                            console.log('EuroDreams actualizado');
+                            break;
+                        case 'LNAC':
+                            botes.loterianacional = '600.000€';
+                            console.log('Lotería Nacional actualizada');
+                            break;
+                        case 'LTRF':
+                            botes.lototurf = premio;
+                            console.log('Lototurf actualizado:', premio);
                             break;
                     }
                 });
