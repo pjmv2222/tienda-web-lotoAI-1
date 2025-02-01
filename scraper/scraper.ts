@@ -29,37 +29,66 @@ function formatearBote(monto: string): string {
     return cantidad.toLocaleString('es-ES');
 }
 
+const userAgents = [
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2.1 Safari/605.1.15',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:122.0) Gecko/20100101 Firefox/122.0'
+];
+
 async function scrapeBotes(): Promise<void> {
     try {
         console.log('Iniciando scraping...');
         
-        const response = await axios.get('https://www.loteriasyapuestas.es/servicios/proximosv3', {
+        // Delay aleatorio entre 2 y 5 segundos
+        const delay = Math.floor(Math.random() * 3000) + 2000;
+        await new Promise(resolve => setTimeout(resolve, delay));
+        
+        // Seleccionar un User-Agent aleatorio
+        const randomUserAgent = userAgents[Math.floor(Math.random() * userAgents.length)];
+        
+        const response = await axios.get('https://www.loteriasyapuestas.es/es/resultados', {
+            headers: {
+                'User-Agent': randomUserAgent,
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+                'Accept-Language': 'es-ES,es;q=0.9,en;q=0.8',
+                'Accept-Encoding': 'gzip, deflate, br',
+                'Connection': 'keep-alive',
+                'Cookie': '',  // La cookie se establecerá en la primera petición
+                'Upgrade-Insecure-Requests': '1',
+                'Sec-Fetch-Dest': 'document',
+                'Sec-Fetch-Mode': 'navigate',
+                'Sec-Fetch-Site': 'none',
+                'Sec-Fetch-User': '?1',
+                'Cache-Control': 'max-age=0'
+            },
+            maxRedirects: 5,
+            validateStatus: function (status) {
+                return status >= 200 && status < 303;
+            }
+        });
+
+        // Obtener cookies de la respuesta
+        const cookies = response.headers['set-cookie'];
+        
+        // Esperar un poco antes de la segunda petición
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        // Segunda petición con las cookies obtenidas
+        const dataResponse = await axios.get('https://www.loteriasyapuestas.es/servicios/proximosv3', {
             params: {
                 game_id: 'TODOS',
                 num: 2
             },
             headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'User-Agent': randomUserAgent,
                 'Accept': 'application/json, text/plain, */*',
                 'Accept-Language': 'es-ES,es;q=0.9,en;q=0.8',
-                'Accept-Encoding': 'gzip, deflate, br',
                 'Connection': 'keep-alive',
-                'Referer': 'https://www.loteriasyapuestas.es/es',
-                'Origin': 'https://www.loteriasyapuestas.es',
-                'sec-ch-ua': '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
-                'sec-ch-ua-mobile': '?0',
-                'sec-ch-ua-platform': '"Windows"',
+                'Referer': 'https://www.loteriasyapuestas.es/es/resultados',
+                'Cookie': cookies ? cookies.join('; ') : '',
                 'Sec-Fetch-Dest': 'empty',
                 'Sec-Fetch-Mode': 'cors',
-                'Sec-Fetch-Site': 'same-origin',
-                'DNT': '1',
-                'Cache-Control': 'no-cache',
-                'Pragma': 'no-cache'
-            },
-            timeout: 10000,
-            maxRedirects: 5,
-            validateStatus: function (status) {
-                return status >= 200 && status < 303;
+                'Sec-Fetch-Site': 'same-origin'
             }
         });
 
@@ -70,8 +99,8 @@ async function scrapeBotes(): Promise<void> {
             gordo: ''
         };
 
-        if (Array.isArray(response.data)) {
-            response.data
+        if (Array.isArray(dataResponse.data)) {
+            dataResponse.data
                 .filter((sorteo: Sorteo) => sorteo.estado === 'abierto' && sorteo.premio_bote)
                 .forEach((sorteo: Sorteo) => {
                     const premio = formatearBote(sorteo.premio_bote);
