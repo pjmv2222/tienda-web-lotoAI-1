@@ -1,3 +1,5 @@
+// Actualizado: [fecha actual]
+
 // src/scripts/scraper.ts
 
 import axios from 'axios';
