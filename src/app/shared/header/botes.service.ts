@@ -10,6 +10,12 @@ export class BotesService {
 
   getBotes(): Observable<any> {
     const url = `/assets/botes.json?t=${new Date().getTime()}`;
-    return this.http.get(url, { headers: { 'Cache-Control': 'no-cache' } });
+    return this.http.get(url, {
+      headers: {
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      }
+    });
   }
 }

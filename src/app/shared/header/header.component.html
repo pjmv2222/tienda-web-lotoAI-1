@@ -36,28 +36,29 @@
         </div>
     </div>
 
-    <!-- División inferior -->
+    <!-- División inferior con juegos (versión dinámica) -->
     <div class="cabecera-inferior">
         <div class="juegos-container">
             <ul class="modulo-menu-juegos">
-                <li *ngFor="let juego of ['euromillones', 'primitiva', 'bonoloto', 'gordoPrimitiva', 'lototurf', 'euroDreams', 'loteriaNacional']" 
-                    class="item-menu-juegos {{juego}}">
-                    <a href="#" class="link-cabecera-juego" [title]="'JUGAR ' + juego.toUpperCase()">
+                <li class="item-menu-juegos" *ngFor="let juego of juegos" [class]="juego">
+                    <a href="#" class="link-cabecera-juego">
                         <img class="logotipo-juego-cabecera web" [src]="getImageUrl(juego)" [alt]="juego">
-                        <div class="bote-juego" *ngIf="botes[juego] && formatearBote(botes[juego]).trim()">
-                            <div class="valor" [attr.data-currency]="botes[juego].esEuros">
-                                {{ formatearBote(botes[juego]).split('\n')[0] }}
-                            </div>
-                            <div class="formato">
-                                {{ botes[juego].esEuros ? formatearBote(botes[juego]).split('\n')[1] : 'MILLONES' }}
+                        <div class="bote-juego">
+                            <div class="valor">
+                                <ng-container *ngIf="!loading; else loadingTemplate">
+                                    {{ botes[juego] }}
+                                </ng-container>
+                                <ng-template #loadingTemplate>
+                                    Cargando...
+                                </ng-template>
                             </div>
                         </div>
-                        <div class="bote-juego" *ngIf="!botes[juego]">Cargando...</div>
                     </a>
                 </li>
             </ul>
         </div>
     </div>
+
     <div class="header-line-container">
         <div class="header-line-segment line-blue"></div>
         <div class="header-line-segment line-green"></div>
@@ -68,3 +69,4 @@
         <div class="header-line-segment line-cyan"></div>
     </div>
 </header>
+

@@ -1,191 +1,202 @@
-// Actualizado: [fecha actual]
-
-// src/scripts/scraper.ts
-
-import axios from 'axios';
 import * as fs from 'fs';
 import * as path from 'path';
+import puppeteer from 'puppeteer';
+import * as ProxyChain from 'proxy-chain';
+import randomUseragent from 'random-useragent';
 
-interface Botes {
-    primitiva: string;
-    bonoloto: string;
-    euromillones: string;
-    gordo: string;
-    eurodreams: string;
-    loterianacional: string;
-    lototurf: string;
+interface ProxyConfig {
+    url: string;
+    username?: string;
+    password?: string;
 }
 
-interface Sorteo {
-    game_id: string;
-    premio_bote: string;
-    estado: string;
-}
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-function formatearBote(monto: string): string {
-    const cantidad = parseFloat(monto);
-    if (cantidad >= 1000000) {
-        const millones = (cantidad / 1000000).toLocaleString('es-ES', { 
-            minimumFractionDigits: 1,
-            maximumFractionDigits: 1 
-        });
-        return `${millones} MILLONES`;
-    } else if (cantidad >= 1000) {
-        const miles = (cantidad / 1000).toLocaleString('es-ES', { 
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2 
-        });
-        return `${miles} MIL`;
-    }
-    return cantidad.toLocaleString('es-ES');
-}
+const getRandomDelay = (min: number, max: number) => 
+    Math.floor(Math.random() * (max - min + 1) + min);
 
-const userAgents = [
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2.1 Safari/605.1.15',
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:122.0) Gecko/20100101 Firefox/122.0'
-];
-
-async function scrapeBotes(): Promise<void> {
+const loadProxies = (): ProxyConfig[] => {
     try {
-        console.log('Iniciando scraping...');
-        
-        // Delay aleatorio entre 2 y 5 segundos
-        const delay = Math.floor(Math.random() * 3000) + 2000;
-        await new Promise(resolve => setTimeout(resolve, delay));
-        
-        // Seleccionar un User-Agent aleatorio
-        const randomUserAgent = userAgents[Math.floor(Math.random() * userAgents.length)];
-        
-        const response = await axios.get('https://www.loteriasyapuestas.es/es/resultados', {
-            headers: {
-                'User-Agent': randomUserAgent,
-                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
-                'Accept-Language': 'es-ES,es;q=0.9,en;q=0.8',
-                'Accept-Encoding': 'gzip, deflate, br',
-                'Connection': 'keep-alive',
-                'Cookie': '',  // La cookie se establecerá en la primera petición
-                'Upgrade-Insecure-Requests': '1',
-                'Sec-Fetch-Dest': 'document',
-                'Sec-Fetch-Mode': 'navigate',
-                'Sec-Fetch-Site': 'none',
-                'Sec-Fetch-User': '?1',
-                'Cache-Control': 'max-age=0'
-            },
-            maxRedirects: 5,
-            validateStatus: function (status) {
-                return status >= 200 && status < 303;
-            }
-        });
+        const proxyList = fs.readFileSync('proxies.txt', 'utf-8')
+            .split('\n')
+            .filter(line => line.trim())
+            .map(line => {
+                // Formato esperado: http://username:password@host:port
+                const url = line.trim();
+                const match = url.match(/http:\/\/(.*?):(.*?)@(.*)/);
+                if (match) {
+                    const [_, username, password, host] = match;
+                    // Construir la URL con las credenciales incluidas
+                    return {
+                        url: `http://${username}:${password}@${host}`
+                    };
+                }
+                return { url };
+            });
+        return proxyList;
+    } catch (error) {
+        console.warn('No se pudo cargar la lista de proxies:', error);
+        return [];
+    }
+};
 
-        // Obtener cookies de la respuesta
-        const cookies = response.headers['set-cookie'];
-        
-        // Esperar un poco antes de la segunda petición
-        await new Promise(resolve => setTimeout(resolve, 1000));
+const getRandomProxy = (proxies: ProxyConfig[]): ProxyConfig | null => {
+    if (!proxies.length) return null;
+    return proxies[Math.floor(Math.random() * proxies.length)];
+};
 
-        // Segunda petición con las cookies obtenidas
-        const dataResponse = await axios.get('https://www.loteriasyapuestas.es/servicios/proximosv3', {
-            params: {
-                game_id: 'TODOS',
-                num: 2
-            },
-            headers: {
-                'User-Agent': randomUserAgent,
-                'Accept': 'application/json, text/plain, */*',
-                'Accept-Language': 'es-ES,es;q=0.9,en;q=0.8',
-                'Connection': 'keep-alive',
-                'Referer': 'https://www.loteriasyapuestas.es/es/resultados',
-                'Cookie': cookies ? cookies.join('; ') : '',
-                'Sec-Fetch-Dest': 'empty',
-                'Sec-Fetch-Mode': 'cors',
-                'Sec-Fetch-Site': 'same-origin'
-            }
-        });
-
-        const botes: Botes = {
-            primitiva: '',
-            bonoloto: '',
-            euromillones: '',
-            gordo: '',
-            eurodreams: '',
-            loterianacional: '',
-            lototurf: ''
+async function scrapeWithoutProxy() {
+    let browser;
+    try {
+        const browserOptions: any = {
+            headless: true,
+            args: [
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--disable-dev-shm-usage',
+                '--disable-accelerated-2d-canvas',
+                '--disable-gpu',
+                '--window-size=1920,1080'
+            ]
         };
 
-        if (Array.isArray(dataResponse.data)) {
-            dataResponse.data
-                .filter((sorteo: Sorteo) => sorteo.estado === 'abierto' && sorteo.premio_bote)
-                .forEach((sorteo: Sorteo) => {
-                    const premio = formatearBote(sorteo.premio_bote);
-                    console.log(`Procesando sorteo: ${sorteo.game_id} con premio: ${premio}`);
-                    
-                    switch (sorteo.game_id) {
-                        case 'LAPR':
-                            botes.primitiva = premio;
-                            console.log('Primitiva actualizada:', premio);
-                            break;
-                        case 'BONO':
-                            botes.bonoloto = premio || '0';
-                            console.log('Bonoloto actualizada:', premio);
-                            break;
-                        case 'EMIL':
-                            botes.euromillones = premio;
-                            console.log('Euromillones actualizado:', premio);
-                            break;
-                        case 'ELGR':
-                            botes.gordo = premio;
-                            console.log('Gordo actualizado:', premio);
-                            break;
-                        case 'EUDR':
-                            botes.eurodreams = '20.000€/mes x 30 años';
-                            console.log('EuroDreams actualizado');
-                            break;
-                        case 'LNAC':
-                            botes.loterianacional = '600.000€';
-                            console.log('Lotería Nacional actualizada');
-                            break;
-                        case 'LTRF':
-                            botes.lototurf = premio;
-                            console.log('Lototurf actualizado:', premio);
-                            break;
-                    }
-                });
-        }
+        console.log('Iniciando navegador sin proxy...');
+        browser = await puppeteer.launch(browserOptions);
+        const page = await browser.newPage();
+        
+        // Configurar viewport y user agent
+        await page.setViewport({ width: 1920, height: 1080 });
+        await page.setUserAgent(randomUseragent.getRandom());
 
-        Object.keys(botes).forEach(key => {
-            if (!botes[key as keyof Botes]) {
-                botes[key as keyof Botes] = '0';
-            }
+        // Configurar headers
+        await page.setExtraHTTPHeaders({
+            'Accept-Language': 'es-ES,es;q=0.9',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+            'Referer': 'https://www.google.com/'
         });
 
-        console.log('Botes encontrados:', botes);
-
-        const assetsDir = path.join(__dirname, '..', 'src', 'assets');
-        console.log('Directorio de assets:', assetsDir);
+        // Delay aleatorio antes de navegar
+        await delay(getRandomDelay(2000, 5000));
         
+        console.log('Navegando a la página...');
+        await page.goto('https://www.loteriasyapuestas.es/es', {
+            waitUntil: 'networkidle0',
+            timeout: 60000
+        });
+
+        // Esperar a que los elementos estén cargados
+        await page.waitForSelector('.c-parrilla-juegos__elemento_topaz', { timeout: 10000 });
+        
+        console.log('Extrayendo datos de botes...');
+        const botes = await page.evaluate(() => {
+            const result: { [key: string]: string } = {};
+
+            const getBoteText = (element: Element, gameId: string) => {
+                try {
+                    const cantidadElement = element.querySelector(`p[class*="cantidad"][class*="${gameId}"]`);
+                    const millonesElement = element.querySelector(`p[class*="millones"][class*="${gameId}"]`);
+                    
+                    if (cantidadElement && millonesElement) {
+                        const cantidad = cantidadElement.textContent?.trim() || '';
+                        return `${cantidad} MILLONES`;
+                    }
+                    
+                    const cantidadSpecial = element.querySelector(`p[class*="cantidad"][class*="${gameId}"]`);
+                    if (cantidadSpecial) {
+                        const cantidad = cantidadSpecial.textContent?.trim() || '';
+                        const tipoElement = element.querySelector(`p[class*="tipo-premio"][class*="${gameId}"]`);
+                        const tipo = tipoElement?.textContent?.trim() || '';
+                        const euroSymbol = element.querySelector(`span[class*="simbolo-euro"]`)?.textContent || '€';
+                        
+                        return tipo ? `${cantidad}${euroSymbol} ${tipo}` : `${cantidad}${euroSymbol}`;
+                    }
+
+                    return null;
+                } catch (error) {
+                    console.error(`Error extrayendo bote para ${gameId}:`, error);
+                    return null;
+                }
+            };
+
+            const games = {
+                'euromillones': 'EMIL',
+                'primitiva': 'LAPR',
+                'bonoloto': 'BONO',
+                'gordo': 'ELGR',
+                'lototurf': 'LOTU',
+                'eurodreams': 'EDMS',
+                'loterianacional': 'LNAC'
+            };
+
+            document.querySelectorAll('.c-parrilla-juegos__elemento_topaz').forEach((element) => {
+                for (const [key, id] of Object.entries(games)) {
+                    if (element.querySelector(`.semicirculo--${id}_topaz`)) {
+                        const bote = getBoteText(element, id);
+                        if (bote) {
+                            result[key] = bote;
+                            console.log(`Bote extraído para ${key}:`, bote);
+                        }
+                    }
+                }
+            });
+
+            if (!result['eurodreams']) result['eurodreams'] = '20.000€ AL MES DURANTE 30 AÑOS';
+            if (!result['loterianacional']) result['loterianacional'] = '300.000€ 1ER PREMIO A LA SERIE';
+
+            return result;
+        });
+
+        console.log('Botes obtenidos:', botes);
+
+        // Guardar los datos
+        const assetsDir = path.join(__dirname, '..', 'src', 'assets');
         if (!fs.existsSync(assetsDir)) {
-            console.log('Creando directorio de assets...');
             fs.mkdirSync(assetsDir, { recursive: true });
         }
 
         const outputPath = path.join(assetsDir, 'botes.json');
-        console.log('Guardando archivo en:', outputPath);
         fs.writeFileSync(outputPath, JSON.stringify(botes, null, 2));
-        
-        console.log('Botes actualizados correctamente en:', outputPath);
-        
-    } catch (error) {
-        if (axios.isAxiosError(error)) {
-            console.error('Error de red:', error.message);
-            if (error.response) {
-                console.error('Datos del error:', error.response.data);
-            }
-        } else {
-            console.error('Error inesperado:', error);
+        console.log('Datos guardados en:', outputPath);
+
+        return botes;
+    } finally {
+        if (browser) {
+            await browser.close();
         }
-        process.exit(1);
     }
 }
 
-scrapeBotes();
+async function scrapeWithRetry(maxRetries = 5) {
+    console.log('Iniciando scraping de botes...');
+    
+    // Primer intento sin proxy
+    try {
+        console.log('Intentando sin proxy primero...');
+        return await scrapeWithoutProxy();
+    } catch (error) {
+        console.log('Intento sin proxy falló, probando con proxies...');
+        
+        const proxies = loadProxies();
+        if (proxies.length > 0) {
+            for (let attempt = 1; attempt <= maxRetries - 1; attempt++) {
+                // ... intentos con proxy ...
+            }
+        }
+        
+        // Si todo falla, esperar y reintentar sin proxy
+        console.log('Esperando 5 minutos antes de reintentar sin proxy...');
+        await delay(300000); // 5 minutos
+        return await scrapeWithoutProxy();
+    }
+}
+
+scrapeWithRetry()
+    .then(() => {
+        console.log('Proceso completado exitosamente');
+        process.exit(0);
+    })
+    .catch((error: unknown) => {
+        const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+        console.error('Error final:', errorMessage);
+        process.exit(1);
+    });

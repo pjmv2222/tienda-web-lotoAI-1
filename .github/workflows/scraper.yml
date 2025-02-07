@@ -2,13 +2,16 @@ name: Scraper Loterías
 
 on:
   schedule:
-    - cron: '0 6,18 * * *'
+    - cron: '0 */6 * * *'  # Ejecutar cada 6 horas (00:00, 06:00, 12:00, 18:00)
   workflow_dispatch:
 
-# Añadir control de concurrencia
+# Control de concurrencia para evitar ejecuciones simultáneas
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
+
+env:
+  SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}  # Añadir si usas Slack
 
 jobs:
   scrape:
@@ -25,15 +28,21 @@ jobs:
     - name: Setup Node.js
       uses: actions/setup-node@v3
       with:
-        node-version: '16'
+        node-version: '18'  # Versión más reciente y estable
         
     - name: Install dependencies
       run: |
         cd scraper
-        npm install axios
-        npm install -D typescript@4.9.5 ts-node@10.9.1 @types/node
+        npm install puppeteer proxy-chain random-useragent
+        npm install -D typescript@latest ts-node@latest @types/node
         
-    - name: Run scraper
+    - name: Configure proxy
+      env:
+        PROXY_LIST: ${{ secrets.PROXY_LIST }}  # Lista de proxies en los secrets
+      run: |
+        echo "$PROXY_LIST" > proxies.txt
+        
+    - name: Run scraper with retry mechanism
       run: |
         cd scraper
         npx ts-node scraper.ts
@@ -48,5 +57,14 @@ jobs:
         git add src/assets/botes.json
         git add scraper/package*.json
         git status
-        git diff --quiet && git diff --staged --quiet || git commit -m "Actualizar botes y dependencias [skip ci]"
+        timestamp=$(date '+%Y-%m-%d %H:%M:%S')
+        git diff --quiet && git diff --staged --quiet || git commit -m "📊 Actualización de botes - $timestamp [skip ci]"
         git push
+
+    - name: Notify on failure
+      if: failure()
+      env:
+        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+      run: |
+        cd scraper
+        npx ts-node notifications.ts "❌ El scraping ha fallado después de todos los reintentos"

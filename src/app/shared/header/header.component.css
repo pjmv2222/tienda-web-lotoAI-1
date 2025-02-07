@@ -163,17 +163,17 @@ header.modulo-cabecera {
 .modulo-menu-juegos {
     display: flex;
     justify-content: space-between;
-    list-style: none;
-    padding: 0;
+    align-items: flex-start;
+    padding: 15px 0;
     margin: 0;
-    width: 100%;
+    list-style: none;
 }
 
 .item-menu-juegos {
     flex: 1;
     text-align: center;
+    padding: 0 10px;
     border-right: 1px solid #eee;
-    padding: 15px 10px;
 }
 
 .item-menu-juegos:last-child {
@@ -185,35 +185,35 @@ header.modulo-cabecera {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 10px;
 }
 
 .logotipo-juego-cabecera {
-    width: 100px;
-    height: auto;
-    margin-bottom: 15px;
+    height: 40px;
+    width: auto;
+    margin-bottom: 10px;
+    object-fit: contain;
 }
 
 .bote-juego {
     display: flex;
     flex-direction: column;
     align-items: center;
-    width: 100%;
+    text-align: center;
+    margin-top: 5px;
 }
 
 .valor {
-    font-size: 28px;
+    font-size: 24px;
     font-weight: bold;
-    color: #333;
     line-height: 1.2;
+    color: inherit;
 }
 
 .formato {
-    font-size: 14px;
-    color: #666;
+    font-size: 12px;
     text-transform: uppercase;
-    line-height: 1.2;
-    margin-top: 5px;
+    line-height: 1;
+    margin-top: 2px;
 }
 
 .miles {
@@ -351,6 +351,18 @@ header.modulo-cabecera {
     .btn-entrar, .btn-registro {
         margin: 5px;
     }
+
+    .logotipo-juego-cabecera.web {
+        height: 35px;
+    }
+
+    .valor {
+        font-size: 20px;
+    }
+
+    .formato {
+        font-size: 11px;
+    }
 }
 
 @media screen and (max-width: 768px) {
@@ -373,6 +385,18 @@ header.modulo-cabecera {
     .btn-entrar, .btn-registro {
         padding: 10px 15px;
         font-size: 16px;
+    }
+
+    .logotipo-juego-cabecera.web {
+        height: 30px;
+    }
+
+    .valor {
+        font-size: 18px;
+    }
+
+    .formato {
+        font-size: 10px;
     }
 }
 
@@ -425,44 +449,48 @@ body, html {
 /* Colores específicos para cada juego */
 .euromillones .valor,
 .euromillones .formato {
-    color: #00348D; /* Azul oscuro para Euromillones */
+    color: #00348D;
 }
 
 .primitiva .valor,
 .primitiva .formato {
-    color: #2E7D32; /* Verde para La Primitiva */
+    color: #2E7D32;
 }
 
 .bonoloto .valor,
 .bonoloto .formato {
-    color: #558B2F; /* Verde oliva para Bonoloto */
+    color: #558B2F;
 }
 
-.gordoPrimitiva .valor,
-.gordoPrimitiva .formato {
-    color: #C62828; /* Rojo para El Gordo */
+.gordo .valor,
+.gordo .formato {
+    color: #C62828;
 }
 
-.euroDreams .valor,
-.euroDreams .formato {
-    color: #6A1B9A; /* Morado para EuroDreams */
+/* Estilos para los juegos con valores fijos */
+.eurodreams .valor {
+    color: #6A1B9A;
+    font-size: 20px;
 }
 
-.loteriaNacional .valor,
-.loteriaNacional .formato {
-    color: #0277BD; /* Azul claro para Lotería Nacional */
+.loterianacional .valor {
+    color: #0277BD;
+    font-size: 20px;
 }
 
-.lototurf .valor,
-.lototurf .formato {
-    color: #EF6C00; /* Naranja para Lototurf */
+/* Ajustes para el texto adicional */
+.eurodreams .bote-juego::after {
+    content: "AL MES DURANTE 30 AÑOS";
+    font-size: 10px;
+    color: #6A1B9A;
+    margin-top: 2px;
 }
 
-/* Ajuste para el valor cuando incluye el símbolo € */
-.valor[data-currency="true"] {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+.loterianacional .bote-juego::after {
+    content: "1ER PREMIO A LA SERIE";
+    font-size: 10px;
+    color: #0277BD;
+    margin-top: 2px;
 }
 
 /* Efecto hover para mejorar la interactividad */
@@ -523,4 +551,148 @@ body, html {
 
 .line-cyan {
     background-color: #0277BD;  /* Color de Lotería Nacional */
+}
+
+.header-container {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 1rem;
+    background-color: white;
+    width: 100%;
+}
+
+.game-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.game-container img {
+    max-width: 100px;
+    height: auto;
+}
+
+.bote-text {
+    margin-top: 0.5rem;
+    font-weight: bold;
+    color: #333;
+}
+
+.top-bar {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 20px;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.top-bar-left, .top-bar-right {
+  display: flex;
+  gap: 15px;
+}
+
+.top-link {
+  color: #666;
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.top-link:hover {
+  color: #333;
+}
+
+.header-container {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  padding: 1rem;
+  background-color: white;
+  width: 100%;
+  margin-bottom: 4px;
+}
+
+.game-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin: 0 10px;
+}
+
+.game-logo {
+  margin-bottom: 8px;
+}
+
+.game-logo img {
+  max-width: 100px;
+  height: auto;
+}
+
+.bote-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+.bote-icon {
+  position: absolute;
+  left: -20px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1.2rem;
+}
+
+.bote-cantidad {
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+.bote-texto {
+  font-size: 0.8rem;
+}
+
+/* Colores específicos para cada juego */
+.bote-euromillones {
+  color: #1e3799;
+}
+
+.bote-primitiva {
+  color: #44bd32;
+}
+
+.bote-bonoloto {
+  color: #4cd137;
+}
+
+.bote-gordo {
+  color: #e84118;
+}
+
+.bote-lototurf {
+  color: #fa8231;
+}
+
+.bote-eurodreams {
+  color: #8c7ae6;
+}
+
+.bote-loterianacional {
+  color: #0097e6;
+}
+
+.rainbow-line {
+  height: 4px;
+  width: 100%;
+  background: linear-gradient(to right,
+    #1e3799 14.28%,
+    #44bd32 28.56%,
+    #4cd137 42.84%,
+    #e84118 57.12%,
+    #fa8231 71.4%,
+    #8c7ae6 85.68%,
+    #0097e6 100%
+  );
 }
