@@ -11,14 +11,14 @@
   "license": "ISC",
   "dependencies": {
     "axios": "^1.6.7",
-    "proxy-chain": "^2.4.0",
-    "puppeteer": "^22.8.2",
+    "proxy-chain": "^2.5.6",
+    "puppeteer": "^22.15.0",
     "random-useragent": "^0.5.0"
   },
   "devDependencies": {
-    "@types/node": "^20.11.16",
+    "@types/node": "^20.17.17",
     "@types/random-useragent": "^0.3.3",
     "ts-node": "^10.9.2",
-    "typescript": "^5.3.3"
+    "typescript": "^5.7.3"
   }
 }
