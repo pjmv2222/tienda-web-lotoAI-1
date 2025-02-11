@@ -2,11 +2,12 @@ import { Component, OnInit, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 import { HttpClientModule } from '@angular/common/http';
+import { RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [CommonModule, HttpClientModule],
+  imports: [CommonModule, HttpClientModule, RouterLink],
   templateUrl: './header.component.html',
   styleUrls: ['./header.component.css']
 })
