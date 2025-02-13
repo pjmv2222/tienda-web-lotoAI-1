@@ -16,7 +16,7 @@
     "random-useragent": "^0.5.0"
   },
   "devDependencies": {
-    "@types/node": "^20.17.17",
+    "@types/node": "^20.17.18",
     "@types/random-useragent": "^0.3.3",
     "ts-node": "^10.9.2",
     "typescript": "^5.7.3"
