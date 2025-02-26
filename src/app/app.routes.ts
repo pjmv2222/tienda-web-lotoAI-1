@@ -1,5 +1,4 @@
 import { Routes } from '@angular/router';
-import { RegisterComponent } from './auth/register/register.component';
 
 export const routes: Routes = [
   { 
@@ -17,9 +16,15 @@ export const routes: Routes = [
   },
   { 
     path: 'registro',
-    loadComponent: () => import('./auth/register/register.component').then(m => m.RegisterComponent)
+    loadComponent: () => import('./auth/register/register.component')
+      .then(m => m.RegisterComponent)
   },
   // ... otras rutas ...
+  {
+    path: 'verificar/:token',
+    loadComponent: () => import('./auth/verify-email/verify-email.component')
+      .then(m => m.VerifyEmailComponent)
+  },
   { 
     path: '**', 
     redirectTo: 'home' 
