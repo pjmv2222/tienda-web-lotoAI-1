@@ -1,0 +1,2 @@
+import './polyfills.server.mjs';
+import{Ba as n,Ca as i,Fa as s,Ha as a,S as o}from"./chunk-NOEZSE35.mjs";import"./chunk-5XUXGTUW.mjs";var m=(()=>{class e{static{this.\u0275fac=function(t){return new(t||e)}}static{this.\u0275cmp=o({type:e,selectors:[["app-conocenos"]],standalone:!0,features:[a],decls:2,vars:0,template:function(t,r){t&1&&(n(0,"p"),s(1,"conocenos works!"),i())}})}}return e})();export{m as ConocenosComponent};
