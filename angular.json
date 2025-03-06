@@ -55,6 +55,14 @@
           },
           "defaultConfiguration": "production"
         },
+        "server": {
+          "builder": "@angular-devkit/build-angular:server",
+          "options": {
+            "outputPath": "dist/tienda-web-loto-ai/server",
+            "main": "server.ts",
+            "tsConfig": "tsconfig.server.json"
+          }
+        },
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
           "options": {
@@ -69,6 +77,19 @@
             }
           },
           "defaultConfiguration": "development"
+        },
+        "serve-ssr": {
+          "builder": "@nguniversal/builders:ssr-dev-server",
+          "configurations": {
+            "development": {
+              "browserTarget": "tienda-web-loto-ai:build:development",
+              "serverTarget": "tienda-web-loto-ai:server:development"
+            },
+            "production": {
+              "browserTarget": "tienda-web-loto-ai:build:production",
+              "serverTarget": "tienda-web-loto-ai:server:production"
+            }
+          }
         }
       }
     }
