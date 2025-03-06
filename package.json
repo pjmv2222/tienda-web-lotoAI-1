@@ -7,7 +7,11 @@
     "start:prod": "node dist/tienda-web-loto-ai/server/main.js",
     "preinstall": "npm install -g @angular/cli",
     "postinstall": "npm run build",
-    "deploy:frontend": "bash scripts/deploy-frontend.sh"
+    "deploy:frontend": "bash scripts/deploy-frontend.sh",
+    "dev:ssr": "ng run tienda-web-lotoai:serve-ssr",
+    "serve:ssr": "node dist/tienda-web-loto-ai/server/main.js",
+    "build:ssr": "ng build && ng run tienda-web-lotoai:server",
+    "prerender": "ng run tienda-web-lotoai:prerender"
   },
   "dependencies": {
     "@angular/animations": "^18.2.12",
