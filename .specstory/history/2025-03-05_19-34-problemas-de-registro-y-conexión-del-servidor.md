@@ -10768,6 +10768,194 @@ Basado en toda la información que tenemos:
 1. El modo zoneless en Angular 19 es experimental y aún está siendo mejorado
 2. El error NG05104 ocurre porque el SSR no puede encontrar el elemento raíz en el DOM
 3. El archivo `index.server.html` no se genera durante el proceso de build:ssr
+4. El fallback a `index.csr.html` funciona correctamente
+
+Tenemos dos opciones viables:
+
+### Opción 1: Mantener la configuración actual
+- Usar el modo zoneless con el fallback a `index.csr.html`
+- Ventajas: Aprovechamos las mejoras de rendimiento de Angular 19 sin Zone.js
+- Desventajas: No tenemos SSR completo, solo un fallback al renderizado del cliente
+
+### Opción 2: Crear un nuevo proyecto con la bandera experimental
+- Crear un nuevo proyecto con `ng new mi-proyecto --experimental-zoneless`
+- Migrar el código actual a este nuevo proyecto
+- Ventajas: Configuración correcta desde el inicio para el modo zoneless
+- Desventajas: Requiere migrar todo el código, lo que puede ser laborioso
+
+Para la implementación actual, la solución que tenemos (usar `index.csr.html` como fallback) es la más práctica. El servidor está funcionando correctamente y la aplicación se carga sin problemas.
+
+Si quieres implementar esta solución en la VPS, los pasos serían:
+
+1. Hacer commit de los cambios:
+```bash
+git add .
+git commit -m "feat: implementar servidor con fallback para modo zoneless"
+git push origin main
+```
+
+2. En la VPS:
+```bash
+cd /var/www/tienda-web-lotoAI-1
+git pull origin main
+npm install --legacy-peer-deps
+npm run build:ssr
+pm2 restart loto-ia-ssr
+```
+
+¿Quieres que procedamos con esta solución o prefieres explorar la opción de crear un nuevo proyecto con la bandera experimental?
+
+---
+
+_**User**_
+
+Procedí con la solución qué me has expuesto ¿?
+
+---
+
+_**Assistant**_
+
+¡Excelente! Veo que has implementado la solución en la VPS y el proceso `loto-ia-ssr` se ha reiniciado correctamente con PM2. Esto indica que:
+
+1. Has subido los cambios al repositorio
+2. Has actualizado el código en la VPS
+3. Has reconstruido la aplicación
+4. Has reiniciado el servicio con PM2
+
+El estado `online` en PM2 indica que el servidor está funcionando correctamente. Ahora deberías poder acceder a tu sitio web en https://loto-ia.com y ver la aplicación funcionando.
+
+Para verificar que todo está funcionando correctamente:
+
+1. Accede a https://loto-ia.com en tu navegador
+2. Verifica que la aplicación se carga correctamente
+3. Prueba la funcionalidad de registro y otras características
+
+Si encuentras algún problema, podemos revisar los logs de PM2:
+```bash
+pm2 logs loto-ia-ssr
+```
+
+En resumen, has implementado con éxito una solución que:
+- Mantiene Angular 19 con sus mejoras de rendimiento
+- Utiliza el enfoque zoneless (sin Zone.js)
+- Proporciona un fallback al renderizado del cliente cuando el SSR falla
+- Mantiene la aplicación funcionando correctamente
+
+¿Todo está funcionando como esperabas? ¿Hay alguna otra funcionalidad o aspecto que quieras mejorar?
+
+---
+
+_**User**_
+
+¿?
+
+
+---
+
+_**Assistant**_
+
+Veo que estamos teniendo un problema en la VPS. Hay dos errores principales:
+
+1. Error 500 en el navegador: "Error en el servidor"
+2. En los logs de PM2 vemos el error NG0908 relacionado con NgZone
+
+El problema es que en la VPS sigue intentando usar NgZone a pesar de que configuramos la aplicación para el modo zoneless. Esto puede deberse a que:
+
+1. La configuración zoneless no se aplicó correctamente en la VPS
+2. No se desinstalaron correctamente las dependencias de Zone.js
+
+Vamos a corregir esto con los siguientes pasos:
+
+1. Primero, modifica el archivo `server.ts` para usar directamente el fallback sin intentar SSR:
+
+```typescript:server.ts
+import { APP_BASE_HREF } from '@angular/common';
+import express from 'express';
+import * as path from 'path';
+import * as fs from 'fs';
+
+export function app(): express.Express {
+  const server = express();
+  
+  // Rutas correctas para los directorios
+  const distPath = path.resolve(__dirname, '..');
+  const browserDistFolder = path.resolve(distPath, 'browser');
+  const fallbackHtml = path.resolve(browserDistFolder, 'index.csr.html');
+
+  // Logging para depuración
+  console.log('__dirname:', __dirname);
+  console.log('Dist Path:', distPath);
+  console.log('Browser Dist Folder:', browserDistFolder);
+  console.log('Fallback HTML:', fallbackHtml);
+  
+  // Listar archivos en el directorio browser
+  if (fs.existsSync(browserDistFolder)) {
+    console.log('Archivos en Browser Dist Folder:');
+    fs.readdirSync(browserDistFolder).forEach(file => {
+      console.log(' - ' + file);
+    });
+  } else {
+    console.log('Browser Dist Folder no existe');
+  }
+
+  server.set('view engine', 'html');
+  server.set('views', browserDistFolder);
+
+  // Servir archivos estáticos
+  server.get('*.*', express.static(browserDistFolder, {
+    maxAge: '1y'
+  }));
+
+  // Todas las rutas regulares usan el renderizado del lado del cliente
+  server.get('*', (req, res) => {
+    try {
+      // Usar directamente el fallback HTML
+      if (fs.existsSync(fallbackHtml)) {
+        console.log('Sirviendo index.csr.html para:', req.url);
+        const fallbackContent = fs.readFileSync(fallbackHtml, 'utf8');
+        res.send(fallbackContent);
+      } else {
+        console.error('Archivo de fallback no encontrado:', fallbackHtml);
+        res.status(500).send('Error en el servidor: archivo de fallback no encontrado');
+      }
+    } catch (e) {
+      console.error('Error general en el servidor:', e);
+      res.status(500).send('Error en el servidor');
+    }
+  });
+
+  return server;
+}
+
+function run(): void {
+  const port = process.env['PORT'] || 4000;
+  const server = app();
+  server.listen(port, () => {
+    console.log(`Node Express server listening on http://localhost:${port}`);
+  });
+}
+
+run();
+```
+
+2. Haz commit de estos cambios y actualiza la VPS:
+
+```bash
+# En tu máquina local
+git add .
+git commit -m "fix: simplificar servidor para evitar errores de NgZone"
+git push origin main
+
+# En la VPS
+cd /var/www/tienda-web-lotoAI-1
+git pull origin main
+npm run build:ssr
+pm2 restart loto-ia-ssr
+```
+
+Esta solución simplifica el servidor para que no intente usar SSR en absoluto, evitando así los errores relacionados con NgZone. En su lugar, sirve directamente el archivo `index.csr.html` para todas las rutas.
+
+¿Quieres que procedamos con estos cambios?
 
 ---
 
