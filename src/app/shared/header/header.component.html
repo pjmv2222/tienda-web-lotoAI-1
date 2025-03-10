@@ -13,22 +13,38 @@
                                name="header-username"
                                placeholder="Correo electrónico o NIF/NIE" 
                                autocomplete="username"
-                               class="login-input">
-                        <input type="password"
-                               id="header-password"
-                               name="header-password"
-                               placeholder="••••••••••••"
-                               autocomplete="current-password"
-                               class="login-input">
+                               class="login-input"
+                               [(ngModel)]="username">
+                        <div class="password-input-container">
+                            <input [type]="showPassword ? 'text' : 'password'"
+                                   id="header-password"
+                                   name="header-password"
+                                   placeholder="••••••••••••"
+                                   autocomplete="current-password"
+                                   class="login-input"
+                                   [(ngModel)]="password"
+                                   (keyup.enter)="login()">
+                            <button type="button" class="toggle-password-btn" (click)="togglePasswordVisibility()">
+                                <i class="fas" [class.fa-eye]="!showPassword" [class.fa-eye-slash]="showPassword"></i>
+                            </button>
+                        </div>
                     </div>
                     <div class="forgot-password">
-                        <a href="#">¿Has olvidado tu contraseña?</a>
-                        <a href="#">Solicitar una nueva</a>
+                        <a (click)="goToForgotPassword()" style="cursor: pointer;">¿Has olvidado tu contraseña?</a>
+                        <a (click)="goToRegister()" style="cursor: pointer;">Solicitar una nueva</a>
+                    </div>
+                    <div *ngIf="loginError" class="login-error">
+                        {{ loginError }}
                     </div>
                 </div>
                 <div class="buttons-group">
                     <img src="/assets/img/boton_entrar.png" alt="Icono entrar" class="icon-entrar">
-                    <button class="btn-entrar">Entrar</button>
+                    <button class="btn-entrar" (click)="login()" [disabled]="isLoggingIn">
+                        <span *ngIf="!isLoggingIn">Entrar</span>
+                        <span *ngIf="isLoggingIn">
+                            <i class="fas fa-spinner fa-spin"></i>
+                        </span>
+                    </button>
                     <button class="btn-registro" routerLink="/registro">REGISTRO</button>
                 </div>
             </div>

@@ -10,17 +10,12 @@
       "prefix": "app",
       "architect": {
         "build": {
-          "builder": "@angular-devkit/build-angular:application",
+          "builder": "@angular-devkit/build-angular:browser",
           "options": {
-            "outputPath": "dist/tienda-web-loto-ai",
+            "outputPath": "dist/tienda-web-loto-ai/browser",
             "index": "src/index.html",
-            "browser": "src/main.ts",
-            "server": "src/main.server.ts",
-            "prerender": true,
-            "ssr": {
-              "entry": "server.ts"
-            },
-            "polyfills": [],
+            "main": "src/main.ts",
+            "polyfills": ["zone.js"],
             "tsConfig": "tsconfig.app.json",
             "assets": [
               "src/favicon.ico",
@@ -48,26 +43,18 @@
               "outputHashing": "all"
             },
             "development": {
+              "buildOptimizer": false,
               "optimization": false,
+              "vendorChunk": true,
               "extractLicenses": false,
-              "sourceMap": true
+              "sourceMap": true,
+              "namedChunks": true
             }
           },
           "defaultConfiguration": "production"
         },
-        "server": {
-          "builder": "@angular-devkit/build-angular:server",
-          "options": {
-            "outputPath": "dist/tienda-web-loto-ai/server",
-            "main": "server.ts",
-            "tsConfig": "tsconfig.server.json"
-          }
-        },
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
-          "options": {
-            "buildTarget": "tienda-web-loto-ai:build:development"
-          },
           "configurations": {
             "production": {
               "buildTarget": "tienda-web-loto-ai:build:production"
@@ -78,18 +65,58 @@
           },
           "defaultConfiguration": "development"
         },
+        "server": {
+          "builder": "@angular-devkit/build-angular:server",
+          "options": {
+            "outputPath": "dist/tienda-web-loto-ai/server",
+            "main": "server.ts",
+            "tsConfig": "tsconfig.server.json"
+          },
+          "configurations": {
+            "production": {
+              "outputHashing": "media"
+            },
+            "development": {
+              "optimization": false,
+              "sourceMap": true,
+              "extractLicenses": false,
+              "vendorChunk": true
+            }
+          },
+          "defaultConfiguration": "production"
+        },
         "serve-ssr": {
-          "builder": "@nguniversal/builders:ssr-dev-server",
+          "builder": "@angular/ssr:dev-server",
           "configurations": {
             "development": {
-              "browserTarget": "tienda-web-loto-ai:build:development",
+              "buildTarget": "tienda-web-loto-ai:build:development",
               "serverTarget": "tienda-web-loto-ai:server:development"
             },
             "production": {
-              "browserTarget": "tienda-web-loto-ai:build:production",
+              "buildTarget": "tienda-web-loto-ai:build:production",
               "serverTarget": "tienda-web-loto-ai:server:production"
             }
-          }
+          },
+          "defaultConfiguration": "development"
+        },
+        "prerender": {
+          "builder": "@angular/ssr:prerender",
+          "options": {
+            "routes": [
+              "/"
+            ]
+          },
+          "configurations": {
+            "production": {
+              "buildTarget": "tienda-web-loto-ai:build:production",
+              "serverTarget": "tienda-web-loto-ai:server:production"
+            },
+            "development": {
+              "buildTarget": "tienda-web-loto-ai:build:development",
+              "serverTarget": "tienda-web-loto-ai:server:development"
+            }
+          },
+          "defaultConfiguration": "production"
         }
       }
     }

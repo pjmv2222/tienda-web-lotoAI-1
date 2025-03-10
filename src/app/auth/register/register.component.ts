@@ -52,7 +52,9 @@ interface RegisterResponse {
           </div>
 
           <div class="form-group">
-            <input type="password"
+            <label for="password" class="form-label">Contraseña</label>
+            <div class="password-input-container">
+              <input [type]="showPassword ? 'text' : 'password'"
                    id="password"
                    name="password"
                    formControlName="password" 
@@ -60,6 +62,10 @@ interface RegisterResponse {
                    class="form-input"
                    (input)="onPasswordChange($event)"
                    [class.is-invalid]="isFieldInvalid('password')">
+              <button type="button" class="toggle-password-btn" (click)="togglePasswordVisibility()">
+                <i class="fas" [class.fa-eye]="!showPassword" [class.fa-eye-slash]="showPassword"></i>
+              </button>
+            </div>
             <div class="password-strength" *ngIf="passwordStrength">
               <span [class]="passwordStrength">{{passwordStrength}}</span>
             </div>
@@ -423,6 +429,48 @@ interface RegisterResponse {
       top: 50%;
       transform: translateY(-50%);
     }
+
+    .form-label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+      color: #333;
+    }
+    
+    .password-input-container {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+    
+    .toggle-password-btn {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #666;
+      font-size: 1rem;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .toggle-password-btn:hover {
+      color: #333;
+    }
+    
+    .toggle-password-btn:focus {
+      outline: none;
+    }
+    
+    .form-input {
+      width: 100%;
+      padding-right: 40px;
+    }
   `]
 })
 export class RegisterComponent {
@@ -445,6 +493,7 @@ export class RegisterComponent {
   isLoading = false;
   isCheckingEmail = false;
   errorMessage = '';
+  showPassword = false;
 
   constructor(
     private fb: FormBuilder, 
@@ -587,5 +636,9 @@ export class RegisterComponent {
       default:
         return false;
     }
+  }
+
+  togglePasswordVisibility() {
+    this.showPassword = !this.showPassword;
   }
 }

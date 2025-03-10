@@ -2,21 +2,32 @@ import { Component, OnInit, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 import { HttpClientModule } from '@angular/common/http';
-import { RouterLink } from '@angular/router';
+import { RouterLink, Router } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [CommonModule, HttpClientModule, RouterLink],
+  imports: [CommonModule, HttpClientModule, RouterLink, FormsModule],
   templateUrl: './header.component.html',
   styleUrls: ['./header.component.css']
 })
 export class HeaderComponent implements OnInit {
   private http = inject(HttpClient);
+  private router = inject(Router);
+  private authService = inject(AuthService);
   
   botes: { [key: string]: string } = {};
   loading = true;
   juegos = ['euromillones', 'primitiva', 'bonoloto', 'gordo', 'lototurf', 'eurodreams', 'loterianacional'];
+  
+  // Variables para el login
+  username: string = '';
+  password: string = '';
+  loginError: string = '';
+  isLoggingIn: boolean = false;
+  showPassword: boolean = false;
 
   ngOnInit() {
     this.cargarBotes();
@@ -62,5 +73,49 @@ export class HeaderComponent implements OnInit {
 
   getBoteDisplay(juego: string): string {
     return this.botes[juego] || 'Cargando...';
+  }
+
+  // Método para iniciar sesión
+  login() {
+    this.isLoggingIn = true;
+    this.loginError = '';
+    
+    if (!this.username || !this.password) {
+      this.loginError = 'Por favor, introduce tu email y contraseña';
+      this.isLoggingIn = false;
+      return;
+    }
+    
+    this.authService.login(this.username, this.password).subscribe({
+      next: (response) => {
+        this.isLoggingIn = false;
+        // Redirigir al usuario a la página principal o dashboard
+        this.router.navigate(['/']);
+      },
+      error: (error) => {
+        this.isLoggingIn = false;
+        if (error.status === 401) {
+          this.loginError = 'Email o contraseña incorrectos';
+        } else {
+          this.loginError = 'Error al iniciar sesión. Inténtalo de nuevo más tarde.';
+        }
+        console.error('Error de login:', error);
+      }
+    });
+  }
+
+  // Método para navegar a la página de recuperación de contraseña
+  goToForgotPassword() {
+    this.router.navigate(['/recuperar-password']);
+  }
+
+  // Método para navegar a la página de registro
+  goToRegister() {
+    this.router.navigate(['/registro']);
+  }
+
+  // Método para alternar la visibilidad de la contraseña
+  togglePasswordVisibility() {
+    this.showPassword = !this.showPassword;
   }
 }

@@ -1,56 +1,47 @@
-import { APP_BASE_HREF } from '@angular/common';
-import express from 'express';
-import * as path from 'path';
-import * as fs from 'fs';
+import 'zone.js/node';
 
+import { APP_BASE_HREF } from '@angular/common';
+import { CommonEngine } from '@angular/ssr';
+import express from 'express';
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
+import bootstrap from './src/main.server';
+import { Request, Response, NextFunction } from 'express';
+
+// The Express app is exported so that it can be used by serverless Functions.
 export function app(): express.Express {
   const server = express();
-  
-  // Rutas correctas para los directorios
-  const distPath = path.resolve(__dirname, '..');
-  const browserDistFolder = path.resolve(distPath, 'browser');
-  const fallbackHtml = path.resolve(browserDistFolder, 'index.csr.html');
+  const distFolder = join(process.cwd(), 'dist/tienda-web-loto-ai/browser');
+  const indexHtml = existsSync(join(distFolder, 'index.original.html'))
+    ? join(distFolder, 'index.original.html')
+    : join(distFolder, 'index.html');
 
-  // Logging para depuración
-  console.log('__dirname:', __dirname);
-  console.log('Dist Path:', distPath);
-  console.log('Browser Dist Folder:', browserDistFolder);
-  console.log('Fallback HTML:', fallbackHtml);
-  
-  // Listar archivos en el directorio browser
-  if (fs.existsSync(browserDistFolder)) {
-    console.log('Archivos en Browser Dist Folder:');
-    fs.readdirSync(browserDistFolder).forEach(file => {
-      console.log(' - ' + file);
-    });
-  } else {
-    console.log('Browser Dist Folder no existe');
-  }
+  const commonEngine = new CommonEngine();
 
   server.set('view engine', 'html');
-  server.set('views', browserDistFolder);
+  server.set('views', distFolder);
 
-  // Servir archivos estáticos
-  server.get('*.*', express.static(browserDistFolder, {
+  // Example Express Rest API endpoints
+  // server.get('/api/**', (req, res) => { });
+  // Serve static files from /browser
+  server.get('*.*', express.static(distFolder, {
     maxAge: '1y'
   }));
 
-  // Todas las rutas regulares usan el renderizado del lado del cliente
-  server.get('*', (req, res) => {
-    try {
-      // Usar directamente el fallback HTML
-      if (fs.existsSync(fallbackHtml)) {
-        console.log('Sirviendo index.csr.html para:', req.url);
-        const fallbackContent = fs.readFileSync(fallbackHtml, 'utf8');
-        res.send(fallbackContent);
-      } else {
-        console.error('Archivo de fallback no encontrado:', fallbackHtml);
-        res.status(500).send('Error en el servidor: archivo de fallback no encontrado');
-      }
-    } catch (e) {
-      console.error('Error general en el servidor:', e);
-      res.status(500).send('Error en el servidor');
-    }
+  // All regular routes use the Angular engine
+  server.get('*', (req: Request, res: Response, next: NextFunction) => {
+    const { protocol, originalUrl, baseUrl, headers } = req;
+
+    commonEngine
+      .render({
+        bootstrap,
+        documentFilePath: indexHtml,
+        url: `${protocol}://${headers.host}${originalUrl}`,
+        publicPath: distFolder,
+        providers: [{ provide: APP_BASE_HREF, useValue: baseUrl }],
+      })
+      .then((html) => res.send(html))
+      .catch((err) => next(err));
   });
 
   return server;
@@ -58,10 +49,22 @@ export function app(): express.Express {
 
 function run(): void {
   const port = process.env['PORT'] || 4000;
+
+  // Start up the Node server
   const server = app();
   server.listen(port, () => {
     console.log(`Node Express server listening on http://localhost:${port}`);
   });
 }
 
-run();
+// Webpack will replace 'require' with '__webpack_require__'
+// '__non_webpack_require__' is a proxy to Node 'require'
+// The below code is to ensure that the server is run only when not requiring the bundle.
+declare const __non_webpack_require__: NodeRequire;
+const mainModule = __non_webpack_require__.main;
+const moduleFilename = mainModule && mainModule.filename || '';
+if (moduleFilename === __filename || moduleFilename.includes('iisnode')) {
+  run();
+}
+
+export default bootstrap;

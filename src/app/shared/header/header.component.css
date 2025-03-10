@@ -552,3 +552,59 @@ body, html {
 .line-cyan {
     background-color: #0277BD;  /* Color de Lotería Nacional */
 }
+
+/* Estilos para el contenedor de la contraseña */
+.password-input-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 180px;
+}
+
+/* Estilos para el botón de mostrar/ocultar contraseña */
+.toggle-password-btn {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #666;
+  font-size: 1rem;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.toggle-password-btn:hover {
+  color: #333;
+}
+
+.toggle-password-btn:focus {
+  outline: none;
+}
+
+/* Estilos para el mensaje de error de login */
+.login-error {
+  color: #dc3545;
+  font-size: 12px;
+  margin-top: 5px;
+}
+
+/* Estilos para el botón de login deshabilitado */
+.btn-entrar:disabled {
+  background-color: #6c757d;
+  cursor: not-allowed;
+}
+
+/* Estilos para el spinner de carga */
+.fa-spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

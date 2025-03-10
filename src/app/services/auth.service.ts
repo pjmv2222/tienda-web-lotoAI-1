@@ -77,7 +77,14 @@ export class AuthService {
   }
 
   register(data: any): Observable<RegisterResponse> {
-    return this.http.post<RegisterResponse>(`${this.apiUrl}/auth/register`, data);
+    return this.http.post<RegisterResponse>(`${this.apiUrl}/auth/register`, data)
+      .pipe(
+        tap(response => {
+          if (response.success && response.verificationToken) {
+            this.simulateEmailSending(data.email, response.verificationToken);
+          }
+        })
+      );
   }
 
   private simulateEmailSending(email: string, token: string): void {
@@ -93,7 +100,7 @@ export class AuthService {
       Gracias por registrarte en LotoIA. Para completar tu registro,
       por favor haz clic en el siguiente enlace:
       
-      http://localhost:4200/verificar/${token}
+      http://localhost:4000/verify-email/${token}
       
       Este enlace expirará en 24 horas.
       
@@ -104,7 +111,7 @@ export class AuthService {
   }
 
   login(email: string, password: string): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}/login`, { email, password })
+    return this.http.post<any>(`${this.apiUrl}/auth/login`, { email, password })
       .pipe(
         map(user => {
           // Almacenar detalles del usuario y token jwt en el localStorage
@@ -123,11 +130,7 @@ export class AuthService {
   }
 
   verifyEmail(token: string): Observable<any> {
-    // Simulamos la verificación del email
-    return of({
-      success: true,
-      message: 'Email verificado correctamente'
-    }).pipe(delay(1000));
+    return this.http.get<any>(`${this.apiUrl}/auth/verify-email/${token}`);
   }
 
   // Método para verificar si el email ya existe
@@ -138,11 +141,11 @@ export class AuthService {
 
   // Método para solicitar recuperación de contraseña
   requestPasswordReset(email: string): Observable<any> {
-    return this.http.post(`${this.apiUrl}/request-password-reset`, { email });
+    return this.http.post(`${this.apiUrl}/auth/request-password-reset`, { email });
   }
 
   // Método para resetear la contraseña
   resetPassword(token: string, newPassword: string): Observable<any> {
-    return this.http.post(`${this.apiUrl}/reset-password`, { token, newPassword });
+    return this.http.post(`${this.apiUrl}/auth/reset-password`, { token, newPassword });
   }
 }
