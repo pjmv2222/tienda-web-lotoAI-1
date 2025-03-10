@@ -32,5 +32,13 @@ export const UserModel = {
       [email]
     );
     return result.rows[0];
+  },
+
+  async updatePassword(email: string, newPassword: string) {
+    const result = await pool.query(
+      'UPDATE users SET password = $1 WHERE email = $2 RETURNING *',
+      [newPassword, email]
+    );
+    return result.rows[0];
   }
 }; 

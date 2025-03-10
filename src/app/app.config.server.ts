@@ -1,10 +1,14 @@
-import { ApplicationConfig, mergeApplicationConfig } from '@angular/core';
+import { ApplicationConfig, mergeApplicationConfig, NgZone } from '@angular/core';
 import { provideServerRendering } from '@angular/platform-server';
 import { appConfig } from './app.config';
 
 const serverConfig: ApplicationConfig = {
   providers: [
-    provideServerRendering()
+    provideServerRendering(),
+    {
+      provide: NgZone,
+      useValue: new NgZone({ shouldCoalesceEventChangeDetection: false })
+    }
   ]
 };
 

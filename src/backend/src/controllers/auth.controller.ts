@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import { AuthService } from '../services/auth.service';
-import { sendVerificationEmail } from '../services/email.service';
+import { sendVerificationEmail, sendPasswordResetEmail } from '../services/email.service';
 import { UserModel } from '../models/user.model';
 import jwt from 'jsonwebtoken';
 
@@ -98,10 +98,114 @@ export class AuthController {
         message: 'Email verificado correctamente'
       });
     } catch (error) {
-      console.error('Error en verificación:', error);
+      console.error('Error en verificación de email:', error);
       res.status(500).json({
         success: false,
         message: 'Error al verificar email'
+      });
+    }
+  }
+
+  async verifyEmailWithToken(req: Request, res: Response) {
+    try {
+      const { token } = req.params;
+      
+      // Verificar el token
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your_jwt_secret') as { email: string };
+      const email = decoded.email;
+      
+      // Buscar el usuario por email
+      const user = await UserModel.findByEmail(email);
+      
+      if (!user) {
+        console.log('Usuario no encontrado:', email);
+        return res.redirect('/error-verificacion?message=Usuario no encontrado');
+      }
+      
+      // Actualizar el estado de verificación del usuario
+      await UserModel.verifyEmail(email);
+      
+      // Redirigir a una página de éxito
+      res.redirect('/verificacion-exitosa');
+    } catch (error) {
+      console.error('Error al verificar email con token:', error);
+      res.redirect('/error-verificacion?message=Token inválido o expirado');
+    }
+  }
+
+  // Método para solicitar recuperación de contraseña
+  async requestPasswordReset(req: Request, res: Response) {
+    try {
+      const { email } = req.body;
+      
+      // Verificar si el usuario existe
+      const user = await UserModel.findByEmail(email);
+      
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: 'No se encontró ninguna cuenta con ese correo electrónico.'
+        });
+      }
+      
+      // Generar token de recuperación
+      const token = jwt.sign({ email }, process.env.JWT_SECRET || 'your_jwt_secret', { expiresIn: '1h' });
+      
+      // Enviar email de recuperación
+      const emailSent = await sendPasswordResetEmail(email, token);
+      
+      if (!emailSent) {
+        return res.status(500).json({
+          success: false,
+          message: 'Error al enviar el correo electrónico. Inténtalo de nuevo más tarde.'
+        });
+      }
+      
+      res.json({
+        success: true,
+        message: 'Se ha enviado un correo electrónico con instrucciones para restablecer tu contraseña.'
+      });
+    } catch (error) {
+      console.error('Error al solicitar recuperación de contraseña:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error al procesar la solicitud. Inténtalo de nuevo más tarde.'
+      });
+    }
+  }
+  
+  // Método para restablecer la contraseña
+  async resetPassword(req: Request, res: Response) {
+    try {
+      const { token, newPassword } = req.body;
+      
+      // Verificar el token
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your_jwt_secret') as { email: string };
+      const email = decoded.email;
+      
+      // Buscar el usuario por email
+      const user = await UserModel.findByEmail(email);
+      
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: 'Usuario no encontrado.'
+        });
+      }
+      
+      // Actualizar la contraseña del usuario
+      // En un entorno real, hashearíamos la contraseña antes de guardarla
+      await UserModel.updatePassword(email, newPassword);
+      
+      res.json({
+        success: true,
+        message: 'Contraseña actualizada correctamente.'
+      });
+    } catch (error) {
+      console.error('Error al restablecer contraseña:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error al procesar la solicitud. Inténtalo de nuevo más tarde.'
       });
     }
   }

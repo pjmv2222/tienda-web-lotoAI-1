@@ -12,6 +12,8 @@ export const AuthService = {
     try {
       const hashedPassword = await bcrypt.hash(userData.password, 10);
       
+      console.log('Datos recibidos para registro:', userData);
+      
       // Ajustamos la query para incluir el campo name
       const result = await pool.query(
         'INSERT INTO users (email, password, name) VALUES ($1, $2, $3) RETURNING id',

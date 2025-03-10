@@ -42,3 +42,45 @@ export async function sendVerificationEmail(email: string, token: string): Promi
     return false;
   }
 }
+
+export async function sendPasswordResetEmail(email: string, token: string): Promise<boolean> {
+  try {
+    const resetLink = `${process.env.FRONTEND_URL || 'http://localhost:4200'}/reset-password/${token}`;
+    
+    const result = await mailjet.post('send', { version: 'v3.1' }).request({
+      Messages: [
+        {
+          From: {
+            Email: "adm@loto-ia.com",
+            Name: "LotoIA"
+          },
+          To: [
+            {
+              Email: email,
+              Name: email
+            }
+          ],
+          Subject: "Recuperación de contraseña en LotoIA",
+          TextPart: "Recupera tu contraseña en LotoIA",
+          HTMLPart: `
+            <h3>Recuperación de contraseña en LotoIA</h3>
+            <p>Has solicitado restablecer tu contraseña en LotoIA.</p>
+            <p>Para completar el proceso, haz clic en el siguiente enlace:</p>
+            <a href="${resetLink}">
+              Restablecer contraseña
+            </a>
+            <p>Este enlace expirará en 1 hora.</p>
+            <p>Si no solicitaste este cambio, puedes ignorar este correo.</p>
+            <p>Saludos,<br>El equipo de LotoIA</p>
+          `
+        }
+      ]
+    });
+
+    console.log('Email de recuperación enviado a:', email);
+    return true;
+  } catch (error) {
+    console.error('Error enviando email de recuperación:', error);
+    return false;
+  }
+}
