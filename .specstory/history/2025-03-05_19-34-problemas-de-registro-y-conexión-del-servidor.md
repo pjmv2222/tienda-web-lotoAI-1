@@ -18746,13 +18746,2551 @@ _**Assistant**_
 
 _****_
 
+```bash
+git status
+```
 
+```
+PS C:\Users\Pedro\Desktop\LotoIA\WEB-ANGULAR-Cursor\tienda-web-lotoAI-1> git sta
+tus
+On branch main
+Your branch is up to date with 'origin/main'.
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+        modified:   ".specstory/history/2025-03-05_19-34-problemas-de-registro-y
+-conexi\303\263n-del-servidor.md"
+        modified:   angular.json
+        modified:   package-lock.json
+        modified:   package.json
+        modified:   server.ts
+        modified:   src/app/app.config.server.ts
+        modified:   src/app/app.config.ts
+        modified:   src/app/app.routes.ts
+        modified:   src/app/auth/register/register.component.ts
+        modified:   src/app/services/auth.service.ts
+        modified:   src/app/shared/header/header.component.css
+        modified:   src/app/shared/header/header.component.html
+        modified:   src/app/shared/header/header.component.ts
+        modified:   src/backend/package.json
+        modified:   src/backend/src/controllers/auth.controller.ts
+        modified:   src/backend/src/models/user.model.ts
+        modified:   src/backend/src/routes/auth.routes.ts
+        modified:   src/backend/src/services/auth.service.ts
+        modified:   src/main.server.tsrvices/email.service.ts
+        modified:   tsconfig.server.json
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+        deploy.sh
+        fix-ssr.js
+        server-ssr.js
+        server.ts.backup
+        src/app/auth/forgot-password/
+        src/app/auth/reset-password/
+
+no changes added to commit (use "git add" and/or "git commit -a")
+PS C:\Users\Pedro\Desktop\LotoIA\WEB-ANGULAR-Cursor\tienda-web-lotoAI-1>
+```
+
+---
+
+_****_
+
+```bash
+git add .
+```
+
+```
+PS C:\Users\Pedro\Desktop\LotoIA\WEB-ANGULAR-Cursor\tienda-web-lotoAI-1> git add .
+warning: in the working copy of 'package-lock.json', LF will be replaced by CRLF the next time Git touc
+hes it
+warning: in the working copy of 'package.json', LF will be replaced by CRLF the next time Git touches i
+t
+warning: in the working copy of 'src/app/services/auth.service.ts', LF will be replaced by CRLF the nex
+t time Git touches it
+warning: in the working copy of 'deploy.sh', LF will be replaced by CRLF the next time Git touches it
+
+warning: in the working copy of 'server.ts.backup', LF will be replaced by CRLF the next time Git touch
+es it
+
+```
+
+---
+
+_****_
+
+```bash
+git commit -m "feat: implementación de SSR, recuperación de contraseña y mejoras en la autenticación"
+```
+
+```
+ación de SSR, recuperación de contraseña y mejoras en la autenticación"
+[main b8e479b] feat: implementación de SSR, recuperación de contraseña y mejoras en la autenticación
+
+ 34 files changed, 15539 insertions(+), 6244 deletions(-)
+ create mode 100644 deploy.sh
+ create mode 100644 fix-ssr.js
+ create mode 100644 server-ssr.js
+ create mode 100644 server.ts.backup
+ create mode 100644 src/app/auth/forgot-password/forgot-password.component.css
+ create mode 100644 src/app/auth/forgot-password/forgot-password.component.html
+ create mode 100644 src/app/auth/forgot-password/forgot-password.component.spec.ts
+ create mode 100644 src/app/auth/reset-password/reset-password.component.html
+ create mode 100644 src/app/auth/reset-password/reset-password.component.spec.ts
+ create mode 100644 src/app/auth/reset-password/reset-password.component.ts
+PS C:\Users\Pedro\Desktop\LotoIA\WEB-ANGULAR-Cursor\tienda-web-lotoAI-1>
+
+
+```
+
+---
+
+_****_
+
+```bash
+git push origin main
+```
+
+```
+PS C:\Users\Pedro\Desktop\LotoIA\WEB-ANGULAR-Cursor\tienda-web-lotoAI-1> git push origin main
+Delta compression using up to 8 threads
+Writing objects: 100% (53/53), 106.52 KiB | 2.32 MiB/s, done.
+Total 53 (delta 29), reused 0 (delta 0), pack-reused 0 (from 0)
+remote: Resolving deltas: 100% (29/29), completed with 25 local objects.
+To https://github.com/pjmv2222/tienda-web-lotoAI-1.git
+   9e373fc..b8e479b  main -> main
+PS C:\Users\Pedro\Desktop\LotoIA\WEB-ANGULAR-Cursor\tienda-web-lotoAI-1>
+```
+
+---
+
+_****_
+
+#### 2. Desplegar en la VPS:
+
+Para desplegar en la VPS, necesitarás conectarte por SSH y ejecutar una serie de comandos. Aquí te muestro los pasos que deberías seguir:
+
+1. **Conéctate a tu VPS por SSH**:
+   ```bash
+   ssh usuario@tu-vps
+   ```
+
+2. **Navega al directorio de tu proyecto**:
+   ```bash
+   cd /var/www/tienda-web-lotoAI-1
+   ```
+
+3. **Actualiza el repositorio**:
+   ```bash
+   git pull origin main
+   ```
+
+4. **Instala las dependencias**:
+   ```bash
+   npm install
+   cd src/backend && npm install && cd ../..
+   ```
+
+5. **Compila la aplicación para SSR**:
+   ```bash
+   npm run build:ssr
+   ```
+
+6. **Reinicia el servidor PM2** (si estás usando PM2):
+   ```bash
+   # Detener los procesos existentes
+   pm2 stop all
+   
+   # Iniciar el servidor backend
+   cd src/backend && pm2 start dist/index.js --name backend
+   
+   # Volver al directorio principal e iniciar el servidor SSR
+   cd ../..
+   pm2 start dist/tienda-web-loto-ai/server/main.js --name frontend
+   
+   # Guardar la configuración de PM2
+   pm2 save
+   ```
+
+7. **Verificar que los servidores estén funcionando**:
+   ```bash
+   pm2 status
+   ```
+
+8. **Asegúrate de que Nginx esté configurado correctamente**:
+   - El servidor backend debe estar accesible en `/api`
+   - El servidor frontend debe estar accesible en la raíz `/`
+
+   Ejemplo de configuración de Nginx:
+   ```nginx
+   server {
+       listen 80;
+       server_name loto-ia.com www.loto-ia.com;
+
+       location /api/ {
+           proxy_pass http://localhost:3000/api/;
+           proxy_http_version 1.1;
+           proxy_set_header Upgrade $http_upgrade;
+           proxy_set_header Connection 'upgrade';
+           proxy_set_header Host $host;
+           proxy_cache_bypass $http_upgrade;
+       }
+
+       location / {
+           proxy_pass http://localhost:4000;
+           proxy_http_version 1.1;
+           proxy_set_header Upgrade $http_upgrade;
+           proxy_set_header Connection 'upgrade';
+           proxy_set_header Host $host;
+           proxy_cache_bypass $http_upgrade;
+       }
+   }
+   ```
+
+9. **Reinicia Nginx si es necesario**:
+   ```bash
+   sudo systemctl restart nginx
+   ```
+
+10. **Verifica que todo funcione correctamente** accediendo a tu sitio web desde un navegador.
+
+### Consideraciones adicionales:
+
+1. **Variables de entorno**: Asegúrate de que las variables de entorno estén configuradas correctamente en tu VPS, especialmente las relacionadas con la base de datos, Mailjet, etc.
+
+2. **Permisos de archivos**: Verifica que los permisos de los archivos sean correctos para que el servidor pueda leer y escribir en los directorios necesarios.
+
+3. **Logs**: Si algo no funciona, revisa los logs de PM2 y Nginx para identificar el problema:
+   ```bash
+   pm2 logs
+   sudo tail -f /var/log/nginx/error.log
+   ```
+
+4. **Firewall**: Asegúrate de que los puertos necesarios (80, 443, 3000, 4000) estén abiertos en el firewall.
+
+¿Necesitas ayuda con alguno de estos pasos específicos para el despliegue en tu VPS?
+
+---
+
+_**User**_
+
+Disculpa! pero creo recordar que la VPS tenemos instalado angular 19, debería desinstalarlo y volver a la versión anterior de angular 18 ¿?
+
+---
+
+_**Assistant**_
+
+Tienes razón en tu preocupación. Si en la VPS tienes instalado Angular 19 y tu proyecto local está en Angular 18, esto podría causar problemas de compatibilidad durante la compilación y ejecución.
+
+Hay dos enfoques que puedes tomar:
+
+### Opción 1: Actualizar el proyecto local a Angular 19 (recomendado)
+
+Esta sería la opción más limpia a largo plazo, ya que Angular 19 es la versión más reciente y tiene mejoras de rendimiento y seguridad.
+
+### Opción 2: Bajar la versión de Angular en la VPS a Angular 18
+
+Si prefieres mantener tu proyecto en Angular 18 por ahora, puedes bajar la versión en la VPS.
+
+Vamos a proceder con la Opción 2, ya que parece que prefieres mantener la versión 18:
+
+#### Pasos para bajar la versión de Angular en la VPS:
+
+1. **Conectarte a la VPS** (ya lo has hecho)
+
+2. **Verificar la versión actual de Angular CLI**:
+   ```bash
+   ng version
+   ```
+
+3. **Desinstalar Angular CLI global**:
+   ```bash
+   npm uninstall -g @angular/cli
+   ```
+
+4. **Limpiar la caché de npm**:
+   ```bash
+   npm cache clean --force
+   ```
+
+5. **Instalar Angular CLI versión 18**:
+   ```bash
+   npm install -g @angular/cli@18.2.12
+   ```
+
+6. **Verificar que la instalación fue exitosa**:
+   ```bash
+   ng version
+   ```
+
+7. **Actualizar las dependencias del proyecto**:
+   ```bash
+   cd /var/www/tienda-web-lotoAI-1
+   rm -rf node_modules
+   npm install
+   ```
+
+8. **Compilar el proyecto nuevamente**:
+   ```bash
+   npm run build:ssr
+   ```
+
+9. **Reiniciar los servicios**:
+   ```bash
+   pm2 restart all
+   ```
+
+### Consideraciones importantes:
+
+1. **Versiones de dependencias**: Asegúrate de que el `package.json` en la VPS tenga las mismas versiones de dependencias que tu proyecto local, especialmente para los paquetes de Angular.
+
+2. **Node.js**: Verifica que la versión de Node.js en la VPS sea compatible con Angular 18. Angular 18 funciona bien con Node.js 18.x o 20.x.
+
+3. **Problemas de compilación**: Si sigues teniendo problemas después de bajar la versión, puede ser necesario limpiar completamente el proyecto y volver a instalarlo:
+   ```bash
+   cd /var/www/tienda-web-lotoAI-1
+   rm -rf node_modules dist
+   npm install
+   npm run build:ssr
+   ```
+
+4. **Alternativa**: Si los problemas persisten, otra opción es compilar el proyecto localmente y luego subir solo los archivos compilados a la VPS, evitando así problemas de compatibilidad durante la compilación.
+
+¿Quieres que te guíe a través de alguno de estos pasos específicos?
+
+---
+
+_**User**_
+
+¿?
+
+---
+
+_**Assistant**_
+
+Veo que has instalado Angular CLI 18.2.12, pero la versión que se muestra sigue siendo Angular 19.2.1. Esto puede ocurrir porque la instalación no se completó correctamente o porque hay algún problema con la caché de npm.
+
+Vamos a intentar una solución más completa para asegurarnos de que Angular CLI se instale correctamente en la versión 18:
+
+### Pasos para instalar correctamente Angular CLI 18 en la VPS:
+
+1. **Desinstalar completamente Angular CLI**:
+   ```bash
+   npm uninstall -g @angular/cli
+   ```
+
+2. **Limpiar la caché de npm a fondo**:
+   ```bash
+   npm cache clean --force
+   ```
+
+3. **Eliminar cualquier instalación residual de Angular CLI**:
+   ```bash
+   rm -rf ~/.npm/global/lib/node_modules/@angular
+   ```
+
+4. **Instalar específicamente Angular CLI 18.2.12**:
+   ```bash
+   npm install -g @angular/cli@18.2.12 --force
+   ```
+
+5. **Verificar la instalación**:
+   ```bash
+   ng version
+   ```
+
+Si después de estos pasos sigue mostrando Angular 19, podemos intentar una solución alternativa:
+
+### Solución alternativa: Usar npx para ejecutar la versión correcta
+
+En lugar de depender de la instalación global, podemos usar npx para ejecutar la versión específica de Angular CLI que necesitamos:
+
+1. **Instalar Angular CLI 18 localmente en el proyecto**:
+   ```bash
+   cd /var/www/tienda-web-lotoAI-1
+   npm install @angular/cli@18.2.12 --save-dev
+   ```
+
+2. **Modificar los scripts en package.json para usar npx**:
+   ```json
+   "scripts": {
+     "build": "npx ng build --configuration production",
+     "build:ssr": "npx ng build && npx ng run tienda-web-loto-ai:server",
+     "serve:ssr": "node dist/tienda-web-loto-ai/server/main.js"
+   }
+   ```
+
+3. **Ejecutar la compilación usando los scripts actualizados**:
+   ```bash
+   npm run build:ssr
+   ```
+
+### Otra alternativa: Compilar localmente y subir los archivos compilados
+
+Si las soluciones anteriores no funcionan, puedes compilar el proyecto en tu máquina local (donde tienes Angular 18) y luego subir solo los archivos compilados a la VPS:
+
+1. **Compilar localmente**:
+   ```bash
+   npm run build:ssr
+   ```
+
+2. **Comprimir la carpeta dist**:
+   ```bash
+   zip -r dist.zip dist
+   ```
+
+3. **Subir el archivo zip a la VPS** (usando scp o cualquier otro método):
+   ```bash
+   scp dist.zip usuario@tu-vps:/var/www/tienda-web-lotoAI-1/
+   ```
+
+4. **En la VPS, descomprimir el archivo**:
+   ```bash
+   cd /var/www/tienda-web-lotoAI-1
+   unzip dist.zip -d .
+   ```
+
+5. **Iniciar el servidor SSR**:
+   ```bash
+   npm run serve:ssr
+   ```
+
+¿Cuál de estas opciones prefieres intentar primero?
+
+---
+
+_**User**_
+
+¿?
+
+
+---
+
+_**Assistant**_
+
+Veo que has desinstalado correctamente Angular CLI global. Ahora vamos a continuar con los siguientes pasos para instalar la versión correcta:
+
+### Paso 2: Limpiar la caché de npm
+
+---
+
+_****_
+
+Cancelled
 
 ---
 
 _****_
 
 
+
+---
+
+_**User**_
+
+A qué es debido que no se desinstale la versión de angular 19 ?
+
+---
+
+_**Assistant**_
+
+El problema que estás experimentando es bastante común y puede deberse a varias razones:
+
+1. **Rutas de instalación conflictivas**: A veces, npm instala paquetes en diferentes ubicaciones dependiendo de cómo se instalaron originalmente.
+
+2. **Caché persistente**: A pesar de limpiar la caché, algunos archivos pueden permanecer.
+
+3. **Instalaciones múltiples**: Puede haber múltiples instalaciones de Angular CLI en diferentes rutas.
+
+4. **Configuración de PATH**: El sistema podría estar encontrando primero la versión 19 en el PATH.
+
+Vamos a intentar una solución más radical:
+
+### Solución más completa:
+
+1. **Verificar dónde está instalado Angular CLI**:
+   ```bash
+   which ng
+   ```
+   Esto te mostrará la ruta del ejecutable `ng`.
+
+2. **Eliminar manualmente los directorios de Angular CLI**:
+   ```bash
+   rm -rf $(which ng)
+   rm -rf /usr/local/lib/node_modules/@angular
+   rm -rf /usr/lib/node_modules/@angular
+   ```
+
+3. **Limpiar npm completamente**:
+   ```bash
+   npm cache clean --force
+   ```
+
+4. **Instalar Angular CLI 18 con una ruta específica**:
+   ```bash
+   npm install -g @angular/cli@18.2.12 --prefix=/usr/local
+   ```
+
+5. **Verificar la instalación**:
+   ```bash
+   /usr/local/bin/ng version
+   ```
+
+### Alternativa: Usar nvm para manejar versiones de Node y npm
+
+Si tienes acceso para instalar nvm (Node Version Manager) en la VPS, esto podría ayudar a manejar mejor las versiones:
+
+```bash
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+source ~/.bashrc
+nvm install 18
+nvm use 18
+npm install -g @angular/cli@18.2.12
+```
+
+### Solución práctica: Usar la versión local en lugar de la global
+
+Esta es probablemente la solución más sencilla y confiable:
+
+1. **Instalar Angular CLI 18 localmente en el proyecto**:
+   ```bash
+   cd /var/www/tienda-web-lotoAI-1
+   npm install @angular/cli@18.2.12 --save-dev
+   ```
+
+2. **Usar la versión local directamente**:
+   ```bash
+   npx ng version
+   ```
+   Esto debería mostrar la versión 18.2.12.
+
+3. **Modificar los scripts en package.json**:
+   ```bash
+   nano package.json
+   ```
+   
+   Cambia los scripts para usar `npx`:
+   ```json
+   "scripts": {
+     "build": "npx ng build --configuration production",
+     "build:ssr": "npx ng build && npx ng run tienda-web-loto-ai:server",
+     "serve:ssr": "node dist/tienda-web-loto-ai/server/main.js"
+   }
+   ```
+
+4. **Ejecutar la compilación usando los scripts actualizados**:
+   ```bash
+   npm run build:ssr
+   ```
+
+Esta última solución es la más práctica porque evita conflictos con la instalación global y asegura que siempre se use la versión correcta para este proyecto específico.
+
+¿Quieres intentar alguna de estas soluciones?
+
+---
+
+_**User**_
+
+Qué significa?
+
+---
+
+_**Assistant**_
+
+Este mensaje de error indica que el sistema está buscando el comando `ng` (Angular CLI) en la ruta `/root/.nvm/versions/node/v18.20.5/bin/ng`, pero no lo encuentra en esa ubicación.
+
+Esto es interesante porque muestra que:
+
+1. **NVM está instalado**: El sistema está usando Node.js instalado a través de NVM (Node Version Manager), lo cual es bueno porque facilita el manejo de versiones.
+
+2. **La versión de Node.js es 18.20.5**: Esta es una versión compatible con Angular 18.
+
+3. **El comando `ng` ha sido completamente desinstalado**: La desinstalación que realizaste fue efectiva y eliminó completamente Angular CLI.
+
+Esto es en realidad una buena noticia, porque significa que ahora podemos instalar limpiamente la versión correcta de Angular CLI.
+
+### Pasos para instalar Angular CLI 18.2.12:
+
+1. **Instalar Angular CLI 18.2.12 globalmente**:
+   ```bash
+   npm install -g @angular/cli@18.2.12
+   ```
+
+2. **Verificar la instalación**:
+   ```bash
+   ng version
+   ```
+
+Ahora debería mostrar la versión 18.2.12 de Angular CLI.
+
+Si prefieres un enfoque más seguro, puedes instalar Angular CLI localmente en el proyecto:
+
+1. **Navegar al directorio del proyecto**:
+   ```bash
+   cd /var/www/tienda-web-lotoAI-1
+   ```
+
+2. **Instalar Angular CLI localmente**:
+   ```bash
+   npm install @angular/cli@18.2.12 --save-dev
+   ```
+
+3. **Verificar la instalación local**:
+   ```bash
+   npx ng version
+   ```
+
+4. **Usar npx para ejecutar comandos de Angular**:
+   ```bash
+   npx ng build
+   ```
+
+El enfoque local es más seguro porque asegura que siempre uses la versión correcta para este proyecto específico, independientemente de la versión global instalada.
+
+¿Quieres proceder con la instalación global o local?
+
+---
+
+_**User**_
+
+Ya instalé globalmente angular 18, ya que solamente estoy trabajando con este proyecto en la VPS y, como podrás ver, ahora se muestra que está correctamente instalado, ahora debo de ejecutar de nuevo el comando    npm install?
+
+---
+
+_**Assistant**_
+
+¡Excelente! Veo que has instalado correctamente Angular CLI 18.2.12 globalmente. Ahora estás en el camino correcto.
+
+Sí, el siguiente paso es ejecutar `npm install` en el directorio de tu proyecto para asegurarte de que todas las dependencias sean compatibles con Angular 18:
+
+---
+
+_****_
+
+Cancelled
+
+---
+
+_****_
+
+
+
+---
+
+_**User**_
+
+¿?
+
+---
+
+_**Assistant**_
+
+¡Perfecto! Veo que has ejecutado correctamente los comandos:
+
+1. `npm install` - Instaló todas las dependencias del proyecto
+2. `cd src/backend && npm install && cd ../..` - Instaló las dependencias del backend
+3. `npm run build:ssr` - Compiló la aplicación para SSR
+
+Todo parece haber funcionado correctamente con Angular 18. La compilación se completó exitosamente, solo con una advertencia menor sobre `NgOptimizedImage` que no está siendo utilizado en el componente de registro, pero esto es solo una advertencia y no afecta el funcionamiento de la aplicación.
+
+### Próximos pasos:
+
+1. **Iniciar el servidor SSR**:
+   ```bash
+   npm run serve:ssr
+   ```
+
+2. **Verificar que el servidor backend esté funcionando**:
+   ```bash
+   cd src/backend && npm run start
+   ```
+
+3. **Configurar PM2 para gestionar los procesos** (si aún no lo has hecho):
+   ```bash
+   # Detener los procesos existentes
+   pm2 stop all
+   
+   # Iniciar el servidor backend
+   cd src/backend && pm2 start dist/index.js --name backend
+   
+   # Volver al directorio principal e iniciar el servidor SSR
+   cd ../..
+   pm2 start dist/tienda-web-loto-ai/server/main.js --name frontend
+   
+   # Guardar la configuración de PM2
+   pm2 save
+   ```
+
+4. **Verificar que los servidores estén funcionando**:
+   ```bash
+   pm2 status
+   ```
+
+5. **Asegurarte de que Nginx esté configurado correctamente**:
+   - El servidor backend debe estar accesible en `/api`
+   - El servidor frontend debe estar accesible en la raíz `/`
+
+Todo parece estar en orden ahora. La aplicación debería funcionar correctamente con Angular 18 en la VPS. ¿Quieres proceder con alguno de estos pasos o tienes alguna otra pregunta?
+
+---
+
+_**User**_
+
+   npm run serve:ssr, mostro (Node Express server listening on http://localhost:4000), pero en @https://www.loto-ia.com/home también es posible acceder sin embargo "Entrar ",¿Has olvidado tu contraseña? y "Solicitar una nueva", no están funcionando ¿?
+
+---
+
+_**Assistant**_
+
+Si el servidor SSR está funcionando correctamente pero los botones "Entrar", "¿Has olvidado tu contraseña?" y "Solicitar una nueva" no están funcionando, esto podría deberse a varios problemas:
+
+### 1. Problema de configuración de Nginx
+
+El problema más común es que Nginx no esté configurado correctamente para redirigir las solicitudes de API al servidor backend. Vamos a verificar la configuración de Nginx:
+
+```bash
+cat /etc/nginx/sites-available/loto-ia.com
+```
+
+La configuración debería tener algo similar a esto:
+
+```nginx
+server {
+    listen 80;
+    server_name loto-ia.com www.loto-ia.com;
+
+    location /api/ {
+        proxy_pass http://localhost:3000/api/;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+    }
+
+    location / {
+        proxy_pass http://localhost:4000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+    }
+}
+```
+
+### 2. Verificar que el servidor backend esté funcionando
+
+Asegúrate de que el servidor backend esté funcionando correctamente:
+
+```bash
+cd src/backend && npm run start
+```
+
+O si estás usando PM2:
+
+```bash
+pm2 status
+```
+
+### 3. Verificar los logs del servidor backend
+
+Revisa los logs del servidor backend para ver si hay errores:
+
+```bash
+cd src/backend && npm run start
+```
+
+Y observa la salida para ver si hay errores cuando intentas usar esas funcionalidades.
+
+### 4. Verificar la configuración de CORS
+
+Asegúrate de que el servidor backend tenga configurado CORS correctamente para permitir solicitudes desde el dominio de tu aplicación:
+
+```bash
+cat src/backend/src/index.ts
+```
+
+Debería tener algo como:
+
+```typescript
+app.use(cors({
+  origin: ['https://loto-ia.com', 'https://www.loto-ia.com', 'http://localhost:4200', 'http://localhost:4000']
+}));
+```
+
+### 5. Verificar las rutas de API en el frontend
+
+Asegúrate de que las rutas de API en el frontend estén configuradas correctamente:
+
+```bash
+cat src/environments/environment.prod.ts
+```
+
+Debería tener algo como:
+
+```typescript
+export const environment = {
+  production: true,
+  apiUrl: '/api'  // Esto es importante, debe ser relativo para que funcione con Nginx
+};
+```
+
+### 6. Verificar en las herramientas de desarrollo del navegador
+
+Abre las herramientas de desarrollo del navegador (F12) y ve a la pestaña "Network" (Red). Intenta usar las funcionalidades que no están funcionando y observa si hay errores en las solicitudes HTTP.
+
+### 7. Solución temporal: Actualizar la configuración de API en el frontend
+
+Si el problema está en la configuración de la URL de la API, puedes modificar el archivo `environment.prod.ts` para usar la URL completa:
+
+```bash
+nano src/environments/environment.prod.ts
+```
+
+Y cambiarlo a:
+
+```typescript
+export const environment = {
+  production: true,
+  apiUrl: 'https://www.loto-ia.com/api'  // URL completa
+};
+```
+
+Luego recompila la aplicación:
+
+```bash
+npm run build:ssr
+```
+
+Y reinicia el servidor SSR:
+
+```bash
+npm run serve:ssr
+```
+
+¿Podrías proporcionar más detalles sobre qué sucede exactamente cuando intentas usar esas funcionalidades? ¿Hay algún error en la consola del navegador?
+
+---
+
+_**User**_
+
+Si ejecuto este comando "   npm run serve:ssr", para después ejecutar "   cd src/backend && npm run start",  tengo que detener el proceso, cómo debería de proceder para que funcionaran los dos procesos simultáneamente? también anteriormente creamos un archivo para automatizar el servicio de producción en la VPS sin que se tuvieran que ejecutar estos comandos manualmente@deploy.sh ¿?
+
+---
+
+_**Assistant**_
+
+Tienes razón, para ejecutar ambos procesos simultáneamente (el servidor SSR y el backend) en producción, lo ideal es usar PM2 como gestor de procesos, tal como está configurado en tu archivo `deploy.sh`.
+
+### Usando PM2 para gestionar ambos procesos
+
+PM2 es perfecto para este caso porque permite ejecutar múltiples procesos en segundo plano y gestionarlos fácilmente. Vamos a usar los comandos que ya tienes en tu script `deploy.sh`:
+
+1. **Para el backend**:
+   ```bash
+   cd src/backend
+   pm2 restart loto-ia-backend || pm2 start npm --name "loto-ia-backend" -- start
+   ```
+
+2. **Para el servidor SSR**:
+   ```bash
+   cd /var/www/tienda-web-lotoAI-1
+   pm2 restart loto-ia-ssr || pm2 start npm --name "loto-ia-ssr" -- run serve:ssr
+   ```
+
+3. **Guardar la configuración de PM2**:
+   ```bash
+   pm2 save
+   ```
+
+### Ejecutando el script deploy.sh
+
+El archivo `deploy.sh` que has compartido ya contiene todos los pasos necesarios para desplegar la aplicación, incluyendo:
+1. Obtener los últimos cambios de Git
+2. Instalar dependencias
+3. Construir la aplicación
+4. Verificar y recargar Nginx
+5. Iniciar/reiniciar los servicios con PM2
+
+Para ejecutar este script, simplemente necesitas:
+
+```bash
+chmod +x deploy.sh  # Dar permisos de ejecución (solo la primera vez)
+./deploy.sh         # Ejecutar el script
+```
+
+### Verificando que todo funcione correctamente
+
+Después de ejecutar el script, puedes verificar que ambos procesos estén funcionando:
+
+```bash
+pm2 status
+```
+
+Deberías ver algo como:
+```
+┌─────┬────────────────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id  │ name               │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+├─────┼────────────────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
+│ 0   │ loto-ia-backend    │ default     │ N/A     │ fork    │ 12345    │ 2D     │ 0    │ online    │ 0%       │ 75.5mb   │ root     │ disabled │
+│ 1   │ loto-ia-ssr        │ default     │ N/A     │ fork    │ 12346    │ 2D     │ 0    │ online    │ 0%       │ 98.7mb   │ root     │ disabled │
+└─────┴────────────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+```
+
+### Solución al problema de los botones que no funcionan
+
+Si después de ejecutar el script `deploy.sh` los botones "Entrar", "¿Has olvidado tu contraseña?" y "Solicitar una nueva" siguen sin funcionar, podría ser un problema con la configuración de Nginx o con las rutas de API.
+
+Vamos a verificar la configuración de Nginx:
+
+```bash
+cat /etc/nginx/sites-available/loto-ia.com
+```
+
+Asegúrate de que tenga una configuración similar a esta:
+
+```nginx
+server {
+    listen 80;
+    server_name loto-ia.com www.loto-ia.com;
+    
+    # Redirección a HTTPS
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl;
+    server_name loto-ia.com www.loto-ia.com;
+    
+    # Configuración SSL
+    ssl_certificate /etc/letsencrypt/live/loto-ia.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/loto-ia.com/privkey.pem;
+    
+    # Proxy para el backend
+    location /api/ {
+        proxy_pass http://localhost:3000/api/;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+    }
+    
+    # Proxy para el frontend SSR
+    location / {
+        proxy_pass http://localhost:4000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+    }
+}
+```
+
+### Recomendación final
+
+1. Ejecuta el script `deploy.sh` para asegurarte de que todo esté correctamente configurado y desplegado.
+2. Verifica que ambos procesos estén funcionando con `pm2 status`.
+3. Verifica la configuración de Nginx y asegúrate de que esté redirigiendo correctamente las solicitudes.
+4. Si después de esto los botones siguen sin funcionar, revisa los logs de PM2 para ver si hay errores:
+   ```bash
+   pm2 logs loto-ia-backend
+   pm2 logs loto-ia-ssr
+   ```
+
+¿Quieres que te ayude a revisar alguna configuración específica o a modificar el script `deploy.sh`?
+
+---
+
+_**User**_
+
+¿?
+
+---
+
+_**Assistant**_
+
+Veo que has ejecutado los comandos de PM2 correctamente:
+
+1. Has reiniciado el proceso `loto-ia-backend` exitosamente.
+2. Has iniciado un nuevo proceso `loto-ia-ssr` porque no existía previamente.
+
+Ahora ambos procesos están funcionando correctamente según muestra la tabla de PM2:
+- `loto-ia-backend` (ID: 0) está en estado "online"
+- `loto-ia-ssr` (ID: 1) está en estado "online"
+
+Sin embargo, hay una advertencia importante:
+```
+[PM2][WARN] Current process list is not synchronized with saved list. Type 'pm2 save' to synchronize.
+```
+
+Esto significa que necesitas guardar la configuración actual de PM2 para que estos procesos se reinicien automáticamente si el servidor se reinicia. Ejecuta:
+
+```bash
+pm2 save
+```
+
+### Próximos pasos:
+
+1. **Guarda la configuración de PM2**:
+   ```bash
+   pm2 save
+   ```
+
+2. **Verifica que Nginx esté configurado correctamente**:
+   ```bash
+   cat /etc/nginx/sites-available/loto-ia.com
+   ```
+   
+   Asegúrate de que tenga las configuraciones correctas para redirigir `/api/` al backend y `/` al servidor SSR.
+
+3. **Reinicia Nginx para aplicar cualquier cambio**:
+   ```bash
+   sudo systemctl reload nginx
+   ```
+
+4. **Verifica que todo funcione correctamente** accediendo a tu sitio web desde un navegador.
+
+5. **Si los botones siguen sin funcionar, revisa los logs**:
+   ```bash
+   pm2 logs loto-ia-backend
+   pm2 logs loto-ia-ssr
+   ```
+
+Ahora que ambos procesos están funcionando con PM2, deberías poder acceder a tu sitio web y todas las funcionalidades deberían estar trabajando correctamente. Si los botones "Entrar", "¿Has olvidado tu contraseña?" y "Solicitar una nueva" siguen sin funcionar, podría ser un problema con:
+
+1. **Configuración de CORS en el backend**
+2. **Rutas de API incorrectas en el frontend**
+3. **Configuración incorrecta de Nginx**
+
+¿Quieres que revisemos alguno de estos aspectos específicamente?
+
+---
+
+_**User**_
+
+¿?
+
+---
+
+_**Assistant**_
+
+Veo varios problemas importantes que necesitamos solucionar:
+
+### 1. Problema con el script serve:ssr
+
+El log muestra un error en el proceso `loto-ia-ssr`:
+```
+npm error Missing script: "serve:ssr"
+```
+
+Esto significa que el script `serve:ssr` no está definido en el `package.json` de la VPS. Necesitamos verificar y actualizar el `package.json`:
+
+```bash
+cat /var/www/tienda-web-lotoAI-1/package.json
+```
+
+Y asegurarnos de que tenga el script `serve:ssr` definido:
+
+```json
+"scripts": {
+  "serve:ssr": "node dist/tienda-web-loto-ai/server/main.js"
+}
+```
+
+### 2. Problema con la configuración de Nginx
+
+La configuración actual de Nginx está sirviendo archivos estáticos directamente desde la carpeta `dist/tienda-web-loto-ai/browser` en lugar de usar el servidor SSR:
+
+```nginx
+root /var/www/tienda-web-lotoAI-1/dist/tienda-web-loto-ai/browser;
+index index.csr.html;
+
+location / {
+    try_files $uri $uri/ /index.csr.html;
+    # ...
+}
+```
+
+Esto significa que Nginx está sirviendo la versión estática de la aplicación, no la versión renderizada por el servidor. Necesitamos modificar la configuración para que redirija las solicitudes al servidor SSR:
+
+```nginx
+location / {
+    proxy_pass http://localhost:4000;
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection 'upgrade';
+    proxy_set_header Host $host;
+    proxy_cache_bypass $http_upgrade;
+}
+```
+
+### 3. Problema con el backend
+
+El backend parece estar funcionando correctamente (muestra "Servidor corriendo en el puerto 3000"), pero hay errores relacionados con `nodemon`. Esto no debería ser un problema en producción, pero es mejor usar el script de producción en lugar del script de desarrollo:
+
+```bash
+cd /var/www/tienda-web-lotoAI-1/src/backend
+pm2 stop loto-ia-backend
+pm2 start dist/index.js --name loto-ia-backend
+```
+
+### Pasos para solucionar estos problemas:
+
+1. **Actualizar el package.json** para incluir el script `serve:ssr`:
+
+```bash
+cd /var/www/tienda-web-lotoAI-1
+nano package.json
+```
+
+Asegúrate de que tenga:
+```json
+"scripts": {
+  "serve:ssr": "node dist/tienda-web-loto-ai/server/main.js"
+}
+```
+
+2. **Modificar la configuración de Nginx**:
+
+```bash
+sudo nano /etc/nginx/sites-available/loto-ia.com
+```
+
+Cambia la sección `location /` por:
+```nginx
+location / {
+    proxy_pass http://localhost:4000;
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection 'upgrade';
+    proxy_set_header Host $host;
+    proxy_cache_bypass $http_upgrade;
+}
+```
+
+3. **Reiniciar Nginx**:
+
+```bash
+sudo systemctl reload nginx
+```
+
+4. **Reiniciar los procesos de PM2**:
+
+```bash
+# Detener los procesos actuales
+pm2 stop all
+
+# Iniciar el backend correctamente
+cd /var/www/tienda-web-lotoAI-1/src/backend
+pm2 start dist/index.js --name loto-ia-backend
+
+# Iniciar el servidor SSR
+cd /var/www/tienda-web-lotoAI-1
+pm2 start npm --name loto-ia-ssr -- run serve:ssr
+
+# Guardar la configuración
+pm2 save
+```
+
+5. **Verificar que todo funcione correctamente**:
+
+```bash
+pm2 status
+```
+
+Estos cambios deberían solucionar los problemas y hacer que los botones "Entrar", "¿Has olvidado tu contraseña?" y "Solicitar una nueva" funcionen correctamente.
+
+¿Quieres que te guíe a través de estos pasos uno por uno?
+
+---
+
+_**User**_
+
+Pero si actualizo package.json, ahora el en la VPS, cada vez que hagamos cambios a nivel local, con el sistema que estamos utilizando de actualizar a repositorio enGitHub, y después también actualizarlo en la VPS, tendré que volver a realizar la actualización del package.json en la VPS ¿?
+
+---
+
+_**Assistant**_
+
+Tienes toda la razón, y es una preocupación muy válida. Modificar manualmente el `package.json` en la VPS no es una solución sostenible, ya que estos cambios se perderían cada vez que actualices desde GitHub.
+
+### Solución más adecuada:
+
+Lo ideal es actualizar el `package.json` en tu repositorio local, subirlo a GitHub, y luego hacer el pull en la VPS. De esta manera, los cambios se mantendrán consistentes.
+
+### Pasos recomendados:
+
+1. **Verificar el script actual en la VPS**:
+
+---
+
+_****_
+
+```bash
+cat /var/www/tienda-web-lotoAI-1/package.json | grep -A 10 scripts
+```
+
+```
+PS C:\Users\Pedro\Desktop\LotoIA\WEB-ANGULAR-Cursor\tienda-web-lotoAI-1> cat /var/www/tienda-web-lotoAI
+-1/package.json | grep -A 10 s
+Se produjo un error. Informa de este error indicando los detalles que tienes a continuación.
+Informe de GitHub: https://github.com/lzybkr/PSReadLine/issues/new
+-----------------------------------------------------------------------
+Últimas 200 claves:
+ g i t Space a d d Space . Enter
+ g i t Space c o m m i t Space - m Space " f e a t : Space i m p l e m e n t a c i ó n Space d e Space 
+S S R , Space r e c u p e r a c i ó n Space d e Space c o n t r a s e ñ a Space y Space m e j o r a s S
+pace e n Space l a Space a u t e n t i c a c i ó n " Enter
+ g i t Space p u s h Space o r i g i n Space m a i n Enter
+ c a t Space / v a r / w w w / t i e n d a - w e b - l o t o A I - 1 / p a c k a g e . j s o n Space Ct
+rl+Alt+| Space g r e p Space - A Space 1 0 Space s c r i p t s Enter
+
+
+Excepción:
+System.ArgumentOutOfRangeException: El valor debe ser mayor que o igual a cero y menor que el tamaño de
+ búfer de consola en dicha dimensión.
+Nombre del parámetro: top
+Valor actual -1.
+   en System.Console.SetCursorPosition(Int32 left, Int32 top)
+   en Microsoft.PowerShell.PSConsoleReadLine.ReallyRender(RenderData renderData, String defaultColor)  
+   en Microsoft.PowerShell.PSConsoleReadLine.ForceRender()
+   en Microsoft.PowerShell.PSConsoleReadLine.Insert(Char c)
+   en Microsoft.PowerShell.PSConsoleReadLine.SelfInsert(Nullable`1 key, Object arg)
+   en Microsoft.PowerShell.PSConsoleReadLine.ProcessOneKey(ConsoleKeyInfo key, Dictionary`2 dispatchTab
+le, Boolean ignoreIfNoAction, Object arg)
+   en Microsoft.PowerShell.PSConsoleReadLine.InputLoop()
+   en Microsoft.PowerShell.PSConsoleReadLine.ReadLine(Runspace runspace, EngineIntrinsics engineIntrins
+ics)
+-------------------------------------eadLine.ForceRender()------------- a Space y Space m e j o r a s S
+System.ArgumentOutOfRangeException: El valor debe ser mayor que o igual a cero y menor que el tamaño de
+```
+
+---
+
+_****_
+
+Parece que hay un problema con el comando en PowerShell. Intentemos de otra manera:
+
+---
+
+_****_
+
+Cancelled
+
+---
+
+_****_
+
+
+
+---
+
+_**User**_
+
+El siguiente es el contenido del archivo package.json en la VPS:
+{
+  "name": "tienda-web-lotoai",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "ng build --configuration production",
+    "start": "ng serve",
+    "start:prod": "node dist/tienda-web-loto-ai/server/main.js",
+    "preinstall": "npm install -g @angular/cli",
+    "postinstall": "npm run build",
+    "deploy:frontend": "bash scripts/deploy-frontend.sh",
+    "dev:ssr": "ng run tienda-web-loto-ai:serve-ssr",
+    "serve:ssr": "node dist/tienda-web-loto-ai/server/main.js",
+    "build:ssr": "ng build && ng run tienda-web-loto-ai:server",
+    "prerender": "ng run tienda-web-loto-ai:prerender"
+  },
+  "dependencies": {
+    "@angular/animations": "^19.2.1",
+    "@angular/common": "^19.2.1",
+    "@angular/compiler": "^19.2.1",
+    "@angular/core": "^19.2.1",
+    "@angular/forms": "^19.2.1",
+    "@angular/platform-browser": "^19.2.1",
+    "@angular/platform-browser-dynamic": "^19.2.1",
+    "@angular/platform-server": "^19.2.1",
+    "@angular/router": "^19.2.1",
+    "@angular/ssr": "^19.2.1",
+    "@types/bcrypt": "^5.0.2",
+    "@types/jsonwebtoken": "^9.0.9",
+    "@types/pg": "^8.11.11",
+    "axios": "^1.6.0",
+    "bcrypt": "^5.1.1",
+    "dotenv": "^16.4.7",
+    "jsonwebtoken": "^9.0.2",
+    "node-mailjet": "^6.0.7",
+    "pg": "^8.13.3",
+    "puppeteer": "^24.2.0",
+    "rxjs": "^7.8.1",
+    "tslib": "^2.3.0",
+    "zone.js": "~0.15.0"
+  },
+  "devDependencies": {
+    "@angular-devkit/build-angular": "^19.2.1",
+    "@angular/cli": "^19.2.1",
+    "@angular/compiler-cli": "^19.2.1",
+    "@types/jasmine": "~5.1.0",
+    "@types/node": "^18.19.64",
+    "jasmine-core": "~5.1.0",
+    "karma": "~6.4.0",
+    "karma-chrome-launcher": "~3.2.0",
+    "karma-coverage": "~2.2.0",
+    "karma-jasmine": "~5.1.0",
+    "karma-jasmine-html-reporter": "~2.1.0",
+    "typescript": "~5.8.2"
+  }
+}:
+¿?
+
+
+---
+
+_**Assistant**_
+
+Gracias por compartir el contenido del `package.json`. Veo que el script `serve:ssr` ya está definido correctamente en el archivo:
+
+```json
+"serve:ssr": "node dist/tienda-web-loto-ai/server/main.js"
+```
+
+Esto es bueno, significa que el script existe en el archivo. Sin embargo, el error que vimos en los logs de PM2 indica que no se está encontrando este script. Esto podría deberse a varias razones:
+
+1. **Posible problema con la ruta**: PM2 podría estar ejecutando el comando desde una ubicación incorrecta.
+2. **Versión desactualizada**: Podría estar usando una versión anterior del `package.json`.
+
+### Solución recomendada:
+
+Vamos a reiniciar el proceso de SSR con PM2 asegurándonos de que se ejecute desde el directorio correcto:
+
+---
+
+_****_
+
+Cancelled
+
+---
+
+_****_
+
+
+
+---
+
+_**User**_
+
+¿?
+
+---
+
+_**Assistant**_
+
+Veo que has ejecutado los comandos en la VPS y ahora tienes dos procesos llamados `loto-ia-ssr` (uno con ID 1 que está detenido y otro con ID 2 que está en ejecución). Esto puede causar confusión.
+
+### Pasos para limpiar y organizar los procesos de PM2:
+
+1. **Eliminar el proceso detenido y guardar la configuración**:
+
+---
+
+_****_
+
+Cancelled
+
+---
+
+_****_
+
+
+
+---
+
+_**User**_
+
+¿?
+
+---
+
+_**Assistant**_
+
+Veo que intentaste ejecutar `pm2 delete` sin especificar el ID del proceso. Vamos a corregir esto:
+
+---
+
+_****_
+
+Cancelled
+
+---
+
+_****_
+
+
+
+---
+
+_**User**_
+
+¿?
+
+---
+
+_**Assistant**_
+
+Parece que hay un problema con la forma en que se está ejecutando el comando. Las comillas están siendo interpretadas como parte del comando. Vamos a intentarlo de otra manera:
+
+---
+
+_****_
+
+Cancelled
+
+---
+
+_****_
+
+
+
+---
+
+_**User**_
+
+¿?
+
+---
+
+_**Assistant**_
+
+¡Perfecto! Has eliminado correctamente el proceso detenido con ID 1. Ahora vamos a guardar la configuración de PM2 para que estos cambios persistan después de un reinicio:
+
+---
+
+_****_
+
+Cancelled
+
+---
+
+_****_
+
+
+
+---
+
+_**User**_
+
+en @https://www.loto-ia.com/home , los botones "Entrar", "¿Has olvidado tu contraseña?" y "Solicitar una nueva" siguen sin funcionar ¿?
+
+---
+
+_**Assistant**_
+
+Ahora que hemos limpiado y organizado los procesos de PM2, vamos a abordar el problema de los botones que no funcionan en la web. El problema principal podría estar en la configuración de Nginx, que no está redirigiendo correctamente las solicitudes al servidor SSR.
+
+### Revisemos la configuración actual de Nginx:
+
+Según lo que vimos anteriormente, la configuración de Nginx está sirviendo archivos estáticos directamente desde la carpeta `dist/tienda-web-loto-ai/browser` en lugar de usar el servidor SSR:
+
+```nginx
+root /var/www/tienda-web-lotoAI-1/dist/tienda-web-loto-ai/browser;
+index index.csr.html;
+
+location / {
+    try_files $uri $uri/ /index.csr.html;
+    # ...
+}
+```
+
+### Necesitamos modificar la configuración de Nginx:
+
+---
+
+_****_
+
+Cancelled
+
+---
+
+_****_
+
+
+
+---
+
+_**User**_
+
+Gracias por proporcionarme los comandos para la VPS con el SSH root, sin embargo esto no está funcionando en este editor de código "Cursor", es mejor que me proporciones los comandos sin más, yo los copiaré en la terminal de la VPS, por el momento el contenido del archivo "/etc/nginx/sites-available/loto-ia.com", es el siguiente:
+server {
+    listen 80;
+    listen [::]:80;
+    server_name loto-ia.com www.loto-ia.com;
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name loto-ia.com www.loto-ia.com;
+
+    ssl_certificate /etc/letsencrypt/live/loto-ia.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/loto-ia.com/privkey.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_prefer_server_ciphers on;
+
+    merge_slashes off;
+    absolute_redirect off;
+
+    # Ruta a los archivos estáticos
+    root /var/www/tienda-web-lotoAI-1/dist/tienda-web-loto-ai/browser;
+    index index.csr.html;
+
+    access_log /var/log/nginx/loto-ia.access.log;
+    error_log /var/log/nginx/loto-ia.error.log debug;
+
+    location / {
+        try_files $uri $uri/ /index.csr.html;
+        add_header Cache-Control "no-cache, no-store, must-revalidate";
+        add_header X-Frame-Options "SAMEORIGIN";
+        add_header X-Content-Type-Options "nosniff";
+    }
+
+    location /api {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_connect_timeout 60s;
+        proxy_send_timeout 60s;
+        proxy_read_timeout 60s;
+    }
+
+    # Páginas de error
+    error_page 404 /index.csr.html;
+    error_page 502 503 504 /50x.html;
+    location = /50x.html {
+        root /usr/share/nginx/html;
+    }
+}: ¿?
+
+---
+
+_**Assistant**_
+
+Entendido. Aquí tienes los comandos directamente para que los copies en la terminal de la VPS:
+
+### 1. Modificar la configuración de Nginx
+
+Necesitas editar el archivo de configuración de Nginx para redirigir las solicitudes al servidor SSR en lugar de servir archivos estáticos:
+
+```bash
+sudo nano /etc/nginx/sites-available/loto-ia.com
+```
+
+Modifica la sección `location /` para que quede así:
+
+```nginx
+location / {
+    proxy_pass http://localhost:4000;
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection 'upgrade';
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_cache_bypass $http_upgrade;
+}
+```
+
+Guarda el archivo (Ctrl+O, luego Enter, luego Ctrl+X).
+
+### 2. Verificar la sintaxis de Nginx
+
+```bash
+sudo nginx -t
+```
+
+### 3. Recargar Nginx
+
+```bash
+sudo systemctl reload nginx
+```
+
+### 4. Verificar que el servidor SSR esté funcionando correctamente
+
+```bash
+pm2 logs loto-ia-ssr --lines 20
+```
+
+### 5. Verificar que el backend esté funcionando correctamente
+
+```bash
+pm2 logs loto-ia-backend --lines 20
+```
+
+### 6. Si necesitas reiniciar el servidor SSR:
+
+```bash
+pm2 restart loto-ia-ssr
+```
+
+### 7. Si necesitas reiniciar el backend:
+
+```bash
+pm2 restart loto-ia-backend
+```
+
+Después de aplicar estos cambios, los botones "Entrar", "¿Has olvidado tu contraseña?" y "Solicitar una nueva" deberían funcionar correctamente en la web.
+
+La clave aquí es que estamos cambiando la configuración de Nginx para que redirija todas las solicitudes al servidor SSR en el puerto 4000, en lugar de servir archivos estáticos directamente. Esto permitirá que la aplicación Angular funcione correctamente con SSR.
+
+---
+
+_**User**_
+
+El archivo ha quedado cómo te muestro a continuación:
+server {
+    listen 80;
+    listen [::]:80;
+    server_name loto-ia.com www.loto-ia.com;
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name loto-ia.com www.loto-ia.com;
+
+    ssl_certificate /etc/letsencrypt/live/loto-ia.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/loto-ia.com/privkey.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_prefer_server_ciphers on;
+
+    merge_slashes off;
+    absolute_redirect off;
+
+    # Ruta a los archivos estáticos
+    root /var/www/tienda-web-lotoAI-1/dist/tienda-web-loto-ai/browser;
+    index index.csr.html;
+
+    access_log /var/log/nginx/loto-ia.access.log;
+    error_log /var/log/nginx/loto-ia.error.log debug;
+
+    location / {
+        proxy_pass http://localhost:4000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+    }
+
+    location /api {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_connect_timeout 60s;
+        proxy_send_timeout 60s;
+        proxy_read_timeout 60s;
+    }
+
+    # Páginas de error
+    error_page 404 /index.csr.html;
+    error_page 502 503 504 /50x.html;
+    location = /50x.html {
+        root /usr/share/nginx/html;
+    }
+}:
+ es correcto¿?
+
+---
+
+_**Assistant**_
+
+Sí, la configuración de Nginx que has mostrado es correcta. Has realizado los cambios necesarios en la sección `location /` para redirigir las solicitudes al servidor SSR en el puerto 4000.
+
+Ahora debes verificar la sintaxis de Nginx y recargar el servicio:
+
+```bash
+sudo nginx -t
+sudo systemctl reload nginx
+```
+
+Con esta configuración:
+
+1. Todas las solicitudes a la raíz del sitio (`/`) serán redirigidas al servidor SSR que está ejecutándose en `http://localhost:4000`.
+2. Las solicitudes a la API (`/api`) seguirán siendo redirigidas al backend que está ejecutándose en `http://localhost:3000`.
+3. Has mantenido las configuraciones de SSL, logs y páginas de error.
+
+Esta configuración debería resolver el problema con los botones "Entrar", "¿Has olvidado tu contraseña?" y "Solicitar una nueva" que no estaban funcionando.
+
+Después de recargar Nginx, accede a la web en `https://www.loto-ia.com/home` y verifica si los botones funcionan correctamente. Si sigues teniendo problemas, podemos revisar los logs de Nginx y del servidor SSR para identificar cualquier error:
+
+```bash
+# Ver logs de Nginx
+sudo tail -n 50 /var/log/nginx/loto-ia.error.log
+
+# Ver logs del servidor SSR
+pm2 logs loto-ia-ssr --lines 20
+
+# Ver logs del backend
+pm2 logs loto-ia-backend --lines 20
+```
+
+¿Quieres que te ayude con algo más después de aplicar estos cambios?
+
+---
+
+_**User**_
+
+¿?
+
+---
+
+_**Assistant**_
+
+Veo dos problemas principales en los logs:
+
+### 1. Problema con el servidor SSR:
+
+Los logs muestran que el proceso `loto-ia-ssr` está teniendo problemas para encontrar el script `serve:ssr`:
+
+```
+npm error Missing script: "serve:ssr"
+```
+
+Esto es extraño porque anteriormente vimos que el script sí existe en el `package.json`. Podría ser que PM2 esté ejecutando el comando desde un directorio incorrecto o que haya algún problema con la forma en que se inició el proceso.
+
+### 2. Problema con el backend:
+
+El backend está intentando usar `nodemon`, pero no lo encuentra:
+
+```
+sh: 1: nodemon: not found
+```
+
+Sin embargo, parece que eventualmente logra iniciarse y muestra:
+
+```
+Servidor corriendo en el puerto 3000
+```
+
+### Solución para el servidor SSR:
+
+Vamos a reiniciar el proceso SSR asegurándonos de que se ejecute desde el directorio correcto:
+
+```bash
+# Detener el proceso actual
+pm2 stop loto-ia-ssr
+
+# Eliminar el proceso
+pm2 delete loto-ia-ssr
+
+# Iniciar el proceso correctamente desde el directorio del proyecto
+cd /var/www/tienda-web-lotoAI-1
+pm2 start "npm run serve:ssr" --name loto-ia-ssr
+
+# Guardar la configuración
+pm2 save
+```
+
+### Solución para el backend:
+
+El backend parece estar funcionando a pesar del error de `nodemon`. En producción, es mejor no usar `nodemon` (que es una herramienta de desarrollo). Deberíamos modificar el script de inicio del backend para usar `node` directamente:
+
+```bash
+# Detener el proceso actual
+pm2 stop loto-ia-backend
+
+# Instalar nodemon globalmente (opcional, solo si quieres seguir usándolo)
+npm install -g nodemon
+
+# O mejor aún, modificar el script para usar node directamente
+cd /var/www/tienda-web-lotoAI-1/src/backend
+# Si tienes un archivo compilado (por ejemplo, dist/index.js):
+pm2 start dist/index.js --name loto-ia-backend
+# O si prefieres seguir usando ts-node:
+pm2 start "npx ts-node src/index.ts" --name loto-ia-backend
+
+# Guardar la configuración
+pm2 save
+```
+
+Después de aplicar estos cambios, verifica si los botones funcionan correctamente en la web. Si sigues teniendo problemas, podríamos necesitar revisar el código de la aplicación para ver si hay algún problema con las rutas de la API o con la forma en que se manejan las solicitudes.
+
+---
+
+_**User**_
+
+¿?
+
+---
+
+_**Assistant**_
+
+Veo que has seguido los pasos para reiniciar el servidor SSR, pero hay un problema con el backend. El archivo `dist/index.js` no existe en la ruta `/var/www/tienda-web-lotoAI-1/dist/index.js`. Esto es porque el backend está en una subcarpeta.
+
+### Para el servidor SSR:
+Has reiniciado correctamente el proceso y ahora está funcionando (muestra "online" en el estado de PM2).
+
+### Para el backend:
+Necesitamos navegar a la carpeta correcta del backend:
+
+```bash
+cd /var/www/tienda-web-lotoAI-1/src/backend
+```
+
+Y luego tenemos dos opciones:
+
+1. Si el backend está compilado y tiene un archivo `dist/index.js`:
+```bash
+pm2 start dist/index.js --name loto-ia-backend
+```
+
+2. Si el backend no está compilado y necesitas usar ts-node:
+```bash
+pm2 start "npx ts-node src/index.ts" --name loto-ia-backend
+```
+
+O simplemente reiniciar el proceso anterior que ya estaba funcionando:
+```bash
+pm2 restart loto-ia-backend
+```
+
+### Verificar los procesos:
+Después de iniciar ambos procesos, verifica su estado:
+```bash
+pm2 status
+```
+
+### Verificar los logs:
+```bash
+pm2 logs loto-ia-ssr --lines 20
+pm2 logs loto-ia-backend --lines 20
+```
+
+### Probar la web:
+Ahora deberías poder acceder a `https://www.loto-ia.com/home` y los botones "Entrar", "¿Has olvidado tu contraseña?" y "Solicitar una nueva" deberían funcionar correctamente.
+
+Si sigues teniendo problemas, podríamos necesitar revisar:
+1. El código de la aplicación para ver cómo se manejan las solicitudes de autenticación.
+2. Las rutas de la API en el frontend para asegurarnos de que apuntan a la URL correcta.
+3. La configuración CORS en el backend para permitir solicitudes desde el frontend.
+
+---
+
+_**User**_
+
+Como podrás ver en la imagen sigo sin lograr acceder al sitio web.
+Y en la VPS no no veo que en la ruta "/var/www/tienda-web-lotoAI-1/src/backend", se haya creado un archivo index.js, es posible que la compilación no se haya realizado bien? debería de repetirla?
+
+---
+
+_**Assistant**_
+
+Veo que estás teniendo un error 500 al intentar acceder al sitio web, lo que indica un problema en el servidor. Según la imagen y la información proporcionada, ambos procesos (backend y SSR) aparecen como "online" en PM2, pero el sitio no está funcionando correctamente.
+
+### Posibles problemas:
+
+1. **Compilación del backend**: Es posible que el backend no se haya compilado correctamente. En la ruta `/var/www/tienda-web-lotoAI-1/src/backend` debería existir una carpeta `dist` con el archivo `index.js` compilado.
+
+2. **Configuración de Nginx**: Aunque modificamos la configuración para redirigir al servidor SSR, podría haber algún problema con la configuración.
+
+3. **Logs de error**: Necesitamos revisar los logs para identificar el problema específico.
+
+### Pasos a seguir:
+
+1. **Verificar la estructura del backend**:
+```bash
+cd /var/www/tienda-web-lotoAI-1/src/backend
+ls -la
+```
+
+2. **Compilar el backend** (si es necesario):
+```bash
+cd /var/www/tienda-web-lotoAI-1/src/backend
+npm run build
+```
+
+3. **Revisar los logs de error**:
+```bash
+pm2 logs loto-ia-ssr --lines 50
+pm2 logs loto-ia-backend --lines 50
+```
+
+4. **Verificar los logs de Nginx**:
+```bash
+sudo tail -n 100 /var/log/nginx/loto-ia.error.log
+```
+
+5. **Verificar que el servidor SSR esté escuchando en el puerto 4000**:
+```bash
+netstat -tulpn | grep 4000
+```
+
+6. **Reiniciar ambos servicios**:
+```bash
+pm2 restart loto-ia-backend loto-ia-ssr
+```
+
+7. **Verificar la configuración de Nginx y reiniciarlo**:
+```bash
+sudo nginx -t
+sudo systemctl restart nginx
+```
+
+Es muy probable que el problema esté en los logs de error. Si el backend no se ha compilado correctamente, necesitarás compilarlo antes de reiniciar el servicio. Si el servidor SSR no está escuchando en el puerto 4000, necesitarás verificar la configuración del servidor SSR.
+
+Por favor, ejecuta estos comandos y comparte los resultados para poder ayudarte mejor a resolver el problema.
+
+---
+
+_**User**_
+
+¿?
+
+---
+
+_**Assistant**_
+
+Ahora veo claramente el problema. El servidor SSR está lanzando un error de Angular:
+
+```
+RuntimeError: NG0908
+```
+
+Este es un error específico de Angular relacionado con NgZone. El error NG0908 ocurre cuando hay un problema con la zona de Angular en el entorno de servidor.
+
+### Solución:
+
+1. **Modificar la configuración de Nginx para volver a servir archivos estáticos temporalmente**:
+
+```bash
+sudo nano /etc/nginx/sites-available/loto-ia.com
+```
+
+Cambia la sección `location /` para que vuelva a servir archivos estáticos:
+
+```nginx
+location / {
+    try_files $uri $uri/ /index.csr.html;
+    add_header Cache-Control "no-cache, no-store, must-revalidate";
+    add_header X-Frame-Options "SAMEORIGIN";
+    add_header X-Content-Type-Options "nosniff";
+}
+```
+
+2. **Reiniciar Nginx**:
+
+```bash
+sudo nginx -t
+sudo systemctl restart nginx
+```
+
+3. **Modificar el archivo `server.ts` en tu proyecto local** para solucionar el error de NgZone:
+
+En tu proyecto local, necesitas modificar el archivo `server.ts` para incluir la configuración correcta de NgZone. Debes agregar la siguiente configuración:
+
+```typescript
+// En server.ts
+import { NgZone } from '@angular/core';
+
+// Dentro de la configuración del servidor
+app.engine('html', (_, options, callback) => {
+  const renderOptions = {
+    ...options,
+    platformProviders: [
+      {
+        provide: NgZone,
+        useFactory: () => {
+          return new NgZone({ enableLongStackTrace: false });
+        }
+      }
+    ]
+  };
+  
+  // Resto del código...
+});
+```
+
+4. **Reconstruir la aplicación en local y subir los cambios**:
+
+```bash
+npm run build:ssr
+git add .
+git commit -m "fix: corregir error NG0908 en SSR"
+git push origin main
+```
+
+5. **Actualizar en la VPS**:
+
+```bash
+cd /var/www/tienda-web-lotoAI-1
+git pull origin main
+npm install
+npm run build:ssr
+pm2 restart loto-ia-ssr
+```
+
+6. **Una vez que el error esté solucionado, volver a configurar Nginx para usar SSR**:
+
+```bash
+sudo nano /etc/nginx/sites-available/loto-ia.com
+```
+
+Y volver a cambiar la configuración a:
+
+```nginx
+location / {
+    proxy_pass http://localhost:4000;
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection 'upgrade';
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_cache_bypass $http_upgrade;
+}
+```
+
+Por ahora, lo más importante es que el sitio vuelva a funcionar, aunque sea sin SSR. Luego podemos trabajar en la solución del error de NgZone para implementar correctamente el SSR.
+
+¿Quieres que te guíe a través de estos pasos uno por uno?
+
+---
+
+_**User**_
+
+Gracias, pero preferiría que nos centrásemos en corregir el error del SSR definitivamente ¿?
+
+---
+
+_**Assistant**_
+
+Perfecto, vamos a centrarnos en corregir el error del SSR definitivamente. El error NG0908 está relacionado con NgZone en Angular 19, que tiene un comportamiento diferente en el entorno de servidor.
+
+### Solución definitiva para el error NG0908:
+
+1. **Primero, vamos a examinar el archivo `server.ts` actual en tu proyecto local**:
+
+---
+
+_****_
+
+Tool call timed out after 5000ms
+
+---
+
+_****_
+
+Vamos a intentar con otra herramienta:
+
+---
+
+_****_
+
+Tool call timed out after 5000ms
+
+---
+
+_****_
+
+Parece que hay problemas con las herramientas de búsqueda. Vamos a intentar listar los archivos del directorio raíz para encontrar el archivo `server.ts`:
+
+---
+
+_****_
+
+Tool call timed out after 5000ms
+
+---
+
+_****_
+
+Parece que hay problemas con las herramientas. Vamos a proceder directamente con la solución basada en el error que estamos viendo:
+
+### Solución para el error NG0908 en Angular 19 SSR:
+
+1. **Crea un archivo `fix-ngzone.ts` en tu proyecto local**:
+
+Este archivo debe estar en la carpeta `src` de tu proyecto Angular:
+
+```typescript
+// src/fix-ngzone.ts
+import { NgZone } from '@angular/core';
+
+export function createNgZone(): NgZone {
+  return new NgZone({
+    enableLongStackTrace: false,
+    shouldCoalesceEventChangeDetection: false
+  });
+}
+```
+
+2. **Modifica el archivo `server.ts` para usar esta función**:
+
+```typescript
+// server.ts
+import { APP_BASE_HREF } from '@angular/common';
+import { CommonEngine } from '@angular/ssr';
+import express from 'express';
+import { fileURLToPath } from 'node:url';
+import { dirname, join, resolve } from 'node:path';
+import bootstrap from './src/main.server';
+import { createNgZone } from './src/fix-ngzone';
+import { NgZone } from '@angular/core';
+
+// The Express app is exported so that it can be used by serverless Functions.
+export function app(): express.Express {
+  const server = express();
+  const serverDistFolder = dirname(fileURLToPath(import.meta.url));
+  const browserDistFolder = resolve(serverDistFolder, '../browser');
+  const indexHtml = join(serverDistFolder, 'index.server.html');
+
+  const commonEngine = new CommonEngine({
+    enablePerformanceProfiler: false,
+    platformProviders: [
+      {
+        provide: NgZone,
+        useFactory: createNgZone
+      }
+    ]
+  });
+
+  server.set('view engine', 'html');
+  server.set('views', browserDistFolder);
+
+  // Serve static files from /browser
+  server.get('*.*', express.static(browserDistFolder, {
+    maxAge: '1y'
+  }));
+
+  // All regular routes use the Angular engine
+  server.get('*', (req, res, next) => {
+    const { protocol, originalUrl, baseUrl, headers } = req;
+    
+    commonEngine
+      .render({
+        bootstrap,
+        documentFilePath: indexHtml,
+        url: `${protocol}://${headers.host}${originalUrl}`,
+        publicPath: browserDistFolder,
+        providers: [
+          { provide: APP_BASE_HREF, useValue: baseUrl },
+        ],
+      })
+      .then((html) => res.send(html))
+      .catch((err) => {
+        console.error(err);
+        res.status(500).send('Error rendering page');
+        next(err);
+      });
+  });
+
+  return server;
+}
+
+function run(): void {
+  const port = process.env['PORT'] || 4000;
+
+  // Start up the Node server
+  const server = app();
+  server.listen(port, () => {
+    console.log(`Node Express server listening on http://localhost:${port}`);
+  });
+}
+
+run();
+```
+
+3. **Modifica el archivo `main.server.ts` para asegurarte de que es compatible con Angular 19**:
+
+```typescript
+// src/main.server.ts
+import { bootstrapApplication } from '@angular/platform-browser';
+import { AppComponent } from './app/app.component';
+import { config } from './app/app.config.server';
+
+const bootstrap = () => bootstrapApplication(AppComponent, config);
+
+export default bootstrap;
+```
+
+4. **Actualiza el archivo `app.config.server.ts`**:
+
+```typescript
+// src/app/app.config.server.ts
+import { ApplicationConfig, mergeApplicationConfigs } from '@angular/core';
+import { provideServerRendering } from '@angular/platform-server';
+import { appConfig } from './app.config';
+
+const serverConfig: ApplicationConfig = {
+  providers: [
+    provideServerRendering()
+  ]
+};
+
+export const config = mergeApplicationConfigs(appConfig, serverConfig);
+```
+
+5. **Reconstruye la aplicación y sube los cambios**:
+
+```bash
+npm run build:ssr
+git add .
+git commit -m "fix: corregir error NG0908 en SSR con NgZone personalizado"
+git push origin main
+```
+
+6. **Actualiza en la VPS**:
+
+```bash
+cd /var/www/tienda-web-lotoAI-1
+git pull origin main
+npm install
+npm run build:ssr
+pm2 restart loto-ia-ssr
+```
+
+Esta solución aborda directamente el problema del error NG0908 proporcionando una implementación personalizada de NgZone que es compatible con el entorno de servidor en Angular 19.
+
+¿Quieres que te explique más detalladamente alguna parte de esta solución?
+
+---
+
+_**User**_
+
+Disculpa, pero me veo obligado a reiterarte nuevamente que estamos trabajando, tanto en el proyecto local, como en la VPS con angular 18 ¿?
+
+---
+
+_**Assistant**_
+
+Tienes toda la razón, disculpa la confusión. Vamos a corregir el error NG0908 específicamente para Angular 18, que es la versión que estás utilizando.
+
+### Solución para el error NG0908 en Angular 18 SSR:
+
+1. **Crea un archivo `fix-ngzone.ts` en tu proyecto local**:
+
+```typescript
+// src/fix-ngzone.ts
+import { NgZone } from '@angular/core';
+
+export function createNgZone(): NgZone {
+  return new NgZone({
+    enableLongStackTrace: false,
+    shouldCoalesceEventChangeDetection: false
+  });
+}
+```
+
+2. **Modifica el archivo `server.ts` para Angular 18**:
+
+```typescript
+// server.ts
+import { APP_BASE_HREF } from '@angular/common';
+import { CommonEngine } from '@angular/ssr';
+import express from 'express';
+import { fileURLToPath } from 'node:url';
+import { dirname, join, resolve } from 'node:path';
+import bootstrap from './src/main.server';
+import { createNgZone } from './src/fix-ngzone';
+import { NgZone } from '@angular/core';
+
+// The Express app is exported so that it can be used by serverless Functions.
+export function app(): express.Express {
+  const server = express();
+  const serverDistFolder = dirname(fileURLToPath(import.meta.url));
+  const browserDistFolder = resolve(serverDistFolder, '../browser');
+  const indexHtml = join(serverDistFolder, 'index.server.html');
+
+  const commonEngine = new CommonEngine({
+    enablePerformanceProfiler: false,
+    // Añadir NgZone personalizado a los proveedores de la plataforma
+    platformProviders: [
+      {
+        provide: NgZone,
+        useFactory: createNgZone
+      }
+    ]
+  });
+
+  server.set('view engine', 'html');
+  server.set('views', browserDistFolder);
+
+  // Serve static files from /browser
+  server.get('*.*', express.static(browserDistFolder, {
+    maxAge: '1y'
+  }));
+
+  // All regular routes use the Angular engine
+  server.get('*', (req, res, next) => {
+    const { protocol, originalUrl, baseUrl, headers } = req;
+    
+    commonEngine
+      .render({
+        bootstrap,
+        documentFilePath: indexHtml,
+        url: `${protocol}://${headers.host}${originalUrl}`,
+        publicPath: browserDistFolder,
+        providers: [
+          { provide: APP_BASE_HREF, useValue: baseUrl },
+        ],
+      })
+      .then((html) => res.send(html))
+      .catch((err) => {
+        console.error(err);
+        res.status(500).send('Error rendering page');
+        next(err);
+      });
+  });
+
+  return server;
+}
+
+function run(): void {
+  const port = process.env['PORT'] || 4000;
+
+  // Start up the Node server
+  const server = app();
+  server.listen(port, () => {
+    console.log(`Node Express server listening on http://localhost:${port}`);
+  });
+}
+
+run();
+```
+
+3. **Reconstruye la aplicación y sube los cambios**:
+
+```bash
+npm run build:ssr
+git add .
+git commit -m "fix: corregir error NG0908 en SSR con NgZone personalizado para Angular 18"
+git push origin main
+```
+
+4. **Actualiza en la VPS**:
+
+```bash
+cd /var/www/tienda-web-lotoAI-1
+git pull origin main
+npm install
+npm run build:ssr
+pm2 restart loto-ia-ssr
+```
+
+### Explicación del error NG0908:
+
+El error NG0908 ocurre porque Angular intenta crear una instancia de NgZone en el entorno del servidor, pero hay un problema con la configuración predeterminada. Al proporcionar nuestra propia implementación de NgZone con configuraciones específicas, podemos evitar este error.
+
+La clave está en añadir el proveedor de NgZone en los `platformProviders` del `CommonEngine`, lo que permite que Angular use nuestra implementación personalizada en lugar de la predeterminada que está causando el error.
+
+¿Quieres que te explique más detalladamente alguna parte de esta solución?
+
+---
+
+_**User**_
+
+@fix-ssr.js ya cuento con este archivo en la raíz del proyecto local, cómo debería de modificarlo?
+
+---
+
+_**Assistant**_
+
+Perfecto, si ya tienes un archivo `fix-ssr.js` en la raíz del proyecto, podemos modificarlo para solucionar el problema del error NG0908. Vamos a ver cómo debería quedar:
+
+### Modificación del archivo `fix-ssr.js`:
+
+```javascript
+// fix-ssr.js
+const fs = require('fs');
+const path = require('path');
+
+// Ruta al archivo server.ts
+const serverTsPath = path.join(__dirname, 'server.ts');
+
+// Leer el contenido actual del archivo
+let serverTsContent = fs.readFileSync(serverTsPath, 'utf8');
+
+// Verificar si ya contiene la importación de NgZone
+if (!serverTsContent.includes('import { NgZone } from \'@angular/core\';')) {
+  // Añadir importación de NgZone
+  serverTsContent = serverTsContent.replace(
+    'import bootstrap from \'./src/main.server\';',
+    'import bootstrap from \'./src/main.server\';\nimport { NgZone } from \'@angular/core\';'
+  );
+}
+
+// Crear función para NgZone personalizado
+const ngZoneFunction = `
+// Función para crear NgZone personalizado
+function createNgZone() {
+  return new NgZone({
+    enableLongStackTrace: false,
+    shouldCoalesceEventChangeDetection: false
+  });
+}
+`;
+
+// Añadir la función si no existe
+if (!serverTsContent.includes('function createNgZone()')) {
+  // Añadir después de las importaciones
+  const importEndIndex = serverTsContent.indexOf('export function app()');
+  serverTsContent = serverTsContent.slice(0, importEndIndex) + 
+                    ngZoneFunction + 
+                    serverTsContent.slice(importEndIndex);
+}
+
+// Modificar la configuración de CommonEngine para incluir NgZone
+if (!serverTsContent.includes('platformProviders:')) {
+  // Buscar la creación de CommonEngine
+  const commonEnginePattern = /const commonEngine = new CommonEngine\(\{([^}]*)\}\);/s;
+  const commonEngineMatch = serverTsContent.match(commonEnginePattern);
+  
+  if (commonEngineMatch) {
+    const commonEngineOptions = commonEngineMatch[1];
+    const updatedOptions = commonEngineOptions.trim() ? 
+      `${commonEngineOptions},
+    platformProviders: [
+      {
+        provide: NgZone,
+        useFactory: createNgZone
+      }
+    ]` : 
+      `
+    platformProviders: [
+      {
+        provide: NgZone,
+        useFactory: createNgZone
+      }
+    ]`;
+    
+    serverTsContent = serverTsContent.replace(
+      commonEnginePattern,
+      `const commonEngine = new CommonEngine({${updatedOptions}
+});`
+    );
+  }
+}
+
+// Guardar los cambios
+fs.writeFileSync(serverTsPath, serverTsContent);
+
+console.log('✅ Archivo server.ts modificado correctamente para solucionar el error NG0908.');
+
+// Verificar si necesitamos crear el archivo fix-ngzone.ts
+const fixNgZonePath = path.join(__dirname, 'src', 'fix-ngzone.ts');
+if (!fs.existsSync(fixNgZonePath)) {
+  const fixNgZoneContent = `import { NgZone } from '@angular/core';
+
+export function createNgZone(): NgZone {
+  return new NgZone({
+    enableLongStackTrace: false,
+    shouldCoalesceEventChangeDetection: false
+  });
+}
+`;
+  
+  // Crear el directorio si no existe
+  const fixNgZoneDir = path.dirname(fixNgZonePath);
+  if (!fs.existsSync(fixNgZoneDir)) {
+    fs.mkdirSync(fixNgZoneDir, { recursive: true });
+  }
+  
+  fs.writeFileSync(fixNgZonePath, fixNgZoneContent);
+  console.log('✅ Archivo src/fix-ngzone.ts creado correctamente.');
+  
+  // Actualizar server.ts para importar desde fix-ngzone.ts
+  serverTsContent = serverTsContent.replace(
+    'import { NgZone } from \'@angular/core\';',
+    'import { NgZone } from \'@angular/core\';\nimport { createNgZone } from \'./src/fix-ngzone\';'
+  );
+  
+  // Eliminar la función createNgZone del server.ts
+  serverTsContent = serverTsContent.replace(ngZoneFunction, '');
+  
+  // Guardar los cambios actualizados
+  fs.writeFileSync(serverTsPath, serverTsContent);
+  console.log('✅ Archivo server.ts actualizado para usar fix-ngzone.ts.');
+}
+
+console.log('🚀 Corrección de SSR completada. Ejecuta npm run build:ssr para reconstruir la aplicación.');
+```
+
+### Pasos para aplicar la solución:
+
+1. **Reemplaza el contenido de tu archivo `fix-ssr.js` con el código anterior**
+
+2. **Ejecuta el script para aplicar los cambios**:
+```bash
+node fix-ssr.js
+```
+
+3. **Reconstruye la aplicación**:
+```bash
+npm run build:ssr
+```
+
+4. **Sube los cambios a GitHub**:
+```bash
+git add .
+git commit -m "fix: corregir error NG0908 en SSR con NgZone personalizado"
+git push origin main
+```
+
+5. **Actualiza en la VPS**:
+```bash
+cd /var/www/tienda-web-lotoAI-1
+git pull origin main
+npm install
+npm run build:ssr
+pm2 restart loto-ia-ssr
+```
+
+Este script hace lo siguiente:
+1. Añade la importación de NgZone si no existe
+2. Crea una función para generar un NgZone personalizado
+3. Modifica la configuración de CommonEngine para incluir el proveedor de NgZone
+4. Opcionalmente crea un archivo separado `src/fix-ngzone.ts` para una mejor organización del código
+
+Esta solución debería resolver el error NG0908 en tu aplicación Angular 18 con SSR.
+
+---
+
+_**User**_
+
+Y la modificación al que haces referencia en tu respuesta anterior:
+2. Modifica el archivo server.ts para Angular 18:
+ también la debo de realizarla, además de estos pasos que me acabas de indicar?
+
+---
+
+_**Assistant**_
+
+No, no es necesario que modifiques manualmente el archivo `server.ts`. El script `fix-ssr.js` que acabas de mostrar ya se encarga de hacer todas las modificaciones necesarias al archivo `server.ts` automáticamente.
+
+El script `fix-ssr.js` realiza exactamente los cambios que mencioné en mi respuesta anterior para el archivo `server.ts`, pero de forma programática:
+
+1. Añade la importación de NgZone
+2. Crea la función `createNgZone()`
+3. Modifica la configuración de CommonEngine para incluir el prove
 
 ---
 

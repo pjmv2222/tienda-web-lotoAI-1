@@ -6,6 +6,8 @@ import express from 'express';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import bootstrap from './src/main.server';
+import { NgZone } from '@angular/core';
+import { createNgZone } from './src/fix-ngzone';
 import { Request, Response, NextFunction } from 'express';
 
 // The Express app is exported so that it can be used by serverless Functions.
