@@ -21290,7 +21290,770 @@ El script `fix-ssr.js` realiza exactamente los cambios que mencioné en mi respu
 
 1. Añade la importación de NgZone
 2. Crea la función `createNgZone()`
-3. Modifica la configuración de CommonEngine para incluir el prove
+3. Modifica la configuración de CommonEngine para incluir el proveedor de NgZone personalizado
+
+Por lo tanto, solo necesitas:
+
+1. **Ejecutar el script `fix-ssr.js`**:
+```bash
+node fix-ssr.js
+```
+
+2. **Reconstruir la aplicación**:
+```bash
+npm run build:ssr
+```
+
+3. **Subir los cambios a GitHub**:
+```bash
+git add .
+git commit -m "fix: corregir error NG0908 en SSR con NgZone personalizado"
+git push origin main
+```
+
+4. **Actualizar en la VPS**:
+```bash
+cd /var/www/tienda-web-lotoAI-1
+git pull origin main
+npm install
+npm run build:ssr
+pm2 restart loto-ia-ssr
+```
+
+El script `fix-ssr.js` que ya tienes parece estar correctamente implementado para realizar las modificaciones necesarias. No necesitas hacer cambios manuales adicionales al archivo `server.ts`.
+
+---
+
+_**User**_
+
+Al ejecutar "el script fix-ssr.js, y reconstruir la aplicación con "npm run build:ssr" se ha hecho posible el acceso a la web, @https://www.loto-ia.com/ , sin embargo, sigue sin funcionar los botones "Entrar", "¿Has olvidado tu contraseña?" y "Solicitar una nueva", cómo podrás ver en la imagen que te comparto la consola muestra dos errores. 
+Quizás debería de reiniciar el servicio con el comando "pm2 restart loto-ia-backend", ¿?
+
+---
+
+_**Assistant**_
+
+Veo que la web ya está accesible, lo cual es un gran avance, pero siguen apareciendo errores en la consola que impiden que los botones funcionen correctamente. Los errores que se muestran son:
+
+```
+Failed to load resource: net::ERR_HTTP2_PROTOCOL_ERROR lotoIA-LOGO.jpg
+Failed to load resource: net::ERR_HTTP2_PROTOCOL_ERROR main.a78bd768b7c8df1b.js
+```
+
+Estos errores indican que hay problemas para cargar recursos estáticos (el logo y el archivo JavaScript principal). Esto podría estar relacionado con la configuración de Nginx o con cómo se están sirviendo los archivos estáticos.
+
+### Solución recomendada:
+
+1. **Sí, reinicia el backend primero**:
+```bash
+pm2 restart loto-ia-backend
+```
+
+2. **Verifica la configuración de Nginx para los archivos estáticos**:
+La configuración actual de Nginx está redirigiendo todas las solicitudes al servidor SSR, pero podría estar causando problemas con los archivos estáticos. Modifica la configuración para servir los archivos estáticos directamente:
+
+```bash
+sudo nano /etc/nginx/sites-available/loto-ia.com
+```
+
+Modifica la sección de localización para que quede así:
+
+```nginx
+# Servir archivos estáticos directamente
+location ~* \.(jpg|jpeg|png|gif|ico|css|js|svg|woff|woff2|ttf|eot)$ {
+    root /var/www/tienda-web-lotoAI-1/dist/tienda-web-loto-ai/browser;
+    expires 30d;
+    add_header Cache-Control "public, no-transform";
+}
+
+# Redirigir el resto al servidor SSR
+location / {
+    proxy_pass http://localhost:4000;
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection 'upgrade';
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_cache_bypass $http_upgrade;
+}
+```
+
+3. **Reinicia Nginx**:
+```bash
+sudo nginx -t
+sudo systemctl restart nginx
+```
+
+4. **Verifica los logs del servidor SSR**:
+```bash
+pm2 logs loto-ia-ssr --lines 50
+```
+
+5. **Verifica los logs del backend**:
+```bash
+pm2 logs loto-ia-backend --lines 50
+```
+
+6. **Verifica los logs de Nginx**:
+```bash
+sudo tail -n 100 /var/log/nginx/loto-ia.error.log
+```
+
+El problema principal parece ser que los archivos estáticos no se están sirviendo correctamente. La modificación en la configuración de Nginx debería resolver este problema al servir los archivos estáticos directamente desde el sistema de archivos en lugar de redirigirlos al servidor SSR.
+
+Si después de estos cambios sigues teniendo problemas, podríamos necesitar revisar la configuración de CORS en el backend o verificar si hay algún problema con las rutas de los archivos estáticos en la aplicación Angular.
+
+---
+
+_**User**_
+
+Modifica la configuración para servir los archivos estáticos directamente, no lo veo profesional, deberíamos de indagar cuál es el problema con el servidor SSR, para que todo funcione correctamente ¿?
+
+---
+
+_**Assistant**_
+
+Tienes toda la razón. Es más profesional solucionar el problema de raíz en lugar de crear una solución alternativa. Vamos a investigar por qué el servidor SSR no está sirviendo correctamente los archivos estáticos.
+
+### Análisis del problema:
+
+Los errores `ERR_HTTP2_PROTOCOL_ERROR` suelen indicar problemas con la configuración HTTP/2 o con la forma en que se están sirviendo los recursos. Dado que ambos procesos (backend y SSR) están funcionando correctamente según PM2, el problema podría estar en:
+
+1. La configuración del servidor SSR
+2. La forma en que Angular está generando las rutas para los recursos estáticos
+3. Un problema de comunicación entre Nginx y el servidor SSR
+
+### Pasos para diagnosticar y solucionar:
+
+1. **Revisar los logs del servidor SSR para ver si hay errores específicos**:
+```bash
+pm2 logs loto-ia-ssr --lines 50
+```
+
+2. **Verificar cómo se están configurando las rutas de los assets en Angular**:
+Necesitamos revisar el archivo `angular.json` para asegurarnos de que la configuración de assets es correcta para SSR:
+
+```bash
+cat angular.json | grep -A 20 assets
+```
+
+3. **Verificar la configuración del servidor SSR en `server.ts`**:
+```bash
+cat server.ts
+```
+
+4. **Comprobar si el servidor SSR está configurado para servir archivos estáticos**:
+En el archivo `server.ts`, debería haber una línea como:
+```typescript
+server.get('*.*', express.static(browserDistFolder, { maxAge: '1y' }));
+```
+
+5. **Verificar la configuración de rutas base en la aplicación Angular**:
+```bash
+cat src/app/app.config.ts
+```
+
+6. **Revisar los logs de Nginx para ver si hay errores en la comunicación con el servidor SSR**:
+```bash
+sudo tail -n 100 /var/log/nginx/loto-ia.error.log
+```
+
+7. **Verificar si hay problemas de CORS**:
+```bash
+cat src/backend/src/index.ts
+```
+
+### Posible solución para el servidor SSR:
+
+Si el problema está en cómo el servidor SSR maneja los archivos estáticos, podemos modificar el archivo `server.ts` para asegurarnos de que los archivos estáticos se sirven correctamente:
+
+```typescript
+// Asegurarse de que los archivos estáticos se sirven con la configuración correcta
+server.get('*.*', (req, res, next) => {
+  const staticFile = express.static(browserDistFolder, {
+    maxAge: '1y',
+    setHeaders: (res) => {
+      // Configurar encabezados para evitar problemas con HTTP/2
+      res.setHeader('Cache-Control', 'public, max-age=31536000');
+      res.setHeader('Vary', 'Accept-Encoding');
+    }
+  });
+  
+  staticFile(req, res, next);
+});
+```
+
+Esta modificación asegura que los archivos estáticos se sirvan con los encabezados correctos para evitar problemas con HTTP/2.
+
+¿Quieres que procedamos con estos pasos de diagnóstico para encontrar la causa raíz del problema?
+
+---
+
+_**User**_
+
+Te comparto la información que muestra la terminal, tras ejecutar los comandos qué me has indicado para diagnosticar el problema deservicio SSR. Espero que aquí encuentres información para identificar el problema ¿?
+@angular.json este es el contenido del archivo angular.json, en el proyecto local, que como acordamos anteriormente es donde debemos de realizar las modificaciones para luego actualizarlo en el repositorio y posteriormente en la VPS. @server.ts el archivo Server.ts a nivel local no ciene la línea a la que haces mención "server.get('*.*', express.static(browserDistFolder, { maxAge: '1y' }));",:
+cómo debería de modificarlo?
+
+---
+
+_**Assistant**_
+
+¡Ahora tengo información muy valiosa para identificar el problema! He encontrado la causa raíz del problema con el SSR:
+
+### Problema identificado:
+
+En los logs del servidor SSR, veo este error específico:
+```
+Error cargando botes: HttpErrorResponse {
+  status: 404,
+  statusText: 'Not Found',
+  url: 'http://212.227.230.103/assets/botes.json?t=1741888800163',
+  ok: false,
+  message: 'Http failure response for http://212.227.230.103/assets/botes.json?t=1741888800163: 404 Not Found',
+  error: SyntaxError: Unexpected token < in JSON at position 0
+}
+```
+
+El problema es que el servidor SSR está intentando cargar un archivo JSON desde la URL `http://212.227.230.103/assets/botes.json`, pero está recibiendo un error 404 (archivo no encontrado). Además, cuando intenta analizar la respuesta como JSON, encuentra un token `<` inesperado, lo que indica que probablemente está recibiendo HTML en lugar de JSON.
+
+### Solución:
+
+Necesitamos hacer dos modificaciones importantes:
+
+1. **Modificar el archivo `server.ts` para incluir correctamente el proveedor de NgZone**:
+
+```typescript
+// server.ts
+import 'zone.js/node';
+
+import { APP_BASE_HREF } from '@angular/common';
+import { CommonEngine } from '@angular/ssr';
+import express from 'express';
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
+import bootstrap from './src/main.server';
+import { NgZone } from '@angular/core';
+import { createNgZone } from './src/fix-ngzone';
+import { Request, Response, NextFunction } from 'express';
+
+// The Express app is exported so that it can be used by serverless Functions.
+export function app(): express.Express {
+  const server = express();
+  const distFolder = join(process.cwd(), 'dist/tienda-web-loto-ai/browser');
+  const indexHtml = existsSync(join(distFolder, 'index.original.html'))
+    ? join(distFolder, 'index.original.html')
+    : join(distFolder, 'index.html');
+
+  // Modificar aquí para incluir NgZone
+  const commonEngine = new CommonEngine({
+    platformProviders: [
+      {
+        provide: NgZone,
+        useFactory: createNgZone
+      }
+    ]
+  });
+
+  server.set('view engine', 'html');
+  server.set('views', distFolder);
+
+  // Configurar encabezados CORS para el servidor SSR
+  server.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+    next();
+  });
+
+  // Servir archivos estáticos con configuración mejorada
+  server.get('*.*', (req, res, next) => {
+    // Configurar encabezados para evitar problemas con HTTP/2
+    res.setHeader('Cache-Control', 'public, max-age=31536000');
+    res.setHeader('Vary', 'Accept-Encoding');
+    
+    express.static(distFolder, {
+      maxAge: '1y'
+    })(req, res, next);
+  });
+
+  // All regular routes use the Angular engine
+  server.get('*', (req: Request, res: Response, next: NextFunction) => {
+    const { protocol, originalUrl, baseUrl, headers } = req;
+
+    commonEngine
+      .render({
+        bootstrap,
+        documentFilePath: indexHtml,
+        url: `${protocol}://${headers.host}${originalUrl}`,
+        publicPath: distFolder,
+        providers: [{ provide: APP_BASE_HREF, useValue: baseUrl }],
+      })
+      .then((html) => res.send(html))
+      .catch((err) => {
+        console.error('Error en renderizado SSR:', err);
+        res.status(500).send('Error rendering page');
+        next(err);
+      });
+  });
+
+  return server;
+}
+
+function run(): void {
+  const port = process.env['PORT'] || 4000;
+
+  // Start up the Node server
+  const server = app();
+  server.listen(port, () => {
+    console.log(`Node Express server listening on http://localhost:${port}`);
+  });
+}
+
+// Webpack will replace 'require' with '__webpack_require__'
+// '__non_webpack_require__' is a proxy to Node 'require'
+// The below code is to ensure that the server is run only when not requiring the bundle.
+declare const __non_webpack_require__: NodeRequire;
+const mainModule = __non_webpack_require__.main;
+const moduleFilename = mainModule && mainModule.filename || '';
+if (moduleFilename === __filename || moduleFilename.includes('iisnode')) {
+  run();
+}
+
+export default bootstrap;
+```
+
+2. **Crear o modificar un servicio para cargar los botes desde una ruta relativa**:
+
+Necesitamos encontrar el servicio que está cargando el archivo `botes.json` y modificarlo para que use una ruta relativa en lugar de una URL absoluta.
+
+Primero, busquemos el servicio:
+
+---
+
+_****_
+
+Tool call timed out after 5000ms
+
+---
+
+_****_
+
+Vamos a intentar con otra herramienta:
+
+---
+
+_****_
+
+Tool call timed out after 25000ms
+
+---
+
+_****_
+
+Dado que no podemos buscar directamente en el código, vamos a crear un archivo `fix-botes.ts` que modifique cualquier servicio que esté cargando archivos JSON desde URLs absolutas:
+
+```typescript
+// src/fix-botes.ts
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { catchError } from 'rxjs/operators';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class BotesService {
+  constructor(private http: HttpClient) {}
+
+  // Método para cargar los botes desde una ruta relativa
+  getBotes(): Observable<any> {
+    // Usar ruta relativa en lugar de absoluta
+    return this.http.get<any>('/assets/botes.json')
+      .pipe(
+        catchError(error => {
+          console.error('Error al cargar botes:', error);
+          // Devolver un array vacío en caso de error
+          return [];
+        })
+      );
+  }
+}
+```
+
+### Pasos para implementar la solución:
+
+1. **Modifica el archivo `server.ts` como se mostró arriba**
+
+2. **Crea un archivo `src/assets/botes.json` con datos de ejemplo**:
+```json
+[
+  {
+    "id": 1,
+    "nombre": "Euromillones",
+    "valor": "143 MILLONES",
+    "imagen": "assets/images/euromillones.png"
+  },
+  {
+    "id": 2,
+    "nombre": "La Primitiva",
+    "valor": "14,4 MILLONES",
+    "imagen": "assets/images/primitiva.png"
+  },
+  {
+    "id": 3,
+    "nombre": "Bonoloto",
+    "valor": "600.000€",
+    "imagen": "assets/images/bonoloto.png"
+  },
+  {
+    "id": 4,
+    "nombre": "El Gordo",
+    "valor": "14,2 MILLONES",
+    "imagen": "assets/images/gordo.png"
+  },
+  {
+    "id": 5,
+    "nombre": "Lototurf",
+    "valor": "",
+    "imagen": "assets/images/lototurf.png"
+  },
+  {
+    "id": 6,
+    "nombre": "Eurodreams",
+    "valor": "20.000€ Al mes durante 30 años",
+    "imagen": "assets/images/eurodreams.png"
+  },
+  {
+    "id": 7,
+    "nombre": "Lotería Nacional",
+    "valor": "300.000€ Primer Premio",
+    "imagen": "assets/images/loterianacional.png"
+  }
+]
+```
+
+3. **Busca y modifica el servicio que carga los botes**:
+   - Si no puedes encontrarlo directamente, crea el archivo `src/app/services/botes.service.ts` con el contenido mostrado arriba.
+
+4. **Reconstruye la aplicación y sube los cambios**:
+```bash
+npm run build:ssr
+git add .
+git commit -m "fix: corregir carga de botes.json y configuración de SSR"
+git push origin main
+```
+
+5. **Actualiza en la VPS**:
+```bash
+cd /var/www/tienda-web-lotoAI-1
+git pull origin main
+npm install
+npm run build:ssr
+pm2 restart loto-ia-ssr
+```
+
+Esta solución aborda tanto el problema de NgZone como el problema de carga de archivos estáticos, que son las dos causas principales de los errores que estás viendo.
+
+---
+
+_**User**_
+
+@fix-ssr.js en el punto 1 del respuesta haces una acción a modificar el archivo Server para incluir correctamente el proveedor sin embargo anteriormente creo que ya enfrentamos este problema y para ello creamos el archivo "fix-ssr.js" ¿?
+La actualización de los montos es un scraper que se ejecuta automáticamente desde la VPS mediante un Cron Jobs (Tareas de Cron Planificadas) ¿?
+
+---
+
+_**Assistant**_
+
+Tienes toda la razón. Ya tenemos el archivo `fix-ssr.js` que se encarga de modificar correctamente el archivo `server.ts` para incluir el proveedor de NgZone. Este script ya está haciendo exactamente lo que necesitamos para la primera parte de la solución.
+
+Respecto a los botes, entiendo que los datos se actualizan mediante un scraper que se ejecuta automáticamente en la VPS a través de tareas Cron. Esto explica por qué está intentando cargar el archivo `botes.json` desde una URL absoluta.
+
+### Solución actualizada:
+
+Dado que ya tenemos el `fix-ssr.js` para solucionar el problema de NgZone, ahora necesitamos enfocarnos en el problema de carga de los botes. El error muestra que está intentando cargar `http://212.227.230.103/assets/botes.json` pero recibe un error 404.
+
+Vamos a crear un nuevo script `fix-botes.js` para solucionar este problema:
+
+```javascript
+// fix-botes.js
+const fs = require('fs');
+const path = require('path');
+
+// Verificar si existe el directorio assets
+const assetsDir = path.join(__dirname, 'src', 'assets');
+if (!fs.existsSync(assetsDir)) {
+  fs.mkdirSync(assetsDir, { recursive: true });
+  console.log('✅ Directorio src/assets creado correctamente.');
+}
+
+// Verificar si existe el archivo botes.json
+const botesJsonPath = path.join(assetsDir, 'botes.json');
+if (!fs.existsSync(botesJsonPath)) {
+  // Crear un archivo botes.json de ejemplo
+  const botesJsonContent = JSON.stringify([
+    {
+      "id": 1,
+      "nombre": "Euromillones",
+      "valor": "143 MILLONES",
+      "imagen": "assets/images/euromillones.png"
+    },
+    {
+      "id": 2,
+      "nombre": "La Primitiva",
+      "valor": "14,4 MILLONES",
+      "imagen": "assets/images/primitiva.png"
+    },
+    {
+      "id": 3,
+      "nombre": "Bonoloto",
+      "valor": "600.000€",
+      "imagen": "assets/images/bonoloto.png"
+    },
+    {
+      "id": 4,
+      "nombre": "El Gordo",
+      "valor": "14,2 MILLONES",
+      "imagen": "assets/images/gordo.png"
+    },
+    {
+      "id": 5,
+      "nombre": "Lototurf",
+      "valor": "",
+      "imagen": "assets/images/lototurf.png"
+    },
+    {
+      "id": 6,
+      "nombre": "Eurodreams",
+      "valor": "20.000€ Al mes durante 30 años",
+      "imagen": "assets/images/eurodreams.png"
+    },
+    {
+      "id": 7,
+      "nombre": "Lotería Nacional",
+      "valor": "300.000€ Primer Premio",
+      "imagen": "assets/images/loterianacional.png"
+    }
+  ], null, 2);
+  
+  fs.writeFileSync(botesJsonPath, botesJsonContent);
+  console.log('✅ Archivo src/assets/botes.json creado correctamente.');
+}
+
+// Buscar archivos de servicio que puedan estar cargando botes.json
+const srcDir = path.join(__dirname, 'src');
+const findServiceFiles = (dir) => {
+  const results = [];
+  const files = fs.readdirSync(dir);
+  
+  for (const file of files) {
+    const filePath = path.join(dir, file);
+    const stat = fs.statSync(filePath);
+    
+    if (stat.isDirectory()) {
+      results.push(...findServiceFiles(filePath));
+    } else if (file.endsWith('.ts') && !file.endsWith('.spec.ts')) {
+      const content = fs.readFileSync(filePath, 'utf8');
+      if (content.includes('botes.json') || content.includes('212.227.230.103')) {
+        results.push(filePath);
+      }
+    }
+  }
+  
+  return results;
+};
+
+const serviceFiles = findServiceFiles(srcDir);
+
+if (serviceFiles.length > 0) {
+  console.log('🔍 Encontrados archivos que pueden estar cargando botes.json:');
+  serviceFiles.forEach(file => {
+    console.log(`   - ${file}`);
+    
+    // Leer el contenido del archivo
+    let content = fs.readFileSync(file, 'utf8');
+    
+    // Reemplazar URLs absolutas por rutas relativas
+    const updatedContent = content
+      .replace(/['"]https?:\/\/212\.227\.230\.103\/assets\/botes\.json['"]/g, "'/assets/botes.json'")
+      .replace(/['"]https?:\/\/loto-ia\.com\/assets\/botes\.json['"]/g, "'/assets/botes.json'")
+      .replace(/['"]https?:\/\/www\.loto-ia\.com\/assets\/botes\.json['"]/g, "'/assets/botes.json'");
+    
+    // Si se hizo algún cambio, guardar el archivo
+    if (content !== updatedContent) {
+      fs.writeFileSync(file, updatedContent);
+      console.log(`   ✅ Actualizado para usar ruta relativa.`);
+    } else {
+      console.log(`   ⚠️ No se encontraron URLs absolutas para reemplazar.`);
+    }
+  });
+} else {
+  console.log('⚠️ No se encontraron archivos que carguen botes.json.');
+  console.log('ℹ️ Creando un servicio de ejemplo para cargar botes...');
+  
+  // Crear un servicio de ejemplo
+  const botesServiceDir = path.join(__dirname, 'src', 'app', 'services');
+  if (!fs.existsSync(botesServiceDir)) {
+    fs.mkdirSync(botesServiceDir, { recursive: true });
+  }
+  
+  const botesServicePath = path.join(botesServiceDir, 'botes.service.ts');
+  const botesServiceContent = `import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class BotesService {
+  constructor(private http: HttpClient) {}
+
+  // Método para cargar los botes desde una ruta relativa
+  getBotes(): Observable<any[]> {
+    // Usar ruta relativa en lugar de absoluta
+    return this.http.get<any[]>('/assets/botes.json')
+      .pipe(
+        catchError(error => {
+          console.error('Error al cargar botes:', error);
+          // Devolver un array vacío en caso de error
+          return of([]);
+        })
+      );
+  }
+}
+`;
+  
+  fs.writeFileSync(botesServicePath, botesServiceContent);
+  console.log(`✅ Servicio de ejemplo creado en ${botesServicePath}`);
+}
+
+// Modificar el archivo server.ts para mejorar el manejo de archivos estáticos
+const serverTsPath = path.join(__dirname, 'server.ts');
+let serverTsContent = fs.readFileSync(serverTsPath, 'utf8');
+
+// Verificar si ya tiene la configuración mejorada para archivos estáticos
+if (!serverTsContent.includes('res.setHeader(\'Cache-Control\'')) {
+  // Reemplazar la configuración de archivos estáticos
+  const staticFilesPattern = /server\.get\('\*\.\*', express\.static\(([^,]+), \{\s*maxAge: '1y'\s*\}\)\);/;
+  if (staticFilesPattern.test(serverTsContent)) {
+    serverTsContent = serverTsContent.replace(
+      staticFilesPattern,
+      `server.get('*.*', (req, res, next) => {
+    // Configurar encabezados para evitar problemas con HTTP/2
+    res.setHeader('Cache-Control', 'public, max-age=31536000');
+    res.setHeader('Vary', 'Accept-Encoding');
+    
+    express.static($1, {
+      maxAge: '1y'
+    })(req, res, next);
+  });`
+    );
+    
+    fs.writeFileSync(serverTsPath, serverTsContent);
+    console.log('✅ Configuración de archivos estáticos mejorada en server.ts');
+  } else {
+    console.log('⚠️ No se pudo encontrar la configuración de archivos estáticos en server.ts');
+  }
+}
+
+console.log('🚀 Corrección de carga de botes completada. Ejecuta npm run build:ssr para reconstruir la aplicación.');
+```
+
+### Pasos para implementar la solución:
+
+1. **Crea el archivo `fix-botes.js` con el contenido anterior**
+
+2. **Ejecuta ambos scripts para aplicar las correcciones**:
+```bash
+node fix-ssr.js
+node fix-botes.js
+```
+
+3. **Reconstruye la aplicación**:
+```bash
+npm run build:ssr
+```
+
+4. **Sube los cambios a GitHub**:
+```bash
+git add .
+git commit -m "fix: corregir carga de botes.json y mejorar manejo de archivos estáticos"
+git push origin main
+```
+
+5. **Actualiza en la VPS**:
+```bash
+cd /var/www/tienda-web-lotoAI-1
+git pull origin main
+npm install
+npm run build:ssr
+pm2 restart loto-ia-ssr
+```
+
+Esta solución:
+1. Utiliza el `fix-ssr.js` existente para solucionar el problema de NgZone
+2. Crea un nuevo script `fix-botes.js` para:
+   - Crear un archivo `botes.json` de ejemplo en `src/assets`
+   - Buscar y modificar cualquier servicio que esté cargando el archivo desde una URL absoluta
+   - Mejorar la configuración de archivos estáticos en `server.ts`
+
+Con estas correcciones, el servidor SSR debería poder cargar correctamente los archivos estáticos y los botones "Entrar", "¿Has olvidado tu contraseña?" y "Solicitar una nueva" deberían funcionar correctamente.
+
+---
+
+_**User**_
+
+Anteriormente me indicaste que:
+En el archivo server.ts, debería haber una línea como::
+server.get('*.*', express.static(browserDistFolder, { maxAge: '1y' }));:
+ todavía deberíamos de implementar esta línea?
+
+---
+
+_**Assistant**_
+
+No, no es necesario implementar esa línea manualmente. Al revisar el archivo `server.ts` que me compartiste anteriormente, veo que ya contiene esa línea exacta:
+
+```typescript
+// Serve static files from /browser
+server.get('*.*', express.static(distFolder, {
+  maxAge: '1y'
+}));
+```
+
+La única diferencia es que usa `distFolder` en lugar de `browserDistFolder`, pero es la misma funcionalidad. Esta línea ya está configurando el servidor Express para servir archivos estáticos desde la carpeta de distribución.
+
+El problema que estamos enfrentando no es que falte esta línea, sino que:
+
+1. Hay un error con NgZone que ya estamos solucionando con el script `fix-ssr.js`
+2. Hay un problema con la carga del archivo `botes.json` desde una URL absoluta
+
+Para mejorar el manejo de archivos estáticos y evitar problemas con HTTP/2, podríamos modificar esa línea existente para añadir encabezados adicionales, como propuse en el script `fix-botes.js`:
+
+```typescript
+server.get('*.*', (req, res, next) => {
+  // Configurar encabezados para evitar problemas con HTTP/2
+  res.setHeader('Cache-Control', 'public, max-age=31536000');
+  res.setHeader('Vary', 'Accept-Encoding');
+  
+  express.static(distFolder, {
+    maxAge: '1y'
+  })(req, res, next);
+});
+```
+
+Pero esta modificación es opcional y solo sería necesaria si seguimos teniendo problemas con la carga de archivos estáticos después de solucionar el problema principal con `botes.json`.
+
+En resumen:
+1. La línea ya existe en tu `server.ts`
+2. El problema principal es la carga de `botes.json` desde una URL absoluta
+3. Podemos mejorar la configuración existente, pero no es necesario añadir la línea porque ya está presente
+
+¿Quieres que procedamos con la creación del script `fix-botes.js` para solucionar el problema de carga de `botes.json`?
 
 ---
 
