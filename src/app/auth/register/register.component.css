@@ -1,53 +1,166 @@
 .register-container {
-  max-width: 400px;
-  margin: 40px auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
   padding: 20px;
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  background-color: #f5f5f5;
+}
+
+.register-card {
+  background: white;
+  padding: 2rem;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 500px;
+}
+
+h2 {
+  text-align: center;
+  color: #333;
+  margin-bottom: 1.5rem;
 }
 
 .form-group {
-  margin-bottom: 20px;
+  margin-bottom: 1.5rem;
 }
 
 label {
   display: block;
-  margin-bottom: 5px;
-  color: #333;
+  margin-bottom: 0.5rem;
+  color: #555;
+  font-weight: 500;
 }
 
-input[type="email"],
-input[type="password"] {
+.form-control {
   width: 100%;
-  padding: 8px;
+  padding: 0.75rem;
   border: 1px solid #ddd;
-  border-radius: 4px;
+  border-radius: 5px;
+  font-size: 1rem;
+  transition: border-color 0.2s;
 }
 
-.is-invalid {
+.form-control:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.form-control.is-invalid {
   border-color: #dc3545;
 }
 
-.error-message {
+.invalid-feedback {
   color: #dc3545;
-  font-size: 12px;
-  margin-top: 5px;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
 }
 
-button {
+.alert {
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  border-radius: 5px;
+}
+
+.alert-danger {
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  color: #721c24;
+}
+
+.alert-success {
+  background-color: #d4edda;
+  border: 1px solid #c3e6cb;
+  color: #155724;
+}
+
+.form-actions {
+  margin-top: 1.5rem;
+}
+
+.btn {
   width: 100%;
-  padding: 10px;
+  padding: 0.75rem;
+  border: none;
+  border-radius: 5px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btn-primary {
   background-color: #007bff;
   color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
 }
 
-button:disabled {
+.btn-primary:hover:not(:disabled) {
+  background-color: #0056b3;
+}
+
+.btn:disabled {
   background-color: #ccc;
   cursor: not-allowed;
+}
+
+.form-links {
+  margin-top: 1.5rem;
+  text-align: center;
+  color: #666;
+}
+
+.form-links a {
+  color: #007bff;
+  text-decoration: none;
+  margin-left: 0.5rem;
+  transition: color 0.2s;
+}
+
+.form-links a:hover {
+  color: #0056b3;
+  text-decoration: underline;
+}
+
+.password-input {
+  position: relative;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #666;
+  cursor: pointer;
+  padding: 0;
+}
+
+.password-toggle:hover {
+  color: #333;
+}
+
+.spinner-border {
+  width: 1rem;
+  height: 1rem;
+  border-width: 0.2em;
+}
+
+@media (max-width: 480px) {
+  .register-card {
+    padding: 1.5rem;
+  }
+  
+  .form-group {
+    margin-bottom: 1rem;
+  }
+  
+  .btn {
+    padding: 0.625rem;
+  }
 }
 
 /* Estilos del Breadcrumb */

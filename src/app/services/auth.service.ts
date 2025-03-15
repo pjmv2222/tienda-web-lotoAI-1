@@ -1,151 +1,120 @@
-import { Injectable, PLATFORM_ID, Inject } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, BehaviorSubject, of, delay } from 'rxjs';
-import { map, tap } from 'rxjs/operators';
+import { BehaviorSubject, Observable, tap } from 'rxjs';
+import { User, UserLogin, UserRegistration, UserPasswordReset, UserPasswordForgot } from '../models/user.model';
 import { environment } from '../../environments/environment';
-import { isPlatformBrowser } from '@angular/common';
 
-interface AuthResponse {
-  token: string;
-  user: User;
-}
-
-interface User {
+interface UserProfile {
   id: string;
   email: string;
   nombre: string;
-  apellidos: string;
-  // ... otros campos del usuario
-}
-
-interface RegisterData {
-  email: string;
-  password: string;
-  nombre: string;
-  apellidos: string;
-  nif: string;
-  fechaNacimiento: string;
-  direccion: string;
-  codigoPostal: string;
-  poblacion: string;
-  provincia: string;
-  telefono: string;
-}
-
-interface RegisterResponse {
-  success: boolean;
-  message: string;
-  verificationToken?: string;
+  apellido: string;
+  telefono?: string;
+  fechaRegistro: Date;
 }
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
-  private apiUrl = environment.apiUrl;
   private currentUserSubject: BehaviorSubject<User | null>;
   public currentUser: Observable<User | null>;
+  private apiUrl = `${environment.apiUrl}/auth`;
 
-  // Por ahora, usaremos datos mock
-  private mockUsers: string[] = ['test@example.com'];
-
-  constructor(
-    private http: HttpClient,
-    @Inject(PLATFORM_ID) private platformId: Object
-  ) {
+  constructor(private http: HttpClient) {
     this.currentUserSubject = new BehaviorSubject<User | null>(
-      this.getStoredUser()
+      this.getUserFromStorage()
     );
     this.currentUser = this.currentUserSubject.asObservable();
   }
 
-  private getStoredUser(): User | null {
-    if (isPlatformBrowser(this.platformId)) {
-      return JSON.parse(localStorage.getItem('currentUser') || 'null');
-    }
-    return null;
-  }
-
-  private setStoredUser(user: User | null): void {
-    if (isPlatformBrowser(this.platformId)) {
-      localStorage.setItem('currentUser', JSON.stringify(user));
-    }
+  private getUserFromStorage(): User | null {
+    const user = localStorage.getItem('currentUser');
+    return user ? JSON.parse(user) : null;
   }
 
   public get currentUserValue(): User | null {
     return this.currentUserSubject.value;
   }
 
-  register(data: any): Observable<RegisterResponse> {
-    return this.http.post<RegisterResponse>(`${this.apiUrl}/auth/register`, data)
-      .pipe(
-        tap(response => {
-          if (response.success && response.verificationToken) {
-            this.simulateEmailSending(data.email, response.verificationToken);
-          }
-        })
-      );
+  checkEmailExists(email: string): Observable<boolean> {
+    return this.http.post<boolean>(`${this.apiUrl}/check-email`, { email });
   }
 
-  private simulateEmailSending(email: string, token: string): void {
-    console.log(`
-      ===============================================
-      Simulación de Email de Verificación
-      ===============================================
-      Para: ${email}
-      Asunto: Verifica tu cuenta en LotoIA
-      
-      Hola,
-      
-      Gracias por registrarte en LotoIA. Para completar tu registro,
-      por favor haz clic en el siguiente enlace:
-      
-      http://localhost:4000/verify-email/${token}
-      
-      Este enlace expirará en 24 horas.
-      
-      Saludos,
-      El equipo de LotoIA
-      ===============================================
-    `);
+  register(userData: UserRegistration): Observable<User> {
+    return this.http.post<User>(`${this.apiUrl}/register`, userData).pipe(
+      tap(user => {
+        this.currentUserSubject.next(user);
+        localStorage.setItem('currentUser', JSON.stringify(user));
+      })
+    );
   }
 
-  login(email: string, password: string): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}/auth/login`, { email, password })
-      .pipe(
-        map(user => {
-          // Almacenar detalles del usuario y token jwt en el localStorage
-          this.setStoredUser(user);
-          this.currentUserSubject.next(user);
-          return user;
-        })
-      );
+  login(credentials: UserLogin): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/login`, credentials).pipe(
+      tap(response => {
+        if (response.user) {
+          this.currentUserSubject.next(response.user);
+          localStorage.setItem('currentUser', JSON.stringify(response.user));
+        }
+      })
+    );
   }
 
   logout(): void {
-    if (isPlatformBrowser(this.platformId)) {
-      localStorage.removeItem('currentUser');
-    }
+    localStorage.removeItem('currentUser');
     this.currentUserSubject.next(null);
   }
 
+  forgotPassword(email: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/forgot-password`, { email });
+  }
+
+  resetPassword(resetData: UserPasswordReset): Observable<any> {
+    return this.http.post(`${this.apiUrl}/reset-password`, resetData);
+  }
+
   verifyEmail(token: string): Observable<any> {
-    return this.http.get<any>(`${this.apiUrl}/auth/verify-email/${token}`);
+    return this.http.post(`${this.apiUrl}/verify-email`, { token });
   }
 
-  // Método para verificar si el email ya existe
-  checkEmailExists(email: string): Observable<boolean> {
-    // Simulamos verificación de email
-    return of(this.mockUsers.includes(email)).pipe(delay(500));
+  update(userData: Partial<User>): Observable<User> {
+    const currentUser = this.currentUserValue;
+    if (!currentUser) {
+      throw new Error('No hay usuario autenticado');
+    }
+
+    return this.http.put<User>(`${this.apiUrl}/users/${currentUser.id}`, userData).pipe(
+      tap(updatedUser => {
+        const newUser = { ...currentUser, ...updatedUser };
+        this.currentUserSubject.next(newUser);
+        localStorage.setItem('currentUser', JSON.stringify(newUser));
+      })
+    );
   }
 
-  // Método para solicitar recuperación de contraseña
-  requestPasswordReset(email: string): Observable<any> {
-    return this.http.post(`${this.apiUrl}/auth/request-password-reset`, { email });
+  delete(): Observable<void> {
+    const currentUser = this.currentUserValue;
+    if (!currentUser) {
+      throw new Error('No hay usuario autenticado');
+    }
+
+    return this.http.delete<void>(`${this.apiUrl}/users/${currentUser.id}`).pipe(
+      tap(() => {
+        this.logout();
+      })
+    );
   }
 
-  // Método para resetear la contraseña
-  resetPassword(token: string, newPassword: string): Observable<any> {
-    return this.http.post(`${this.apiUrl}/auth/reset-password`, { token, newPassword });
+  getCurrentUser(): Observable<UserProfile> {
+    return this.http.get<UserProfile>(`${this.apiUrl}/users/profile`);
+  }
+
+  updateProfile(userId: string, userData: Partial<UserProfile>): Observable<UserProfile> {
+    return this.http.put<UserProfile>(`${this.apiUrl}/users/${userId}`, userData);
+  }
+
+  deleteAccount(userId: string): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/users/${userId}`);
   }
 }

@@ -1,4 +1,4 @@
-.forgot-password-container {
+.login-container {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -7,7 +7,7 @@
   background-color: #f5f5f5;
 }
 
-.forgot-password-card {
+.login-card {
   background: white;
   padding: 2rem;
   border-radius: 10px;
@@ -19,15 +19,7 @@
 h2 {
   text-align: center;
   color: #333;
-  margin-bottom: 1rem;
-}
-
-.description {
-  text-align: center;
-  color: #666;
   margin-bottom: 1.5rem;
-  font-size: 0.95rem;
-  line-height: 1.5;
 }
 
 .form-group {
@@ -78,12 +70,6 @@ label {
   color: #721c24;
 }
 
-.alert-success {
-  background-color: #d4edda;
-  border: 1px solid #c3e6cb;
-  color: #155724;
-}
-
 .form-actions {
   margin-top: 1.5rem;
 }
@@ -129,6 +115,11 @@ label {
   text-decoration: underline;
 }
 
+.divider {
+  margin: 0 0.5rem;
+  color: #ccc;
+}
+
 .spinner-border {
   width: 1rem;
   height: 1rem;
@@ -136,7 +127,7 @@ label {
 }
 
 @media (max-width: 480px) {
-  .forgot-password-card {
+  .login-card {
     padding: 1.5rem;
   }
   
@@ -147,4 +138,4 @@ label {
   .btn {
     padding: 0.625rem;
   }
-}
+} 

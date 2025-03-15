@@ -13,50 +13,48 @@ import { AuthService } from '../../services/auth.service';
 })
 export class ForgotPasswordComponent {
   forgotPasswordForm: FormGroup;
-  isSubmitting = false;
-  successMessage = '';
+  loading = false;
+  submitted = false;
   errorMessage = '';
+  successMessage = '';
 
   constructor(
-    private fb: FormBuilder,
+    private formBuilder: FormBuilder,
     private authService: AuthService,
     private router: Router
   ) {
-    this.forgotPasswordForm = this.fb.group({
+    this.forgotPasswordForm = this.formBuilder.group({
       email: ['', [Validators.required, Validators.email]]
     });
   }
 
   onSubmit() {
+    this.submitted = true;
+
     if (this.forgotPasswordForm.invalid) {
       return;
     }
 
-    this.isSubmitting = true;
-    this.successMessage = '';
+    this.loading = true;
     this.errorMessage = '';
+    this.successMessage = '';
 
-    const email = this.forgotPasswordForm.get('email')?.value;
-
-    this.authService.requestPasswordReset(email).subscribe({
-      next: (response) => {
-        this.isSubmitting = false;
-        this.successMessage = 'Se ha enviado un correo electrónico con instrucciones para restablecer tu contraseña.';
-        // Opcionalmente, redirigir después de un tiempo
-        setTimeout(() => {
-          this.router.navigate(['/']);
-        }, 5000);
-      },
-      error: (error) => {
-        this.isSubmitting = false;
-        if (error.status === 404) {
-          this.errorMessage = 'No se encontró ninguna cuenta con ese correo electrónico.';
-        } else {
-          this.errorMessage = 'Error al solicitar el restablecimiento de contraseña. Inténtalo de nuevo más tarde.';
+    this.authService.forgotPassword(this.forgotPasswordForm.value.email)
+      .subscribe({
+        next: () => {
+          this.successMessage = 'Se ha enviado un enlace de recuperación a tu correo electrónico.';
+          setTimeout(() => {
+            this.router.navigate(['/auth/login']);
+          }, 3000);
+        },
+        error: error => {
+          this.errorMessage = error.error?.message || 'Ha ocurrido un error. Por favor, inténtalo de nuevo.';
+          this.loading = false;
+        },
+        complete: () => {
+          this.loading = false;
         }
-        console.error('Error al solicitar restablecimiento de contraseña:', error);
-      }
-    });
+      });
   }
 
   goToLogin() {

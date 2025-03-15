@@ -1,41 +1,35 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, map } from 'rxjs';
-
-export interface Botes {
-  primitiva: string;
-  bonoloto: string;
-  euromillones: string;
-  gordo: string;
-  lototurf: string;
-  eurodreams: string;
-  loterianacional: string;
-}
+import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
+import { Bote } from '../models/bote.model';
 
 @Injectable({
   providedIn: 'root'
 })
 export class BotesService {
+  private apiUrl = `${environment.apiUrl}/botes`;
+
   constructor(private http: HttpClient) { }
 
-  getBotes(): Observable<Botes> {
-    const timestamp = new Date().getTime();
-    return this.http.get<any>(`./assets/botes.json?t=${timestamp}`, {
-      headers: {
-        'Cache-Control': 'no-cache',
-        'Pragma': 'no-cache',
-        'Expires': '0'
-      }
-    }).pipe(
-      map(data => ({
-        primitiva: data.primitiva || '0',
-        bonoloto: data.bonoloto || '0',
-        euromillones: data.euromillones || '0',
-        gordo: data.gordo || '0',
-        lototurf: data.lototurf || '0',
-        eurodreams: data.eurodreams || '20.000€',
-        loterianacional: data.loterianacional || '300.000€'
-      }))
-    );
+  /**
+   * Obtiene todos los botes activos
+   */
+  getBotes(): Observable<Bote[]> {
+    return this.http.get<Bote[]>(this.apiUrl);
+  }
+
+  /**
+   * Obtiene un bote específico por su ID
+   */
+  getBoteById(id: number): Observable<Bote> {
+    return this.http.get<Bote>(`${this.apiUrl}/${id}`);
+  }
+
+  /**
+   * Obtiene los botes por tipo de juego
+   */
+  getBotesByJuego(juego: string): Observable<Bote[]> {
+    return this.http.get<Bote[]>(`${this.apiUrl}/juego/${juego}`);
   }
 }
