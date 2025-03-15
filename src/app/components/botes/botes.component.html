@@ -1,0 +1,73 @@
+<div class="botes-container">
+  <h1 class="titulo-seccion">Botes Activos</h1>
+
+  <!-- Filtros -->
+  <div class="filtros">
+    <button 
+      [class.activo]="filtroActivo === 'todos'"
+      (click)="filtrarBotes('todos')">
+      Todos
+    </button>
+    <button 
+      [class.activo]="filtroActivo === 'primitiva'"
+      (click)="filtrarBotes('primitiva')">
+      Primitiva
+    </button>
+    <button 
+      [class.activo]="filtroActivo === 'euromillones'"
+      (click)="filtrarBotes('euromillones')">
+      Euromillones
+    </button>
+    <button 
+      [class.activo]="filtroActivo === 'bonoloto'"
+      (click)="filtrarBotes('bonoloto')">
+      Bonoloto
+    </button>
+  </div>
+
+  <!-- Estado de carga -->
+  <div class="loading-state" *ngIf="loading">
+    <div class="spinner"></div>
+    <p>Cargando botes...</p>
+  </div>
+
+  <!-- Mensaje de error -->
+  <div class="error-message" *ngIf="error">
+    <i class="fas fa-exclamation-circle"></i>
+    <p>{{ error }}</p>
+    <button (click)="cargarBotes()">Reintentar</button>
+  </div>
+
+  <!-- Lista de botes -->
+  <div class="botes-grid" *ngIf="!loading && !error">
+    <div class="bote-card" *ngFor="let bote of botesFiltrados">
+      <div class="bote-imagen">
+        <img [src]="bote.imagen" [alt]="bote.juego">
+      </div>
+      <div class="bote-info">
+        <h2>{{ bote.juego }}</h2>
+        <div class="bote-cantidad">
+          <span class="cantidad">{{ formatearCantidad(bote.cantidad) }}</span>
+        </div>
+        <p class="fecha">Sorteo: {{ formatearFecha(bote.fecha) }}</p>
+        <p class="descripcion" *ngIf="bote.descripcion">{{ bote.descripcion }}</p>
+        <div class="bote-acciones">
+          <a [routerLink]="['/jugar', bote.juego.toLowerCase()]" class="btn-jugar">
+            <i class="fas fa-ticket-alt"></i>
+            Jugar Ahora
+          </a>
+          <button class="btn-info" [routerLink]="['/juegos', bote.juego.toLowerCase(), 'info']">
+            <i class="fas fa-info-circle"></i>
+            Más Info
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mensaje sin resultados -->
+  <div class="no-resultados" *ngIf="!loading && !error && botesFiltrados.length === 0">
+    <i class="fas fa-search"></i>
+    <p>No hay botes disponibles para el filtro seleccionado.</p>
+  </div>
+</div> 

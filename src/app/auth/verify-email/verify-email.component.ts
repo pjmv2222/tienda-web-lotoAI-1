@@ -10,22 +10,22 @@ import { AuthService } from '../../services/auth.service';
   template: `
     <div class="verification-container">
       <div class="card">
-        <div class="card-content" [ngClass]="{'loading': isLoading}">
+        <div class="card-content" [ngClass]="{'loading': loading}">
           <h2>Verificación de Email</h2>
           
-          <div *ngIf="isLoading" class="loader">
+          <div *ngIf="loading" class="loader">
             <div class="spinner"></div>
             <p>Verificando tu email...</p>
           </div>
 
-          <div *ngIf="!isLoading && success" class="success-message">
+          <div *ngIf="!loading && verified" class="success-message">
             <i class="check-icon">✓</i>
             <h3>¡Email Verificado!</h3>
             <p>Tu cuenta ha sido verificada correctamente.</p>
             <button (click)="goToLogin()" class="btn-primary">Ir al Login</button>
           </div>
 
-          <div *ngIf="!isLoading && !success && errorMessage" class="error-message">
+          <div *ngIf="!loading && !verified && errorMessage" class="error-message">
             <i class="error-icon">✗</i>
             <h3>Error de Verificación</h3>
             <p>{{ errorMessage }}</p>
@@ -111,37 +111,56 @@ import { AuthService } from '../../services/auth.service';
   `]
 })
 export class VerifyEmailComponent implements OnInit {
-  isLoading = true;
-  success = false;
+  loading = true;
+  verified = false;
   errorMessage = '';
+  token: string = '';
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private authService: AuthService
-  ) {}
+  ) { }
 
   ngOnInit() {
-    const token = this.route.snapshot.paramMap.get('token');
-    if (token) {
-      this.verifyEmail(token);
-    } else {
-      this.errorMessage = 'Token de verificación no encontrado';
-      this.isLoading = false;
+    this.token = this.route.snapshot.params['token'];
+    
+    if (!this.token) {
+      this.errorMessage = 'Token de verificación no válido';
+      this.loading = false;
+      return;
     }
+
+    this.verifyEmail();
   }
 
-  verifyEmail(token: string) {
-    this.authService.verifyEmail(token).subscribe({
-      next: (response) => {
-        this.success = true;
-        this.isLoading = false;
+  private verifyEmail() {
+    this.authService.verifyEmail(this.token).subscribe({
+      next: () => {
+        this.verified = true;
+        this.loading = false;
+        setTimeout(() => {
+          this.router.navigate(['/auth/login'], {
+            queryParams: { verified: true }
+          });
+        }, 3000);
       },
-      error: (error) => {
-        this.errorMessage = 'Error al verificar el email. Por favor, intenta de nuevo.';
-        this.isLoading = false;
+      error: error => {
+        this.loading = false;
+        if (error.status === 404) {
+          this.errorMessage = 'El enlace de verificación no es válido o ha expirado.';
+        } else if (error.status === 409) {
+          this.errorMessage = 'Esta cuenta ya ha sido verificada.';
+        } else {
+          this.errorMessage = 'Ha ocurrido un error al verificar tu cuenta. Por favor, inténtalo de nuevo.';
+        }
       }
     });
+  }
+
+  resendVerification() {
+    // Esta función se implementará cuando tengamos el endpoint correspondiente
+    // this.authService.resendVerificationEmail(this.email)
   }
 
   goToLogin() {
@@ -149,11 +168,8 @@ export class VerifyEmailComponent implements OnInit {
   }
 
   retry() {
-    this.isLoading = true;
+    this.loading = true;
     this.errorMessage = '';
-    const token = this.route.snapshot.paramMap.get('token');
-    if (token) {
-      this.verifyEmail(token);
-    }
+    this.verifyEmail();
   }
 }
