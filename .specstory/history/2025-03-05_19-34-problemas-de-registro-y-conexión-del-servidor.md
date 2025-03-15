@@ -22065,6 +22065,776 @@ _**User**_
 
 _**Assistant**_
 
+Veo que estás teniendo problemas con los comandos en la VPS. Hay un error en la forma en que se están ejecutando los comandos. Vamos a corregirlo:
+
+### Problema identificado:
+
+1. El comando `cd /var/www/tienda-web-lotoAI-1git pull origin main` está mal formado. Estás intentando ejecutar dos comandos en una sola línea sin separación adecuada.
+
+2. Estás intentando ejecutar `npm install` en el directorio `/root` donde no existe un archivo `package.json`.
+
+### Comandos correctos:
+
+```bash
+# Primero, navega al directorio del proyecto
+cd /var/www/tienda-web-lotoAI-1
+
+# Luego, obtén los últimos cambios del repositorio
+git pull origin main
+
+# Instala las dependencias
+npm install
+
+# Reconstruye la aplicación
+npm run build:ssr
+
+# Reinicia el servidor SSR
+pm2 restart loto-ia-ssr
+```
+
+### Respecto al problema original:
+
+Vamos a crear el script `fix-botes.js` en tu proyecto local para solucionar el problema de carga de `botes.json`. Este script buscará y modificará cualquier servicio que esté cargando el archivo desde una URL absoluta.
+
+Aquí está el contenido del script:
+
+```javascript
+// fix-botes.js
+const fs = require('fs');
+const path = require('path');
+
+// Verificar si existe el directorio assets
+const assetsDir = path.join(__dirname, 'src', 'assets');
+if (!fs.existsSync(assetsDir)) {
+  fs.mkdirSync(assetsDir, { recursive: true });
+  console.log('✅ Directorio src/assets creado correctamente.');
+}
+
+// Verificar si existe el archivo botes.json
+const botesJsonPath = path.join(assetsDir, 'botes.json');
+if (!fs.existsSync(botesJsonPath)) {
+  // Crear un archivo botes.json de ejemplo
+  const botesJsonContent = JSON.stringify([
+    {
+      "id": 1,
+      "nombre": "Euromillones",
+      "valor": "143 MILLONES",
+      "imagen": "assets/images/euromillones.png"
+    },
+    {
+      "id": 2,
+      "nombre": "La Primitiva",
+      "valor": "14,4 MILLONES",
+      "imagen": "assets/images/primitiva.png"
+    },
+    {
+      "id": 3,
+      "nombre": "Bonoloto",
+      "valor": "600.000€",
+      "imagen": "assets/images/bonoloto.png"
+    },
+    {
+      "id": 4,
+      "nombre": "El Gordo",
+      "valor": "14,2 MILLONES",
+      "imagen": "assets/images/gordo.png"
+    },
+    {
+      "id": 5,
+      "nombre": "Lototurf",
+      "valor": "",
+      "imagen": "assets/images/lototurf.png"
+    },
+    {
+      "id": 6,
+      "nombre": "Eurodreams",
+      "valor": "20.000€ Al mes durante 30 años",
+      "imagen": "assets/images/eurodreams.png"
+    },
+    {
+      "id": 7,
+      "nombre": "Lotería Nacional",
+      "valor": "300.000€ Primer Premio",
+      "imagen": "assets/images/loterianacional.png"
+    }
+  ], null, 2);
+  
+  fs.writeFileSync(botesJsonPath, botesJsonContent);
+  console.log('✅ Archivo src/assets/botes.json creado correctamente.');
+}
+
+// Buscar archivos de servicio que puedan estar cargando botes.json
+const srcDir = path.join(__dirname, 'src');
+const findServiceFiles = (dir) => {
+  const results = [];
+  const files = fs.readdirSync(dir);
+  
+  for (const file of files) {
+    const filePath = path.join(dir, file);
+    const stat = fs.statSync(filePath);
+    
+    if (stat.isDirectory()) {
+      results.push(...findServiceFiles(filePath));
+    } else if (file.endsWith('.ts') && !file.endsWith('.spec.ts')) {
+      const content = fs.readFileSync(filePath, 'utf8');
+      if (content.includes('botes.json') || content.includes('212.227.230.103')) {
+        results.push(filePath);
+      }
+    }
+  }
+  
+  return results;
+};
+
+const serviceFiles = findServiceFiles(srcDir);
+
+if (serviceFiles.length > 0) {
+  console.log('🔍 Encontrados archivos que pueden estar cargando botes.json:');
+  serviceFiles.forEach(file => {
+    console.log(`   - ${file}`);
+    
+    // Leer el contenido del archivo
+    let content = fs.readFileSync(file, 'utf8');
+    
+    // Reemplazar URLs absolutas por rutas relativas
+    const updatedContent = content
+      .replace(/['"]https?:\/\/212\.227\.230\.103\/assets\/botes\.json['"]/g, "'/assets/botes.json'")
+      .replace(/['"]https?:\/\/loto-ia\.com\/assets\/botes\.json['"]/g, "'/assets/botes.json'")
+      .replace(/['"]https?:\/\/www\.loto-ia\.com\/assets\/botes\.json['"]/g, "'/assets/botes.json'");
+    
+    // Si se hizo algún cambio, guardar el archivo
+    if (content !== updatedContent) {
+      fs.writeFileSync(file, updatedContent);
+      console.log(`   ✅ Actualizado para usar ruta relativa.`);
+    } else {
+      console.log(`   ⚠️ No se encontraron URLs absolutas para reemplazar.`);
+    }
+  });
+} else {
+  console.log('⚠️ No se encontraron archivos que carguen botes.json.');
+  console.log('ℹ️ Creando un servicio de ejemplo para cargar botes...');
+  
+  // Crear un servicio de ejemplo
+  const botesServiceDir = path.join(__dirname, 'src', 'app', 'services');
+  if (!fs.existsSync(botesServiceDir)) {
+    fs.mkdirSync(botesServiceDir, { recursive: true });
+  }
+  
+  const botesServicePath = path.join(botesServiceDir, 'botes.service.ts');
+  const botesServiceContent = `import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class BotesService {
+  constructor(private http: HttpClient) {}
+
+  // Método para cargar los botes desde una ruta relativa
+  getBotes(): Observable<any[]> {
+    // Usar ruta relativa en lugar de absoluta
+    return this.http.get<any[]>('/assets/botes.json')
+      .pipe(
+        catchError(error => {
+          console.error('Error al cargar botes:', error);
+          // Devolver un array vacío en caso de error
+          return of([]);
+        })
+      );
+  }
+}
+`;
+  
+  fs.writeFileSync(botesServicePath, botesServiceContent);
+  console.log(`✅ Servicio de ejemplo creado en ${botesServicePath}`);
+}
+
+console.log('🚀 Corrección de carga de botes completada. Ejecuta npm run build:ssr para reconstruir la aplicación.');
+```
+
+### Pasos a seguir:
+
+1. **En tu proyecto local**:
+   - Crea el archivo `fix-botes.js` con el contenido anterior
+   - Ejecuta el script: `node fix-botes.js`
+   - Reconstruye la aplicación: `npm run build:ssr`
+   - Sube los cambios a GitHub:
+     ```bash
+     git add .
+     git commit -m "fix: corregir carga de botes.json"
+     git push origin main
+     ```
+
+2. **En la VPS**:
+   - Navega al directorio del proyecto: `cd /var/www/tienda-web-lotoAI-1`
+   - Obtén los últimos cambios: `git pull origin main`
+   - Instala las dependencias: `npm install`
+   - Reconstruye la aplicación: `npm run build:ssr`
+   - Reinicia el servidor SSR: `pm2 restart loto-ia-ssr`
+
+Este script buscará cualquier servicio que esté cargando `botes.json` desde una URL absoluta y lo modificará para usar una ruta relativa. También creará un archivo `botes.json` de ejemplo en `src/assets` si no existe.
+
+---
+
+_**User**_
+
+Gracias, he realizado los cambios en los archivos que me as indicado y he actualizado el proyecto tanto a nivel local cómo en la VPS, y me ha sido posible el acceso a la web, @https://www.loto-ia.com/ ,sin embargo, sigue sin funcionar los botones "Entrar", "¿Has olvidado tu contraseña?" y "Solicitar una nueva", en la consola se muestran dos errores:
+Failed to load resource: net::ERR_HTTP2_PROTOCOL_ERROR Understand this errorAI
+Failed to load resource: net::ERR_HTTP2_PROTOCOL_ERRORUnderstand this errorAI
+/main.a78bd768b7c8df1b.js:1:
+¿?
+
+
+---
+
+_**Assistant**_
+
+Ahora veo más claramente el problema. El error `ERR_HTTP2_PROTOCOL_ERROR` está relacionado específicamente con el protocolo HTTP/2 y cómo Nginx está manejando las solicitudes. Necesitamos ajustar la configuración de Nginx para manejar correctamente HTTP/2.
+
+### Solución:
+
+1. **Modifica la configuración de Nginx**:
+```bash
+sudo nano /etc/nginx/sites-available/loto-ia.com
+```
+
+Añade o modifica estas configuraciones dentro del bloque `server` que maneja HTTPS (el que tiene el puerto 443):
+
+```nginx
+# Configuración HTTP/2
+http2_push_preload on;
+http2_max_concurrent_streams 128;
+http2_idle_timeout 300s;
+
+# Configuración de buffers
+client_body_buffer_size 10K;
+client_header_buffer_size 1k;
+client_max_body_size 8m;
+large_client_header_buffers 2 1k;
+
+# Configuración de timeouts
+client_body_timeout 12;
+client_header_timeout 12;
+keepalive_timeout 15;
+send_timeout 10;
+
+# Compresión
+gzip on;
+gzip_vary on;
+gzip_min_length 10240;
+gzip_proxied expired no-cache no-store private auth;
+gzip_types text/plain text/css text/xml text/javascript application/x-javascript application/xml application/javascript;
+gzip_disable "MSIE [1-6]\.";
+
+location / {
+    proxy_pass http://localhost:4000;
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection 'upgrade';
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_cache_bypass $http_upgrade;
+    
+    # Configuración de buffers para proxy
+    proxy_buffers 8 32k;
+    proxy_buffer_size 64k;
+    
+    # Configuración de timeouts para proxy
+    proxy_connect_timeout 300s;
+    proxy_read_timeout 300s;
+    proxy_send_timeout 300s;
+    
+    # Headers adicionales
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header Referrer-Policy "no-referrer-when-downgrade" always;
+    add_header Content-Security-Policy "default-src 'self' http: https: data: blob: 'unsafe-inline'" always;
+}
+
+# Configuración específica para archivos estáticos
+location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg)$ {
+    expires 30d;
+    add_header Cache-Control "public, no-transform";
+    proxy_pass http://localhost:4000;
+    proxy_http_version 1.1;
+    proxy_set_header Connection "";
+    proxy_buffering on;
+    proxy_cache_valid 200 60m;
+    proxy_cache_use_stale error timeout http_500 http_502 http_503 http_504;
+}
+```
+
+2. **Verifica la sintaxis de Nginx**:
+```bash
+sudo nginx -t
+```
+
+3. **Reinicia Nginx**:
+```bash
+sudo systemctl restart nginx
+```
+
+4. **Limpia la caché del navegador**:
+- Abre las herramientas de desarrollo (F12)
+- Ve a la pestaña Network
+- Marca la casilla "Disable cache"
+- Haz clic derecho en el botón de actualizar y selecciona "Empty Cache and Hard Reload"
+
+5. **Verifica los logs de Nginx para ver si hay errores**:
+```bash
+sudo tail -f /var/log/nginx/error.log
+```
+
+Esta configuración:
+1. Optimiza el manejo de HTTP/2
+2. Ajusta los buffers y timeouts para evitar errores de protocolo
+3. Configura la compresión gzip para mejorar el rendimiento
+4. Establece headers de seguridad
+5. Optimiza el manejo de archivos estáticos
+
+Si después de aplicar estos cambios sigues viendo errores, podemos:
+1. Revisar los logs de Nginx para ver errores específicos
+2. Verificar que el servidor SSR esté funcionando correctamente con `pm2 logs loto-ia-ssr`
+3. Comprobar que el backend esté respondiendo con `pm2 logs loto-ia-backend`
+
+¿Quieres que procedamos con alguno de estos pasos adicionales de verificación?
+
+---
+
+_**User**_
+
+Gracias, he realizado los cambios en los archivos que me as indicado y he actualizado el proyecto tanto a nivel local cómo en la VPS, y me ha sido posible el acceso a la web, https://www.loto-ia.com/ ,sin embargo, sigue sin funcionar los botones "Entrar", "¿Has olvidado tu contraseña?" y "Solicitar una nueva", en la consola se muestran dos errores:
+Failed to load resource: net::ERR_HTTP2_PROTOCOL_ERROR Understand this errorAI
+Failed to load resource: net::ERR_HTTP2_PROTOCOL_ERRORUnderstand this errorAI
+/main.a78bd768b7c8df1b.js:1:
+¿?
+
+---
+
+_**Assistant**_
+
+Veo que seguimos teniendo el mismo problema con los errores HTTP/2 a pesar de los cambios en la configuración de Nginx. Vamos a intentar un enfoque diferente.
+
+### Solución alternativa:
+
+1. **Desactiva HTTP/2 temporalmente en Nginx**:
+
+```bash
+sudo nano /etc/nginx/sites-available/loto-ia.com
+```
+
+Modifica la línea que tiene `listen 443 ssl http2;` para quitar `http2`:
+
+```nginx
+listen 443 ssl;
+listen [::]:443 ssl;
+```
+
+2. **Simplifica la configuración de Nginx**:
+
+Reemplaza toda la configuración del bloque `location /` por algo más simple:
+
+```nginx
+location / {
+    proxy_pass http://localhost:4000;
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection 'upgrade';
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+}
+```
+
+3. **Verifica la sintaxis y reinicia Nginx**:
+
+```bash
+sudo nginx -t
+sudo systemctl restart nginx
+```
+
+4. **Modifica el archivo `server.ts` en tu proyecto local**:
+
+Vamos a modificar cómo se manejan los archivos estáticos en el servidor SSR:
+
+```typescript
+// Modificar la parte de archivos estáticos
+server.get('*.*', (req, res, next) => {
+  console.log(`Sirviendo archivo estático: ${req.url}`);
+  
+  // Configurar encabezados para evitar problemas con la caché
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  
+  express.static(distFolder, {
+    maxAge: '0'
+  })(req, res, next);
+});
+```
+
+5. **Reconstruye la aplicación y actualiza en la VPS**:
+
+```bash
+# En tu proyecto local
+npm run build:ssr
+git add .
+git commit -m "fix: desactivar caché para archivos estáticos"
+git push origin main
+
+# En la VPS
+cd /var/www/tienda-web-lotoAI-1
+git pull origin main
+npm run build:ssr
+pm2 restart loto-ia-ssr
+```
+
+6. **Verifica los logs del servidor SSR**:
+
+```bash
+pm2 logs loto-ia-ssr
+```
+
+7. **Verifica si hay errores en el backend**:
+
+```bash
+pm2 logs loto-ia-backend
+```
+
+8. **Comprueba si hay errores en los logs de Nginx**:
+
+```bash
+sudo tail -n 100 /var/log/nginx/error.log
+```
+
+### Otra alternativa: Servir archivos estáticos directamente desde Nginx
+
+Si los pasos anteriores no funcionan, podemos intentar servir los archivos estáticos directamente desde Nginx:
+
+```nginx
+# Configuración para archivos estáticos
+location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg)$ {
+    root /var/www/tienda-web-lotoAI-1/dist/tienda-web-loto-ai/browser;
+    expires 0;
+    add_header Cache-Control "no-cache, no-store, must-revalidate";
+    add_header Pragma "no-cache";
+    add_header Expires "0";
+    try_files $uri =404;
+}
+
+# Redirigir el resto al servidor SSR
+location / {
+    proxy_pass http://localhost:4000;
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection 'upgrade';
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+}
+```
+
+Esta configuración:
+1. Desactiva HTTP/2 para evitar los errores de protocolo
+2. Simplifica la configuración de proxy
+3. Desactiva la caché para archivos estáticos
+4. Proporciona una alternativa para servir archivos estáticos directamente desde Nginx
+
+Por favor, intenta estos cambios y comparte los resultados para poder ayudarte mejor.
+
+---
+
+_**User**_
+
+Realicé las siguientes modificaciones en el archivo y quedó como te muestro a continuación:
+server {
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name loto-ia.com www.loto-ia.com;
+    ssl_certificate /etc/letsencrypt/live/loto-ia.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/loto-ia.com/privkey.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_prefer_server_ciphers on;
+    merge_slashes off;
+    absolute_redirect off;
+    
+    # Ajustes para HTTP/2
+    http2_max_field_size 16k;
+    http2_max_header_size 32k;
+    http2_idle_timeout 5m;
+    client_max_body_size 20M;
+                                 
+    # Ruta a los archivos estáticos
+    root /var/www/tienda-web-lotoAI-1/dist/tienda-web-loto-ai/browser;
+    index index.csr.html;
+    access_log /var/log/nginx/loto-ia.access.log;
+    error_log /var/log/nginx/loto-ia.error.log debug;
+    
+    location / {
+        proxy_pass http://localhost:4000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+        
+        # Añade estos timeouts y configuraciones de buffer
+        proxy_connect_timeout 300s;
+        proxy_send_timeout 300s;
+        proxy_read_timeout 300s;
+        proxy_buffer_size 128k;
+        proxy_buffers 4 256k;
+        proxy_busy_buffers_size 256k;
+    }
+    
+    location /api {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_connect_timeout 60s;
+        proxy_send_timeout 60s;
+        proxy_read_timeout 60s;
+    }
+    
+    # Bloquear acceso a archivos sensibles (añadir para mayor seguridad)
+    location ~ \.env$ {
+        deny all;
+        return 404;
+    }
+    
+    # Páginas de error
+    error_page 404 /index.csr.html;
+    error_page 502 503 504 /50x.html;
+    location = /50x.html {
+        root /usr/share/nginx/html;
+    }
+}:
+ahora todo funciona correctamente en el PC de sobremesa, sin embargo, en el teléfono móvil no es posible ver la página web correctamente , cómo debería de proceder para que en los teléfonos móviles también se vira bien y si podría interactuar con la web correctamente ¿?
+
+---
+
+_**Assistant**_
+
+¡Excelente! Me alegra que hayas logrado solucionar el problema en el PC de sobremesa. Ahora vamos a enfocarnos en hacer que la web funcione correctamente en dispositivos móviles.
+
+### Problemas comunes en dispositivos móviles:
+
+1. **Problemas de responsive design**: La web podría no estar adaptada para pantallas pequeñas.
+2. **Problemas de caché**: Los navegadores móviles suelen ser más agresivos con el caché.
+3. **Problemas de compatibilidad**: Algunos navegadores móviles pueden tener problemas con ciertas características de JavaScript.
+4. **Problemas de rendimiento**: Los dispositivos móviles tienen menos recursos, lo que puede afectar el rendimiento.
+
+### Solución para mejorar la compatibilidad con dispositivos móviles:
+
+1. **Añade encabezados específicos para dispositivos móviles en Nginx**:
+
+```bash
+sudo nano /etc/nginx/sites-available/loto-ia.com
+```
+
+Añade estos encabezados en la sección `location /`:
+
+```nginx
+location / {
+    # Configuración existente...
+    
+    # Añadir estos encabezados para dispositivos móviles
+    add_header X-UA-Compatible "IE=edge";
+    add_header X-Content-Type-Options "nosniff";
+    add_header X-Frame-Options "SAMEORIGIN";
+    add_header Vary "Accept-Encoding, User-Agent";
+    
+    # Añadir esta línea para evitar problemas de caché en móviles
+    add_header Cache-Control "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0";
+}
+```
+
+2. **Añade una configuración específica para archivos estáticos**:
+
+```nginx
+# Configuración para archivos estáticos
+location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
+    root /var/www/tienda-web-lotoAI-1/dist/tienda-web-loto-ai/browser;
+    expires 0;
+    add_header Cache-Control "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0";
+    add_header Pragma "no-cache";
+    add_header Expires "0";
+    add_header Vary "Accept-Encoding, User-Agent";
+    try_files $uri =404;
+}
+```
+
+3. **Verifica la sintaxis y reinicia Nginx**:
+
+```bash
+sudo nginx -t
+sudo systemctl restart nginx
+```
+
+4. **Modifica el archivo `index.html` para mejorar la compatibilidad con dispositivos móviles**:
+
+En tu proyecto local, edita el archivo `src/index.html` para asegurarte de que tenga las siguientes meta etiquetas:
+
+```html
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>LotoIA</title>
+  <base href="/">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, user-scalable=yes">
+  <meta name="theme-color" content="#ffffff">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <!-- Añadir estilos CSS para mejorar la visualización en móviles -->
+  <style>
+    @media (max-width: 768px) {
+      body {
+        font-size: 16px;
+        -webkit-text-size-adjust: 100%;
+      }
+      /* Asegurarse de que los elementos no se salgan de la pantalla */
+      img, video, canvas, svg, iframe {
+        max-width: 100% !important;
+        height: auto !important;
+      }
+      /* Mejorar la interacción táctil */
+      button, a, input, select, textarea {
+        min-height: 44px;
+        min-width: 44px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <app-root></app-root>
+</body>
+</html>
+```
+
+5. **Reconstruye la aplicación y actualiza en la VPS**:
+
+```bash
+# En tu proyecto local
+npm run build:ssr
+git add .
+git commit -m "fix: mejorar compatibilidad con dispositivos móviles"
+git push origin main
+
+# En la VPS
+cd /var/www/tienda-web-lotoAI-1
+git pull origin main
+npm run build:ssr
+pm2 restart loto-ia-ssr
+```
+
+6. **Verifica el diseño responsive**:
+
+Si después de estos cambios sigues teniendo problemas con la visualización en dispositivos móviles, es posible que necesites revisar y mejorar el diseño responsive de tu aplicación Angular. Esto implica:
+
+- Usar media queries en tus estilos CSS
+- Utilizar unidades relativas (%, em, rem) en lugar de píxeles
+- Implementar un diseño flexible con Flexbox o Grid
+- Asegurarte de que los elementos interactivos (botones, enlaces) sean lo suficientemente grandes para ser tocados en pantallas táctiles
+
+7. **Prueba en diferentes dispositivos y navegadores**:
+
+Utiliza herramientas como BrowserStack o las herramientas de desarrollo de Chrome (modo dispositivo) para probar tu sitio en diferentes dispositivos y navegadores.
+
+¿Quieres que te ayude con algún aspecto específico del diseño responsive o tienes alguna otra pregunta sobre la compatibilidad con dispositivos móviles?
+
+---
+
+_**User**_
+
+El siguiente es el código actual del archivo cómo debería de quedar con implementación del código que me indicas?:
+server {
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name loto-ia.com www.loto-ia.com;
+    ssl_certificate /etc/letsencrypt/live/loto-ia.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/loto-ia.com/privkey.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_prefer_server_ciphers on;
+    merge_slashes off;
+    absolute_redirect off;
+    
+    # Ajustes para HTTP/2
+    http2_max_field_size 16k;
+    http2_max_header_size 32k;
+    http2_idle_timeout 5m;
+    client_max_body_size 20M;
+                                 
+    # Ruta a los archivos estáticos
+    root /var/www/tienda-web-lotoAI-1/dist/tienda-web-loto-ai/browser;
+    index index.csr.html;
+    access_log /var/log/nginx/loto-ia.access.log;
+    error_log /var/log/nginx/loto-ia.error.log debug;
+    
+    location / {
+        proxy_pass http://localhost:4000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+        
+        # Añade estos timeouts y configuraciones de buffer
+        proxy_connect_timeout 300s;
+        proxy_send_timeout 300s;
+        proxy_read_timeout 300s;
+        proxy_buffer_size 128k;
+        proxy_buffers 4 256k;
+        proxy_busy_buffers_size 256k;
+    }
+    
+    location /api {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_connect_timeout 60s;
+        proxy_send_timeout 60s;
+        proxy_read_timeout 60s;
+    }
+    
+    # Bloquear acceso a archivos sensibles (añadir para mayor seguridad)
+    location ~ \.env$ {
+        deny all;
+        return 404;
+    }
+    
+    # Páginas de error
+    error_page 404 /index.csr.html;
+    error_page 502 503 504 /50x.html;
+    location = /50x.html {
+        root /usr/share/nginx/html;
+    }
+}
+
+---
+
+_**Assistant**_
+
 
 
 ---
