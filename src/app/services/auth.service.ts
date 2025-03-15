@@ -51,11 +51,11 @@ export class AuthService {
   }
 
   login(credentials: UserLogin): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}/login`, credentials).pipe(
-      tap(response => {
-        if (response.user) {
+    return this.http.post(`${this.apiUrl}/login`, credentials).pipe(
+      tap((response: any) => {
+        if (response.token) {
+          localStorage.setItem('token', response.token);
           this.currentUserSubject.next(response.user);
-          localStorage.setItem('currentUser', JSON.stringify(response.user));
         }
       })
     );
