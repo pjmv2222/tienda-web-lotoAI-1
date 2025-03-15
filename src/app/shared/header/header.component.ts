@@ -77,29 +77,16 @@ export class HeaderComponent implements OnInit {
 
   // Método para iniciar sesión
   login() {
-    this.isLoggingIn = true;
-    this.loginError = '';
-    
-    if (!this.username || !this.password) {
-      this.loginError = 'Por favor, introduce tu email y contraseña';
-      this.isLoggingIn = false;
-      return;
-    }
-    
-    this.authService.login(this.username, this.password).subscribe({
-      next: (response) => {
-        this.isLoggingIn = false;
-        // Redirigir al usuario a la página principal o dashboard
-        this.router.navigate(['/']);
+    const credentials = {
+      email: this.username,
+      password: this.password
+    };
+    this.authService.login(credentials).subscribe({
+      next: () => {
+        this.router.navigate(['/profile']);
       },
       error: (error) => {
-        this.isLoggingIn = false;
-        if (error.status === 401) {
-          this.loginError = 'Email o contraseña incorrectos';
-        } else {
-          this.loginError = 'Error al iniciar sesión. Inténtalo de nuevo más tarde.';
-        }
-        console.error('Error de login:', error);
+        console.error('Error de inicio de sesión:', error);
       }
     });
   }

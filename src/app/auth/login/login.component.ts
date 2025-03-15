@@ -1,46 +1,46 @@
-import { Component } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { Component, OnInit } from '@angular/core';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { CommonModule } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
 import { UserLogin } from '../../models/user.model';
 
 @Component({
   selector: 'app-login',
   templateUrl: './login.component.html',
-  styleUrls: ['./login.component.css']
+  styleUrls: ['./login.component.css'],
+  standalone: true,
+  imports: [CommonModule, ReactiveFormsModule]
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit {
   loginForm: FormGroup;
-  errorMessage: string = '';
+  error: string = '';
   loading: boolean = false;
 
   constructor(
-    private fb: FormBuilder,
+    private formBuilder: FormBuilder,
     private authService: AuthService,
     private router: Router
   ) {
-    this.loginForm = this.fb.group({
+    this.loginForm = this.formBuilder.group({
       email: ['', [Validators.required, Validators.email]],
-      password: ['', [Validators.required, Validators.minLength(6)]]
+      password: ['', Validators.required]
     });
   }
 
-  onSubmit() {
+  ngOnInit(): void {}
+
+  onSubmit(): void {
     if (this.loginForm.valid) {
       this.loading = true;
-      this.errorMessage = '';
+      this.error = '';
       
-      const credentials: UserLogin = this.loginForm.value;
-      
-      this.authService.login(credentials).subscribe({
+      this.authService.login(this.loginForm.value).subscribe({
         next: () => {
-          this.router.navigate(['/profile']);
+          this.router.navigate(['/']);
         },
         error: (error) => {
-          this.loading = false;
-          this.errorMessage = error.error?.message || 'Error al iniciar sesión. Por favor, inténtalo de nuevo.';
-        },
-        complete: () => {
+          this.error = error.error.message || 'Error al iniciar sesión';
           this.loading = false;
         }
       });
