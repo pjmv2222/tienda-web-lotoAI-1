@@ -108,8 +108,8 @@
             </div>
           </div>
 
-          <div class="alert alert-danger" *ngIf="error">
-            {{ error }}
+          <div class="alert alert-danger" *ngIf="errorMessage">
+            {{ errorMessage }}
           </div>
 
           <button type="submit" class="btn btn-primary" [disabled]="registerForm.invalid || loading">
