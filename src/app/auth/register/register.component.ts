@@ -57,9 +57,15 @@ export class RegisterComponent implements OnInit {
 
   // Validador personalizado para confirmar contraseña
   passwordMatchValidator(g: FormGroup) {
-    return g.get('password')?.value === g.get('confirmPassword')?.value
-      ? null
-      : { 'mismatch': true };
+    const password = g.get('password');
+    const confirmPassword = g.get('confirmPassword');
+    
+    if (password && confirmPassword && password.value !== confirmPassword.value) {
+      confirmPassword.setErrors({ 'passwordMismatch': true });
+    } else {
+      confirmPassword?.setErrors(null);
+    }
+    return null;
   }
 
   onPasswordChange(event: Event) {
