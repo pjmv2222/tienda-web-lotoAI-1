@@ -389,3 +389,36 @@ input.error, select.error {
 .form-group.error select {
   animation: shake 0.3s ease-in-out;
 }
+
+.password-input {
+  position: relative;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #666;
+  cursor: pointer;
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: unset;
+  min-width: unset;
+}
+
+.password-toggle:hover {
+  color: #333;
+}
+
+.password-toggle:focus {
+  outline: none;
+}
+
+.password-input input {
+  padding-right: 40px;
+}

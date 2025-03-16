@@ -1,12 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, AbstractControl } from '@angular/forms';
 import { Router } from '@angular/router';
 import { NgOptimizedImage } from '@angular/common';
 import { BreadcrumbComponent } from '../../shared/breadcrumb/breadcrumb.component';
 import { ProgressStepsComponent } from '../../shared/progress-steps/progress-steps.component';
 import { AuthService } from '../../services/auth.service';
 import { UserRegistration } from '../../models/user.model';
+import { RouterModule } from '@angular/router';
 
 interface RegisterResponse {
   success: boolean;
@@ -16,12 +17,12 @@ interface RegisterResponse {
 @Component({
   selector: 'app-register',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, NgOptimizedImage, BreadcrumbComponent, ProgressStepsComponent],
+  imports: [CommonModule, ReactiveFormsModule, NgOptimizedImage, BreadcrumbComponent, ProgressStepsComponent, RouterModule],
   templateUrl: './register.component.html',
   styleUrls: ['./register.component.css']
 })
 export class RegisterComponent implements OnInit {
-  registerForm: FormGroup;
+  registerForm!: FormGroup;
   errorMessage: string = '';
   loading: boolean = false;
   successMessage: string = '';
@@ -29,43 +30,55 @@ export class RegisterComponent implements OnInit {
   currentStep = 0;
   isCheckingEmail = false;
   showPassword = false;
+  showConfirmPassword = false;
   submitted = false;
 
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
     private router: Router
-  ) {
-    this.registerForm = this.fb.group({
-      nombre: ['', [Validators.required, Validators.minLength(2)]],
-      apellido: ['', [Validators.required, Validators.minLength(2)]],
-      email: ['', [Validators.required, Validators.email]],
-      telefono: ['', [Validators.pattern('^[0-9]{9,12}$')]],
-      password: ['', [Validators.required, Validators.minLength(6)]],
-      confirmPassword: ['', Validators.required]
-    }, {
-      validator: this.passwordMatchValidator
-    });
-  }
+  ) {}
 
-  ngOnInit() {
+  ngOnInit(): void {
+    this.initializeForm();
     // Si el usuario ya está autenticado, redirigir al inicio
     if (this.authService.currentUserValue) {
       this.router.navigate(['/']);
     }
   }
 
+  private initializeForm(): void {
+    this.registerForm = this.fb.group({
+      nombre: ['', [Validators.required, Validators.minLength(2)]],
+      apellido: ['', [Validators.required, Validators.minLength(2)]],
+      email: ['', [Validators.required, Validators.email]],
+      telefono: ['', [Validators.pattern('^[0-9]{9,12}$')]],
+      password: ['', [
+        Validators.required,
+        Validators.minLength(6),
+        Validators.pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{6,}$/)
+      ]],
+      confirmPassword: ['', Validators.required]
+    }, {
+      validators: this.passwordMatchValidator
+    });
+  }
+
   // Validador personalizado para confirmar contraseña
-  passwordMatchValidator(g: FormGroup) {
-    const password = g.get('password');
-    const confirmPassword = g.get('confirmPassword');
+  private passwordMatchValidator(control: AbstractControl): {[key: string]: boolean} | null {
+    const password = control.get('password');
+    const confirmPassword = control.get('confirmPassword');
     
-    if (password && confirmPassword && password.value !== confirmPassword.value) {
-      confirmPassword.setErrors({ 'passwordMismatch': true });
-    } else {
-      confirmPassword?.setErrors(null);
+    if (!password || !confirmPassword) {
+      return null;
     }
-    return null;
+
+    return password.value === confirmPassword.value ? null : { 'passwordMismatch': true };
+  }
+
+  // Getters para acceder fácilmente a los campos del formulario
+  get f() { 
+    return this.registerForm.controls; 
   }
 
   onPasswordChange(event: Event) {
@@ -96,7 +109,7 @@ export class RegisterComponent implements OnInit {
     }
   }
 
-  onSubmit() {
+  onSubmit(): void {
     this.submitted = true;
 
     if (this.registerForm.valid) {
@@ -104,12 +117,12 @@ export class RegisterComponent implements OnInit {
       this.errorMessage = '';
 
       const registrationData: UserRegistration = {
-        nombre: this.registerForm.get('nombre')?.value,
-        apellido: this.registerForm.get('apellido')?.value,
-        email: this.registerForm.get('email')?.value,
-        password: this.registerForm.get('password')?.value,
-        confirmPassword: this.registerForm.get('confirmPassword')?.value,
-        telefono: this.registerForm.get('telefono')?.value
+        nombre: this.f['nombre'].value,
+        apellido: this.f['apellido'].value,
+        email: this.f['email'].value,
+        password: this.f['password'].value,
+        confirmPassword: this.f['confirmPassword'].value,
+        telefono: this.f['telefono'].value
       };
 
       this.authService.register(registrationData).subscribe({
@@ -117,8 +130,8 @@ export class RegisterComponent implements OnInit {
           this.successMessage = 'Registro exitoso. Por favor, verifica tu correo electrónico para activar tu cuenta.';
           this.registerForm.reset();
           setTimeout(() => {
-            this.router.navigate(['/auth/login'], {
-              queryParams: { registered: true }
+            this.router.navigate(['/auth/verify-email-sent'], { 
+              queryParams: { email: registrationData.email }
             });
           }, 3000);
         },
@@ -127,19 +140,30 @@ export class RegisterComponent implements OnInit {
           this.loading = false;
         }
       });
+    } else {
+      this.markFormGroupTouched(this.registerForm);
     }
   }
 
+  private markFormGroupTouched(formGroup: FormGroup) {
+    Object.values(formGroup.controls).forEach(control => {
+      control.markAsTouched();
+      if (control instanceof FormGroup) {
+        this.markFormGroupTouched(control);
+      }
+    });
+  }
+
   checkEmail() {
-    const email = this.registerForm.get('email')?.value;
-    if (email && this.registerForm.get('email')?.valid) {
+    const email = this.f['email'].value;
+    if (email && this.f['email'].valid) {
       this.isCheckingEmail = true;
 
       this.authService.checkEmailExists(email)
         .subscribe({
           next: (exists: boolean) => {
             if (exists) {
-              this.registerForm.get('email')?.setErrors({ emailExists: true });
+              this.f['email'].setErrors({ emailExists: true });
             }
           },
           error: (error: Error) => {
@@ -193,17 +217,25 @@ export class RegisterComponent implements OnInit {
     }
   }
 
-  togglePasswordVisibility() {
-    this.showPassword = !this.showPassword;
+  togglePasswordVisibility(field: 'password' | 'confirmPassword'): void {
+    if (field === 'password') {
+      this.showPassword = !this.showPassword;
+    } else {
+      this.showConfirmPassword = !this.showConfirmPassword;
+    }
   }
 
-  getPasswordErrors(): string {
-    const control = this.registerForm.get('password');
-    if (control?.errors && control.touched) {
-      if (control.errors['required']) return 'La contraseña es requerida';
-      if (control.errors['minlength']) return 'La contraseña debe tener al menos 6 caracteres';
+  getPasswordError(): string {
+    const control = this.f['password'];
+    if (control.errors) {
+      if (control.errors['required']) {
+        return 'La contraseña es requerida';
+      }
+      if (control.errors['minlength']) {
+        return 'La contraseña debe tener al menos 6 caracteres';
+      }
       if (control.errors['pattern']) {
-        return 'La contraseña debe contener al menos una letra mayúscula, una minúscula, un número y un carácter especial';
+        return 'La contraseña debe contener al menos una letra mayúscula, una minúscula y un número';
       }
     }
     return '';
