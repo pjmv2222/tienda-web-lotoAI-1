@@ -6,9 +6,38 @@ import { UserModel } from '../models/user.model';
 import jwt from 'jsonwebtoken';
 
 export class AuthController {
+  // Añadir método para verificar si un email ya existe
+  async checkEmail(req: Request, res: Response) {
+    try {
+      const { email } = req.body;
+      
+      if (!email) {
+        return res.status(400).json({
+          success: false,
+          message: 'El email es requerido'
+        });
+      }
+      
+      // Verificar si el usuario existe
+      const user = await UserModel.findByEmail(email);
+      
+      // Devolver true si el email ya existe, false si no
+      res.json(!!user);
+    } catch (error) {
+      console.error('Error al verificar email:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error al verificar email'
+      });
+    }
+  }
+
   async register(req: Request, res: Response) {
     try {
       const { email, password, ...userData } = req.body;
+
+      // Hash de la contraseña
+      const password_hash = await bcrypt.hash(password, 10);
 
       // Generar token de verificación
       const verificationToken = jwt.sign(
@@ -16,10 +45,10 @@ export class AuthController {
         process.env.JWT_SECRET || 'your-secret-key'
       );
 
-      // Registrar usuario
+      // Registrar usuario con password_hash
       const result = await AuthService.register({
         email,
-        password,
+        password_hash,  // Cambiado de password a password_hash
         ...userData
       });
 
@@ -49,10 +78,19 @@ export class AuthController {
     }
   }
 
+  // En el método login
   async login(req: Request, res: Response) {
     try {
       const { email, password } = req.body;
+      console.log('Intento de login:', { email });
+  
+      // Eliminar estas líneas que sobrescriben la configuración CORS
+      // res.header('Access-Control-Allow-Origin', ...);
+      // res.header('Access-Control-Allow-Methods', ...);
+      // res.header('Access-Control-Allow-Headers', ...);
+  
       const user = await AuthService.validateUser(email, password);
+      console.log('Usuario validado:', user ? 'encontrado' : 'no encontrado');
       
       if (!user) {
         return res.status(401).json({
@@ -60,18 +98,28 @@ export class AuthController {
           message: 'Email o contraseña incorrectos'
         });
       }
-
+  
       const token = AuthService.generateToken(user.id);
+      console.log('Token generado:', !!token);
+  
+      const userResponse = {
+        id: user.id,
+        email: user.email,
+        nombre: user.nombre || '',
+        apellido: user.apellido || '',
+        verified: user.verified || false,
+        role: user.role || 'user'
+      };
+
+      console.log('2. Headers de respuesta:', res.getHeaders());
+      console.log('3. Enviando respuesta:', { success: true, user: userResponse, token });
       
       res.json({
         success: true,
-        token,
-        user: {
-          id: user.id,
-          email: user.email,
-          name: user.name
-        }
+        user: userResponse,
+        token
       });
+      
     } catch (error) {
       console.error('Error en login:', error);
       res.status(500).json({
@@ -114,22 +162,30 @@ export class AuthController {
       const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your_jwt_secret') as { email: string };
       const email = decoded.email;
       
+      // Asegurarnos de que FRONTEND_URL esté disponible
+      const frontendUrl = process.env.NODE_ENV === 'development' 
+        ? 'http://localhost:4200' 
+        : 'https://loto-ia.com';
+      
       // Buscar el usuario por email
       const user = await UserModel.findByEmail(email);
       
       if (!user) {
         console.log('Usuario no encontrado:', email);
-        return res.redirect('/error-verificacion?message=Usuario no encontrado');
+        return res.redirect(`${frontendUrl}/auth/verificacion-error?message=Usuario no encontrado`);
       }
       
       // Actualizar el estado de verificación del usuario
       await UserModel.verifyEmail(email);
       
-      // Redirigir a una página de éxito
-      res.redirect('/verificacion-exitosa');
+      // Redirigir a una página de éxito en el frontend
+      res.redirect(`${frontendUrl}/auth/verificacion-exitosa`);
     } catch (error) {
       console.error('Error al verificar email con token:', error);
-      res.redirect('/error-verificacion?message=Token inválido o expirado');
+      const frontendUrl = process.env.NODE_ENV === 'development' 
+        ? 'http://localhost:4200' 
+        : 'https://loto-ia.com';
+      res.redirect(`${frontendUrl}/auth/verificacion-error?message=Token inválido o expirado`);
     }
   }
 
@@ -209,4 +265,36 @@ export class AuthController {
       });
     }
   }
-} 
+
+  async getProfile(req: Request, res: Response) {
+    try {
+      const userId = req.user.id;
+      const user = await UserModel.findById(userId);
+      
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: 'Usuario no encontrado'
+        });
+      }
+  
+      res.json({
+        success: true,
+        user: {
+          id: user.id,
+          email: user.email,
+          nombre: user.nombre,
+          apellido: user.apellido,
+          verified: user.verified,
+          role: user.role
+        }
+      });
+    } catch (error) {
+      console.error('Error al obtener perfil:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error al obtener el perfil'
+      });
+    }
+  }
+}

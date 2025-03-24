@@ -18,6 +18,17 @@ export const UserModel = {
     return result.rows[0];
   },
 
+  async findById(id: number) {
+    const query = 'SELECT * FROM users WHERE id = $1';
+    try {
+      const result = await pool.query(query, [id]);
+      return result.rows[0] || null;
+    } catch (error) {
+      console.error('Error al buscar usuario por ID:', error);
+      throw error;
+    }
+  },
+
   async create(user: Omit<User, 'id' | 'created_at' | 'verified'>) {
     const result = await pool.query(
       'INSERT INTO users (email, password, name, verified) VALUES ($1, $2, $3, false) RETURNING *',
@@ -41,4 +52,4 @@ export const UserModel = {
     );
     return result.rows[0];
   }
-}; 
+};

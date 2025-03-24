@@ -1,12 +1,19 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
+import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { User } from '../../models/user.model';
 
 @Component({
   selector: 'app-navbar',
   templateUrl: './navbar.component.html',
-  styleUrls: ['./navbar.component.css']
+  styleUrls: ['./navbar.component.css'],
+  standalone: true,
+  imports: [
+    CommonModule,
+    RouterModule
+  ]
 })
 export class NavbarComponent implements OnInit {
   currentUser: User | null = null;
@@ -19,10 +26,12 @@ export class NavbarComponent implements OnInit {
   ) {}
 
   ngOnInit() {
+    // Suscribirse al observable del usuario actual
     this.authService.currentUser.subscribe(user => {
+      console.log('Usuario actual:', user); // Para debugging
       this.currentUser = user;
     });
-
+    
     window.addEventListener('resize', () => {
       this.isMobile = window.innerWidth < 768;
       if (!this.isMobile) {
@@ -53,4 +62,4 @@ export class NavbarComponent implements OnInit {
   get userName(): string {
     return this.currentUser ? `${this.currentUser.nombre} ${this.currentUser.apellido}` : '';
   }
-} 
+}

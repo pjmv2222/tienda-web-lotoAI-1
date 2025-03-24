@@ -8,6 +8,18 @@ export interface User {
     verified?: boolean;
     created_at?: Date;
     updated_at?: Date;
+    token?: string;  // Añadimos el token de autenticación
+    role?: string;   // Añadimos el rol del usuario
+    subscriptions?: Subscription[];
+}
+
+// Interfaz para las suscripciones
+export interface Subscription {
+    id: number;
+    tipo: string;
+    fechaInicio: Date;
+    fechaFin: Date;
+    activa: boolean;
 }
 
 export interface UserRegistration {
@@ -37,4 +49,11 @@ export interface UserPasswordForgot {
 export interface RegisterResponse {
     success: boolean;
     message: string;
-} 
+}
+
+export interface LoginResponse {
+    success: boolean;
+    message?: string;
+    token?: string;
+    user?: User;
+}

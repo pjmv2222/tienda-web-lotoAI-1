@@ -10,17 +10,15 @@ interface JwtPayload {
 export const AuthService = {
   async register(userData: any) {
     try {
-      const hashedPassword = await bcrypt.hash(userData.password, 10);
-      
+      // Ya no necesitamos hashear aquí porque viene hasheado del controlador
       console.log('Datos recibidos para registro:', userData);
       
-      // Ajustamos la query para incluir el campo name
       const result = await pool.query(
-        'INSERT INTO users (email, password, name) VALUES ($1, $2, $3) RETURNING id',
+        'INSERT INTO users (email, password_hash, name) VALUES ($1, $2, $3) RETURNING id',
         [
           userData.email, 
-          hashedPassword,
-          userData.nombre  // Asumiendo que el campo viene como 'nombre' del frontend
+          userData.password_hash,  // Usamos password_hash en lugar de password
+          userData.nombre
         ]
       );
 
@@ -41,22 +39,41 @@ export const AuthService = {
       console.error('Error en registro:', error);
       throw error;
     }
-  },
+  },  // <-- Asegurarse de que hay una coma aquí
 
   async validateUser(email: string, password: string) {
-    const result = await pool.query(
-      'SELECT * FROM users WHERE email = $1',
-      [email]
-    );
-    
-    const user = result.rows[0];
-    if (!user) return null;
-    
-    const isValid = await bcrypt.compare(password, user.password);
-    if (!isValid) return null;
-    
-    return user;
-  },
+    try {
+      console.log('Validando usuario:', email);
+      
+      const result = await pool.query(
+        'SELECT * FROM users WHERE email = $1',
+        [email]
+      );
+      
+      const user = result.rows[0];
+      if (!user) {
+        console.log('Usuario no encontrado');
+        return null;
+      }
+      
+      const isValid = await bcrypt.compare(password, user.password_hash);
+      console.log('Contraseña válida:', isValid);
+      
+      if (!isValid) return null;
+      
+      return {
+        id: user.id,
+        email: user.email,
+        nombre: user.nombre,
+        apellido: user.apellido,
+        verified: user.verified,
+        role: user.role
+      };
+    } catch (error) {
+      console.error('Error en validateUser:', error);
+      throw error;
+    }
+  },  // <-- Asegurarse de que hay una coma aquí
 
   generateToken(userId: number) {
     const jwtSecret: Secret = process.env.JWT_SECRET || 'your-secret-key';
@@ -65,5 +82,5 @@ export const AuthService = {
       jwtSecret,
       { expiresIn: '24h' }
     );
-  }
+  }  // <-- No necesita coma por ser el último método
 };
