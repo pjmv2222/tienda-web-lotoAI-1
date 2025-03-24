@@ -1,23 +1,30 @@
 import { Router } from 'express';
 import { AuthController } from '../controllers/auth.controller';
+import { authenticateToken } from '../middlewares/auth.middleware';
 
 const router = Router();
 const authController = new AuthController();
 
-// Ruta para registro
-router.post('/register', authController.register.bind(authController));
+// Middleware para manejar OPTIONS
+router.options('*', (req, res) => {
+  res.status(200).end();
+});
 
-// Ruta para login
+// Rutas públicas (mantener como están)
 router.post('/login', authController.login.bind(authController));
-
-// Ruta para verificación de email (POST)
 router.post('/verify-email', authController.verifyEmail.bind(authController));
-
-// Ruta para verificación de email con token (GET)
 router.get('/verify-email/:token', authController.verifyEmailWithToken.bind(authController));
-
-// Rutas para recuperación de contraseña
 router.post('/request-password-reset', authController.requestPasswordReset.bind(authController));
 router.post('/reset-password', authController.resetPassword.bind(authController));
+
+// Rutas protegidas (requieren autenticación)
+router.get('/profile', authenticateToken, authController.getProfile.bind(authController));
+router.get('/check-session', authenticateToken, (req, res) => {
+  res.json({ 
+    success: true,
+    message: 'Sesión válida',
+    user: req.user
+  });
+});
 
 export default router;

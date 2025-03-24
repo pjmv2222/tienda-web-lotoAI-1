@@ -36,8 +36,10 @@ export class LoginComponent implements OnInit {
       this.error = '';
       
       this.authService.login(this.loginForm.value).subscribe({
-        next: () => {
-          this.router.navigate(['/']);
+        next: (user) => {
+          this.loading = false;
+          // Forzar recarga para actualizar el estado
+          window.location.href = '/';
         },
         error: (error) => {
           this.error = error.error.message || 'Error al iniciar sesión';
@@ -46,4 +48,4 @@ export class LoginComponent implements OnInit {
       });
     }
   }
-} 
+}

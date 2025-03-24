@@ -1,1 +1,27 @@
-<p>home works!</p>
+<div class="home-container">
+  <h1>Bienvenido a Loto IA</h1>
+  
+  <div *ngIf="currentUser">
+    <p>Hola, {{currentUser.nombre}} {{currentUser.apellido}}</p>
+    
+    <div *ngIf="hasSubscriptions">
+      <h2>Tus suscripciones activas:</h2>
+      <ul>
+        <li *ngFor="let sub of currentUser.subscriptions">
+          {{sub.tipo}} - Válida hasta: {{sub.fechaFin | date}}
+        </li>
+      </ul>
+    </div>
+    
+    <div *ngIf="!hasSubscriptions">
+      <p>No tienes suscripciones activas.</p>
+      <button>Adquirir una suscripción</button>
+    </div>
+  </div>
+  
+  <div *ngIf="!currentUser">
+    <p>Inicia sesión para ver tus pronósticos personalizados</p>
+    <button routerLink="/auth/login">Iniciar sesión</button>
+    <button routerLink="/registro">Registrarse</button>
+  </div>
+</div>
