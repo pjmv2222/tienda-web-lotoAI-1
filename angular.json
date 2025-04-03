@@ -55,6 +55,9 @@
         },
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
+          "options": {
+            "port": 4000
+          },
           "configurations": {
             "production": {
               "buildTarget": "tienda-web-loto-ai:build:production"
