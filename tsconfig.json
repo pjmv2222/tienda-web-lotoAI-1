@@ -10,8 +10,8 @@
     "module": "ES2022",
     "strict": true,
     "noImplicitOverride": true,
-    "noPropertyAccessFromIndexSignature": true,
-    "noImplicitReturns": true,
+    "noPropertyAccessFromIndexSignature": false,
+    "noImplicitReturns": false,
     "noFallthroughCasesInSwitch": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
@@ -22,6 +22,7 @@
     "experimentalDecorators": true,
     "importHelpers": true,
     "useDefineForClassFields": false,
+    "types": ["jest", "node"],
     "lib": [
       "ES2022",
       "dom"

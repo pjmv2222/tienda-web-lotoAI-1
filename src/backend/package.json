@@ -13,7 +13,8 @@
     "pm2:stop": "node_modules/.bin/pm2 stop loto-ia",
     "pm2:restart": "node_modules/.bin/pm2 restart loto-ia",
     "pm2:logs": "node_modules/.bin/pm2 logs loto-ia",
-    "pm2:status": "node_modules/.bin/pm2 status"
+    "pm2:status": "node_modules/.bin/pm2 status",
+    "clean": "rimraf dist node_modules package-lock.json"
   },
   "keywords": [
     "backend"
@@ -40,6 +41,7 @@
     "bcryptjs": "^2.4.3",
     "jsonwebtoken": "^9.0.2",
     "nodemon": "^3.1.7",
+    "rimraf": "^6.0.1",
     "ts-node": "^10.9.1",
     "typescript": "^5.7.2"
   }
