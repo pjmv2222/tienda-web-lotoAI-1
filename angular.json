@@ -86,21 +86,21 @@
           "defaultConfiguration": "production"
         },
         "serve-ssr": {
-          "builder": "@angular/ssr:dev-server",
+          "builder": "@angular-devkit/build-angular:ssr-dev-server",
           "configurations": {
             "development": {
-              "buildTarget": "tienda-web-loto-ai:build:development",
+              "browserTarget": "tienda-web-loto-ai:build:development",
               "serverTarget": "tienda-web-loto-ai:server:development"
             },
             "production": {
-              "buildTarget": "tienda-web-loto-ai:build:production",
+              "browserTarget": "tienda-web-loto-ai:build:production",
               "serverTarget": "tienda-web-loto-ai:server:production"
             }
           },
           "defaultConfiguration": "development"
         },
         "prerender": {
-          "builder": "@angular/ssr:prerender",
+          "builder": "@angular-devkit/build-angular:prerender",
           "options": {
             "routes": [
               "/"
@@ -108,11 +108,11 @@
           },
           "configurations": {
             "production": {
-              "buildTarget": "tienda-web-loto-ai:build:production",
+              "browserTarget": "tienda-web-loto-ai:build:production",
               "serverTarget": "tienda-web-loto-ai:server:production"
             },
             "development": {
-              "buildTarget": "tienda-web-loto-ai:build:development",
+              "browserTarget": "tienda-web-loto-ai:build:development",
               "serverTarget": "tienda-web-loto-ai:server:development"
             }
           },

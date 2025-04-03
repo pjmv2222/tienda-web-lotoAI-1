@@ -1,11 +1,15 @@
 import { Component, OnInit } from '@angular/core';
+import { RouterModule } from '@angular/router';
+import { CommonModule } from '@angular/common';
 import { BotesService } from '../../services/botes.service';
 import { Bote } from '../../models/bote.model';
 
 @Component({
   selector: 'app-botes',
   templateUrl: './botes.component.html',
-  styleUrls: ['./botes.component.css']
+  styleUrls: ['./botes.component.css'],
+  standalone: true,
+  imports: [CommonModule, RouterModule]
 })
 export class BotesComponent implements OnInit {
   botes: Bote[] = [];
