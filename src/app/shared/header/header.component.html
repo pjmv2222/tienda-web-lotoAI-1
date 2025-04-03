@@ -5,7 +5,8 @@
             <img src="/assets/img/lotoIA-LOGO.jpg" alt="LotoIA Logo" class="logo">
         </div>
         <div class="user-actions">
-            <div class="login-container">
+            <!-- Mostrar esto solo si NO hay usuario autenticado -->
+            <div class="login-container" *ngIf="!currentUser">
                 <div class="input-group">
                     <div class="inputs-row">
                         <input type="text" 
@@ -33,7 +34,7 @@
                         <a (click)="goToForgotPassword()" style="cursor: pointer;">¿Has olvidado tu contraseña?</a>
                         <a (click)="goToRegister()" style="cursor: pointer;">Solicitar una nueva</a>
                     </div>
-                    <div *ngIf="loginError" class="login-error">
+                    <div *ngIf="loginError" class="login-error" style="color: red; margin-top: 5px;">
                         {{ loginError }}
                     </div>
                 </div>
@@ -48,6 +49,18 @@
                     <button class="btn-registro" routerLink="/registro">REGISTRO</button>
                 </div>
             </div>
+
+            <!-- Mostrar esto solo si hay usuario autenticado -->
+            <div class="user-menu" *ngIf="currentUser">
+                <div class="user-info">
+                    <span>Bienvenido, {{currentUser.nombre}}</span>
+                </div>
+                <div class="user-actions-menu">
+                    <button class="btn-profile" routerLink="/profile">Mi Perfil</button>
+                    <button class="btn-logout" (click)="logout()">Cerrar Sesión</button>
+                </div>
+            </div>
+
             <div class="idioma-container">
                 <label for="changeLanguage">Idioma</label>
                 <select id="changeLanguage" name="changeLanguage">

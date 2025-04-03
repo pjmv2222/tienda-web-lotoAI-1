@@ -4,24 +4,26 @@
   <div *ngIf="currentUser">
     <p>Hola, {{currentUser.nombre}} {{currentUser.apellido}}</p>
     
-    <div *ngIf="hasSubscriptions">
+    <div *ngIf="hasSubscriptions && currentUser.subscriptions?.length">
       <h2>Tus suscripciones activas:</h2>
       <ul>
         <li *ngFor="let sub of currentUser.subscriptions">
-          {{sub.tipo}} - Válida hasta: {{sub.fechaFin | date}}
+          <span *ngIf="sub.activa">
+            {{sub.tipo}} - Válida hasta: {{sub.fechaFin | date:'dd/MM/yyyy'}}
+          </span>
         </li>
       </ul>
     </div>
     
-    <div *ngIf="!hasSubscriptions">
+    <div *ngIf="!hasSubscriptions || !currentUser.subscriptions?.length">
       <p>No tienes suscripciones activas.</p>
-      <button>Adquirir una suscripción</button>
+      <button class="btn-primary">Adquirir una suscripción</button>
     </div>
   </div>
   
   <div *ngIf="!currentUser">
     <p>Inicia sesión para ver tus pronósticos personalizados</p>
-    <button routerLink="/auth/login">Iniciar sesión</button>
-    <button routerLink="/registro">Registrarse</button>
+    <button class="btn-primary" routerLink="/auth/login">Iniciar sesión</button>
+    <button class="btn-secondary" routerLink="/registro">Registrarse</button>
   </div>
 </div>
