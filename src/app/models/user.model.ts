@@ -1,19 +1,4 @@
 // Interfaces para el modelo de usuario
-export interface User {
-    id?: number;
-    email: string;
-    nombre: string;
-    apellido: string;
-    telefono?: string;
-    verified?: boolean;
-    created_at?: Date;
-    updated_at?: Date;
-    token?: string;  // Añadimos el token de autenticación
-    role?: string;   // Añadimos el rol del usuario
-    subscriptions?: Subscription[];
-}
-
-// Interfaz para las suscripciones
 export interface Subscription {
     id: number;
     tipo: string;
@@ -22,12 +7,32 @@ export interface Subscription {
     activa: boolean;
 }
 
-export interface UserRegistration {
+export interface User {
+    id: string;
+    email: string;
     nombre: string;
     apellido: string;
+    telefono?: string;
+    verified: boolean;
+    role: string;
+    token?: string;
+    subscriptions?: Subscription[];
+}
+
+export interface UserProfile {
+    id: string;
+    email: string;
+    nombre: string;
+    apellido: string;
+    telefono?: string;
+    fechaRegistro: Date;
+}
+
+export interface UserRegistration {
     email: string;
     password: string;
-    confirmPassword?: string;
+    nombre: string;
+    apellido: string;
     telefono?: string;
 }
 
@@ -39,7 +44,6 @@ export interface UserLogin {
 export interface UserPasswordReset {
     token: string;
     password: string;
-    confirmPassword: string;
 }
 
 export interface UserPasswordForgot {

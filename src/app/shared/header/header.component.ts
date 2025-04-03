@@ -3,13 +3,14 @@ import { HttpClient } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 import { HttpClientModule } from '@angular/common/http';
 import { RouterLink, Router } from '@angular/router';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
+import { User } from '../../models/user.model';
 
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [CommonModule, HttpClientModule, RouterLink, FormsModule],
+  imports: [CommonModule, HttpClientModule, RouterLink, FormsModule, ReactiveFormsModule],
   templateUrl: './header.component.html',
   styleUrls: ['./header.component.css']
 })
@@ -28,9 +29,13 @@ export class HeaderComponent implements OnInit {
   loginError: string = '';
   isLoggingIn: boolean = false;
   showPassword: boolean = false;
+  currentUser: User | null = null;
 
   ngOnInit() {
     this.cargarBotes();
+    this.authService.currentUser.subscribe(user => {
+      this.currentUser = user;
+    });
   }
 
   async cargarBotes() {
@@ -77,18 +82,39 @@ export class HeaderComponent implements OnInit {
 
   // Método para iniciar sesión
   login() {
+    // Validar campos
+    if (!this.username || !this.password) {
+      this.loginError = 'Por favor, complete todos los campos';
+      return;
+    }
+
+    this.isLoggingIn = true;
+    this.loginError = '';
+
     const credentials = {
       email: this.username,
       password: this.password
     };
+
     this.authService.login(credentials).subscribe({
-      next: () => {
+      next: (response) => {
+        this.isLoggingIn = false;
+        this.username = '';
+        this.password = '';
         this.router.navigate(['/profile']);
       },
       error: (error) => {
+        this.isLoggingIn = false;
         console.error('Error de inicio de sesión:', error);
+        this.loginError = error?.error?.message || 'Error al iniciar sesión. Por favor, inténtelo de nuevo.';
       }
     });
+  }
+
+  // Método para cerrar sesión
+  logout() {
+    this.authService.logout();
+    this.router.navigate(['/']);
   }
 
   // Método para navegar a la página de recuperación de contraseña

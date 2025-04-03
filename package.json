@@ -9,7 +9,7 @@
     "start:prod": "node dist/tienda-web-loto-ai/server/main.js",
     "_preinstall": "npm install -g @angular/cli",
     "deploy:frontend": "bash scripts/deploy-frontend.sh",
-    "dev": "ng serve --configuration development",
+    "dev": "ng run tienda-web-loto-ai:serve-ssr:development",
     "dev:ssr": "ng run tienda-web-loto-ai:serve-ssr:development",
     "dev:backend": "cd src/backend && npm run dev",
     "fix-ssr": "node fix-ssr.js",
