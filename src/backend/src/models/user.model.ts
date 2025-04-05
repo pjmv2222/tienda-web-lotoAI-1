@@ -3,10 +3,13 @@ import { pool } from '../config/database';
 export interface User {
   id: number;
   email: string;
-  password: string;
-  name: string;
+  password_hash: string;
+  nombre: string;
+  apellido: string;
+  telefono?: string;
   verified: boolean;
-  created_at: Date;
+  role: string;
+  created_at?: Date;
 }
 
 export const UserModel = {
@@ -19,20 +22,61 @@ export const UserModel = {
   },
 
   async findById(id: number) {
-    const query = 'SELECT * FROM users WHERE id = $1';
-    try {
-      const result = await pool.query(query, [id]);
-      return result.rows[0] || null;
-    } catch (error) {
-      console.error('Error al buscar usuario por ID:', error);
-      throw error;
-    }
+    const result = await pool.query(
+      'SELECT * FROM users WHERE id = $1',
+      [id]
+    );
+    return result.rows[0];
   },
 
-  async create(user: Omit<User, 'id' | 'created_at' | 'verified'>) {
+  async create(userData: any) {
     const result = await pool.query(
-      'INSERT INTO users (email, password, name, verified) VALUES ($1, $2, $3, false) RETURNING *',
-      [user.email, user.password, user.name]
+      `INSERT INTO users (email, password_hash, nombre, apellido, verified, role)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       RETURNING *`,
+      [
+        userData.email,
+        userData.password_hash,
+        userData.nombre,
+        userData.apellido,
+        false,
+        'user'
+      ]
+    );
+    return result.rows[0];
+  },
+
+  async update(id: number, userData: Partial<User>) {
+    const result = await pool.query(
+      `UPDATE users 
+       SET nombre = COALESCE($1, nombre),
+           apellido = COALESCE($2, apellido),
+           telefono = COALESCE($3, telefono)
+       WHERE id = $4
+       RETURNING *`,
+      [
+        userData.nombre,
+        userData.apellido,
+        userData.telefono,
+        id
+      ]
+    );
+    return result.rows[0];
+  },
+
+  async updatePassword(idOrEmail: number | string, password_hash: string) {
+    const query = typeof idOrEmail === 'number' 
+      ? 'UPDATE users SET password_hash = $1 WHERE id = $2 RETURNING *'
+      : 'UPDATE users SET password_hash = $1 WHERE email = $2 RETURNING *';
+    
+    const result = await pool.query(query, [password_hash, idOrEmail]);
+    return result.rows[0];
+  },
+
+  async delete(id: number) {
+    const result = await pool.query(
+      'DELETE FROM users WHERE id = $1 RETURNING *',
+      [id]
     );
     return result.rows[0];
   },
@@ -41,14 +85,6 @@ export const UserModel = {
     const result = await pool.query(
       'UPDATE users SET verified = true WHERE email = $1 RETURNING *',
       [email]
-    );
-    return result.rows[0];
-  },
-
-  async updatePassword(email: string, newPassword: string) {
-    const result = await pool.query(
-      'UPDATE users SET password = $1 WHERE email = $2 RETURNING *',
-      [newPassword, email]
     );
     return result.rows[0];
   }

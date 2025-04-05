@@ -2,77 +2,70 @@ import express from 'express';
 import cors from 'cors';
 import authRoutes from './routes/auth.routes';
 import productRoutes from './routes/product.routes';
-import session from 'express-session';
 
 const app = express();
 
-// Configuración CORS mejorada
+console.log('Iniciando configuración del servidor...');
+
+// Middleware para parsear JSON - DEBE IR ANTES DE LAS RUTAS
+app.use(express.json());
+
+// Configuración CORS
 app.use(cors({
-  origin: ['http://localhost:4000', 'http://127.0.0.1:4000', 'http://localhost:4200', 'http://127.0.0.1:4200'],
+  origin: ['http://localhost:4000'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With'],
-  exposedHeaders: ['Authorization'],
-  optionsSuccessStatus: 200
 }));
 
-// Eliminar este middleware de headers ya que CORS lo maneja
-// app.use((req, res, next) => {
-//   res.header('Access-Control-Allow-Origin', req.headers.origin);
-//   res.header('Access-Control-Allow-Credentials', 'true');
-//   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-//   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
-//   
-//   if (req.method === 'OPTIONS') {
-//     return res.status(200).end();
-//   }
-//   next();
-// });
-
-// Session configuration after CORS
-app.use(session({
-  secret: process.env.JWT_SECRET || 'your_jwt_secret',
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    secure: false,
-    httpOnly: true,
-    sameSite: 'lax',
-    maxAge: 24 * 60 * 60 * 1000
+// Log de todas las peticiones
+app.use((req, res, next) => {
+  const timestamp = new Date().toISOString();
+  console.log(`[${timestamp}] ${req.method} ${req.originalUrl}`);
+  console.log('Headers:', JSON.stringify(req.headers, null, 2));
+  if (req.method !== 'GET') {
+    console.log('Body:', JSON.stringify(req.body, null, 2));
   }
-}));
-
-app.use(express.json());
-
-// Middleware para verificar token en todas las rutas protegidas
-app.use('/api/auth/*', (req, res, next) => {
-  console.log('Request Headers:', req.headers);
-  console.log('Request Body:', req.body);
   next();
 });
 
-// Log mejorado de peticiones
-app.use((req, res, next) => {
-  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
-  console.log('Origin:', req.headers.origin);
-  console.log('Headers:', req.headers);
-  next();
+// Verificar que el servidor está vivo
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
-// Añadir justo después de la configuración CORS
-app.use((req, res, next) => {
-  const oldJson = res.json;
-  res.json = function(data) {
-    console.log('Respuesta a enviar:', data);
-    console.log('Headers de respuesta:', res.getHeaders());
-    return oldJson.call(res, data); // Cambiado de apply a call con el argumento directo
-  };
-  next();
+// Rutas
+console.log('Configurando rutas...');
+
+// Ruta de prueba principal
+app.get('/api/test', (req, res) => {
+  console.log('[Main] Prueba de ruta principal');
+  res.json({ message: 'API funcionando correctamente' });
 });
 
-// Routes
+// Montar rutas de autenticación
+console.log('Montando rutas de autenticación en /api/auth');
 app.use('/api/auth', authRoutes);
+app.get('/api/auth/test', (req, res) => {
+  console.log('[Main] Prueba de ruta auth desde main');
+  res.json({ message: 'Auth router accesible desde main' });
+});
+
+// Montar otras rutas
 app.use('/api/products', productRoutes);
+
+// Manejador de rutas no encontradas
+app.use((req, res) => {
+  const timestamp = new Date().toISOString();
+  console.log(`[${timestamp}] 404 - Ruta no encontrada: ${req.method} ${req.originalUrl}`);
+  res.status(404).json({
+    success: false,
+    message: 'Ruta no encontrada',
+    path: req.originalUrl,
+    method: req.method,
+    timestamp: timestamp
+  });
+});
 
 // Manejador de errores global
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
@@ -83,17 +76,15 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
   });
 });
 
-const port = Number(process.env.PORT) || 3000;
-
-const server = app.listen(port, '0.0.0.0', () => {
-  console.log(`Servidor corriendo en el puerto ${port}`);
-});
-
-// Manejo de errores del servidor
-server.on('error', (error: any) => {
-  console.error('Error del servidor:', error);
-});
-
-process.on('unhandledRejection', (reason, promise) => {
-  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+const PORT = 3000;
+const server = app.listen(PORT, '0.0.0.0', () => {
+  console.log('='.repeat(50));
+  console.log(`Servidor iniciado en http://localhost:${PORT}`);
+  console.log(`API disponible en http://localhost:${PORT}/api`);
+  console.log('Rutas disponibles:');
+  console.log('- GET  /api/health');
+  console.log('- POST /api/auth/login');
+  console.log('- POST /api/auth/register');
+  console.log('- GET  /api/auth/profile');
+  console.log('='.repeat(50));
 });
