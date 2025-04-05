@@ -32,21 +32,23 @@
                     </div>
                     <div class="forgot-password">
                         <a (click)="goToForgotPassword()" style="cursor: pointer;">¿Has olvidado tu contraseña?</a>
-                        <a (click)="goToRegister()" style="cursor: pointer;">Solicitar una nueva</a>
                     </div>
-                    <div *ngIf="loginError" class="login-error" style="color: red; margin-top: 5px;">
+                    <div *ngIf="loginError" class="login-error">
                         {{ loginError }}
+                        <div *ngIf="loginError.includes('¿Deseas registrarte?')" class="register-link">
+                            <a [routerLink]="['/auth/register']" class="btn-register">Registrarse</a>
+                        </div>
                     </div>
                 </div>
                 <div class="buttons-group">
                     <img src="/assets/img/boton_entrar.png" alt="Icono entrar" class="icon-entrar">
-                    <button class="btn-entrar" (click)="login()" [disabled]="isLoggingIn">
+                    <button type="button" class="btn-entrar" (click)="login()" [disabled]="isLoggingIn">
                         <span *ngIf="!isLoggingIn">Entrar</span>
                         <span *ngIf="isLoggingIn">
                             <i class="fas fa-spinner fa-spin"></i>
                         </span>
                     </button>
-                    <button class="btn-registro" routerLink="/registro">REGISTRO</button>
+                    <button type="button" class="btn-registro" routerLink="/registro">REGISTRO</button>
                 </div>
             </div>
 

@@ -14,7 +14,8 @@
     "pm2:restart": "node_modules/.bin/pm2 restart loto-ia",
     "pm2:logs": "node_modules/.bin/pm2 logs loto-ia",
     "pm2:status": "node_modules/.bin/pm2 status",
-    "clean": "rimraf dist node_modules package-lock.json"
+    "clean": "rimraf dist node_modules package-lock.json",
+    "init-db": "ts-node src/config/init-db.ts"
   },
   "keywords": [
     "backend"

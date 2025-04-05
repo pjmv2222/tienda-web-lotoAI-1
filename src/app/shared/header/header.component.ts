@@ -82,6 +82,8 @@ export class HeaderComponent implements OnInit {
 
   // Método para iniciar sesión
   login() {
+    console.log('Iniciando proceso de login...');
+    
     // Validar campos
     if (!this.username || !this.password) {
       this.loginError = 'Por favor, complete todos los campos';
@@ -96,17 +98,32 @@ export class HeaderComponent implements OnInit {
       password: this.password
     };
 
+    console.log('Enviando credenciales al servicio de autenticación...');
+    
     this.authService.login(credentials).subscribe({
       next: (response) => {
+        console.log('Login exitoso:', response);
         this.isLoggingIn = false;
         this.username = '';
         this.password = '';
         this.router.navigate(['/profile']);
       },
       error: (error) => {
+        console.log('Error en login:', {
+          status: error.status,
+          message: error.error?.message || 'Error desconocido',
+          error: error
+        });
+        
         this.isLoggingIn = false;
-        console.error('Error de inicio de sesión:', error);
-        this.loginError = error?.error?.message || 'Error al iniciar sesión. Por favor, inténtelo de nuevo.';
+        
+        if (error.status === 404) {
+          this.loginError = 'No existe una cuenta con este email. ¿Deseas registrarte?';
+        } else if (error.status === 401) {
+          this.loginError = 'Contraseña incorrecta';
+        } else {
+          this.loginError = 'Error al iniciar sesión. Por favor, inténtelo de nuevo.';
+        }
       }
     });
   }

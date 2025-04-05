@@ -91,6 +91,9 @@
         },
         "serve-ssr": {
           "builder": "@angular-devkit/build-angular:ssr-dev-server",
+          "options": {
+            "port": 4000
+          },
           "configurations": {
             "development": {
               "browserTarget": "tienda-web-loto-ai:build:development",

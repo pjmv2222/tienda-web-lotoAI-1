@@ -9,7 +9,7 @@
     "start:prod": "node dist/tienda-web-loto-ai/server/main.js",
     "_preinstall": "npm install -g @angular/cli",
     "deploy:frontend": "bash scripts/deploy-frontend.sh",
-    "dev": "ng run tienda-web-loto-ai:serve-ssr:development",
+    "dev": "ng serve --port 4000 --configuration development",
     "dev:ssr": "ng run tienda-web-loto-ai:serve-ssr:development",
     "dev:backend": "cd src/backend && npm run dev",
     "fix-ssr": "node fix-ssr.js",
@@ -18,7 +18,8 @@
     "build:ssr": "ng build && ng run tienda-web-loto-ai:server",
     "prerender": "ng run tienda-web-loto-ai:prerender",
     "clean": "rimraf dist node_modules package-lock.json",
-    "clean:all": "npm run clean && cd src/backend && npm run clean"
+    "clean:all": "npm run clean && cd src/backend && npm run clean",
+    "start:dev": "concurrently \"npm run dev:backend\" \"npm run dev:ssr\""
   },
   "dependencies": {
     "@angular/animations": "^18.2.12",
@@ -37,6 +38,7 @@
     "@types/pg": "^8.11.11",
     "axios": "^1.6.0",
     "bcrypt": "^5.1.1",
+    "concurrently": "^8.2.2",
     "domino": "^2.1.6",
     "dotenv": "^16.4.7",
     "express": "^4.18.2",

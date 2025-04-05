@@ -5,26 +5,50 @@ import { authenticateToken } from '../middlewares/auth.middleware';
 const router = Router();
 const authController = new AuthController();
 
-// Middleware para manejar OPTIONS
-router.options('*', (req, res) => {
-  res.status(200).end();
+console.log('Configurando rutas de autenticación...');
+
+// Middleware para todas las rutas de autenticación
+router.use((req, res, next) => {
+  console.log(`[Auth Route] ${req.method} ${req.url}`);
+  next();
 });
 
-// Rutas públicas (mantener como están)
-router.post('/login', authController.login.bind(authController));
-router.post('/verify-email', authController.verifyEmail.bind(authController));
-router.get('/verify-email/:token', authController.verifyEmailWithToken.bind(authController));
-router.post('/request-password-reset', authController.requestPasswordReset.bind(authController));
-router.post('/reset-password', authController.resetPassword.bind(authController));
-
-// Rutas protegidas (requieren autenticación)
-router.get('/profile', authenticateToken, authController.getProfile.bind(authController));
-router.get('/check-session', authenticateToken, (req, res) => {
-  res.json({ 
-    success: true,
-    message: 'Sesión válida',
-    user: req.user
+// Rutas públicas
+router.post('/login', (req, res) => {
+  console.log('[Auth Route] Recibida petición de login:', {
+    body: req.body,
+    headers: req.headers
   });
+  authController.login(req, res);
 });
+
+router.post('/register', (req, res) => {
+  console.log('[Auth Route] Recibida petición de registro:', req.body);
+  authController.register(req, res);
+});
+
+// Rutas protegidas
+router.get('/profile', authenticateToken, (req, res) => {
+  console.log('[Auth Route] Recibida petición de perfil');
+  authController.getProfile(req, res);
+});
+
+router.put('/profile', authenticateToken, (req, res) => {
+  console.log('[Auth Route] Recibida petición de actualización de perfil');
+  authController.updateProfile(req, res);
+});
+
+router.delete('/profile', authenticateToken, (req, res) => {
+  console.log('[Auth Route] Recibida petición de eliminación de cuenta');
+  authController.deleteAccount(req, res);
+});
+
+// Ruta de prueba en el router de autenticación
+router.get('/test', (req, res) => {
+  console.log('[Auth Route] Prueba de ruta auth');
+  res.json({ message: 'Auth router funcionando correctamente' });
+});
+
+console.log('Rutas de autenticación configuradas');
 
 export default router;
