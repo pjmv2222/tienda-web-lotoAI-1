@@ -34,10 +34,19 @@ export class AuthController {
 
   async register(req: Request, res: Response) {
     try {
+      console.log('='.repeat(50));
+      console.log('Iniciando registro de usuario');
       const { email, password, nombre, apellido } = req.body;
+      console.log('Datos recibidos:', { email, nombre, apellido, password: '***' });
 
       // Validar campos requeridos
       if (!email || !password || !nombre || !apellido) {
+        console.log('Campos faltantes:', { 
+          email: !email, 
+          password: !password, 
+          nombre: !nombre, 
+          apellido: !apellido 
+        });
         return res.status(400).json({
           success: false,
           message: 'Todos los campos son requeridos'
@@ -46,12 +55,16 @@ export class AuthController {
 
       // Hash de la contraseña
       const password_hash = await bcrypt.hash(password, 10);
+      console.log('Contraseña hasheada correctamente');
 
       // Generar token de verificación
+      console.log('JWT_SECRET usado para generar token:', process.env.JWT_SECRET || 'your-secret-key');
       const verificationToken = jwt.sign(
         { email },
-        process.env.JWT_SECRET || 'your-secret-key'
+        process.env.JWT_SECRET || 'your-secret-key',
+        { expiresIn: '24h' }
       );
+      console.log('Token de verificación generado:', verificationToken);
 
       // Registrar usuario con password_hash
       const result = await AuthService.register({
@@ -60,9 +73,11 @@ export class AuthController {
         nombre,
         apellido
       });
+      console.log('Usuario registrado correctamente:', result.id);
 
       // Enviar email de verificación
-      await sendVerificationEmail(email, verificationToken);
+      const emailSent = await sendVerificationEmail(email, verificationToken);
+      console.log('Email de verificación enviado:', emailSent ? 'Sí' : 'No');
 
       // Devolver respuesta en el formato que espera el frontend
       res.status(201).json({
@@ -305,36 +320,53 @@ export class AuthController {
 
   async verifyEmailWithToken(req: Request, res: Response) {
     try {
+      console.log('='.repeat(50));
+      console.log('Iniciando verificación de email con token');
       const { token } = req.params;
+      console.log('Token recibido:', token);
       
       // Verificar el token
-      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your_jwt_secret') as { email: string };
-      const email = decoded.email;
+      console.log('JWT_SECRET:', process.env.JWT_SECRET || 'your_jwt_secret');
+      try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your_jwt_secret') as { email: string };
+        console.log('Token decodificado exitosamente:', decoded);
+        const email = decoded.email;
+        console.log('Email extraído del token:', email);
       
-      // Usar la variable de entorno FRONTEND_URL
-      const frontendUrl = process.env.NODE_ENV === 'production' 
-        ? 'https://loto-ia.com'
-        : (process.env.FRONTEND_URL || 'http://localhost:4000');
+        // Buscar el usuario por email
+        const user = await UserModel.findByEmail(email);
+        console.log('Usuario encontrado:', user ? 'Sí' : 'No');
       
-      // Buscar el usuario por email
-      const user = await UserModel.findByEmail(email);
+        if (!user) {
+          console.log('Usuario no encontrado:', email);
+          return res.status(404).json({
+            success: false,
+            message: 'Usuario no encontrado'
+          });
+        }
       
-      if (!user) {
-        console.log('Usuario no encontrado:', email);
-        return res.redirect(`${frontendUrl}/auth/verificacion-error?message=Usuario no encontrado`);
+        // Actualizar el estado de verificación del usuario
+        await UserModel.verifyEmail(email);
+        console.log('Email verificado correctamente');
+      
+        // Enviar respuesta exitosa
+        res.json({
+          success: true,
+          message: 'Email verificado correctamente'
+        });
+      } catch (jwtError) {
+        console.error('Error al verificar el token JWT:', jwtError);
+        return res.status(400).json({
+          success: false,
+          message: 'Token inválido o expirado'
+        });
       }
-      
-      // Actualizar el estado de verificación del usuario
-      await UserModel.verifyEmail(email);
-      
-      // Redirigir a una página de éxito en el frontend
-      res.redirect(`${frontendUrl}/auth/verificacion-exitosa`);
     } catch (error) {
-      console.error('Error al verificar email con token:', error);
-      const frontendUrl = process.env.NODE_ENV === 'production' 
-        ? 'https://loto-ia.com'
-        : (process.env.FRONTEND_URL || 'http://localhost:4000');
-      res.redirect(`${frontendUrl}/auth/verificacion-error?message=Token inválido o expirado`);
+      console.error('Error general al verificar email con token:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error al verificar el email'
+      });
     }
   }
 

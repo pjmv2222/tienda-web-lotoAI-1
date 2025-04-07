@@ -4,19 +4,14 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const mailjet = new Mailjet({
-  apiKey: process.env.MAILJET_API_KEY,
-  apiSecret: process.env.MAILJET_API_SECRET
+  apiKey: process.env.MAILJET_API_KEY || '6d0949fe3bebd9e83bdca5d4ec3e19db',
+  apiSecret: process.env.MAILJET_API_SECRET || 'fcd11e866b78ed68526fd750a7bd6138'
 });
 
 export async function sendVerificationEmail(email: string, token: string): Promise<boolean> {
   try {
-    const frontendUrl = process.env.NODE_ENV === 'production' 
-      ? 'https://loto-ia.com'
-      : (process.env.FRONTEND_URL || 'http://localhost:4000');
-
-    const verificationLink = `${frontendUrl}/auth/verify-email/${token}`;
-    
-    console.log('Enviando email de verificación a:', email);
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:4000';
+    const verificationLink = `${frontendUrl}/verificar/${token}`;
     console.log('Link de verificación:', verificationLink);
 
     const result = await mailjet.post('send', { version: 'v3.1' }).request({
@@ -40,12 +35,14 @@ export async function sendVerificationEmail(email: string, token: string): Promi
             <a href="${verificationLink}">
               Verificar cuenta
             </a>
+            <p>Este enlace expirará en 24 horas.</p>
+            <p>Si no creaste esta cuenta, puedes ignorar este correo.</p>
+            <p>Saludos,<br>El equipo de LotoIA</p>
           `
         }
       ]
     });
 
-    console.log('Email enviado exitosamente');
     return true;
   } catch (error) {
     console.error('Error enviando email:', error);
@@ -55,7 +52,8 @@ export async function sendVerificationEmail(email: string, token: string): Promi
 
 export async function sendPasswordResetEmail(email: string, token: string): Promise<boolean> {
   try {
-    const resetLink = `${process.env.FRONTEND_URL || 'http://localhost:4200'}/reset-password/${token}`;
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:4000';
+    const resetLink = `${frontendUrl}/reset-password/${token}`;
     
     const result = await mailjet.post('send', { version: 'v3.1' }).request({
       Messages: [

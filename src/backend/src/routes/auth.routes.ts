@@ -27,6 +27,12 @@ router.post('/register', (req, res) => {
   authController.register(req, res);
 });
 
+// Ruta de verificación de email
+router.get('/verify/:token', (req, res) => {
+  console.log('[Auth Route] Recibida petición de verificación de email:', req.params);
+  authController.verifyEmailWithToken(req, res);
+});
+
 // Rutas protegidas
 router.get('/profile', authenticateToken, (req, res) => {
   console.log('[Auth Route] Recibida petición de perfil');
