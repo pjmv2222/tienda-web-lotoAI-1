@@ -9,10 +9,10 @@
             <div class="login-container" *ngIf="!currentUser">
                 <div class="input-group">
                     <div class="inputs-row">
-                        <input type="text" 
+                        <input type="text"
                                id="header-username"
                                name="header-username"
-                               placeholder="Correo electrónico o NIF/NIE" 
+                               placeholder="Correo electrónico o NIF/NIE"
                                autocomplete="username"
                                class="login-input"
                                [(ngModel)]="username">
@@ -82,7 +82,7 @@
         <div class="juegos-container">
             <ul class="modulo-menu-juegos">
                 <li class="item-menu-juegos" *ngFor="let juego of juegos" [class]="juego">
-                    <a href="#" class="link-cabecera-juego">
+                    <a [routerLink]="getRouterLink(juego)" class="link-cabecera-juego">
                         <img class="logotipo-juego-cabecera web" [src]="getImageUrl(juego)" [alt]="juego">
                         <div class="bote-juego">
                             <div class="valor">

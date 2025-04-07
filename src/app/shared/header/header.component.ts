@@ -18,11 +18,11 @@ export class HeaderComponent implements OnInit {
   private http = inject(HttpClient);
   private router = inject(Router);
   private authService = inject(AuthService);
-  
+
   botes: { [key: string]: string } = {};
   loading = true;
   juegos = ['euromillones', 'primitiva', 'bonoloto', 'gordo', 'lototurf', 'eurodreams', 'loterianacional'];
-  
+
   // Variables para el login
   username: string = '';
   password: string = '';
@@ -42,7 +42,7 @@ export class HeaderComponent implements OnInit {
     try {
       const timestamp = new Date().getTime();
       const response = await this.http.get<{ [key: string]: string }>(`assets/botes.json?t=${timestamp}`).toPromise();
-      
+
       if (response) {
         Object.keys(response).forEach(key => {
           if (response[key] && response[key] !== '0') {
@@ -83,7 +83,7 @@ export class HeaderComponent implements OnInit {
   // Método para iniciar sesión
   login() {
     console.log('Iniciando proceso de login...');
-    
+
     // Validar campos
     if (!this.username || !this.password) {
       this.loginError = 'Por favor, complete todos los campos';
@@ -99,7 +99,7 @@ export class HeaderComponent implements OnInit {
     };
 
     console.log('Enviando credenciales al servicio de autenticación...');
-    
+
     this.authService.login(credentials).subscribe({
       next: (response) => {
         console.log('Login exitoso:', response);
@@ -114,9 +114,9 @@ export class HeaderComponent implements OnInit {
           message: error.error?.message || 'Error desconocido',
           error: error
         });
-        
+
         this.isLoggingIn = false;
-        
+
         if (error.status === 404) {
           this.loginError = 'No existe una cuenta con este email. ¿Deseas registrarte?';
         } else if (error.status === 401) {
@@ -147,5 +147,20 @@ export class HeaderComponent implements OnInit {
   // Método para alternar la visibilidad de la contraseña
   togglePasswordVisibility() {
     this.showPassword = !this.showPassword;
+  }
+
+  // Método para obtener la ruta de cada juego
+  getRouterLink(juego: string): string {
+    const routeMap: { [key: string]: string } = {
+      'euromillones': '/euromillon',
+      'primitiva': '/primitiva',
+      'bonoloto': '/bonoloto',
+      'gordo': '/gordo-primitiva',
+      'lototurf': '/lototurf',
+      'eurodreams': '/eurodreams',
+      'loterianacional': '/loteria-nacional'
+    };
+
+    return routeMap[juego.toLowerCase()] || '/home';
   }
 }
