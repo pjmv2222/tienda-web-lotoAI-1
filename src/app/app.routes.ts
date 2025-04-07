@@ -52,6 +52,58 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/uso-web/uso-web.component').then(m => m.UsoWebComponent)
   },
   {
+    path: 'restriccion-edad',
+    loadComponent: () => import('./pages/restriccion-edad/restriccion-edad.component').then(m => m.RestriccionEdadComponent)
+  },
+  {
+    path: 'euromillon',
+    loadComponent: () => import('./pages/euromillon/euromillon.component').then(m => m.EuromillonComponent)
+  },
+  {
+    path: 'primitiva',
+    loadComponent: () => import('./pages/primitiva/primitiva.component').then(m => m.PrimitivaComponent)
+  },
+  {
+    path: 'gordo-primitiva',
+    loadComponent: () => import('./pages/gordo-primitiva/gordo-primitiva.component').then(m => m.GordoPrimitivaComponent)
+  },
+  {
+    path: 'eurodreams',
+    loadComponent: () => import('./pages/eurodreams/eurodreams.component').then(m => m.EurodreamsComponent)
+  },
+  {
+    path: 'loteria-nacional',
+    loadComponent: () => import('./pages/loteria-nacional/loteria-nacional.component').then(m => m.LoteriaNacionalComponent)
+  },
+  {
+    path: 'lototurf',
+    loadComponent: () => import('./pages/lototurf/lototurf.component').then(m => m.LototurfComponent)
+  },
+  {
+    path: 'bonoloto',
+    loadComponent: () => import('./pages/bonoloto/bonoloto.component').then(m => m.BonolotoComponent)
+  },
+  {
+    path: 'planes',
+    loadComponent: () => import('./pages/planes/planes.component').then(m => m.PlanesComponent)
+  },
+  {
+    path: 'pasarela-pago/:plan',
+    loadComponent: () => import('./pages/pasarela-pago/pasarela-pago.component').then(m => m.PasarelaPagoComponent)
+  },
+  {
+    path: 'confirmacion-plan-basico',
+    loadComponent: () => import('./pages/confirmacion-plan-basico/confirmacion-plan-basico.component').then(m => m.ConfirmacionPlanBasicoComponent)
+  },
+  {
+    path: 'confirmacion-plan-mensual',
+    loadComponent: () => import('./pages/confirmacion-plan-mensual/confirmacion-plan-mensual.component').then(m => m.ConfirmacionPlanMensualComponent)
+  },
+  {
+    path: 'confirmacion-plan-pro',
+    loadComponent: () => import('./pages/confirmacion-plan-pro/confirmacion-plan-pro.component').then(m => m.ConfirmacionPlanProComponent)
+  },
+  {
     path: 'registro',
     loadComponent: () => import('./auth/register/register.component')
       .then(m => m.RegisterComponent)

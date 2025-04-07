@@ -1,0 +1,207 @@
+<div class="page-container">
+  <div class="breadcrumb">
+    <a routerLink="/home"><i class="fas fa-home"></i></a>
+    <span class="separator">></span>
+    <a routerLink="/home" class="link">Inicio</a>
+    <span class="separator">></span>
+    <span class="current">La Primitiva</span>
+  </div>
+
+  <div class="content-container">
+    <div class="lottery-header">
+      <div class="lottery-logo">
+        <img src="assets/img/cabecera_PrimitivaAJ_topaz.png" alt="La Primitiva Logo" class="lottery-image">
+      </div>
+      <div class="lottery-info">
+        <h1 class="lottery-title">La Primitiva</h1>
+        <div class="jackpot-info">
+          <span class="jackpot-label">Bote actual:</span>
+          <span class="jackpot-amount">12,4 MILLONES €</span>
+        </div>
+        <div class="next-draw">
+          <span class="next-draw-label">Próximo sorteo:</span>
+          <span class="next-draw-date">Jueves, 11 de abril</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="lottery-description">
+      <h2>Predicciones para La Primitiva con IA</h2>
+      <p>
+        Nuestro sistema de inteligencia artificial analiza los resultados históricos de La Primitiva para generar combinaciones con mayor probabilidad estadística de acierto. Utilizamos algoritmos avanzados de machine learning que identifican patrones y tendencias en los sorteos anteriores.
+      </p>
+      <p>
+        <strong>La Primitiva</strong> es una de las loterías más populares de España. Para ganar el premio mayor, debes acertar 6 números (de 1 a 49) y el número complementario.
+      </p>
+    </div>
+
+    <div class="prediction-options">
+      <h2>Genera tus predicciones</h2>
+      <p>Selecciona una de nuestras opciones para obtener combinaciones generadas por IA:</p>
+
+      <div class="options-container">
+        <div class="option-card">
+          <div class="option-header">
+            <h3>Predicción Básica</h3>
+            <span class="option-price">GRATIS</span>
+          </div>
+          <div class="option-features">
+            <ul>
+              <li>1 combinación</li>
+              <li>Análisis básico</li>
+              <li>Sin número complementario optimizado</li>
+            </ul>
+          </div>
+          <button class="generate-btn" [disabled]="!isLoggedIn" (click)="generateBasicPrediction()">Generar</button>
+          <p *ngIf="!isLoggedIn" class="login-required">Necesitas <a routerLink="/auth/login">iniciar sesión</a> para generar predicciones</p>
+        </div>
+
+        <div class="option-card premium">
+          <div class="option-header">
+            <h3>Predicción Premium</h3>
+            <span class="option-price">Desde 4,99€</span>
+          </div>
+          <div class="option-features">
+            <ul>
+              <li>5 combinaciones optimizadas</li>
+              <li>Análisis avanzado de patrones</li>
+              <li>Número complementario optimizado</li>
+              <li>Estadísticas detalladas</li>
+              <li>Histórico de resultados</li>
+            </ul>
+          </div>
+          <button class="generate-btn premium-btn" (click)="showSubscriptionOptions()">Ver planes</button>
+          <p *ngIf="!isLoggedIn" class="login-required">Necesitas <a routerLink="/auth/login">iniciar sesión</a> para generar predicciones premium</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="how-it-works">
+      <h2>Cómo funciona</h2>
+      <div class="steps-container">
+        <div class="step">
+          <div class="step-number">1</div>
+          <div class="step-content">
+            <h3>Regístrate</h3>
+            <p>Crea una cuenta gratuita para acceder a nuestras predicciones básicas o suscríbete a un plan premium.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">2</div>
+          <div class="step-content">
+            <h3>Genera predicciones</h3>
+            <p>Utiliza nuestra IA para generar combinaciones optimizadas para La Primitiva.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">3</div>
+          <div class="step-content">
+            <h3>Juega tus números</h3>
+            <p>Utiliza las combinaciones generadas para participar en los sorteos oficiales de La Primitiva.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="statistics">
+      <h2>Estadísticas de La Primitiva</h2>
+      <div class="stats-container">
+        <div class="stats-card">
+          <h3>Números más frecuentes</h3>
+          <div class="number-balls">
+            <div class="ball">3</div>
+            <div class="ball">12</div>
+            <div class="ball">23</div>
+            <div class="ball">27</div>
+            <div class="ball">38</div>
+            <div class="ball">43</div>
+          </div>
+        </div>
+        <div class="stats-card">
+          <h3>Complementarios más frecuentes</h3>
+          <div class="number-balls complementary">
+            <div class="complementary-ball">8</div>
+            <div class="complementary-ball">21</div>
+            <div class="complementary-ball">35</div>
+          </div>
+        </div>
+        <div class="stats-card">
+          <h3>Números menos frecuentes</h3>
+          <div class="number-balls">
+            <div class="ball">15</div>
+            <div class="ball">20</div>
+            <div class="ball">29</div>
+            <div class="ball">34</div>
+            <div class="ball">41</div>
+            <div class="ball">47</div>
+          </div>
+        </div>
+      </div>
+      <div class="view-more">
+        <a href="#" class="view-more-link">Ver estadísticas completas</a>
+      </div>
+    </div>
+
+    <div class="last-results">
+      <h2>Últimos resultados</h2>
+      <div class="result-card">
+        <div class="result-date">Sábado, 6 de abril de 2024</div>
+        <div class="result-numbers">
+          <div class="number-balls">
+            <div class="ball">2</div>
+            <div class="ball">14</div>
+            <div class="ball">22</div>
+            <div class="ball">31</div>
+            <div class="ball">37</div>
+            <div class="ball">45</div>
+          </div>
+          <div class="number-balls complementary">
+            <div class="complementary-ball">18</div>
+          </div>
+        </div>
+      </div>
+      <div class="view-more">
+        <a href="#" class="view-more-link">Ver resultados anteriores</a>
+      </div>
+    </div>
+
+    <div class="faq-section">
+      <h2>Preguntas frecuentes</h2>
+      <div class="faq-container">
+        <div class="faq-item">
+          <div class="faq-question">
+            <h3>¿Cómo se generan las predicciones?</h3>
+            <span class="faq-toggle">+</span>
+          </div>
+          <div class="faq-answer">
+            <p>Nuestras predicciones se generan utilizando algoritmos de inteligencia artificial que analizan los resultados históricos, frecuencias, patrones y tendencias estadísticas de los sorteos de La Primitiva.</p>
+          </div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-question">
+            <h3>¿Garantizan que voy a ganar?</h3>
+            <span class="faq-toggle">+</span>
+          </div>
+          <div class="faq-answer">
+            <p>No podemos garantizar premios ya que los sorteos de lotería son juegos de azar. Nuestro sistema mejora las probabilidades estadísticas, pero el resultado final siempre será aleatorio.</p>
+          </div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-question">
+            <h3>¿Cuántas combinaciones puedo generar?</h3>
+            <span class="faq-toggle">+</span>
+          </div>
+          <div class="faq-answer">
+            <p>Con la cuenta gratuita puedes generar 1 combinación básica por sorteo. Los planes premium permiten generar entre 5 y 20 combinaciones optimizadas por sorteo, dependiendo del plan elegido.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="disclaimer">
+      <p>
+        <strong>Aviso importante:</strong> LOTO IA no está afiliado con los operadores oficiales de La Primitiva. Nuestro servicio proporciona predicciones basadas en análisis estadístico e inteligencia artificial, pero no garantiza resultados. Juega con responsabilidad.
+      </p>
+    </div>
+  </div>
+</div>
