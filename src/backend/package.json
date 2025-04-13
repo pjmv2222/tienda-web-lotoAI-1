@@ -30,7 +30,8 @@
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "node-mailjet": "^6.0.6",
-    "pg": "^8.13.3"
+    "pg": "^8.13.3",
+    "stripe": "^18.0.0"
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",

@@ -2,12 +2,17 @@ import express from 'express';
 import cors from 'cors';
 import authRoutes from './routes/auth.routes';
 import productRoutes from './routes/product.routes';
+import webhookRoutes from './routes/webhook.routes';
+import paymentRoutes from './routes/payment.routes';
 
 const app = express();
 
 console.log('Iniciando configuración del servidor...');
 
-// Middleware para parsear JSON - DEBE IR ANTES DE LAS RUTAS
+// Middleware especial para webhooks de Stripe (debe estar antes del express.json())
+app.use('/api/webhooks/stripe', express.raw({ type: 'application/json' }));
+
+// Middleware para parsear JSON - DEBE IR DESPUÉS DEL MIDDLEWARE DE STRIPE
 app.use(express.json());
 
 // Configuración CORS
@@ -54,6 +59,13 @@ app.get('/api/auth/test', (req, res) => {
 // Montar otras rutas
 app.use('/api/products', productRoutes);
 
+// Montar rutas de pagos
+app.use('/api/payments', paymentRoutes);
+
+// Montar rutas de webhook
+// Nota: La ruta principal para webhooks de Stripe ya está configurada arriba con express.raw
+app.use('/api/webhooks', webhookRoutes);
+
 // Manejador de rutas no encontradas
 app.use((req, res) => {
   const timestamp = new Date().toISOString();
@@ -76,7 +88,7 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
   });
 });
 
-const PORT = 3000;
+const PORT = 3001;
 const server = app.listen(PORT, '0.0.0.0', () => {
   console.log('='.repeat(50));
   console.log(`Servidor iniciado en http://localhost:${PORT}`);
@@ -86,5 +98,6 @@ const server = app.listen(PORT, '0.0.0.0', () => {
   console.log('- POST /api/auth/login');
   console.log('- POST /api/auth/register');
   console.log('- GET  /api/auth/profile');
+  console.log('- POST /api/webhooks/stripe');
   console.log('='.repeat(50));
 });

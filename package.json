@@ -32,6 +32,7 @@
     "@angular/platform-server": "^18.2.12",
     "@angular/router": "^18.2.12",
     "@angular/ssr": "^18.2.14",
+    "@stripe/stripe-js": "^7.0.0",
     "@types/bcrypt": "^5.0.2",
     "@types/express-session": "^1.18.1",
     "@types/jsonwebtoken": "^9.0.9",
