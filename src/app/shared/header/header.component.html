@@ -2,7 +2,9 @@
     <!-- División superior -->
     <div class="cabecera-superior">
         <div class="logo-container">
-            <img src="/assets/img/lotoIA-LOGO.jpg" alt="LotoIA Logo" class="logo">
+            <a routerLink="/home">
+                <img src="/assets/img/lotoIA-LOGO.jpg" alt="LotoIA Logo" class="logo">
+            </a>
         </div>
         <div class="user-actions">
             <!-- Mostrar esto solo si NO hay usuario autenticado -->
@@ -92,6 +94,18 @@
                                 <ng-template #loadingTemplate>
                                     Cargando...
                                 </ng-template>
+                            </div>
+                            <div class="formato" *ngIf="!loading && juego === 'euromillones' || juego === 'primitiva' || juego === 'gordo'">
+                                MILLONES
+                            </div>
+                            <div class="formato" *ngIf="!loading && juego === 'bonoloto'">
+                                €
+                            </div>
+                            <div class="formato" *ngIf="!loading && juego === 'loterianacional'">
+                                1ER PREMIO A LA SERIE
+                            </div>
+                            <div class="formato" *ngIf="!loading && juego === 'eurodreams'">
+                                AL MES DURANTE 30 AÑOS
                             </div>
                         </div>
                     </a>

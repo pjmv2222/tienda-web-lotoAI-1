@@ -46,11 +46,14 @@ export class HeaderComponent implements OnInit {
       if (response) {
         Object.keys(response).forEach(key => {
           if (response[key] && response[key] !== '0') {
-            if (!response[key].includes('MILLONES') && !response[key].includes('€')) {
-              this.botes[key] = `${response[key]} MILLONES`;
-            } else {
-              this.botes[key] = response[key];
-            }
+            // Limpiamos el texto para mostrar solo el número
+            let boteValue = response[key];
+
+            // Eliminar texto adicional y dejar solo el número
+            boteValue = boteValue.replace('MILLONES', '').replace('€', '').replace('€', '').trim();
+
+            // Asignar el valor limpio
+            this.botes[key] = boteValue;
           }
         });
       }

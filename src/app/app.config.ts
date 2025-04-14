@@ -6,6 +6,7 @@ import { provideHttpClient, withFetch } from '@angular/common/http';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
+import { CarouselModule } from 'ngx-bootstrap/carousel';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -14,9 +15,10 @@ export const appConfig: ApplicationConfig = {
     provideHttpClient(withFetch()),
     provideAnimations(),
     importProvidersFrom(
-      FormsModule, 
+      FormsModule,
       ReactiveFormsModule,
-      RouterModule
+      RouterModule,
+      CarouselModule.forRoot()
     )
   ]
 };

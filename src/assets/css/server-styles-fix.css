@@ -1,0 +1,5 @@
+/* Anular selectores problemáticos para el renderizado del servidor */
+.form-floating>~label {
+  /* Anulado para evitar errores en el servidor */
+  position: static !important;
+}
