@@ -1,5 +1,30 @@
+<!-- Slider de imágenes múltiples a ancho completo (solo en navegador) -->
+<section class="slider-section" *ngIf="isBrowser">
+  <div class="carousel-container">
+    <carousel [noPause]="false" [noWrap]="noWrapSlides" [showIndicators]="showIndicators" [interval]="interval">
+      <slide *ngFor="let group of imageGroups">
+        <div class="multi-image-container">
+          <div class="image-item" *ngFor="let slide of group">
+            <img [src]="slide.src" [alt]="slide.alt" class="slider-image">
+            <div class="image-title">{{ slide.alt }}</div>
+          </div>
+        </div>
+      </slide>
+    </carousel>
+  </div>
+</section>
+
+<!-- Alternativa estática para el servidor -->
+<section class="slider-section" *ngIf="!isBrowser">
+  <div class="carousel-container">
+    <div class="static-image">
+      <img *ngFor="let slide of sliderImages.slice(0, 4)" [src]="slide.src" [alt]="slide.alt" class="slider-image">
+    </div>
+  </div>
+</section>
+
 <div class="home-container">
-  <!-- Sección Hero con Slider -->
+  <!-- Sección Hero con contenido principal -->
   <section class="hero-section">
     <div class="hero-content">
       <h1>La Revolución de los Pronósticos con Inteligencia Artificial</h1>
@@ -8,46 +33,7 @@
     </div>
   </section>
 
-  <!-- Slider de imágenes -->
-  <section class="slider-section" *ngIf="isBrowser">
-    <div class="carousel-container">
-      <carousel [noPause]="true" [noWrap]="noWrapSlides" [showIndicators]="showIndicators" [interval]="interval">
-        <slide *ngFor="let slide of sliderImages">
-          <img [src]="slide.src" [alt]="slide.alt" class="slider-image">
-        </slide>
-      </carousel>
-    </div>
-  </section>
 
-  <!-- Alternativa para el servidor -->
-  <section class="slider-section" *ngIf="!isBrowser">
-    <div class="carousel-container">
-      <div class="static-image">
-        <img [src]="sliderImages[0].src" [alt]="sliderImages[0].alt" class="slider-image">
-      </div>
-    </div>
-  </section>
-
-  <!-- Sección de Usuario (si está logueado) -->
-  <div *ngIf="currentUser" class="user-section">
-    <h2>Hola, {{currentUser.nombre}} {{currentUser.apellido}}</h2>
-
-    <div *ngIf="hasSubscriptions && currentUser.subscriptions?.length">
-      <h3>Tus suscripciones activas:</h3>
-      <ul>
-        <li *ngFor="let sub of currentUser.subscriptions">
-          <span *ngIf="sub.activa">
-            {{sub.tipo}} - Válida hasta: {{sub.fechaFin | date:'dd/MM/yyyy'}}
-          </span>
-        </li>
-      </ul>
-    </div>
-
-    <div *ngIf="!hasSubscriptions || !currentUser.subscriptions?.length">
-      <p>No tienes suscripciones activas.</p>
-      <button class="btn-primary" routerLink="/planes">Adquirir una suscripción</button>
-    </div>
-  </div>
 
   <!-- Sección 1: Cómo Loto-IA Revoluciona tu Juego -->
   <section class="section">
@@ -68,7 +54,7 @@
 
     <h3 class="section-title">Conoce a Nuestro Equipo de Expertos en IA</h3>
     <div class="ai-team-container">
-      <div class="ai-card">
+      <div class="ai-card ai-euromillones">
         <div class="ai-card-header">
           <h4 class="ai-name">Da Vinci</h4>
           <p class="ai-specialty">Especialista en Euromillones</p>
@@ -78,7 +64,7 @@
         </div>
       </div>
 
-      <div class="ai-card">
+      <div class="ai-card ai-primitiva">
         <div class="ai-card-header">
           <h4 class="ai-name">Prognosis</h4>
           <p class="ai-specialty">Especialista en Primitiva</p>
@@ -88,7 +74,7 @@
         </div>
       </div>
 
-      <div class="ai-card">
+      <div class="ai-card ai-bonoloto">
         <div class="ai-card-header">
           <h4 class="ai-name">Ástrid</h4>
           <p class="ai-specialty">Especialista en Bonoloto</p>
@@ -98,13 +84,43 @@
         </div>
       </div>
 
-      <div class="ai-card">
+      <div class="ai-card ai-gordo">
         <div class="ai-card-header">
           <h4 class="ai-name">Sináptica</h4>
           <p class="ai-specialty">Especialista en Gordo de la Primitiva</p>
         </div>
         <div class="ai-card-body">
           <p class="ai-description">Utiliza redes neuronales para detectar patrones ocultos en décadas de resultados históricos.</p>
+        </div>
+      </div>
+
+      <div class="ai-card ai-eurodreams">
+        <div class="ai-card-header">
+          <h4 class="ai-name">Nóvax</h4>
+          <p class="ai-specialty">Especialista en EuroDreams</p>
+        </div>
+        <div class="ai-card-body">
+          <p class="ai-description">Implementa algoritmos de aprendizaje profundo para analizar tendencias internacionales y patrones emergentes.</p>
+        </div>
+      </div>
+
+      <div class="ai-card ai-lototurf">
+        <div class="ai-card-header">
+          <h4 class="ai-name">Axioma</h4>
+          <p class="ai-specialty">Especialista en Lototurf</p>
+        </div>
+        <div class="ai-card-body">
+          <p class="ai-description">Combina análisis estadístico con modelos predictivos especializados en sorteos hípicos y deportivos.</p>
+        </div>
+      </div>
+
+      <div class="ai-card ai-loteria-nacional">
+        <div class="ai-card-header">
+          <h4 class="ai-name">Fortunata</h4>
+          <p class="ai-specialty">Especialista en Lotería Nacional</p>
+        </div>
+        <div class="ai-card-body">
+          <p class="ai-description">Analiza históricamente los números premiados y terminaciones más frecuentes en la Lotería Nacional.</p>
         </div>
       </div>
     </div>
@@ -179,6 +195,27 @@
       </div>
     </div>
   </section>
+
+  <!-- Sección de Usuario (si está logueado) -->
+  <div *ngIf="currentUser" class="user-section">
+    <h2>Estimado {{currentUser.nombre}} {{currentUser.apellido}}</h2>
+
+    <div *ngIf="hasSubscriptions && currentUser.subscriptions?.length">
+      <h3>Tus suscripciones activas:</h3>
+      <ul>
+        <li *ngFor="let sub of currentUser.subscriptions">
+          <span *ngIf="sub.activa">
+            {{sub.tipo}} - Válida hasta: {{sub.fechaFin | date:'dd/MM/yyyy'}}
+          </span>
+        </li>
+      </ul>
+    </div>
+
+    <div *ngIf="!hasSubscriptions || !currentUser.subscriptions?.length">
+      <p>No tienes suscripciones activas.</p>
+      <button class="btn-primary" routerLink="/planes">Adquirir una suscripción</button>
+    </div>
+  </div>
 
   <!-- Sección de Login (si no está logueado) -->
   <div *ngIf="!currentUser" class="user-section" style="text-align: center;">

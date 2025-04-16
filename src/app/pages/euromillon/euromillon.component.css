@@ -293,6 +293,8 @@
   font-size: 18px;
 }
 
+/* Estos estilos han sido reemplazados por lottery-balls.css */
+/* Mantenemos las clases vacías para compatibilidad con código existente */
 .number-balls {
   display: flex;
   justify-content: center;
@@ -301,27 +303,11 @@
 }
 
 .ball {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background-color: #0a7abf;
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
+  /* Estilos eliminados para evitar conflictos con lottery-balls.css */
 }
 
 .star-ball {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background-color: #ffd700;
-  color: #333;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
+  /* Estilos eliminados para evitar conflictos con lottery-balls.css */
 }
 
 .view-more {

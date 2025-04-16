@@ -1,0 +1,32 @@
+<div class="lottery-ball-simple" [ngClass]="gameClass">
+  <!-- Círculo central con el número principal -->
+  <div class="center-circle">
+    <span class="number">{{ number }}</span>
+  </div>
+  
+  <!-- Círculos pequeños alrededor con el mismo número -->
+  <div class="small-circle top">
+    <span class="number">{{ number }}</span>
+  </div>
+  <div class="small-circle bottom">
+    <span class="number">{{ number }}</span>
+  </div>
+  <div class="small-circle left">
+    <span class="number">{{ number }}</span>
+  </div>
+  <div class="small-circle right">
+    <span class="number">{{ number }}</span>
+  </div>
+  <div class="small-circle top-left">
+    <span class="number">{{ number }}</span>
+  </div>
+  <div class="small-circle top-right">
+    <span class="number">{{ number }}</span>
+  </div>
+  <div class="small-circle bottom-left">
+    <span class="number">{{ number }}</span>
+  </div>
+  <div class="small-circle bottom-right">
+    <span class="number">{{ number }}</span>
+  </div>
+</div>

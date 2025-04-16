@@ -1,0 +1,249 @@
+/**
+ * Estilos para las bolas de lotería
+ * Estos estilos permiten crear bolas de lotería con CSS
+ * para diferentes juegos y tipos de números
+ */
+
+/* Estilos base para todas las bolas */
+.lottery-ball {
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  margin: 5px;
+  color: black;
+  font-size: 16px;
+  /* Sombra más pronunciada para efecto 3D */
+  box-shadow: 0 6px 10px rgba(0, 0, 0, 0.5), inset 0 -4px 8px rgba(0, 0, 0, 0.3), inset 0 4px 8px rgba(255, 255, 255, 0.4);
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.2s ease;
+  /* Borde sutil para definir mejor la bola */
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  /* Efecto 3D con gradiente más pronunciado */
+  background-image: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0.3) 30%, rgba(0, 0, 0, 0.2) 100%);
+}
+
+/* Número encima del círculo blanco */
+.lottery-ball span {
+  position: relative;
+  z-index: 2;
+  font-weight: 900; /* Extra bold */
+  color: black;
+  font-size: 20px;
+  /* Sombra de texto sutil para mejor legibilidad */
+  text-shadow: 0 0.5px 0 rgba(255, 255, 255, 0.5);
+}
+
+.lottery-ball:hover {
+  transform: scale(1.1);
+}
+
+/* Tamaños de bolas */
+.lottery-ball.small {
+  width: 30px;
+  height: 30px;
+  font-size: 14px;
+  margin: 3px;
+}
+
+.lottery-ball.large {
+  width: 50px;
+  height: 50px;
+  font-size: 22px;
+  margin: 6px;
+}
+
+/* Colores para diferentes juegos */
+
+/* Euromillones - Bolas normales (azules) y estrellas (amarillas) */
+.lottery-ball.euromillones {
+  background: radial-gradient(circle at 30% 30%, #2673ff, #0a4b9f 60%, #003380);
+}
+
+.lottery-ball.euromillones-star {
+  background: radial-gradient(circle at 30% 30%, #ffeb3b, #ffd700 60%, #e6b800);
+  color: #333;
+}
+
+/* Primitiva - Bolas verdes */
+.lottery-ball.primitiva {
+  background: radial-gradient(circle at 30% 30%, #00e676, #00a651 60%, #007e3e);
+}
+
+/* Bonoloto - Bolas rojas */
+.lottery-ball.bonoloto {
+  background: radial-gradient(circle at 30% 30%, #ff5252, #e30613 60%, #b30000);
+}
+
+/* Gordo de la Primitiva - Bolas naranjas */
+.lottery-ball.gordo {
+  background: radial-gradient(circle at 30% 30%, #ffab40, #f39200 60%, #d17a00);
+}
+
+/* EuroDreams - Bolas moradas */
+.lottery-ball.eurodreams {
+  background: radial-gradient(circle at 30% 30%, #9c4dff, #662d91 60%, #4b1d6a);
+}
+
+/* EuroDreams - Bolas de sueños (azul claro) */
+.lottery-ball.eurodreams-dream {
+  background: radial-gradient(circle at 30% 30%, #40c4ff, #00b0ea 60%, #0095c8);
+}
+
+/* Lototurf - Bolas verdes */
+.lottery-ball.lototurf {
+  background: radial-gradient(circle at 30% 30%, #00e676, #009640 60%, #006e2e);
+}
+
+/* Lotería Nacional - Bolas doradas */
+.lottery-ball.loteria-nacional {
+  background: radial-gradient(circle at 30% 30%, #ffd54f, #c6a023 60%, #9e7e1c);
+  color: #333;
+}
+
+/* Contenedor para grupos de bolas */
+.lottery-balls-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 5px;
+  margin: 10px 0;
+}
+
+/* Estilos para separadores entre grupos de bolas */
+.lottery-balls-separator {
+  display: inline-block;
+  font-weight: bold;
+  margin: 0 10px;
+  font-size: 20px;
+  color: #333;
+}
+
+/* Estilos para etiquetas de bolas */
+.lottery-ball-label {
+  display: block;
+  text-align: center;
+  font-size: 14px;
+  color: #666;
+  margin-top: 5px;
+}
+
+/* Números decorativos alrededor de la bola */
+.lottery-ball {
+  position: relative;
+}
+
+/* Usamos pseudo-elementos para los números decorativos */
+.lottery-ball::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 70%;
+  height: 70%;
+  background: white;
+  border-radius: 50%;
+  z-index: 1;
+  /* Sombra interna para dar profundidad */
+  box-shadow: inset 0 0 4px rgba(0, 0, 0, 0.4);
+  /* Borde sutil */
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+/* Números decorativos en las cuatro esquinas */
+.lottery-ball::after {
+  content: '';
+  position: absolute;
+  top: 8%;
+  left: 20%;
+  width: 60%;
+  height: 20%;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 3;
+  transform: rotate(-20deg);
+  /* Desenfoque para un brillo más natural */
+  filter: blur(1px);
+}
+
+/* Números decorativos usando elementos adicionales */
+.lottery-ball .decorative-number {
+  position: absolute;
+  font-size: 8px;
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: bold;
+  z-index: 4;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
+}
+
+.lottery-ball .decorative-number.top-left {
+  top: 5px;
+  left: 8px;
+}
+
+.lottery-ball .decorative-number.top-right {
+  top: 5px;
+  right: 8px;
+}
+
+.lottery-ball .decorative-number.bottom-left {
+  bottom: 5px;
+  left: 8px;
+}
+
+.lottery-ball .decorative-number.bottom-right {
+  bottom: 5px;
+  right: 8px;
+}
+
+/* Animación para bolas destacadas */
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(0, 114, 255, 0.7);
+  }
+
+  70% {
+    transform: scale(1.05);
+    box-shadow: 0 0 0 10px rgba(0, 114, 255, 0);
+  }
+
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(0, 114, 255, 0);
+  }
+}
+
+.lottery-ball.highlight {
+  animation: pulse 1.5s infinite;
+}
+
+/* Estilos responsivos */
+@media (max-width: 576px) {
+  .lottery-ball {
+    width: 35px;
+    height: 35px;
+    font-size: 16px;
+    margin: 3px;
+  }
+
+  .lottery-ball.small {
+    width: 25px;
+    height: 25px;
+    font-size: 12px;
+    margin: 2px;
+  }
+
+  .lottery-ball.large {
+    width: 40px;
+    height: 40px;
+    font-size: 18px;
+    margin: 4px;
+  }
+}

@@ -133,6 +133,14 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/welcome/welcome.component').then(m => m.WelcomeComponent)
   },
   {
+    path: 'lottery-balls-example',
+    loadComponent: () => import('./components/lottery-balls-example/lottery-balls-example.component').then(m => m.LotteryBallsExampleComponent)
+  },
+  {
+    path: 'lottery-balls-simple-example',
+    loadComponent: () => import('./components/lottery-balls-simple-example/lottery-balls-simple-example.component').then(m => m.LotteryBallsSimpleExampleComponent)
+  },
+  {
     path: '**',
     redirectTo: 'home'
   }

@@ -1,11 +1,10 @@
-import { Component, OnInit, OnDestroy, PLATFORM_ID, Inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, OnDestroy, Inject, PLATFORM_ID } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
 import { User } from '../../models/user.model';
 import { RouterModule } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { CarouselModule } from 'ngx-bootstrap/carousel';
-import { isPlatformBrowser } from '@angular/common';
 
 @Component({
   selector: 'app-home',
@@ -20,22 +19,25 @@ export class HomeComponent implements OnInit, OnDestroy {
   private authSubscription: Subscription | null = null;
   isBrowser: boolean;
 
-  // Imágenes para el slider
+  // Imágenes para el slider con títulos descriptivos
   sliderImages = [
-    { src: 'assets/img/slider/descarga.jfif', alt: 'Imagen 1' },
-    { src: 'assets/img/slider/descarga (1).jfif', alt: 'Imagen 2' },
-    { src: 'assets/img/slider/descarga (2).jfif', alt: 'Imagen 3' },
-    { src: 'assets/img/slider/descarga (3).jfif', alt: 'Imagen 4' },
-    { src: 'assets/img/slider/descarga (4).jfif', alt: 'Imagen 5' },
-    { src: 'assets/img/slider/descarga (5).jfif', alt: 'Imagen 6' },
-    { src: 'assets/img/slider/descarga (6).jfif', alt: 'Imagen 7' },
-    { src: 'assets/img/slider/descarga (7).jfif', alt: 'Imagen 8' }
+    { src: 'assets/img/slider/descarga.jfif', alt: 'Inteligencia Artificial para Loterías' },
+    { src: 'assets/img/slider/descarga (1).jfif', alt: 'Predicciones basadas en datos' },
+    { src: 'assets/img/slider/descarga (2).jfif', alt: 'Algoritmos avanzados de análisis' },
+    { src: 'assets/img/slider/descarga (3).jfif', alt: 'Combinaciones optimizadas' },
+    { src: 'assets/img/slider/descarga (4).jfif', alt: 'Estadísticas en tiempo real' },
+    { src: 'assets/img/slider/descarga (5).jfif', alt: 'Tecnología de vanguardia' },
+    { src: 'assets/img/slider/descarga (6).jfif', alt: 'Análisis predictivo' },
+    { src: 'assets/img/slider/descarga (7).jfif', alt: 'Resultados personalizados' }
   ];
 
-  // Configuración del slider
-  noWrapSlides = false;
-  showIndicators = true;
-  interval = 5000; // Intervalo de cambio de imagen en milisegundos
+  // Grupos de imágenes para mostrar 4 por slide
+  imageGroups: any[] = [];
+
+  // Configuración del slider mejorada
+  noWrapSlides = false; // Permite que el carrusel vuelva al principio
+  showIndicators = true; // Muestra los indicadores de posición
+  interval = 5000; // Intervalo de cambio de grupo de imágenes (5 segundos)
 
   constructor(
     private authService: AuthService,
@@ -45,6 +47,9 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    // Agrupar imágenes en grupos de 4 para el carrusel
+    this.createImageGroups();
+
     // Verificar si el servicio de autenticación está disponible
     if (this.authService && this.authService.currentUser) {
       // Suscribirse al usuario actual
@@ -74,6 +79,28 @@ export class HomeComponent implements OnInit, OnDestroy {
     // Cancelar la suscripción para evitar memory leaks
     if (this.authSubscription) {
       this.authSubscription.unsubscribe();
+    }
+  }
+
+  /**
+   * Agrupa las imágenes en grupos de 4 para mostrarlas en el carrusel
+   */
+  createImageGroups(): void {
+    const imagesPerGroup = 4; // Número de imágenes por grupo
+    this.imageGroups = [];
+
+    // Crear grupos de 4 imágenes
+    for (let i = 0; i < this.sliderImages.length; i += imagesPerGroup) {
+      const group = this.sliderImages.slice(i, i + imagesPerGroup);
+
+      // Si el grupo tiene menos de 4 imágenes, completar con las primeras imágenes
+      if (group.length < imagesPerGroup) {
+        const remaining = imagesPerGroup - group.length;
+        const additionalImages = this.sliderImages.slice(0, remaining);
+        this.imageGroups.push([...group, ...additionalImages]);
+      } else {
+        this.imageGroups.push(group);
+      }
     }
   }
 }

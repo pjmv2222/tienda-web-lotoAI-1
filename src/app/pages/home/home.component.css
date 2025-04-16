@@ -213,12 +213,13 @@ button:disabled {
 }
 
 .ai-card {
-  flex: 0 0 calc(25% - 2rem);
+  flex: 0 0 calc(33.33% - 2rem);
   background: white;
   border-radius: 10px;
   overflow: hidden;
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
+  margin-bottom: 2rem;
 }
 
 .ai-card:hover {
@@ -228,9 +229,37 @@ button:disabled {
 
 .ai-card-header {
   padding: 1.5rem;
-  background: linear-gradient(135deg, #00c6ff, #0072ff);
   color: white;
   text-align: center;
+}
+
+/* Colores específicos para cada IA basados en los colores de los juegos */
+.ai-euromillones .ai-card-header {
+  background: linear-gradient(135deg, #0a4b9f, #003380);
+}
+
+.ai-primitiva .ai-card-header {
+  background: linear-gradient(135deg, #00a651, #007e3e);
+}
+
+.ai-bonoloto .ai-card-header {
+  background: linear-gradient(135deg, #e30613, #b30000);
+}
+
+.ai-gordo .ai-card-header {
+  background: linear-gradient(135deg, #f39200, #d17a00);
+}
+
+.ai-eurodreams .ai-card-header {
+  background: linear-gradient(135deg, #662d91, #4b1d6a);
+}
+
+.ai-lototurf .ai-card-header {
+  background: linear-gradient(135deg, #009640, #006e2e);
+}
+
+.ai-loteria-nacional .ai-card-header {
+  background: linear-gradient(135deg, #c6a023, #9e7e1c);
 }
 
 .ai-card-body {
@@ -340,24 +369,135 @@ button:disabled {
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-/* Estilos para el slider */
+/* Estilos para el slider a ancho completo con múltiples imágenes */
 .slider-section {
-  margin: 2rem auto;
-  max-width: 1000px;
-  padding: 0 15px;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  position: relative;
+  z-index: 1;
+  margin-bottom: 30px; /* Espacio entre el carrusel y la sección hero */
 }
 
 .carousel-container {
   overflow: hidden;
+  width: 100%;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  background-color: #f8f9fa;
+  padding: 30px 0;
+}
+
+/* Contenedor para múltiples imágenes */
+.multi-image-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+  padding: 0 40px;
+  height: 350px; /* Altura similar a la sección hero */
+}
+
+.image-item {
+  flex: 1;
+  max-width: calc(25% - 20px); /* Para 4 imágenes */
+  height: 100%;
+  position: relative;
   border-radius: 10px;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.image-item:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
 }
 
 .slider-image {
   width: 100%;
-  height: 500px;
+  height: 100%; /* Ocupa toda la altura del contenedor */
   object-fit: cover;
   display: block;
+  border-radius: 10px;
+}
+
+/* Estilos para la imagen estática (alternativa para el servidor) */
+.static-image {
+  width: 100%;
+  padding: 0 40px;
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  height: 350px; /* Misma altura que el carrusel */
+}
+
+.static-image img {
+  width: calc(25% - 20px); /* Para 4 imágenes */
+  height: 100%;
+  object-fit: cover;
+  border-radius: 10px;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Mejoras visuales para el carrusel */
+:host ::ng-deep .carousel-caption {
+  background-color: rgba(0, 0, 0, 0.5);
+  border-radius: 10px;
+  padding: 10px;
+  bottom: 10px;
+  left: 10%;
+  right: 10%;
+}
+
+:host ::ng-deep .carousel-indicators {
+  bottom: -30px;
+}
+
+:host ::ng-deep .carousel-control-prev,
+:host ::ng-deep .carousel-control-next {
+  width: 5%;
+  opacity: 0.8;
+}
+
+:host ::ng-deep .carousel-control-prev:hover,
+:host ::ng-deep .carousel-control-next:hover {
+  opacity: 1;
+}
+
+/* Estilos para los títulos de las imágenes */
+.image-title {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: center;
+  border-bottom-left-radius: 10px;
+  border-bottom-right-radius: 10px;
+  transition: background-color 0.3s ease;
+}
+
+.image-item:hover .image-title {
+  background-color: rgba(0, 0, 0, 0.85);
+}
+
+/* Ajuste para la sección hero */
+.hero-section {
+  margin-top: 50px; /* Espacio adicional entre el carrusel y la sección hero */
+}
+
+/* Ajuste para los indicadores del carrusel */
+:host ::ng-deep .carousel-indicators {
+  bottom: -40px;
+}
+
+/* Ajuste para el contenedor del carrusel */
+.slider-section {
+  margin-bottom: 50px; /* Aumentar el espacio inferior */
 }
 
 /* Estilos para los controles del carousel */
@@ -386,14 +526,81 @@ button:disabled {
   overflow: hidden;
 }
 
+/* Estilos para la sección de usuario */
+.user-section {
+  background-color: #f8f9fa;
+  border-radius: 10px;
+  padding: 1.5rem;
+  margin: 2rem auto 4rem;
+  max-width: 800px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  text-align: center;
+  border-left: 4px solid #0072ff;
+}
+
+.user-section h2 {
+  font-size: 1.4rem;
+  color: #333;
+  margin-bottom: 1rem;
+}
+
+.user-section h3 {
+  font-size: 1.2rem;
+  color: #555;
+  margin: 1rem 0;
+}
+
+.user-section p {
+  color: #666;
+  margin-bottom: 1.5rem;
+}
+
+.user-section ul {
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0;
+  display: inline-block;
+  text-align: left;
+}
+
+.user-section li {
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #eee;
+  color: #555;
+}
+
+.user-section li:last-child {
+  border-bottom: none;
+}
+
+.user-section .btn-primary {
+  background-color: #0072ff;
+  margin-top: 0.5rem;
+}
+
 /* Responsive styles */
+@media (max-width: 1200px) {
+  .ai-card {
+    flex: 0 0 calc(50% - 2rem);
+  }
+}
+
 @media (max-width: 992px) {
-  .process-item, .ai-card, .plan-card {
+  .process-item, .plan-card {
+    flex: 0 0 calc(50% - 2rem);
+  }
+
+  .ai-card {
     flex: 0 0 calc(50% - 2rem);
   }
 
   .slider-image {
     height: 400px;
+  }
+
+  .user-section {
+    margin: 2rem 1rem 3rem;
+    padding: 1.2rem;
   }
 }
 
@@ -428,6 +635,14 @@ button:disabled {
   .process-item, .ai-card, .plan-card {
     flex: 0 0 100%;
     margin: 1rem 0;
+  }
+
+  .ai-team-container {
+    gap: 1.5rem;
+  }
+
+  .ai-card {
+    margin-bottom: 1rem;
   }
 
   .btn-secondary {
