@@ -2,8 +2,6 @@
 
 /* Importar estilos de las bolas de lotería */
 @import './assets/css/lottery-balls.css';
-@import './assets/css/lottery-balls-3d.css';
-@import './assets/css/lottery-balls-simple.css';
 
 body {
   margin: 0;

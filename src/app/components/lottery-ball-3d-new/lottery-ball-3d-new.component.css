@@ -1,0 +1,23 @@
+.lottery-ball-container {
+  display: inline-block;
+  margin: 0; /* Eliminar margen para que se ajuste mejor a los contenedores */
+  position: relative;
+  width: 100%; /* Ocupar todo el ancho disponible */
+  height: 100%; /* Ocupar todo el alto disponible */
+}
+
+.highlight {
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}

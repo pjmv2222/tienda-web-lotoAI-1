@@ -2,13 +2,13 @@ import { Component, Input, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 @Component({
-  selector: 'app-lottery-ball-simple',
-  templateUrl: './lottery-ball-simple.component.html',
+  selector: 'app-lottery-ball-new',
+  templateUrl: './lottery-ball-new.component.html',
+  styleUrls: ['./lottery-ball-new.component.css'],
   standalone: true,
-  imports: [CommonModule],
-  styleUrls: []
+  imports: [CommonModule]
 })
-export class LotteryBallSimpleComponent implements OnInit {
+export class LotteryBallNewComponent implements OnInit {
   @Input() number: string | number = '';
   @Input() game: string = 'euromillones';
   @Input() type: string = 'regular'; // regular, star, dream, etc.

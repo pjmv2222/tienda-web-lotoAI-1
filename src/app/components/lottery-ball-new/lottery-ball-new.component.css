@@ -1,0 +1,269 @@
+/* Contenedor principal */
+.sphere-container {
+  width: 80px;
+  height: 80px;
+  position: relative;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  margin: 5px;
+}
+
+/* Esfera principal */
+.sphere {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  position: relative;
+  box-shadow: 2px 5px 12px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Efecto de brillo */
+.highlight {
+  position: absolute;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  top: 10px;
+  left: 10px;
+  background: radial-gradient(circle at 35% 35%,
+    rgba(255, 255, 255, 0.8) 0%,
+    rgba(255, 255, 255, 0.2) 40%,
+    rgba(255, 255, 255, 0) 100%
+  );
+}
+
+/* Estilo para los círculos blancos */
+.circle {
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: white;
+  border: 1px solid #dddddd;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2;
+}
+
+/* Estilo para los números */
+.circle span {
+  font-family: Arial, sans-serif;
+  font-size: 16px;
+  font-weight: bold;
+  color: black;
+}
+
+/* Posicionamiento de los círculos */
+.center {
+  top: 21px;
+  left: 21px;
+}
+
+.top {
+  top: -8px;
+  left: 21px;
+}
+
+.right {
+  top: 21px;
+  right: -8px;
+}
+
+.bottom {
+  bottom: -8px;
+  left: 21px;
+}
+
+.left {
+  top: 21px;
+  left: -8px;
+}
+
+/* Colores para diferentes juegos */
+.sphere-container.euromillones .sphere {
+  background: radial-gradient(circle at 35% 35%,
+    #4a90e2 0%,
+    #2a70c2 70%,
+    #0a4b9f 100%
+  );
+}
+
+.sphere-container.euromillones-star .sphere {
+  background: radial-gradient(circle at 35% 35%,
+    #ffeb3b 0%,
+    #ffd700 70%,
+    #ffc107 100%
+  );
+}
+
+.sphere-container.primitiva .sphere {
+  background: radial-gradient(circle at 35% 35%,
+    #00e676 0%,
+    #00c853 70%,
+    #00a651 100%
+  );
+}
+
+.sphere-container.bonoloto .sphere {
+  background: radial-gradient(circle at 35% 35%,
+    #ff5252 0%,
+    #ff1744 70%,
+    #e30613 100%
+  );
+}
+
+.sphere-container.gordo .sphere {
+  background: radial-gradient(circle at 35% 35%,
+    #ffab40 0%,
+    #ff9100 70%,
+    #f39200 100%
+  );
+}
+
+.sphere-container.eurodreams .sphere {
+  background: radial-gradient(circle at 35% 35%,
+    #9c4dff 0%,
+    #7c3aed 70%,
+    #662d91 100%
+  );
+}
+
+.sphere-container.eurodreams-dream .sphere {
+  background: radial-gradient(circle at 35% 35%,
+    #40c4ff 0%,
+    #00b0ff 70%,
+    #00b0ea 100%
+  );
+}
+
+.sphere-container.lototurf .sphere {
+  background: radial-gradient(circle at 35% 35%,
+    #00e676 0%,
+    #00c853 70%,
+    #009640 100%
+  );
+}
+
+.sphere-container.loteria-nacional .sphere {
+  background: radial-gradient(circle at 35% 35%,
+    #ffd54f 0%,
+    #ffca28 70%,
+    #c6a023 100%
+  );
+}
+
+/* Animación para bolas destacadas */
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.05);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+.sphere-container.highlight .sphere {
+  animation: pulse 1.5s infinite;
+}
+
+/* Estilos responsivos */
+@media (max-width: 768px) {
+  .sphere-container {
+    width: 70px;
+    height: 70px;
+  }
+
+  .sphere {
+    width: 60px;
+    height: 60px;
+  }
+
+  .circle {
+    width: 24px;
+    height: 24px;
+  }
+
+  .circle span {
+    font-size: 14px;
+  }
+
+  .center {
+    top: 18px;
+    left: 18px;
+  }
+
+  .top {
+    top: -6px;
+    left: 18px;
+  }
+
+  .right {
+    top: 18px;
+    right: -6px;
+  }
+
+  .bottom {
+    bottom: -6px;
+    left: 18px;
+  }
+
+  .left {
+    top: 18px;
+    left: -6px;
+  }
+}
+
+@media (max-width: 576px) {
+  .sphere-container {
+    width: 60px;
+    height: 60px;
+  }
+
+  .sphere {
+    width: 50px;
+    height: 50px;
+  }
+
+  .circle {
+    width: 20px;
+    height: 20px;
+  }
+
+  .circle span {
+    font-size: 12px;
+  }
+
+  .center {
+    top: 15px;
+    left: 15px;
+  }
+
+  .top {
+    top: -5px;
+    left: 15px;
+  }
+
+  .right {
+    top: 15px;
+    right: -5px;
+  }
+
+  .bottom {
+    bottom: -5px;
+    left: 15px;
+  }
+
+  .left {
+    top: 15px;
+    left: -5px;
+  }
+}

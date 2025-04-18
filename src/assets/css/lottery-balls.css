@@ -4,42 +4,89 @@
  * para diferentes juegos y tipos de números
  */
 
+/* Contenedor principal para la bola de lotería */
+.lottery-ball-container {
+  position: relative;
+  width: 60px;
+  height: 60px;
+  margin: 10px;
+  display: inline-block;
+  border-radius: 50%;
+  /* Sombra exterior para efecto 3D */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+  /* Borde blanco fino */
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  overflow: visible;
+  transition: transform 0.2s ease;
+}
+
 /* Estilos base para todas las bolas */
 .lottery-ball {
-  width: 45px;
-  height: 45px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
-  margin: 5px;
-  color: black;
-  font-size: 16px;
-  /* Sombra más pronunciada para efecto 3D */
-  box-shadow: 0 6px 10px rgba(0, 0, 0, 0.5), inset 0 -4px 8px rgba(0, 0, 0, 0.3), inset 0 4px 8px rgba(255, 255, 255, 0.4);
-  position: relative;
-  overflow: hidden;
-  transition: transform 0.2s ease;
-  /* Borde sutil para definir mejor la bola */
+  position: absolute;
+  background-color: white;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
   border: 1px solid rgba(0, 0, 0, 0.1);
-  /* Efecto 3D con gradiente más pronunciado */
-  background-image: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0.3) 30%, rgba(0, 0, 0, 0.2) 100%);
+  z-index: 1;
 }
 
-/* Número encima del círculo blanco */
+/* Número dentro del círculo blanco */
 .lottery-ball span {
-  position: relative;
-  z-index: 2;
-  font-weight: 900; /* Extra bold */
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-family: Arial, sans-serif;
+  font-weight: bold;
+  font-size: 14px;
   color: black;
-  font-size: 20px;
-  /* Sombra de texto sutil para mejor legibilidad */
-  text-shadow: 0 0.5px 0 rgba(255, 255, 255, 0.5);
+  z-index: 2;
 }
 
-.lottery-ball:hover {
-  transform: scale(1.1);
+/* Bola central */
+.lottery-ball.center {
+  width: 40px;
+  height: 40px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 2;
+}
+
+.lottery-ball.center span {
+  font-size: 18px;
+  font-weight: 900;
+}
+
+/* Bolas alrededor */
+.lottery-ball.top {
+  top: 0;
+  left: 50%;
+  transform: translate(-50%, -30%);
+}
+
+.lottery-ball.bottom {
+  bottom: 0;
+  left: 50%;
+  transform: translate(-50%, 30%);
+}
+
+.lottery-ball.left {
+  left: 0;
+  top: 50%;
+  transform: translate(-30%, -50%);
+}
+
+.lottery-ball.right {
+  right: 0;
+  top: 50%;
+  transform: translate(30%, -50%);
+}
+
+.lottery-ball-container:hover {
+  transform: scale(1.05);
 }
 
 /* Tamaños de bolas */
@@ -59,50 +106,49 @@
 
 /* Colores para diferentes juegos */
 
-/* Euromillones - Bolas normales (azules) y estrellas (amarillas) */
-.lottery-ball.euromillones {
-  background: radial-gradient(circle at 30% 30%, #2673ff, #0a4b9f 60%, #003380);
+/* Euromillones - Bolas normales (azules) */
+.lottery-ball-container.euromillones {
+  background: linear-gradient(to bottom, #4a90e2, #0a4b9f);
 }
 
-.lottery-ball.euromillones-star {
-  background: radial-gradient(circle at 30% 30%, #ffeb3b, #ffd700 60%, #e6b800);
-  color: #333;
+/* Euromillones - Estrellas (amarillas) */
+.lottery-ball-container.euromillones-star {
+  background: linear-gradient(to bottom, #ffeb3b, #ffd700);
 }
 
 /* Primitiva - Bolas verdes */
-.lottery-ball.primitiva {
-  background: radial-gradient(circle at 30% 30%, #00e676, #00a651 60%, #007e3e);
+.lottery-ball-container.primitiva {
+  background: linear-gradient(to bottom, #00e676, #00a651);
 }
 
 /* Bonoloto - Bolas rojas */
-.lottery-ball.bonoloto {
-  background: radial-gradient(circle at 30% 30%, #ff5252, #e30613 60%, #b30000);
+.lottery-ball-container.bonoloto {
+  background: linear-gradient(to bottom, #ff5252, #e30613);
 }
 
 /* Gordo de la Primitiva - Bolas naranjas */
-.lottery-ball.gordo {
-  background: radial-gradient(circle at 30% 30%, #ffab40, #f39200 60%, #d17a00);
+.lottery-ball-container.gordo {
+  background: linear-gradient(to bottom, #ffab40, #f39200);
 }
 
 /* EuroDreams - Bolas moradas */
-.lottery-ball.eurodreams {
-  background: radial-gradient(circle at 30% 30%, #9c4dff, #662d91 60%, #4b1d6a);
+.lottery-ball-container.eurodreams {
+  background: linear-gradient(to bottom, #9c4dff, #662d91);
 }
 
 /* EuroDreams - Bolas de sueños (azul claro) */
-.lottery-ball.eurodreams-dream {
-  background: radial-gradient(circle at 30% 30%, #40c4ff, #00b0ea 60%, #0095c8);
+.lottery-ball-container.eurodreams-dream {
+  background: linear-gradient(to bottom, #40c4ff, #00b0ea);
 }
 
 /* Lototurf - Bolas verdes */
-.lottery-ball.lototurf {
-  background: radial-gradient(circle at 30% 30%, #00e676, #009640 60%, #006e2e);
+.lottery-ball-container.lototurf {
+  background: linear-gradient(to bottom, #00e676, #009640);
 }
 
 /* Lotería Nacional - Bolas doradas */
-.lottery-ball.loteria-nacional {
-  background: radial-gradient(circle at 30% 30%, #ffd54f, #c6a023 60%, #9e7e1c);
-  color: #333;
+.lottery-ball-container.loteria-nacional {
+  background: linear-gradient(to bottom, #ffd54f, #c6a023);
 }
 
 /* Contenedor para grupos de bolas */
@@ -137,7 +183,7 @@
   position: relative;
 }
 
-/* Usamos pseudo-elementos para los números decorativos */
+/* Círculo blanco central */
 .lottery-ball::before {
   content: '';
   position: absolute;
@@ -146,30 +192,28 @@
   transform: translate(-50%, -50%);
   width: 70%;
   height: 70%;
-  background: white;
+  background-color: white;
   border-radius: 50%;
-  z-index: 1;
-  /* Sombra interna para dar profundidad */
-  box-shadow: inset 0 0 4px rgba(0, 0, 0, 0.4);
-  /* Borde sutil */
+  /* Sombra sutil para dar profundidad */
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  /* Borde gris muy sutil */
   border: 1px solid rgba(0, 0, 0, 0.1);
+  z-index: 1;
 }
 
-/* Números decorativos en las cuatro esquinas */
+/* Efecto de brillo en la parte superior */
 .lottery-ball::after {
   content: '';
   position: absolute;
-  top: 8%;
-  left: 20%;
-  width: 60%;
-  height: 20%;
-  background: rgba(255, 255, 255, 0.7);
+  top: 10%;
+  left: 25%;
+  width: 20%;
+  height: 10%;
+  background: rgba(255, 255, 255, 0.6);
   border-radius: 50%;
-  pointer-events: none;
-  z-index: 3;
-  transform: rotate(-20deg);
-  /* Desenfoque para un brillo más natural */
+  transform: rotate(-40deg);
   filter: blur(1px);
+  z-index: 3;
 }
 
 /* Números decorativos usando elementos adicionales */
@@ -206,44 +250,73 @@
 @keyframes pulse {
   0% {
     transform: scale(1);
-    box-shadow: 0 0 0 0 rgba(0, 114, 255, 0.7);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
   }
 
-  70% {
+  50% {
     transform: scale(1.05);
-    box-shadow: 0 0 0 10px rgba(0, 114, 255, 0);
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.5);
   }
 
   100% {
     transform: scale(1);
-    box-shadow: 0 0 0 0 rgba(0, 114, 255, 0);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
   }
 }
 
-.lottery-ball.highlight {
+.lottery-ball-container.highlight {
   animation: pulse 1.5s infinite;
 }
 
 /* Estilos responsivos */
-@media (max-width: 576px) {
-  .lottery-ball {
-    width: 35px;
-    height: 35px;
-    font-size: 16px;
-    margin: 3px;
+@media (max-width: 768px) {
+  .lottery-ball-container {
+    width: 50px;
+    height: 50px;
+    margin: 8px;
   }
 
-  .lottery-ball.small {
+  .lottery-ball {
     width: 25px;
     height: 25px;
-    font-size: 12px;
-    margin: 2px;
   }
 
-  .lottery-ball.large {
-    width: 40px;
-    height: 40px;
-    font-size: 18px;
-    margin: 4px;
+  .lottery-ball span {
+    font-size: 12px;
+  }
+
+  .lottery-ball.center {
+    width: 35px;
+    height: 35px;
+  }
+
+  .lottery-ball.center span {
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 576px) {
+  .lottery-ball-container {
+    width: 45px;
+    height: 45px;
+    margin: 6px;
+  }
+
+  .lottery-ball {
+    width: 22px;
+    height: 22px;
+  }
+
+  .lottery-ball span {
+    font-size: 10px;
+  }
+
+  .lottery-ball.center {
+    width: 30px;
+    height: 30px;
+  }
+
+  .lottery-ball.center span {
+    font-size: 14px;
   }
 }

@@ -1,12 +1,12 @@
 import { Component, OnInit } from '@angular/core';
 import { RouterLink, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { LotteryBallSimpleComponent } from '../../components/lottery-ball-simple/lottery-ball-simple.component';
+import { LotteryBall3dNewComponent } from '../../components/lottery-ball-3d-new/lottery-ball-3d-new.component';
 
 @Component({
   selector: 'app-euromillon',
   standalone: true,
-  imports: [RouterLink, CommonModule, LotteryBallSimpleComponent],
+  imports: [RouterLink, CommonModule, LotteryBall3dNewComponent],
   templateUrl: './euromillon.component.html',
   styleUrl: './euromillon.component.css'
 })

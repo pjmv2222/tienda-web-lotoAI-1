@@ -1,0 +1,28 @@
+<div class="sphere-container" [ngClass]="gameClass">
+  <div class="sphere">
+    <div class="highlight"></div>
+    <div class="circles-container">
+      <!-- Círculo central -->
+      <div class="circle center">
+        <span>{{ number }}</span>
+      </div>
+
+      <!-- Círculos periféricos -->
+      <div class="circle top">
+        <span>{{ number }}</span>
+      </div>
+      <div class="circle top-right">
+        <span>{{ number }}</span>
+      </div>
+      <div class="circle bottom-right">
+        <span>{{ number }}</span>
+      </div>
+      <div class="circle bottom-left">
+        <span>{{ number }}</span>
+      </div>
+      <div class="circle top-left">
+        <span>{{ number }}</span>
+      </div>
+    </div>
+  </div>
+</div>

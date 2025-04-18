@@ -1,0 +1,112 @@
+.lottery-balls-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+  padding: 20px;
+}
+
+.card {
+  margin-bottom: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border-radius: 8px;
+  overflow: hidden;
+  border: none;
+}
+
+.card-header {
+  padding: 15px 20px;
+}
+
+.card-header h3 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.card-body {
+  padding: 20px;
+  background-color: #f9f9f9;
+}
+
+h1 {
+  color: #0a7abf;
+  margin-bottom: 30px;
+  font-weight: 700;
+}
+
+h4 {
+  color: #333;
+  margin-bottom: 15px;
+  font-weight: 600;
+}
+
+.btn-primary {
+  background-color: #0a7abf;
+  border-color: #0a7abf;
+  padding: 10px 20px;
+  font-size: 16px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.btn-primary:hover {
+  background-color: #086aa6;
+  border-color: #086aa6;
+}
+
+.btn-secondary {
+  background-color: #6c757d;
+  border-color: #6c757d;
+  padding: 10px 20px;
+  font-size: 16px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.btn-secondary:hover {
+  background-color: #5a6268;
+  border-color: #545b62;
+}
+
+@media (max-width: 768px) {
+  .lottery-balls-container {
+    gap: 10px;
+    padding: 15px;
+  }
+  
+  .card-header h3 {
+    font-size: 20px;
+  }
+  
+  h4 {
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 576px) {
+  .lottery-balls-container {
+    gap: 8px;
+    padding: 10px;
+  }
+  
+  .card-header {
+    padding: 12px 15px;
+  }
+  
+  .card-header h3 {
+    font-size: 18px;
+  }
+  
+  .card-body {
+    padding: 15px;
+  }
+  
+  h4 {
+    font-size: 14px;
+  }
+  
+  .btn-primary, .btn-secondary {
+    font-size: 14px;
+    padding: 8px 15px;
+  }
+}

@@ -276,14 +276,75 @@
   display: flex;
   gap: 20px;
   margin-bottom: 20px;
+  flex-wrap: wrap; /* Permitir que los elementos se ajusten en pantallas pequeñas */
 }
 
 .stats-card {
   flex: 1;
+  min-width: 250px; /* Ancho mínimo para evitar que se compriman demasiado */
   background-color: #f9f9f9;
   border-radius: 8px;
   padding: 20px;
   text-align: center;
+  position: relative;
+  margin-bottom: 15px; /* Espacio entre tarjetas cuando se apilan */
+}
+
+/* Estilos para los círculos donde van las bolas - Corregido */
+.stats-card .lottery-balls-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 15px; /* Espacio entre bolas */
+  margin-top: 15px;
+  padding: 15px;
+  min-height: 100px; /* Altura mínima para asegurar espacio */
+}
+
+/* Wrapper para cada bola individual */
+.ball-wrapper {
+  display: inline-block;
+  width: 80px;
+  height: 80px;
+  position: relative;
+  margin: 5px;
+}
+
+/* Asegurarse de que las bolas estén correctamente posicionadas - Corregido */
+.stats-card app-lottery-ball-3d-new {
+  display: block;
+  width: 80px; /* Ancho fijo para las bolas */
+  height: 80px; /* Alto fijo para las bolas */
+  margin: 0 auto; /* Centrar horizontalmente */
+  position: relative; /* Asegurar posicionamiento correcto */
+  z-index: 1; /* Asegurar que esté por encima de otros elementos */
+}
+
+/* Estilos para la sección de resultados - Simplificado */
+.result-numbers .lottery-balls-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  padding: 10px;
+}
+
+/* Asegurar que las bolas en los resultados también tengan tamaño fijo - Simplificado */
+.result-numbers app-lottery-ball-3d-new {
+  display: inline-block;
+  width: 80px;
+  height: 80px;
+}
+
+.lottery-balls-separator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: bold;
+  margin: 0 5px;
+  color: #333;
 }
 
 .stats-card h3 {

@@ -2,17 +2,18 @@ import { Component, Input, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 @Component({
-  selector: 'app-lottery-ball-simple',
-  templateUrl: './lottery-ball-simple.component.html',
+  selector: 'app-lottery-ball-3d',
+  templateUrl: './lottery-ball-3d.component.html',
+  styleUrls: ['./lottery-ball-3d.component.css'],
   standalone: true,
-  imports: [CommonModule],
-  styleUrls: []
+  imports: [CommonModule]
 })
-export class LotteryBallSimpleComponent implements OnInit {
+export class LotteryBall3DComponent implements OnInit {
   @Input() number: string | number = '';
   @Input() game: string = 'euromillones';
   @Input() type: string = 'regular'; // regular, star, dream, etc.
   @Input() highlight: boolean = false;
+  @Input() animate: boolean = false; // Por defecto sin animación
 
   gameClass: string = '';
 
@@ -51,6 +52,11 @@ export class LotteryBallSimpleComponent implements OnInit {
         break;
       default:
         classes.push('euromillones');
+    }
+
+    // Añadir clase de animación si es necesario
+    if (this.animate) {
+      classes.push('animate');
     }
 
     // Añadir clase de resaltado si es necesario

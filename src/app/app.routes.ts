@@ -141,6 +141,22 @@ export const routes: Routes = [
     loadComponent: () => import('./components/lottery-balls-simple-example/lottery-balls-simple-example.component').then(m => m.LotteryBallsSimpleExampleComponent)
   },
   {
+    path: 'lottery-balls-new-example',
+    loadComponent: () => import('./components/lottery-balls-new-example/lottery-balls-new-example.component').then(m => m.LotteryBallsNewExampleComponent)
+  },
+  {
+    path: 'lottery-balls-3d-example',
+    loadComponent: () => import('./components/lottery-balls-3d-example/lottery-balls-3d-example.component').then(m => m.LotteryBalls3DExampleComponent)
+  },
+  {
+    path: 'lottery-balls-threejs-example',
+    loadComponent: () => import('./components/lottery-balls-threejs-example/lottery-balls-threejs-example.component').then(m => m.LotteryBallsThreejsExampleComponent)
+  },
+  {
+    path: 'lottery-balls-3d-new-example',
+    loadComponent: () => import('./components/lottery-balls-3d-new-example/lottery-balls-3d-new-example.component').then(m => m.LotteryBalls3dNewExampleComponent)
+  },
+  {
     path: '**',
     redirectTo: 'home'
   }
