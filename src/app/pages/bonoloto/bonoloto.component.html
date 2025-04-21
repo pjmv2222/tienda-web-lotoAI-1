@@ -43,7 +43,8 @@
         <div class="option-card">
           <div class="option-header">
             <h3>Predicción Básica</h3>
-            <span class="option-price">GRATIS</span>
+            <span class="option-price" *ngIf="!hasBasicPlan" style="display: none;">GRATIS</span>
+            <span class="option-price active" style="display: inline-block;">ACTIVADO</span>
           </div>
           <div class="option-features">
             <ul>

@@ -131,6 +131,16 @@
   background-color: #fffdf0;
 }
 
+.option-card.premium.pro {
+  border-color: #0a7abf;
+  background-color: #f0f8ff;
+}
+
+.option-card.active {
+  border-color: #28a745;
+  background-color: rgba(40, 167, 69, 0.05);
+}
+
 .option-header {
   display: flex;
   justify-content: space-between;
@@ -148,6 +158,15 @@
 .option-price {
   font-weight: bold;
   color: #e63946;
+}
+
+.option-price.active {
+  background-color: #0a7abf !important;
+  color: white !important;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-weight: bold;
+  display: inline-block !important;
 }
 
 .option-features ul {
@@ -309,6 +328,64 @@
   height: 80px;
   position: relative;
   margin: 5px;
+}
+
+/* Estilos para bolas estáticas de Euromillones */
+.static-ball-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.static-euromillones-ball {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ff3333, #cc0000);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  position: relative;
+  animation: pulse 2s infinite;
+}
+
+.static-euromillones-star {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ffcc00, #ff9900);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  position: relative;
+  animation: pulse 2s infinite;
+  clip-path: polygon(
+    50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%,
+    50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%
+  );
+}
+
+.static-ball-number {
+  color: white;
+  font-size: 28px;
+  font-weight: bold;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+  position: relative;
+  z-index: 2;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 /* Asegurarse de que las bolas estén correctamente posicionadas - Corregido */

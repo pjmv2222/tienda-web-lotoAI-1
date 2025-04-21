@@ -1,0 +1,35 @@
+.ball-container {
+  display: inline-block;
+  position: relative;
+  margin: 0;
+  border-radius: 50%;
+  overflow: hidden;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+:host {
+  display: inline-block;
+}
+
+/* Estilo para la imagen estática */
+.static-ball-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: contain;
+  animation: pulse 2s infinite ease-in-out;
+  transition: transform 0.3s ease;
+}
+
+/* Efecto hover para las bolas estáticas */
+.static-ball-image:hover {
+  transform: scale(1.05);
+}
+
+/* Animación de pulso para la imagen estática */
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+  100% { transform: scale(1); }
+}

@@ -6,6 +6,14 @@
   height: 100%; /* Ocupar todo el alto disponible */
 }
 
+/* Estilo para la imagen estática de la bola */
+.static-ball-image {
+  display: block;
+  border-radius: 50%; /* Asegurar que la imagen se vea como una bola */
+  object-fit: cover; /* Mantener la proporción de la imagen */
+  margin: 0 auto; /* Centrar horizontalmente */
+}
+
 .highlight {
   animation: pulse 1.5s infinite;
 }

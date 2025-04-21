@@ -31,7 +31,8 @@
               "src/styles.css",
               "node_modules/ngx-bootstrap/datepicker/bs-datepicker.css",
               "node_modules/bootstrap/dist/css/bootstrap.min.css",
-              "src/assets/css/lottery-balls.css"
+              "src/assets/css/lottery-balls.css",
+              "src/assets/css/bootstrap-fixes.css"
             ],
             "scripts": []
           },

@@ -18,6 +18,7 @@ export class LotteryBall3dNewComponent implements AfterViewInit, OnDestroy, OnCh
   @Input() highlight: boolean = false;
   @Input() size: number = 80; // Tamaño del canvas en píxeles
   @Input() animate: boolean = true;
+  @Input() staticRendering: boolean = false; // Nueva opción para renderizado estático
 
   private scene!: THREE.Scene;
   private camera!: THREE.PerspectiveCamera;
@@ -25,11 +26,12 @@ export class LotteryBall3dNewComponent implements AfterViewInit, OnDestroy, OnCh
   private sphere!: THREE.Mesh;
   private animationFrameId: number = 0;
   private isDestroyed: boolean = false;
+  staticImageUrl: string = ''; // URL de la imagen estática
 
-  // Colores para diferentes juegos - Colores aún más vibrantes y saturados
+  // Colores para diferentes juegos - Ajustados para coincidir con las bolas reales
   private gameColors: Record<string, string> = {
-    'euromillones': '#ff0000', // Rojo intenso para Euromillones (como en la imagen de referencia)
-    'euromillones-star': '#ffcc00', // Amarillo dorado más intenso
+    'euromillones': '#E30613', // Rojo exacto de las bolas de Euromillones
+    'euromillones-star': '#D4C600', // Amarillo exacto de las estrellas de Euromillones
     'primitiva': '#00cc66', // Verde más intenso
     'bonoloto': '#0033cc', // Azul más intenso
     'gordo': '#ff9900', // Naranja más intenso
@@ -39,10 +41,10 @@ export class LotteryBall3dNewComponent implements AfterViewInit, OnDestroy, OnCh
     'loteria-nacional': '#e6b800' // Dorado más intenso
   };
 
-  // Gradientes para mejorar el aspecto visual - Colores más intensos
+  // Gradientes para mejorar el aspecto visual - Ajustados para coincidir con las bolas reales
   private gameGradients: Record<string, {top: string, bottom: string}> = {
-    'euromillones': {top: '#ff0000', bottom: '#cc0000'}, // Rojo intenso para Euromillones
-    'euromillones-star': {top: '#ffcc00', bottom: '#e6b800'}, // Amarillo dorado intenso
+    'euromillones': {top: '#E30613', bottom: '#C00000'}, // Rojo exacto de Euromillones
+    'euromillones-star': {top: '#D4C600', bottom: '#B8AA00'}, // Amarillo exacto de las estrellas
     'primitiva': {top: '#00cc66', bottom: '#009933'}, // Verde intenso
     'bonoloto': {top: '#0033cc', bottom: '#0000cc'}, // Azul intenso
     'gordo': {top: '#ff9900', bottom: '#cc7a00'}, // Naranja intenso
@@ -58,31 +60,60 @@ export class LotteryBall3dNewComponent implements AfterViewInit, OnDestroy, OnCh
 
   ngAfterViewInit(): void {
     // Usar setTimeout para asegurar que el DOM esté completamente cargado
+    console.log(`[DIAGNÓSTICO] Bola ${this.number} (${this.game}): ngAfterViewInit iniciado`);
+
     setTimeout(() => {
-      if (this.isDestroyed) return;
+      if (this.isDestroyed) {
+        console.log(`[DIAGNÓSTICO] Bola ${this.number} (${this.game}): componente destruido antes de inicializar`);
+        return;
+      }
 
       try {
+        // Si es renderizado estático, intentar generar o recuperar la imagen estática
+        if (this.staticRendering) {
+          console.log(`[DIAGNÓSTICO] Bola ${this.number} (${this.game}): usando renderizado estático`);
+          this.generateStaticImage();
+          return;
+        }
+
+        console.log(`[DIAGNÓSTICO] Bola ${this.number} (${this.game}): iniciando escena`);
         this.initScene();
 
         if (this.sphere) {
+          console.log(`[DIAGNÓSTICO] Bola ${this.number} (${this.game}): esfera creada correctamente`);
           // Forzar rotación exactamente frontal
           this.sphere.rotation.set(0, 0, 0);
           // Asegurar que la posición sea correcta
           this.sphere.position.set(0, 0, 0);
+        } else {
+          console.warn(`[DIAGNÓSTICO] Bola ${this.number} (${this.game}): esfera no creada`);
         }
 
         // Iniciar efecto de pulsación para el número central
         this.startPulseEffect();
 
         // Renderizar la escena
+        console.log(`[DIAGNÓSTICO] Bola ${this.number} (${this.game}): renderizando escena`);
         this.renderOnce();
 
         // Solo iniciar animación si se solicita explícitamente
         if (this.animate) {
           this.startAnimation();
         }
+
+        // Verificar si el canvas sigue existiendo después de un tiempo
+        setTimeout(() => {
+          if (!this.isDestroyed) {
+            const canvas = this.rendererContainer?.nativeElement?.querySelector('canvas');
+            if (canvas) {
+              console.log(`[DIAGNÓSTICO] Bola ${this.number} (${this.game}): canvas sigue presente después de 500ms`);
+            } else {
+              console.warn(`[DIAGNÓSTICO] Bola ${this.number} (${this.game}): canvas NO ENCONTRADO después de 500ms`);
+            }
+          }
+        }, 500);
       } catch (error) {
-        console.error('Error initializing ball:', error);
+        console.error(`[DIAGNÓSTICO] Bola ${this.number} (${this.game}): Error initializing ball:`, error);
       }
     }, 100); // Pequeño retraso para asegurar que el DOM esté listo
   }
@@ -103,6 +134,7 @@ export class LotteryBall3dNewComponent implements AfterViewInit, OnDestroy, OnCh
   }
 
   ngOnDestroy(): void {
+    console.log(`[DIAGNÓSTICO] Bola ${this.number} (${this.game}): ngOnDestroy llamado`);
     this.isDestroyed = true;
     this.stopAnimation();
     this.stopPulseEffect();
@@ -111,7 +143,7 @@ export class LotteryBall3dNewComponent implements AfterViewInit, OnDestroy, OnCh
 
   private initScene(): void {
     if (!this.rendererContainer || !this.rendererContainer.nativeElement) {
-      console.error('Renderer container not available');
+      console.error(`[DIAGNÓSTICO] Bola ${this.number} (${this.game}): Renderer container not available`);
       return;
     }
 
@@ -120,18 +152,27 @@ export class LotteryBall3dNewComponent implements AfterViewInit, OnDestroy, OnCh
       const width = this.size;
       const height = this.size;
 
+      console.log(`[DIAGNÓSTICO] Bola ${this.number} (${this.game}): Inicializando escena, tamaño ${width}x${height}`);
+
       // Limpiar el contenedor si ya tiene elementos
+      let childrenRemoved = 0;
       while (container.firstChild) {
         container.removeChild(container.firstChild);
+        childrenRemoved++;
+      }
+      if (childrenRemoved > 0) {
+        console.log(`[DIAGNÓSTICO] Bola ${this.number} (${this.game}): Se eliminaron ${childrenRemoved} elementos del contenedor`);
       }
 
       // Crear escena
       this.scene = new THREE.Scene();
+      console.log(`[DIAGNÓSTICO] Bola ${this.number} (${this.game}): Escena creada`);
 
       // Crear cámara con menor campo de visión para un efecto más plano (menos perspectiva)
       this.camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 1000);
       // Alejar un poco la cámara para ver mejor toda la esfera
       this.camera.position.z = 2.2;
+      console.log(`[DIAGNÓSTICO] Bola ${this.number} (${this.game}): Cámara creada`);
 
       // Crear renderer con mejor calidad
       this.renderer = new THREE.WebGLRenderer({
@@ -141,18 +182,30 @@ export class LotteryBall3dNewComponent implements AfterViewInit, OnDestroy, OnCh
       });
       this.renderer.setSize(width, height);
       this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Limitar para mejor rendimiento
-      container.appendChild(this.renderer.domElement);
+      console.log(`[DIAGNÓSTICO] Bola ${this.number} (${this.game}): Renderer creado`);
+
+      // Verificar si el contenedor sigue existiendo antes de añadir el canvas
+      if (container.isConnected) {
+        container.appendChild(this.renderer.domElement);
+        console.log(`[DIAGNÓSTICO] Bola ${this.number} (${this.game}): Canvas añadido al DOM`);
+      } else {
+        console.warn(`[DIAGNÓSTICO] Bola ${this.number} (${this.game}): El contenedor ya no está conectado al DOM`);
+        return; // Salir si el contenedor ya no está en el DOM
+      }
 
       // Crear la bola
       this.createBall();
+      console.log(`[DIAGNÓSTICO] Bola ${this.number} (${this.game}): Bola creada`);
 
       // Añadir luces
       this.addLights();
+      console.log(`[DIAGNÓSTICO] Bola ${this.number} (${this.game}): Luces añadidas`);
 
       // Renderizar inmediatamente
       this.renderOnce();
+      console.log(`[DIAGNÓSTICO] Bola ${this.number} (${this.game}): Renderizado inicial completado`);
     } catch (error) {
-      console.error('Error initializing Three.js scene:', error);
+      console.error(`[DIAGNÓSTICO] Bola ${this.number} (${this.game}): Error initializing Three.js scene:`, error);
     }
   }
 
@@ -169,113 +222,81 @@ export class LotteryBall3dNewComponent implements AfterViewInit, OnDestroy, OnCh
     // Obtener color según el juego
     const ballColor = this.getBallColor();
 
-    // Crear un gradiente para dar más profundidad a la bola
-    const gradient = textureContext.createRadialGradient(
-      textureSize/2, textureSize/2, 0,
-      textureSize/2, textureSize/2, textureSize/2
-    );
-
-    // Obtener colores del gradiente
-    const gameKey = this.getGameKey();
-    const gradientColors = this.gameGradients[gameKey] || this.gameGradients['euromillones'];
-
-    // Configurar gradiente con brillo intenso en el centro para mayor luminosidad
-    // Ajustado para mantener la intensidad del color
-    gradient.addColorStop(0, '#FFFFFF'); // Centro completamente blanco para efecto de brillo
-    gradient.addColorStop(0.15, this.lightenColor(ballColor, 70)); // Transición más clara y más cercana al centro
-    gradient.addColorStop(0.4, ballColor); // Color principal más extendido
-    gradient.addColorStop(0.7, gradientColors.top); // Usar el color superior del gradiente
-    gradient.addColorStop(0.9, gradientColors.bottom); // Transición al color inferior
-    gradient.addColorStop(1, this.darkenColor(gradientColors.bottom, 10)); // Borde ligeramente más claro
-
-    // Rellenar el fondo con el gradiente
-    textureContext.fillStyle = gradient;
+    // Rellenar el fondo con el color de la bola
+    textureContext.fillStyle = ballColor;
     textureContext.fillRect(0, 0, textureSize, textureSize);
 
-    // Configuración para los círculos con números
-    const circleDiameter = textureSize * 0.22;
+    // Configuración para los círculos
+    const circleDiameter = textureSize * 0.25; // Diámetro de los círculos
     const circleRadius = circleDiameter / 2;
+    const verticalSquash = 0.8; // Factor de achatamiento vertical
     const numberToDisplay = this.number.toString();
 
-    // Función para dibujar un círculo con número - Simplificada
-    const drawNumberCircle = (centerX: number, centerY: number, scale: number = 1.0, isCenter: boolean = false) => {
+    // Función para dibujar un círculo blanco achatado con el número
+    const drawNumberCircle = (centerX: number, centerY: number) => {
       textureContext.save();
       textureContext.translate(centerX, centerY);
-
-      // Aplicar efecto de pulsación al círculo central si está activo
-      const pulseScale = (isCenter && this.pulseEffect) ? 1.15 : 1.0;
-
-      // Tamaño de círculo
-      // Círculo central más grande, círculos periféricos más pequeños
-      const circleSize = isCenter ?
-                        circleRadius * pulseScale :
-                        circleRadius * 0.6; // Círculos periféricos más pequeños
+      textureContext.scale(1, verticalSquash);
 
       // Dibujar círculo blanco
       textureContext.beginPath();
-      textureContext.arc(0, 0, circleSize, 0, 2 * Math.PI);
+      textureContext.arc(0, 0, circleRadius, 0, 2 * Math.PI);
       textureContext.fillStyle = '#FFFFFF';
       textureContext.fill();
 
       // Borde del círculo
-      textureContext.lineWidth = 1.0;
-      textureContext.strokeStyle = '#DDDDDD';
+      textureContext.lineWidth = 2.0;
+      textureContext.strokeStyle = '#AAAAAA';
       textureContext.stroke();
 
-      // Dibujar número con tamaño consistente
-      const fontSize = isCenter ?
-                     circleSize * 1.2 : // Tamaño para círculo central
-                     circleSize * 1.4;  // Tamaño para círculos periféricos
-      textureContext.font = `bold ${fontSize}px Arial, sans-serif`;
+      // Deshacer el achatamiento para el texto
+      textureContext.scale(1, 1 / verticalSquash);
+
+      // Configurar texto
+      textureContext.font = `bold ${circleRadius * 1.2}px Arial, sans-serif`;
       textureContext.fillStyle = '#000000';
       textureContext.textAlign = 'center';
       textureContext.textBaseline = 'middle';
+
+      // Dibujar número
       textureContext.fillText(numberToDisplay, 0, 0);
 
       textureContext.restore();
     };
 
-    // Posiciones para los círculos - Estilo Euromillones real
+    // Calcular posiciones de los círculos
     const centerX = textureSize / 2;
     const centerY = textureSize / 2;
+    const diagonalOffset = circleDiameter * 0.9; // Ajustar para evitar superposición
 
-    // Dibujar solo el círculo central para simplificar y evitar problemas
-    // Círculo central - con efecto de pulsación
-    drawNumberCircle(centerX, centerY, 1.0, true); // Marcado como círculo central para el efecto de pulsación
+    // Dibujar el círculo central
+    drawNumberCircle(centerX, centerY);
 
-    // Dibujar solo 4 círculos adicionales en posiciones cardinales
-    // Usar un radio muy pequeño para que estén muy cerca del centro
-    const radius = textureSize * 0.15; // Radio muy pequeño
+    // Dibujar los círculos diagonales
+    drawNumberCircle(centerX + diagonalOffset * 0.707, centerY + diagonalOffset * 0.707); // Abajo-Derecha
+    drawNumberCircle(centerX + diagonalOffset * 0.707, centerY - diagonalOffset * 0.707); // Arriba-Derecha
+    drawNumberCircle(centerX - diagonalOffset * 0.707, centerY + diagonalOffset * 0.707); // Abajo-Izquierda
+    drawNumberCircle(centerX - diagonalOffset * 0.707, centerY - diagonalOffset * 0.707); // Arriba-Izquierda
 
-    // Arriba
-    drawNumberCircle(centerX, centerY - radius, 1.0, false);
-    // Derecha
-    drawNumberCircle(centerX + radius, centerY, 1.0, false);
-    // Abajo
-    drawNumberCircle(centerX, centerY + radius, 1.0, false);
-    // Izquierda
-    drawNumberCircle(centerX - radius, centerY, 1.0, false);
-
-    // Crear textura Three.js
+    // Crear textura
     const texture = new THREE.CanvasTexture(textureCanvas);
 
-    // Crear geometría y material
-    const geometry = new THREE.SphereGeometry(1, 64, 64); // Mayor resolución para la esfera
+    // Crear geometría
+    const geometry = new THREE.SphereGeometry(1, 32, 32);
 
-    // Material con brillo y reflejo mejorados para mayor realismo
-    // Ajustado para mantener la intensidad del color
+    // Material con brillo y reflejo
     const material = new THREE.MeshPhongMaterial({
       map: texture,
-      shininess: 80, // Brillo ajustado para no lavar los colores
-      specular: 0xffffff, // Reflejo blanco
-      bumpScale: 0.02,
-      reflectivity: 0.5, // Reflectividad ajustada para mantener la intensidad del color
-      emissive: 0x111111, // Ligera emisión para que parezca más brillante (reducida)
-      emissiveIntensity: 0.1 // Intensidad de la emisión reducida
+      shininess: 50,
+      specular: 0xffffff,
     });
 
     // Crear la esfera
     this.sphere = new THREE.Mesh(geometry, material);
+
+    // Asegurar que la esfera esté orientada correctamente para mostrar el número frontal
+    this.sphere.rotation.set(0, 0, 0); // Sin rotación para mostrar el número frontalmente
+
     this.scene.add(this.sphere);
   }
 
@@ -317,8 +338,13 @@ export class LotteryBall3dNewComponent implements AfterViewInit, OnDestroy, OnCh
     const animate = () => {
       if (this.isDestroyed) return;
 
-      // Ya no rotamos la esfera para mantener el número frontal
-      // Solo renderizamos para mantener actualizados los efectos visuales
+      if (this.sphere) {
+        // Rotación mínima para mantener el número visible frontalmente
+        // Aplicamos una oscilación suave en lugar de una rotación completa
+        // para que el número siempre sea visible de frente
+        this.sphere.rotation.y = Math.sin(Date.now() * 0.001) * 0.1; // Oscilación suave lateral
+        this.sphere.rotation.x = Math.sin(Date.now() * 0.0008) * 0.05; // Oscilación suave vertical (más lenta y menor)
+      }
 
       this.renderer.render(this.scene, this.camera);
       this.animationFrameId = requestAnimationFrame(animate);
@@ -461,28 +487,228 @@ export class LotteryBall3dNewComponent implements AfterViewInit, OnDestroy, OnCh
     ).toString(16).slice(1);
   }
 
+  // Método para generar una imagen estática de la bola
+  private generateStaticImage(): void {
+    console.log(`[DIAGNÓSTICO] Bola ${this.number} (${this.game}): Generando imagen estática`);
+
+    // Verificar si ya tenemos una imagen estática en caché
+    const cacheKey = `ball_${this.game}_${this.type}_${this.number}_${this.size}`;
+    const cachedImage = localStorage.getItem(cacheKey);
+
+    if (cachedImage) {
+      console.log(`[DIAGNÓSTICO] Bola ${this.number} (${this.game}): Usando imagen estática de caché`);
+      this.staticImageUrl = cachedImage;
+      return;
+    }
+
+    // Si no hay imagen en caché, crear una escena temporal para renderizar la imagen
+    console.log(`[DIAGNÓSTICO] Bola ${this.number} (${this.game}): Creando escena temporal para imagen estática`);
+
+    // Crear un contenedor temporal fuera del DOM para el renderizado
+    const tempContainer = document.createElement('div');
+    tempContainer.style.width = `${this.size}px`;
+    tempContainer.style.height = `${this.size}px`;
+    tempContainer.style.position = 'absolute';
+    tempContainer.style.left = '-9999px';
+    tempContainer.style.top = '-9999px';
+    document.body.appendChild(tempContainer);
+
+    // Crear escena, cámara y renderer temporal
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(60, 1, 0.1, 1000);
+    camera.position.z = 2.2;
+
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: true,
+      precision: 'highp'
+    });
+    renderer.setSize(this.size, this.size);
+    renderer.setPixelRatio(1); // Usar un pixel ratio fijo para la imagen estática
+    tempContainer.appendChild(renderer.domElement);
+
+    // Crear la bola usando la misma lógica que en createBall()
+    const textureCanvas = document.createElement('canvas');
+    const textureContext = textureCanvas.getContext('2d');
+    if (!textureContext) {
+      console.error(`[DIAGNÓSTICO] Bola ${this.number} (${this.game}): No se pudo crear el contexto de canvas para la textura`);
+      document.body.removeChild(tempContainer);
+      return;
+    }
+
+    const textureSize = 1024;
+    textureCanvas.width = textureSize;
+    textureCanvas.height = textureSize;
+
+    // Obtener color según el juego
+    const gameKey = this.getGameKey();
+    const ballColor = this.gameColors[gameKey] || this.gameColors['euromillones'];
+
+    // Rellenar el fondo con el color de la bola
+    textureContext.fillStyle = ballColor;
+    textureContext.fillRect(0, 0, textureSize, textureSize);
+
+    // Configuración para los círculos
+    const circleDiameter = textureSize * 0.25; // Diámetro de los círculos
+    const circleRadius = circleDiameter / 2;
+    const verticalSquash = 0.8; // Factor de achatamiento vertical
+    const numberToDisplay = this.number.toString();
+
+    // Función para dibujar un círculo blanco achatado con el número
+    const drawNumberCircle = (centerX: number, centerY: number) => {
+      textureContext.save();
+      textureContext.translate(centerX, centerY);
+      textureContext.scale(1, verticalSquash);
+
+      // Dibujar círculo blanco
+      textureContext.beginPath();
+      textureContext.arc(0, 0, circleRadius, 0, 2 * Math.PI);
+      textureContext.fillStyle = '#FFFFFF';
+      textureContext.fill();
+
+      // Borde del círculo
+      textureContext.lineWidth = 2.0;
+      textureContext.strokeStyle = '#AAAAAA';
+      textureContext.stroke();
+
+      // Deshacer el achatamiento para el texto
+      textureContext.scale(1, 1 / verticalSquash);
+
+      // Configurar texto
+      textureContext.font = `bold ${circleRadius * 1.2}px Arial, sans-serif`;
+      textureContext.fillStyle = '#000000';
+      textureContext.textAlign = 'center';
+      textureContext.textBaseline = 'middle';
+
+      // Dibujar número
+      textureContext.fillText(numberToDisplay, 0, 0);
+
+      textureContext.restore();
+    };
+
+    // Calcular posiciones de los círculos
+    const centerX = textureSize / 2;
+    const centerY = textureSize / 2;
+    const diagonalOffset = circleDiameter * 0.9; // Ajustar para evitar superposición
+
+    // Dibujar el círculo central
+    drawNumberCircle(centerX, centerY);
+
+    // Dibujar los círculos diagonales
+    drawNumberCircle(centerX + diagonalOffset * 0.707, centerY + diagonalOffset * 0.707); // Abajo-Derecha
+    drawNumberCircle(centerX + diagonalOffset * 0.707, centerY - diagonalOffset * 0.707); // Arriba-Derecha
+    drawNumberCircle(centerX - diagonalOffset * 0.707, centerY + diagonalOffset * 0.707); // Abajo-Izquierda
+    drawNumberCircle(centerX - diagonalOffset * 0.707, centerY - diagonalOffset * 0.707); // Arriba-Izquierda
+
+    // Crear textura
+    const texture = new THREE.CanvasTexture(textureCanvas);
+
+    // Crear geometría y material
+    const geometry = new THREE.SphereGeometry(1, 64, 64);
+    const material = new THREE.MeshPhongMaterial({
+      map: texture,
+      shininess: 80,
+      specular: 0xffffff,
+      bumpScale: 0.02,
+      reflectivity: 0.5,
+      emissive: 0x111111,
+      emissiveIntensity: 0.1
+    });
+
+    // Crear esfera
+    const sphere = new THREE.Mesh(geometry, material);
+    // Asegurar que la esfera esté orientada correctamente para mostrar el número frontal
+    sphere.rotation.set(0, 0, 0); // Sin rotación para mostrar el número frontalmente
+    scene.add(sphere);
+
+    // Añadir luces
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+    scene.add(ambientLight);
+
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.9);
+    directionalLight.position.set(0, 0, 5);
+    scene.add(directionalLight);
+
+    const pointLight1 = new THREE.PointLight(0xffffff, 0.8);
+    pointLight1.position.set(0, 0, 8);
+    scene.add(pointLight1);
+
+    const pointLight2 = new THREE.PointLight(0xffffff, 0.5);
+    pointLight2.position.set(0, 8, 3);
+    scene.add(pointLight2);
+
+    // Renderizar la escena
+    renderer.render(scene, camera);
+
+    // Convertir el canvas a una imagen data URL
+    try {
+      const dataUrl = renderer.domElement.toDataURL('image/png');
+      this.staticImageUrl = dataUrl;
+
+      // Guardar en caché para uso futuro
+      try {
+        localStorage.setItem(cacheKey, dataUrl);
+        console.log(`[DIAGNÓSTICO] Bola ${this.number} (${this.game}): Imagen estática guardada en caché`);
+      } catch (e) {
+        console.warn(`[DIAGNÓSTICO] Bola ${this.number} (${this.game}): No se pudo guardar en caché:`, e);
+      }
+    } catch (e) {
+      console.error(`[DIAGNÓSTICO] Bola ${this.number} (${this.game}): Error al convertir canvas a imagen:`, e);
+    }
+
+    // Limpiar recursos
+    geometry.dispose();
+    material.dispose();
+    texture.dispose();
+    renderer.dispose();
+
+    // Eliminar el contenedor temporal
+    document.body.removeChild(tempContainer);
+
+    console.log(`[DIAGNÓSTICO] Bola ${this.number} (${this.game}): Imagen estática generada correctamente`);
+  }
+
   private disposeResources(): void {
+    console.log(`[DIAGNÓSTICO] Bola ${this.number} (${this.game}): Iniciando liberación de recursos`);
+
     if (this.renderer) {
+      console.log(`[DIAGNÓSTICO] Bola ${this.number} (${this.game}): Liberando renderer`);
       if (this.rendererContainer && this.rendererContainer.nativeElement) {
         const canvas = this.rendererContainer.nativeElement.querySelector('canvas');
         if (canvas) {
+          console.log(`[DIAGNÓSTICO] Bola ${this.number} (${this.game}): Eliminando canvas del DOM`);
           this.rendererContainer.nativeElement.removeChild(canvas);
+        } else {
+          console.warn(`[DIAGNÓSTICO] Bola ${this.number} (${this.game}): No se encontró canvas para eliminar`);
         }
+      } else {
+        console.warn(`[DIAGNÓSTICO] Bola ${this.number} (${this.game}): Contenedor no disponible para limpiar`);
       }
       this.renderer.dispose();
+      console.log(`[DIAGNÓSTICO] Bola ${this.number} (${this.game}): Renderer liberado`);
+    } else {
+      console.log(`[DIAGNÓSTICO] Bola ${this.number} (${this.game}): No hay renderer para liberar`);
     }
 
     if (this.sphere) {
+      console.log(`[DIAGNÓSTICO] Bola ${this.number} (${this.game}): Liberando recursos de la esfera`);
       if (this.sphere.geometry) {
+        console.log(`[DIAGNÓSTICO] Bola ${this.number} (${this.game}): Liberando geometría`);
         this.sphere.geometry.dispose();
       }
       if (this.sphere.material) {
+        console.log(`[DIAGNÓSTICO] Bola ${this.number} (${this.game}): Liberando materiales`);
         if (Array.isArray(this.sphere.material)) {
           this.sphere.material.forEach(material => material.dispose());
         } else {
           this.sphere.material.dispose();
         }
       }
+      console.log(`[DIAGNÓSTICO] Bola ${this.number} (${this.game}): Esfera liberada completamente`);
+    } else {
+      console.log(`[DIAGNÓSTICO] Bola ${this.number} (${this.game}): No hay esfera para liberar`);
     }
+
+    console.log(`[DIAGNÓSTICO] Bola ${this.number} (${this.game}): Recursos liberados completamente`);
   }
 }
