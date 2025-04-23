@@ -43,34 +43,61 @@
         <div class="option-card">
           <div class="option-header">
             <h3>Predicción Básica</h3>
-            <span class="option-price">GRATIS</span>
+            <span class="option-price" *ngIf="!hasBasicPlan" style="display: none;">GRATIS</span>
+            <span class="option-price active" style="display: inline-block;">ACTIVADO</span>
           </div>
           <div class="option-features">
             <ul>
-              <li>1 combinación</li>
+              <li>3 combinaciones para cada 1 de los 7 juegos</li>
               <li>Análisis básico</li>
-              <li>Sin número de sueño optimizado</li>
+              <li>Número de sueño optimizado</li>
             </ul>
           </div>
-          <button class="generate-btn" [disabled]="!isLoggedIn" (click)="generateBasicPrediction()">Generar</button>
+          <button class="generate-btn" [disabled]="!isLoggedIn || !hasBasicPlan" (click)="generateBasicPrediction()">Generar</button>
           <p *ngIf="!isLoggedIn" class="login-required">Necesitas <a routerLink="/auth/login">iniciar sesión</a> para generar predicciones</p>
+          <p *ngIf="isLoggedIn && !hasBasicPlan && false" class="login-required">Necesitas <a routerLink="/planes">suscribir este plan</a> para generar predicciones</p>
         </div>
 
-        <div class="option-card premium">
+        <!-- Plan Mensual -->
+        <div class="option-card premium" [class.active]="hasMonthlyPlan">
           <div class="option-header">
-            <h3>Predicción Premium</h3>
-            <span class="option-price">Desde 4,99€</span>
+            <h3>Plan Mensual</h3>
+            <span class="option-price" *ngIf="!hasMonthlyPlan">10,22€</span>
+            <span class="option-price active" *ngIf="hasMonthlyPlan">ACTIVADO</span>
           </div>
           <div class="option-features">
             <ul>
-              <li>5 combinaciones optimizadas</li>
+              <li>Combinaciones optimizadas ilimitadas durante el mes de suscripción</li>
               <li>Análisis avanzado de patrones</li>
               <li>Número de sueño optimizado</li>
               <li>Estadísticas detalladas</li>
               <li>Histórico de resultados</li>
             </ul>
           </div>
-          <button class="generate-btn premium-btn" (click)="showSubscriptionOptions()">Ver planes</button>
+          <button class="generate-btn premium-btn" *ngIf="!hasMonthlyPlan" (click)="showSubscriptionOptions()">Suscribir</button>
+          <button class="generate-btn premium-btn" *ngIf="hasMonthlyPlan" [disabled]="true">Generar</button>
+          <p *ngIf="!isLoggedIn" class="login-required">Necesitas <a routerLink="/auth/login">iniciar sesión</a> para generar predicciones premium</p>
+        </div>
+
+        <!-- Plan Pro -->
+        <div class="option-card premium pro" [class.active]="hasProPlan">
+          <div class="option-header">
+            <h3>Plan Pro</h3>
+            <span class="option-price" *ngIf="!hasProPlan">122€</span>
+            <span class="option-price active" *ngIf="hasProPlan">ACTIVADO</span>
+          </div>
+          <div class="option-features">
+            <ul>
+              <li>Combinaciones optimizadas ilimitadas durante los 12 meses de la suscripción</li>
+              <li>Análisis avanzado de patrones</li>
+              <li>Número de sueño optimizado</li>
+              <li>Estadísticas detalladas</li>
+              <li>Histórico de resultados</li>
+              <li>Acceso a todas las loterías</li>
+            </ul>
+          </div>
+          <button class="generate-btn premium-btn" *ngIf="!hasProPlan" (click)="showSubscriptionOptions()">Suscribir</button>
+          <button class="generate-btn premium-btn" *ngIf="hasProPlan" [disabled]="true">Generar</button>
           <p *ngIf="!isLoggedIn" class="login-required">Necesitas <a routerLink="/auth/login">iniciar sesión</a> para generar predicciones premium</p>
         </div>
       </div>
@@ -108,67 +135,59 @@
       <div class="stats-container">
         <div class="stats-card">
           <h3>Números más frecuentes</h3>
-          <div class="lottery-balls-container">
-            <div class="lottery-ball eurodreams">
-              <span>7</span>
-              <div class="decorative-number top-left">7</div>
-              <div class="decorative-number top-right">7</div>
-              <div class="decorative-number bottom-left">7</div>
-              <div class="decorative-number bottom-right">7</div>
+          <div class="lottery-balls-container" id="most-frequent-numbers-container">
+            <div class="ball-wrapper">
+              <app-euromillones-ball [number]="7" [size]="80" [staticRendering]="true"></app-euromillones-ball>
             </div>
-            <div class="lottery-ball eurodreams">
-              <span>15</span>
-              <div class="decorative-number top-left">15</div>
-              <div class="decorative-number top-right">15</div>
-              <div class="decorative-number bottom-left">15</div>
-              <div class="decorative-number bottom-right">15</div>
+            <div class="ball-wrapper">
+              <app-euromillones-ball [number]="15" [size]="80" [staticRendering]="true"></app-euromillones-ball>
             </div>
-            <div class="lottery-ball eurodreams">
-              <span>22</span>
-              <div class="decorative-number top-left">22</div>
-              <div class="decorative-number top-right">22</div>
-              <div class="decorative-number bottom-left">22</div>
-              <div class="decorative-number bottom-right">22</div>
+            <div class="ball-wrapper">
+              <app-euromillones-ball [number]="22" [size]="80" [staticRendering]="true"></app-euromillones-ball>
             </div>
-            <div class="lottery-ball eurodreams">
-              <span>29</span>
-              <div class="decorative-number top-left">29</div>
-              <div class="decorative-number top-right">29</div>
-              <div class="decorative-number bottom-left">29</div>
-              <div class="decorative-number bottom-right">29</div>
+            <div class="ball-wrapper">
+              <app-euromillones-ball [number]="29" [size]="80" [staticRendering]="true"></app-euromillones-ball>
             </div>
-            <div class="lottery-ball eurodreams">
-              <span>34</span>
-              <div class="decorative-number top-left">34</div>
-              <div class="decorative-number top-right">34</div>
-              <div class="decorative-number bottom-left">34</div>
-              <div class="decorative-number bottom-right">34</div>
+            <div class="ball-wrapper">
+              <app-euromillones-ball [number]="34" [size]="80" [staticRendering]="true"></app-euromillones-ball>
             </div>
-            <div class="lottery-ball eurodreams">
-              <span>38</span>
-              <div class="decorative-number top-left">38</div>
-              <div class="decorative-number top-right">38</div>
-              <div class="decorative-number bottom-left">38</div>
-              <div class="decorative-number bottom-right">38</div>
+            <div class="ball-wrapper">
+              <app-euromillones-ball [number]="38" [size]="80" [staticRendering]="true"></app-euromillones-ball>
             </div>
           </div>
         </div>
         <div class="stats-card">
           <h3>Números de sueño más frecuentes</h3>
-          <div class="lottery-balls-container">
-            <div class="lottery-ball eurodreams-dream"><span>2</span></div>
-            <div class="lottery-ball eurodreams-dream"><span>4</span></div>
+          <div class="lottery-balls-container" id="most-frequent-dream-container">
+            <div class="ball-wrapper">
+              <app-euromillones-ball [number]="2" [type]="'star'" [size]="80" [priority]="1"></app-euromillones-ball>
+            </div>
+            <div class="ball-wrapper">
+              <app-euromillones-ball [number]="4" [type]="'star'" [size]="80" [priority]="1"></app-euromillones-ball>
+            </div>
           </div>
         </div>
         <div class="stats-card">
           <h3>Números menos frecuentes</h3>
-          <div class="lottery-balls-container">
-            <div class="lottery-ball eurodreams"><span>3</span></div>
-            <div class="lottery-ball eurodreams"><span>11</span></div>
-            <div class="lottery-ball eurodreams"><span>19</span></div>
-            <div class="lottery-ball eurodreams"><span>26</span></div>
-            <div class="lottery-ball eurodreams"><span>33</span></div>
-            <div class="lottery-ball eurodreams"><span>40</span></div>
+          <div class="lottery-balls-container" id="least-frequent-numbers-container">
+            <div class="ball-wrapper">
+              <app-euromillones-ball [number]="3" [size]="80" [priority]="0"></app-euromillones-ball>
+            </div>
+            <div class="ball-wrapper">
+              <app-euromillones-ball [number]="11" [size]="80" [priority]="0"></app-euromillones-ball>
+            </div>
+            <div class="ball-wrapper">
+              <app-euromillones-ball [number]="19" [size]="80" [priority]="0"></app-euromillones-ball>
+            </div>
+            <div class="ball-wrapper">
+              <app-euromillones-ball [number]="26" [size]="80" [priority]="0"></app-euromillones-ball>
+            </div>
+            <div class="ball-wrapper">
+              <app-euromillones-ball [number]="33" [size]="80" [priority]="0"></app-euromillones-ball>
+            </div>
+            <div class="ball-wrapper">
+              <app-euromillones-ball [number]="40" [size]="80" [priority]="0"></app-euromillones-ball>
+            </div>
           </div>
         </div>
       </div>
@@ -182,15 +201,29 @@
       <div class="result-card">
         <div class="result-date">Jueves, 11 de abril de 2024</div>
         <div class="result-numbers">
-          <div class="lottery-balls-container">
-            <div class="lottery-ball eurodreams">5</div>
-            <div class="lottery-ball eurodreams">12</div>
-            <div class="lottery-ball eurodreams">18</div>
-            <div class="lottery-ball eurodreams">24</div>
-            <div class="lottery-ball eurodreams">31</div>
-            <div class="lottery-ball eurodreams">37</div>
+          <div class="lottery-balls-container" id="last-results-container">
+            <div class="ball-wrapper">
+              <app-euromillones-ball [number]="5" [size]="80" [priority]="2"></app-euromillones-ball>
+            </div>
+            <div class="ball-wrapper">
+              <app-euromillones-ball [number]="12" [size]="80" [priority]="2"></app-euromillones-ball>
+            </div>
+            <div class="ball-wrapper">
+              <app-euromillones-ball [number]="18" [size]="80" [priority]="2"></app-euromillones-ball>
+            </div>
+            <div class="ball-wrapper">
+              <app-euromillones-ball [number]="24" [size]="80" [priority]="2"></app-euromillones-ball>
+            </div>
+            <div class="ball-wrapper">
+              <app-euromillones-ball [number]="31" [size]="80" [priority]="2"></app-euromillones-ball>
+            </div>
+            <div class="ball-wrapper">
+              <app-euromillones-ball [number]="37" [size]="80" [priority]="2"></app-euromillones-ball>
+            </div>
             <span class="lottery-balls-separator">+</span>
-            <div class="lottery-ball eurodreams-dream">3</div>
+            <div class="ball-wrapper">
+              <app-euromillones-ball [number]="3" [type]="'star'" [size]="80" [priority]="2"></app-euromillones-ball>
+            </div>
           </div>
         </div>
       </div>

@@ -130,13 +130,14 @@ class WebGLContextManager {
 })
 export class EuromillonesBallComponent implements OnInit, AfterViewInit, OnDestroy {
   // Versión de cache para forzar regeneración cuando cambie el aspecto visual
-  private static readonly CACHE_VERSION = 'v3-webgl';
+  private static readonly CACHE_VERSION = 'v5-custom-colors';
   @ViewChild('ballContainer') ballContainer!: ElementRef;
   @Input() number: string | number = '';
   @Input() type: string = 'regular'; // regular o star
   @Input() size: number = 80;
   @Input() priority: number = 0; // 0 = baja, 1 = media, 2 = alta
   @Input() staticRendering: boolean = false; // Renderizado estático para evitar problemas de contexto WebGL
+  @Input() customColor: string = ''; // Color personalizado para diferentes juegos de lotería
 
   // Propiedades para el modo estático
   public useStaticImage: boolean = false;
@@ -158,11 +159,13 @@ export class EuromillonesBallComponent implements OnInit, AfterViewInit, OnDestr
     this.elementRef.nativeElement.style.setProperty('--ball-size', `${this.size}px`);
 
     // Generar clave única para esta bola
-    this.cacheKey = `ball-${this.type}-${this.number}`;
+    const colorSuffix = this.customColor ? `-${this.customColor.replace('#', '')}` : '';
+    this.cacheKey = `ball-${this.type}-${this.number}${colorSuffix}`;
 
     // Si se solicita renderizado estático, buscar en localStorage primero
     if (this.staticRendering) {
-      const cacheKey = `euromillones_ball_${EuromillonesBallComponent.CACHE_VERSION}_${this.type}_${this.number}_${this.size}`;
+      const colorSuffix = this.customColor ? `_${this.customColor.replace('#', '')}` : '';
+      const cacheKey = `euromillones_ball_${EuromillonesBallComponent.CACHE_VERSION}_${this.type}_${this.number}_${this.size}${colorSuffix}`;
       const cachedImage = localStorage.getItem(cacheKey);
 
       if (cachedImage) {
@@ -222,7 +225,7 @@ export class EuromillonesBallComponent implements OnInit, AfterViewInit, OnDestr
 
   // Método para crear una imagen estática inmediatamente sin depender de cache
   private createStaticImageImmediately(): void {
-    // Crear un canvas temporal
+    // Crear un canvas temporal con mayor tamaño para mejor calidad
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     if (!ctx) {
@@ -230,31 +233,98 @@ export class EuromillonesBallComponent implements OnInit, AfterViewInit, OnDestr
       return;
     }
 
-    // Configurar tamaño
-    canvas.width = 200;
-    canvas.height = 200;
+    // Configurar tamaño mayor para mejor calidad
+    const canvasSize = 400; // Doble tamaño para mejor calidad
+    canvas.width = canvasSize;
+    canvas.height = canvasSize;
 
-    // Dibujar círculo
+    // Activar suavizado
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+
+    // Radio del círculo principal
+    const ballRadius = canvasSize * 0.45;
+    const center = canvasSize / 2;
+
+    // Dibujar círculo principal con gradiente
     ctx.beginPath();
-    ctx.arc(100, 100, 90, 0, 2 * Math.PI);
+    ctx.arc(center, center, ballRadius, 0, 2 * Math.PI);
 
-    // Color según el tipo
-    const ballColor = this.type === 'star' ? '#FFCC00' : '#E30613';
-    ctx.fillStyle = ballColor;
+    // Crear gradiente radial para dar efecto 3D
+    const gradient = ctx.createRadialGradient(
+      center - ballRadius * 0.3, center - ballRadius * 0.3, 0,
+      center, center, ballRadius
+    );
+
+    // Color según el tipo con gradiente para efecto 3D
+    if (this.customColor) {
+      // Usar color personalizado si se proporciona
+      const baseColor = this.customColor;
+
+      // Generar colores para el gradiente basados en el color personalizado
+      const lighterColor = this.lightenColor(baseColor, 30);
+      const darkerColor = this.darkenColor(baseColor, 20);
+
+      gradient.addColorStop(0, lighterColor);
+      gradient.addColorStop(0.3, baseColor);
+      gradient.addColorStop(1, darkerColor);
+    } else if (this.type === 'star') {
+      // Gradiente para estrellas (amarillo)
+      gradient.addColorStop(0, '#FFEE88');
+      gradient.addColorStop(0.3, '#FFCC00');
+      gradient.addColorStop(1, '#CC9900');
+    } else {
+      // Gradiente para números regulares (rojo)
+      gradient.addColorStop(0, '#FF5555');
+      gradient.addColorStop(0.3, '#E30613');
+      gradient.addColorStop(1, '#AA0000');
+    }
+
+    ctx.fillStyle = gradient;
     ctx.fill();
 
-    // Dibujar círculo blanco central
+    // Añadir borde sutil para mejor definición
+    ctx.lineWidth = 1.0;
+    ctx.strokeStyle = this.type === 'star' ? '#CC9900' : '#AA0000';
+    ctx.stroke();
+
+    // Dibujar círculo blanco central con gradiente
+    const whiteCircleRadius = canvasSize * 0.2;
     ctx.beginPath();
-    ctx.arc(100, 100, 40, 0, 2 * Math.PI);
-    ctx.fillStyle = '#FFFFFF';
+    ctx.arc(center, center, whiteCircleRadius, 0, 2 * Math.PI);
+
+    // Gradiente para el círculo blanco
+    const whiteGradient = ctx.createRadialGradient(
+      center - whiteCircleRadius * 0.2, center - whiteCircleRadius * 0.2, 0,
+      center, center, whiteCircleRadius
+    );
+    whiteGradient.addColorStop(0, '#FFFFFF');
+    whiteGradient.addColorStop(1, '#F0F0F0');
+
+    ctx.fillStyle = whiteGradient;
     ctx.fill();
 
-    // Dibujar número
-    ctx.font = 'bold 40px Arial';
+    // Borde sutil para el círculo blanco
+    ctx.lineWidth = 0.5;
+    ctx.strokeStyle = '#DDDDDD';
+    ctx.stroke();
+
+    // Dibujar número con mejor tipografía y tamaño
+    const numberToDisplay = this.number.toString();
+    const fontSize = whiteCircleRadius * (numberToDisplay.length > 1 ? 0.9 : 1.1);
+
+    ctx.font = `bold ${fontSize}px Arial, sans-serif`;
     ctx.fillStyle = '#000000';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(this.number.toString(), 100, 100);
+
+    // Añadir sombra sutil al texto para mejor legibilidad
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.2)';
+    ctx.shadowBlur = 2;
+    ctx.shadowOffsetX = 1;
+    ctx.shadowOffsetY = 1;
+
+    ctx.fillText(numberToDisplay, center, center);
 
     // Convertir a URL de datos
     try {
@@ -262,6 +332,15 @@ export class EuromillonesBallComponent implements OnInit, AfterViewInit, OnDestr
 
       // Guardar en cache
       this.contextManager.cacheStaticImage(this.cacheKey, this.staticImageUrl);
+
+      // Guardar en localStorage también para persistencia
+      const colorSuffix = this.customColor ? `_${this.customColor.replace('#', '')}` : '';
+      const localStorageKey = `euromillones_ball_${EuromillonesBallComponent.CACHE_VERSION}_${this.type}_${this.number}_${this.size}${colorSuffix}`;
+      try {
+        localStorage.setItem(localStorageKey, this.staticImageUrl);
+      } catch (e) {
+        console.warn('No se pudo guardar en localStorage:', e);
+      }
 
       // Forzar detección de cambios
       this.cdr.detectChanges();
@@ -295,8 +374,10 @@ export class EuromillonesBallComponent implements OnInit, AfterViewInit, OnDestr
     tempContainer.style.position = 'absolute';
     tempContainer.style.left = '-9999px';
     tempContainer.style.top = '-9999px';
-    tempContainer.style.width = `${this.size}px`;
-    tempContainer.style.height = `${this.size}px`;
+    // Usar un tamaño mayor para el renderizado para mejorar la calidad
+    const renderSize = Math.max(this.size * 2, 200); // Al menos 200px para mejor calidad
+    tempContainer.style.width = `${renderSize}px`;
+    tempContainer.style.height = `${renderSize}px`;
     document.body.appendChild(tempContainer);
 
     try {
@@ -308,7 +389,7 @@ export class EuromillonesBallComponent implements OnInit, AfterViewInit, OnDestr
       const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
       camera.position.z = 2;
 
-      // Crear renderer con opciones optimizadas
+      // Crear renderer con opciones optimizadas para alta calidad
       const renderer = new THREE.WebGLRenderer({
         antialias: true,
         alpha: true,
@@ -317,21 +398,24 @@ export class EuromillonesBallComponent implements OnInit, AfterViewInit, OnDestr
         precision: 'highp' // Alta precisión para mejor calidad
       });
 
-      renderer.setSize(this.size, this.size);
-      renderer.setPixelRatio(window.devicePixelRatio || 2); // Mayor calidad
+      // Configurar tamaño mayor para mejor calidad
+      renderer.setSize(renderSize, renderSize);
+      // Usar un pixel ratio alto para mejorar la nitidez
+      renderer.setPixelRatio(Math.max(window.devicePixelRatio || 1, 3)); // Forzar al menos 3x para mejor calidad
       tempContainer.appendChild(renderer.domElement);
 
-      // Crear la bola
-      const geometry = new THREE.SphereGeometry(0.9, 64, 64); // Mayor detalle
+      // Crear la bola con geometría de alta resolución
+      const geometry = new THREE.SphereGeometry(0.9, 128, 128); // Mayor detalle (128 segmentos)
 
-      // Crear un canvas para la textura
+      // Crear un canvas para la textura con resolución muy alta
       const textureCanvas = document.createElement('canvas');
       const textureContext = textureCanvas.getContext('2d');
       if (!textureContext) {
         throw new Error('No se pudo obtener contexto 2D para la textura');
       }
 
-      const textureSize = 1024; // Alta resolución para la textura
+      // Usar una textura de muy alta resolución
+      const textureSize = 2048; // Doble resolución para mayor detalle
       textureCanvas.width = textureSize;
       textureCanvas.height = textureSize;
 
@@ -345,8 +429,19 @@ export class EuromillonesBallComponent implements OnInit, AfterViewInit, OnDestr
         textureSize * 0.9
       );
 
-      // Configurar colores según el tipo
-      if (this.type === 'star') {
+      // Configurar colores según el tipo con mayor saturación y contraste
+      if (this.customColor) {
+        // Usar color personalizado si se proporciona
+        const baseColor = this.customColor;
+
+        // Generar colores para el gradiente basados en el color personalizado
+        const lighterColor = this.lightenColor(baseColor, 30);
+        const darkerColor = this.darkenColor(baseColor, 20);
+
+        gradient.addColorStop(0, lighterColor);
+        gradient.addColorStop(0.3, baseColor);
+        gradient.addColorStop(1, darkerColor);
+      } else if (this.type === 'star') {
         // Gradiente para estrellas (amarillo)
         gradient.addColorStop(0, '#FFEE88');
         gradient.addColorStop(0.3, '#FFCC00');
@@ -365,7 +460,7 @@ export class EuromillonesBallComponent implements OnInit, AfterViewInit, OnDestr
       // Configuración para los círculos
       const circleDiameter = textureSize * 0.22;
       const circleRadius = circleDiameter / 2;
-      const verticalSquash = 0.9;
+      const verticalSquash = 0.95; // Menos achatamiento para mejor apariencia
       const numberToDisplay = this.number.toString();
 
       // Función para dibujar un círculo con número
@@ -379,24 +474,93 @@ export class EuromillonesBallComponent implements OnInit, AfterViewInit, OnDestr
           circleRadius * verticalSquash,
           0, 0, Math.PI * 2
         );
-        textureContext.fillStyle = '#FFFFFF';
+
+        // Usar un gradiente para el círculo blanco para dar más realismo
+        const circleGradient = textureContext.createRadialGradient(
+          x - circleRadius * 0.2, y - circleRadius * 0.2, 0,
+          x, y, circleRadius
+        );
+        circleGradient.addColorStop(0, '#FFFFFF');
+        circleGradient.addColorStop(1, '#F0F0F0');
+
+        textureContext.fillStyle = circleGradient;
         textureContext.fill();
 
-        // Dibujar número
+        // Añadir un borde sutil para mejor definición
+        textureContext.lineWidth = 1.0;
+        textureContext.strokeStyle = '#DDDDDD';
+        textureContext.stroke();
+
+        // Dibujar número con mejor tipografía y tamaño
         const fontSize = circleRadius * (numberToDisplay.length > 1 ? 0.9 : 1.1);
         textureContext.font = `bold ${fontSize}px Arial, sans-serif`;
         textureContext.fillStyle = '#000000';
         textureContext.textAlign = 'center';
         textureContext.textBaseline = 'middle';
+
+        // Añadir sombra sutil al texto para mejor legibilidad
+        textureContext.shadowColor = 'rgba(0, 0, 0, 0.2)';
+        textureContext.shadowBlur = 2;
+        textureContext.shadowOffsetX = 1;
+        textureContext.shadowOffsetY = 1;
+
         textureContext.fillText(numberToDisplay, x, y);
+
+        // Restaurar contexto
         textureContext.restore();
       };
 
-      // Dibujar círculo central
-      drawNumberCircle(textureSize / 2, textureSize / 2);
+      // Dibujar círculo central más grande
+      const mainCircleRadius = circleRadius * 1.2;
 
-      // Calcular offset para los círculos adicionales
-      const offset = textureSize * 0.28;
+      // Dibujar el círculo central con gradiente
+      textureContext.save();
+      textureContext.beginPath();
+      textureContext.ellipse(
+        textureSize / 2, textureSize / 2,
+        mainCircleRadius,
+        mainCircleRadius * verticalSquash,
+        0, 0, Math.PI * 2
+      );
+
+      // Gradiente para el círculo central
+      const mainCircleGradient = textureContext.createRadialGradient(
+        textureSize / 2 - mainCircleRadius * 0.2,
+        textureSize / 2 - mainCircleRadius * 0.2,
+        0,
+        textureSize / 2,
+        textureSize / 2,
+        mainCircleRadius
+      );
+      mainCircleGradient.addColorStop(0, '#FFFFFF');
+      mainCircleGradient.addColorStop(1, '#F0F0F0');
+
+      textureContext.fillStyle = mainCircleGradient;
+      textureContext.fill();
+
+      // Borde sutil
+      textureContext.lineWidth = 1.0;
+      textureContext.strokeStyle = '#DDDDDD';
+      textureContext.stroke();
+
+      // Dibujar número central
+      const mainFontSize = mainCircleRadius * (numberToDisplay.length > 1 ? 0.9 : 1.1);
+      textureContext.font = `bold ${mainFontSize}px Arial, sans-serif`;
+      textureContext.fillStyle = '#000000';
+      textureContext.textAlign = 'center';
+      textureContext.textBaseline = 'middle';
+
+      // Sombra sutil para el texto central
+      textureContext.shadowColor = 'rgba(0, 0, 0, 0.2)';
+      textureContext.shadowBlur = 2;
+      textureContext.shadowOffsetX = 1;
+      textureContext.shadowOffsetY = 1;
+
+      textureContext.fillText(numberToDisplay, textureSize / 2, textureSize / 2);
+      textureContext.restore();
+
+      // Calcular offset para los círculos adicionales (más cercanos para mejor visibilidad)
+      const offset = textureSize * 0.25;
       const centerX = textureSize / 2;
       const centerY = textureSize / 2;
 
@@ -406,22 +570,24 @@ export class EuromillonesBallComponent implements OnInit, AfterViewInit, OnDestr
       drawNumberCircle(centerX, centerY + offset); // Abajo
       drawNumberCircle(centerX - offset, centerY); // Izquierda
 
-      // Crear textura
+      // Crear textura con configuración de alta calidad
       const texture = new THREE.CanvasTexture(textureCanvas);
       texture.anisotropy = 16; // Mejora la nitidez
+      texture.minFilter = THREE.LinearMipmapLinearFilter; // Mejor filtrado
+      texture.magFilter = THREE.LinearFilter;
 
-      // Crear material con propiedades físicas realistas
+      // Crear material con propiedades físicas realistas mejoradas
       const material = new THREE.MeshPhysicalMaterial({
         map: texture,
-        clearcoat: 0.3,
-        clearcoatRoughness: 0.2,
+        clearcoat: 0.4, // Más capa de barniz
+        clearcoatRoughness: 0.1, // Más suave
         metalness: 0.0,
-        roughness: 0.2,
-        reflectivity: 0.5,
-        envMapIntensity: 0.8,
+        roughness: 0.1, // Más suave para mejor brillo
+        reflectivity: 0.7, // Más reflectividad
+        envMapIntensity: 1.0, // Más intensidad de reflejos
         ior: 1.5,
         transmission: 0.0,
-        specularIntensity: 1.0,
+        specularIntensity: 1.2, // Más intensidad especular
         specularColor: 0xffffff,
         flatShading: false
       });
@@ -432,18 +598,23 @@ export class EuromillonesBallComponent implements OnInit, AfterViewInit, OnDestr
       sphere.position.set(0, 0, 0);
       scene.add(sphere);
 
-      // Añadir luces
-      const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+      // Añadir luces mejoradas
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.6); // Más intensa
       scene.add(ambientLight);
 
-      const directionalLight = new THREE.DirectionalLight(0xffffff, 1.0);
+      const directionalLight = new THREE.DirectionalLight(0xffffff, 1.2); // Más intensa
       directionalLight.position.set(-1, 1, 2);
       scene.add(directionalLight);
+
+      // Luz de relleno para mejorar la iluminación
+      const fillLight = new THREE.DirectionalLight(0xffffff, 0.4);
+      fillLight.position.set(1, -1, 1);
+      scene.add(fillLight);
 
       // Renderizar la escena
       renderer.render(scene, camera);
 
-      // Capturar la imagen renderizada
+      // Capturar la imagen renderizada en alta calidad
       try {
         const dataUrl = renderer.domElement.toDataURL('image/png');
         this.staticImageUrl = dataUrl;
@@ -587,10 +758,10 @@ export class EuromillonesBallComponent implements OnInit, AfterViewInit, OnDestr
     }
   }
 
-  // Método de respaldo para crear una imagen muy simple en caso de error
+  // Método de respaldo para crear una imagen simple pero de buena calidad en caso de error
   private createFallbackImage(): void {
     try {
-      // Crear un canvas muy simple
+      // Crear un canvas con tamaño adecuado
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
       if (!ctx) {
@@ -598,31 +769,86 @@ export class EuromillonesBallComponent implements OnInit, AfterViewInit, OnDestr
         return;
       }
 
-      // Tamaño mínimo
-      canvas.width = 100;
-      canvas.height = 100;
+      // Usar un tamaño mayor para mejor calidad
+      const canvasSize = 200;
+      canvas.width = canvasSize;
+      canvas.height = canvasSize;
 
-      // Fondo simple del color correspondiente
-      ctx.fillStyle = this.type === 'star' ? '#FFCC00' : '#E30613';
-      ctx.fillRect(0, 0, 100, 100);
+      // Activar suavizado
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
 
-      // Círculo blanco simple
+      const center = canvasSize / 2;
+      const radius = canvasSize * 0.4;
+
+      // Dibujar círculo con el color correspondiente
       ctx.beginPath();
-      ctx.arc(50, 50, 30, 0, 2 * Math.PI);
+      ctx.arc(center, center, radius, 0, 2 * Math.PI);
+
+      // Determinar el color a usar
+      let ballColor, borderColor;
+
+      if (this.customColor) {
+        // Usar color personalizado
+        ballColor = this.customColor;
+        borderColor = this.darkenColor(this.customColor, 20);
+      } else {
+        // Usar colores predeterminados
+        ballColor = this.type === 'star' ? '#FFCC00' : '#E30613';
+        borderColor = this.type === 'star' ? '#CC9900' : '#AA0000';
+      }
+
+      ctx.fillStyle = ballColor;
+      ctx.fill();
+
+      // Añadir borde sutil
+      ctx.lineWidth = 1.0;
+      ctx.strokeStyle = borderColor;
+      ctx.stroke();
+
+      // Círculo blanco para el número
+      const whiteRadius = radius * 0.6;
+      ctx.beginPath();
+      ctx.arc(center, center, whiteRadius, 0, 2 * Math.PI);
       ctx.fillStyle = '#FFFFFF';
       ctx.fill();
 
-      // Número en texto simple
-      ctx.font = 'bold 30px Arial';
+      // Borde sutil para el círculo blanco
+      ctx.lineWidth = 0.5;
+      ctx.strokeStyle = '#DDDDDD';
+      ctx.stroke();
+
+      // Número con mejor tipografía
+      const numberToDisplay = this.number.toString();
+      const fontSize = whiteRadius * (numberToDisplay.length > 1 ? 0.9 : 1.1);
+
+      ctx.font = `bold ${fontSize}px Arial, sans-serif`;
       ctx.fillStyle = '#000000';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(this.number.toString(), 50, 50);
+
+      // Sombra sutil para mejor legibilidad
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.2)';
+      ctx.shadowBlur = 1;
+      ctx.shadowOffsetX = 0.5;
+      ctx.shadowOffsetY = 0.5;
+
+      ctx.fillText(numberToDisplay, center, center);
 
       // Intentar generar URL
       try {
         this.staticImageUrl = canvas.toDataURL('image/png');
         this.contextManager.cacheStaticImage(this.cacheKey, this.staticImageUrl);
+
+        // Guardar en localStorage también
+        const colorSuffix = this.customColor ? `_${this.customColor.replace('#', '')}` : '';
+        const localStorageKey = `euromillones_ball_${EuromillonesBallComponent.CACHE_VERSION}_${this.type}_${this.number}_${this.size}${colorSuffix}`;
+        try {
+          localStorage.setItem(localStorageKey, this.staticImageUrl);
+        } catch (e) {
+          console.warn('No se pudo guardar imagen de respaldo en localStorage:', e);
+        }
+
         this.cdr.detectChanges();
       } catch (e) {
         console.error('Error fatal al crear imagen de respaldo:', e);
@@ -782,7 +1008,18 @@ export class EuromillonesBallComponent implements OnInit, AfterViewInit, OnDestr
     );
 
     // Configurar paradas de color para el gradiente
-    if (this.type === 'star') {
+    if (this.customColor) {
+      // Usar color personalizado si se proporciona
+      const baseColor = this.customColor;
+
+      // Generar colores para el gradiente basados en el color personalizado
+      const lighterColor = this.lightenColor(baseColor, 30);
+      const darkerColor = this.darkenColor(baseColor, 20);
+
+      gradient.addColorStop(0, lighterColor); // Más claro en el punto de luz
+      gradient.addColorStop(0.3, baseColor); // Color principal
+      gradient.addColorStop(1, darkerColor); // Más oscuro en los bordes
+    } else if (this.type === 'star') {
       // Gradiente para estrellas (amarillo)
       gradient.addColorStop(0, '#FFEE88'); // Más claro en el punto de luz
       gradient.addColorStop(0.3, '#FFCC00'); // Color principal
@@ -1066,5 +1303,47 @@ export class EuromillonesBallComponent implements OnInit, AfterViewInit, OnDestr
     this.sphere = null as any;
   }
 
-  // Eliminamos las funciones no utilizadas para evitar advertencias
+  // Función para aclarar un color hex
+  private lightenColor(color: string, percent: number): string {
+    // Eliminar el # si existe
+    let hex = color.replace('#', '');
+
+    // Convertir a RGB
+    let r = parseInt(hex.substring(0, 2), 16);
+    let g = parseInt(hex.substring(2, 4), 16);
+    let b = parseInt(hex.substring(4, 6), 16);
+
+    // Aclarar cada componente
+    r = Math.min(255, Math.floor(r + (255 - r) * (percent / 100)));
+    g = Math.min(255, Math.floor(g + (255 - g) * (percent / 100)));
+    b = Math.min(255, Math.floor(b + (255 - b) * (percent / 100)));
+
+    // Convertir de nuevo a hex
+    return `#${this.componentToHex(r)}${this.componentToHex(g)}${this.componentToHex(b)}`;
+  }
+
+  // Función para oscurecer un color hex
+  private darkenColor(color: string, percent: number): string {
+    // Eliminar el # si existe
+    let hex = color.replace('#', '');
+
+    // Convertir a RGB
+    let r = parseInt(hex.substring(0, 2), 16);
+    let g = parseInt(hex.substring(2, 4), 16);
+    let b = parseInt(hex.substring(4, 6), 16);
+
+    // Oscurecer cada componente
+    r = Math.max(0, Math.floor(r * (1 - percent / 100)));
+    g = Math.max(0, Math.floor(g * (1 - percent / 100)));
+    b = Math.max(0, Math.floor(b * (1 - percent / 100)));
+
+    // Convertir de nuevo a hex
+    return `#${this.componentToHex(r)}${this.componentToHex(g)}${this.componentToHex(b)}`;
+  }
+
+  // Función auxiliar para convertir un componente decimal a hex
+  private componentToHex(c: number): string {
+    const hex = c.toString(16);
+    return hex.length === 1 ? '0' + hex : hex;
+  }
 }

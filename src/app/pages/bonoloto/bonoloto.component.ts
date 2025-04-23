@@ -4,11 +4,12 @@ import { CommonModule } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
 import { SubscriptionService } from '../../services/subscription.service';
 import { Subscription } from 'rxjs';
+import { EuromillonesBallComponent } from '../../components/euromillones-ball/euromillones-ball.component';
 
 @Component({
   selector: 'app-bonoloto',
   standalone: true,
-  imports: [RouterLink, CommonModule],
+  imports: [RouterLink, CommonModule, EuromillonesBallComponent],
   templateUrl: './bonoloto.component.html',
   styleUrl: './bonoloto.component.css'
 })

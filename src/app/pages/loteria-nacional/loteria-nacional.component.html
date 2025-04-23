@@ -43,34 +43,61 @@
         <div class="option-card">
           <div class="option-header">
             <h3>Predicción Básica</h3>
-            <span class="option-price">GRATIS</span>
+            <span class="option-price" *ngIf="!hasBasicPlan" style="display: none;">GRATIS</span>
+            <span class="option-price active" style="display: inline-block;">ACTIVADO</span>
           </div>
           <div class="option-features">
             <ul>
-              <li>1 número recomendado</li>
+              <li>3 combinaciones para cada 1 de los 7 juegos</li>
               <li>Análisis básico</li>
-              <li>Sin terminaciones optimizadas</li>
+              <li>Terminaciones optimizadas</li>
             </ul>
           </div>
-          <button class="generate-btn" [disabled]="!isLoggedIn" (click)="generateBasicPrediction()">Generar</button>
+          <button class="generate-btn" [disabled]="!isLoggedIn || !hasBasicPlan" (click)="generateBasicPrediction()">Generar</button>
           <p *ngIf="!isLoggedIn" class="login-required">Necesitas <a routerLink="/auth/login">iniciar sesión</a> para generar predicciones</p>
+          <p *ngIf="isLoggedIn && !hasBasicPlan && false" class="login-required">Necesitas <a routerLink="/planes">suscribir este plan</a> para generar predicciones</p>
         </div>
 
-        <div class="option-card premium">
+        <!-- Plan Mensual -->
+        <div class="option-card premium" [class.active]="hasMonthlyPlan">
           <div class="option-header">
-            <h3>Predicción Premium</h3>
-            <span class="option-price">Desde 4,99€</span>
+            <h3>Plan Mensual</h3>
+            <span class="option-price" *ngIf="!hasMonthlyPlan">10,22€</span>
+            <span class="option-price active" *ngIf="hasMonthlyPlan">ACTIVADO</span>
           </div>
           <div class="option-features">
             <ul>
-              <li>5 números optimizados</li>
+              <li>Combinaciones optimizadas ilimitadas durante el mes de suscripción</li>
               <li>Análisis avanzado de patrones</li>
               <li>Terminaciones optimizadas</li>
               <li>Estadísticas detalladas</li>
               <li>Histórico de resultados</li>
             </ul>
           </div>
-          <button class="generate-btn premium-btn" (click)="showSubscriptionOptions()">Ver planes</button>
+          <button class="generate-btn premium-btn" *ngIf="!hasMonthlyPlan" (click)="showSubscriptionOptions()">Suscribir</button>
+          <button class="generate-btn premium-btn" *ngIf="hasMonthlyPlan" [disabled]="true">Generar</button>
+          <p *ngIf="!isLoggedIn" class="login-required">Necesitas <a routerLink="/auth/login">iniciar sesión</a> para generar predicciones premium</p>
+        </div>
+
+        <!-- Plan Pro -->
+        <div class="option-card premium pro" [class.active]="hasProPlan">
+          <div class="option-header">
+            <h3>Plan Pro</h3>
+            <span class="option-price" *ngIf="!hasProPlan">122€</span>
+            <span class="option-price active" *ngIf="hasProPlan">ACTIVADO</span>
+          </div>
+          <div class="option-features">
+            <ul>
+              <li>Combinaciones optimizadas ilimitadas durante los 12 meses de la suscripción</li>
+              <li>Análisis avanzado de patrones</li>
+              <li>Terminaciones optimizadas</li>
+              <li>Estadísticas detalladas</li>
+              <li>Histórico de resultados</li>
+              <li>Acceso a todas las loterías</li>
+            </ul>
+          </div>
+          <button class="generate-btn premium-btn" *ngIf="!hasProPlan" (click)="showSubscriptionOptions()">Suscribir</button>
+          <button class="generate-btn premium-btn" *ngIf="hasProPlan" [disabled]="true">Generar</button>
           <p *ngIf="!isLoggedIn" class="login-required">Necesitas <a routerLink="/auth/login">iniciar sesión</a> para generar predicciones premium</p>
         </div>
       </div>
@@ -108,30 +135,98 @@
       <div class="stats-container">
         <div class="stats-card">
           <h3>Terminaciones más frecuentes</h3>
-          <div class="number-balls">
-            <div class="termination">7</div>
-            <div class="termination">5</div>
-            <div class="termination">3</div>
-            <div class="termination">9</div>
-            <div class="termination">1</div>
+          <div class="lottery-balls-container" id="most-frequent-terminations-container">
+            <div class="ball-wrapper">
+              <app-euromillones-ball [number]="7" [size]="80" [staticRendering]="true" [customColor]="'#0066CC'"></app-euromillones-ball>
+            </div>
+            <div class="ball-wrapper">
+              <app-euromillones-ball [number]="5" [size]="80" [staticRendering]="true" [customColor]="'#0066CC'"></app-euromillones-ball>
+            </div>
+            <div class="ball-wrapper">
+              <app-euromillones-ball [number]="3" [size]="80" [staticRendering]="true" [customColor]="'#0066CC'"></app-euromillones-ball>
+            </div>
+            <div class="ball-wrapper">
+              <app-euromillones-ball [number]="9" [size]="80" [staticRendering]="true" [customColor]="'#0066CC'"></app-euromillones-ball>
+            </div>
+            <div class="ball-wrapper">
+              <app-euromillones-ball [number]="1" [size]="80" [staticRendering]="true" [customColor]="'#0066CC'"></app-euromillones-ball>
+            </div>
           </div>
         </div>
         <div class="stats-card">
           <h3>Números premiados recientemente</h3>
-          <div class="number-list">
-            <div class="lottery-number">45678</div>
-            <div class="lottery-number">23456</div>
-            <div class="lottery-number">87654</div>
+          <div class="lottery-numbers-container">
+            <div class="lottery-number-row">
+              <div class="ball-wrapper">
+                <app-euromillones-ball [number]="4" [size]="50" [staticRendering]="true" [customColor]="'#0066CC'"></app-euromillones-ball>
+              </div>
+              <div class="ball-wrapper">
+                <app-euromillones-ball [number]="5" [size]="50" [staticRendering]="true" [customColor]="'#0066CC'"></app-euromillones-ball>
+              </div>
+              <div class="ball-wrapper">
+                <app-euromillones-ball [number]="6" [size]="50" [staticRendering]="true" [customColor]="'#0066CC'"></app-euromillones-ball>
+              </div>
+              <div class="ball-wrapper">
+                <app-euromillones-ball [number]="7" [size]="50" [staticRendering]="true" [customColor]="'#0066CC'"></app-euromillones-ball>
+              </div>
+              <div class="ball-wrapper">
+                <app-euromillones-ball [number]="8" [size]="50" [staticRendering]="true" [customColor]="'#0066CC'"></app-euromillones-ball>
+              </div>
+            </div>
+            <div class="lottery-number-row">
+              <div class="ball-wrapper">
+                <app-euromillones-ball [number]="2" [size]="50" [staticRendering]="true" [customColor]="'#0066CC'"></app-euromillones-ball>
+              </div>
+              <div class="ball-wrapper">
+                <app-euromillones-ball [number]="3" [size]="50" [staticRendering]="true" [customColor]="'#0066CC'"></app-euromillones-ball>
+              </div>
+              <div class="ball-wrapper">
+                <app-euromillones-ball [number]="4" [size]="50" [staticRendering]="true" [customColor]="'#0066CC'"></app-euromillones-ball>
+              </div>
+              <div class="ball-wrapper">
+                <app-euromillones-ball [number]="5" [size]="50" [staticRendering]="true" [customColor]="'#0066CC'"></app-euromillones-ball>
+              </div>
+              <div class="ball-wrapper">
+                <app-euromillones-ball [number]="6" [size]="50" [staticRendering]="true" [customColor]="'#0066CC'"></app-euromillones-ball>
+              </div>
+            </div>
+            <div class="lottery-number-row">
+              <div class="ball-wrapper">
+                <app-euromillones-ball [number]="8" [size]="50" [staticRendering]="true" [customColor]="'#0066CC'"></app-euromillones-ball>
+              </div>
+              <div class="ball-wrapper">
+                <app-euromillones-ball [number]="7" [size]="50" [staticRendering]="true" [customColor]="'#0066CC'"></app-euromillones-ball>
+              </div>
+              <div class="ball-wrapper">
+                <app-euromillones-ball [number]="6" [size]="50" [staticRendering]="true" [customColor]="'#0066CC'"></app-euromillones-ball>
+              </div>
+              <div class="ball-wrapper">
+                <app-euromillones-ball [number]="5" [size]="50" [staticRendering]="true" [customColor]="'#0066CC'"></app-euromillones-ball>
+              </div>
+              <div class="ball-wrapper">
+                <app-euromillones-ball [number]="4" [size]="50" [staticRendering]="true" [customColor]="'#0066CC'"></app-euromillones-ball>
+              </div>
+            </div>
           </div>
         </div>
         <div class="stats-card">
           <h3>Terminaciones menos frecuentes</h3>
-          <div class="number-balls">
-            <div class="termination">2</div>
-            <div class="termination">4</div>
-            <div class="termination">6</div>
-            <div class="termination">8</div>
-            <div class="termination">0</div>
+          <div class="lottery-balls-container" id="least-frequent-terminations-container">
+            <div class="ball-wrapper">
+              <app-euromillones-ball [number]="2" [size]="80" [priority]="0" [customColor]="'#0066CC'"></app-euromillones-ball>
+            </div>
+            <div class="ball-wrapper">
+              <app-euromillones-ball [number]="4" [size]="80" [priority]="0" [customColor]="'#0066CC'"></app-euromillones-ball>
+            </div>
+            <div class="ball-wrapper">
+              <app-euromillones-ball [number]="6" [size]="80" [priority]="0" [customColor]="'#0066CC'"></app-euromillones-ball>
+            </div>
+            <div class="ball-wrapper">
+              <app-euromillones-ball [number]="8" [size]="80" [priority]="0" [customColor]="'#0066CC'"></app-euromillones-ball>
+            </div>
+            <div class="ball-wrapper">
+              <app-euromillones-ball [number]="0" [size]="80" [priority]="0" [customColor]="'#0066CC'"></app-euromillones-ball>
+            </div>
           </div>
         </div>
       </div>
@@ -145,8 +240,26 @@
       <div class="result-card">
         <div class="result-date">Sábado, 6 de abril de 2024</div>
         <div class="result-numbers">
-          <div class="lottery-number-large">67890</div>
-          <div class="prize-info">Primer Premio</div>
+          <div class="lottery-number-large-container">
+            <div class="lottery-number-row large">
+              <div class="ball-wrapper">
+                <app-euromillones-ball [number]="6" [size]="60" [staticRendering]="true" [customColor]="'#D32F2F'"></app-euromillones-ball>
+              </div>
+              <div class="ball-wrapper">
+                <app-euromillones-ball [number]="7" [size]="60" [staticRendering]="true" [customColor]="'#D32F2F'"></app-euromillones-ball>
+              </div>
+              <div class="ball-wrapper">
+                <app-euromillones-ball [number]="8" [size]="60" [staticRendering]="true" [customColor]="'#D32F2F'"></app-euromillones-ball>
+              </div>
+              <div class="ball-wrapper">
+                <app-euromillones-ball [number]="9" [size]="60" [staticRendering]="true" [customColor]="'#D32F2F'"></app-euromillones-ball>
+              </div>
+              <div class="ball-wrapper">
+                <app-euromillones-ball [number]="0" [size]="60" [staticRendering]="true" [customColor]="'#D32F2F'"></app-euromillones-ball>
+              </div>
+            </div>
+            <div class="prize-info">Primer Premio</div>
+          </div>
         </div>
       </div>
       <div class="view-more">

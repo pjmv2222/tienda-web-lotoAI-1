@@ -131,6 +131,16 @@
   background-color: #fffdf0;
 }
 
+.option-card.premium.pro {
+  border-color: #0a7abf;
+  background-color: #f0f8ff;
+}
+
+.option-card.active {
+  border-color: #28a745;
+  background-color: rgba(40, 167, 69, 0.05);
+}
+
 .option-header {
   display: flex;
   justify-content: space-between;
@@ -148,6 +158,15 @@
 .option-price {
   font-weight: bold;
   color: #e63946;
+}
+
+.option-price.active {
+  background-color: #0a7abf !important;
+  color: white !important;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-weight: bold;
+  display: inline-block !important;
 }
 
 .option-features ul {
@@ -293,6 +312,29 @@
   font-size: 18px;
 }
 
+/* Estilos para los contenedores de bolas de lotería */
+.lottery-balls-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 15px 0;
+}
+
+.ball-wrapper {
+  display: inline-block;
+  margin: 5px;
+}
+
+.lottery-balls-separator {
+  font-size: 24px;
+  font-weight: bold;
+  margin: 0 10px;
+  color: #333;
+}
+
+/* Mantener los estilos antiguos para compatibilidad */
 .number-balls {
   display: flex;
   justify-content: center;
