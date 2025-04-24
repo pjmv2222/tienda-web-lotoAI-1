@@ -78,19 +78,23 @@ jobs:
 
     - name: Configure known_hosts
       run: |
-        ssh-keyscan -H ${{ secrets.HOST }} >> ~/.ssh/known_hosts
+        # Usar un valor hardcoded para depuración
+        echo "Configurando known_hosts con valor hardcoded..."
+        ssh-keyscan -H 212.227.230.103 >> ~/.ssh/known_hosts
 
     # Eliminado el paso redundante de "Add host key to known_hosts"
 
     - name: Deploy to VPS
       run: |
         echo "Deploying to VPS..."
-        ssh -v ${{ secrets.USERNAME }}@${{ secrets.HOST }} "cd ${{ secrets.SERVER_PATH }} && git pull origin main && pm2 restart all" || echo "SSH command failed"
+        # Usar valores hardcoded para depuración
+        ssh -v root@212.227.230.103 "cd /var/www/tienda-web-lotoAI-1 && git pull origin main && pm2 restart all" || echo "SSH command failed"
 
     - name: Verify deployment
       run: |
         echo "Verifying deployment..."
-        ssh ${{ secrets.USERNAME }}@${{ secrets.HOST }} "pm2 status" || echo "Verification failed"
+        # Usar valores hardcoded para depuración
+        ssh root@212.227.230.103 "pm2 status" || echo "Verification failed"
 
     - name: Deployment notification
       run: echo "Deployment completed successfully!"
