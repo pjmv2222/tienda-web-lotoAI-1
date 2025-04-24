@@ -15,47 +15,6 @@ jobs:
       with:
         fetch-depth: 0  # Obtener todo el historial para que git describe funcione correctamente
 
-    - name: Debug secrets
-      run: |
-        echo "Checking if HOST secret exists..."
-        if [ -n "${{ secrets.HOST }}" ]; then
-          echo "HOST secret exists"
-          echo "HOST length: ${#HOST}"
-        else
-          echo "HOST secret is empty or not set"
-        fi
-
-        echo "Checking if USERNAME secret exists..."
-        if [ -n "${{ secrets.USERNAME }}" ]; then
-          echo "USERNAME secret exists"
-        else
-          echo "USERNAME secret is empty or not set"
-        fi
-
-        echo "Checking if SERVER_PATH secret exists..."
-        if [ -n "${{ secrets.SERVER_PATH }}" ]; then
-          echo "SERVER_PATH secret exists"
-        else
-          echo "SERVER_PATH secret is empty or not set"
-        fi
-
-        echo "Checking if SSH_PRIVATE_KEY secret exists..."
-        if [ -n "${{ secrets.SSH_PRIVATE_KEY }}" ]; then
-          echo "SSH_PRIVATE_KEY secret exists"
-        else
-          echo "SSH_PRIVATE_KEY secret is empty or not set"
-        fi
-      env:
-        HOST: ${{ secrets.HOST }}
-
-    - name: Test ssh-keyscan
-      run: |
-        echo "Testing ssh-keyscan command..."
-        which ssh-keyscan
-        ssh-keyscan -h || echo "ssh-keyscan help command failed"
-        echo "Trying with explicit IP..."
-        ssh-keyscan -H 212.227.230.103 || echo "ssh-keyscan with hardcoded IP failed"
-
     - name: Setup Node.js
       uses: actions/setup-node@v3
       with:
@@ -68,33 +27,36 @@ jobs:
     - name: Build application
       run: npm run build:ssr
 
-    # Usando una acción alternativa para la configuración SSH
-    - name: Setup SSH
-      uses: shimataro/ssh-key-action@v2
+    # Sincronizar los archivos compilados con el servidor
+    - name: Sync dist folder to server
+      uses: burnett01/rsync-deployments@5.2.1
       with:
-        key: ${{ secrets.SSH_PRIVATE_KEY }}
-        known_hosts: 'just-a-placeholder'
-        if_key_exists: replace
+        switches: -avzr --delete
+        path: dist/
+        remote_path: ${{ secrets.SERVER_PATH }}/dist/
+        remote_host: ${{ secrets.HOST }}
+        remote_user: ${{ secrets.USERNAME }}
+        remote_key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-    - name: Configure known_hosts
-      run: |
-        # Usar un valor hardcoded para depuración
-        echo "Configurando known_hosts con valor hardcoded..."
-        ssh-keyscan -H 212.227.230.103 >> ~/.ssh/known_hosts
-
-    # Eliminado el paso redundante de "Add host key to known_hosts"
-
+    # Usar una acción específica para SSH que maneja mejor los secretos
     - name: Deploy to VPS
-      run: |
-        echo "Deploying to VPS..."
-        # Usar valores hardcoded para depuración
-        ssh -v root@212.227.230.103 "cd /var/www/tienda-web-lotoAI-1 && git pull origin main && pm2 restart all" || echo "SSH command failed"
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USERNAME }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        script: |
+          cd ${{ secrets.SERVER_PATH }}
+          git pull origin main
+          pm2 restart all
+          pm2 status
 
-    - name: Verify deployment
+    - name: Deployment success notification
+      if: success()
       run: |
-        echo "Verifying deployment..."
-        # Usar valores hardcoded para depuración
-        ssh root@212.227.230.103 "pm2 status" || echo "Verification failed"
+        echo "::notice::Deployment completed successfully! The application has been deployed to the VPS."
 
-    - name: Deployment notification
-      run: echo "Deployment completed successfully!"
+    - name: Deployment failure notification
+      if: failure()
+      run: |
+        echo "::error::Deployment failed! Please check the logs for more information."
