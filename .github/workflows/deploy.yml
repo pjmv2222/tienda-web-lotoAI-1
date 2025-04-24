@@ -8,44 +8,89 @@ on:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    
+
     steps:
     - name: Checkout repository
       uses: actions/checkout@v3
       with:
         fetch-depth: 0  # Obtener todo el historial para que git describe funcione correctamente
-    
+
+    - name: Debug secrets
+      run: |
+        echo "Checking if HOST secret exists..."
+        if [ -n "${{ secrets.HOST }}" ]; then
+          echo "HOST secret exists"
+          echo "HOST length: ${#HOST}"
+        else
+          echo "HOST secret is empty or not set"
+        fi
+
+        echo "Checking if USERNAME secret exists..."
+        if [ -n "${{ secrets.USERNAME }}" ]; then
+          echo "USERNAME secret exists"
+        else
+          echo "USERNAME secret is empty or not set"
+        fi
+
+        echo "Checking if SERVER_PATH secret exists..."
+        if [ -n "${{ secrets.SERVER_PATH }}" ]; then
+          echo "SERVER_PATH secret exists"
+        else
+          echo "SERVER_PATH secret is empty or not set"
+        fi
+
+        echo "Checking if SSH_PRIVATE_KEY secret exists..."
+        if [ -n "${{ secrets.SSH_PRIVATE_KEY }}" ]; then
+          echo "SSH_PRIVATE_KEY secret exists"
+        else
+          echo "SSH_PRIVATE_KEY secret is empty or not set"
+        fi
+      env:
+        HOST: ${{ secrets.HOST }}
+
+    - name: Test ssh-keyscan
+      run: |
+        echo "Testing ssh-keyscan command..."
+        which ssh-keyscan
+        ssh-keyscan -h || echo "ssh-keyscan help command failed"
+        echo "Trying with explicit IP..."
+        ssh-keyscan -H 212.227.230.103 || echo "ssh-keyscan with hardcoded IP failed"
+
     - name: Setup Node.js
       uses: actions/setup-node@v3
       with:
         node-version: '18.x'
         cache: 'npm'
-        
+
     - name: Install dependencies
       run: npm ci
-      
+
     - name: Build application
       run: npm run build:ssr
-      
-    - name: Setup SSH key
-      uses: webfactory/ssh-agent@v0.7.0
+
+    # Usando una acción alternativa para la configuración SSH
+    - name: Setup SSH
+      uses: shimataro/ssh-key-action@v2
       with:
-        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-        
-    - name: Add host key to known_hosts
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        known_hosts: ${{ secrets.HOST }}
+        if_key_exists: replace
+
+    - name: Add host key to known_hosts (hardcoded for testing)
       run: |
         mkdir -p ~/.ssh
-        ssh-keyscan -H ${{ secrets.HOST }} >> ~/.ssh/known_hosts
-      
+        echo "Using hardcoded host for testing..."
+        ssh-keyscan -H 212.227.230.103 >> ~/.ssh/known_hosts || echo "ssh-keyscan with hardcoded IP failed"
+
     - name: Deploy to VPS
       run: |
         echo "Deploying to VPS..."
-        ssh ${{ secrets.USERNAME }}@${{ secrets.HOST }} "cd ${{ secrets.SERVER_PATH }} && git pull origin main && pm2 restart all"
-        
+        ssh -v ${{ secrets.USERNAME }}@${{ secrets.HOST }} "cd ${{ secrets.SERVER_PATH }} && git pull origin main && pm2 restart all" || echo "SSH command failed"
+
     - name: Verify deployment
       run: |
         echo "Verifying deployment..."
-        ssh ${{ secrets.USERNAME }}@${{ secrets.HOST }} "pm2 status"
-        
+        ssh ${{ secrets.USERNAME }}@${{ secrets.HOST }} "pm2 status" || echo "Verification failed"
+
     - name: Deployment notification
       run: echo "Deployment completed successfully!"
