@@ -1,0 +1,122 @@
+<div class="cookie-banner" *ngIf="showBanner">
+  <div class="cookie-banner-container">
+    <!-- Banner principal -->
+    <div class="cookie-banner-main" *ngIf="!showDetails">
+      <div class="cookie-banner-content">
+        <h2>Uso de cookies</h2>
+        <p>
+          LOTO IA.COM utiliza cookies propias y de terceros para mejorar tu experiencia de navegación, 
+          mostrar contenido personalizado y analizar el tráfico del sitio. Al hacer clic en "Aceptar todas", 
+          consientes el uso de todas las cookies. Puedes personalizar tus preferencias o rechazar las cookies 
+          no esenciales haciendo clic en "Personalizar".
+        </p>
+        <div class="cookie-banner-links">
+          <a routerLink="/gestion-cookies" target="_blank">Política de cookies</a>
+          <a routerLink="/proteccion-datos" target="_blank">Política de privacidad</a>
+        </div>
+      </div>
+      <div class="cookie-banner-actions">
+        <button class="btn-secondary" (click)="toggleDetails()">Personalizar</button>
+        <button class="btn-secondary" (click)="rejectAll()">Solo necesarias</button>
+        <button class="btn-primary" (click)="acceptAll()">Aceptar todas</button>
+      </div>
+    </div>
+
+    <!-- Panel de configuración detallado -->
+    <div class="cookie-banner-details" *ngIf="showDetails">
+      <div class="cookie-banner-header">
+        <h2>Configuración de cookies</h2>
+        <button class="btn-close" (click)="toggleDetails()">&times;</button>
+      </div>
+      
+      <div class="cookie-categories">
+        <div class="cookie-category">
+          <div class="category-header">
+            <div class="category-title">
+              <h3>Cookies necesarias</h3>
+              <span class="badge">Siempre activas</span>
+            </div>
+            <div class="category-toggle">
+              <input type="checkbox" [checked]="consent.necessary" disabled>
+            </div>
+          </div>
+          <p class="category-description">
+            Estas cookies son necesarias para el funcionamiento básico del sitio web y no se pueden desactivar. 
+            Incluyen cookies que permiten recordar tus acciones durante la navegación, gestionar la sesión y 
+            proporcionar funcionalidades esenciales como el acceso a áreas seguras.
+          </p>
+        </div>
+
+        <div class="cookie-category">
+          <div class="category-header">
+            <div class="category-title">
+              <h3>Cookies funcionales</h3>
+            </div>
+            <div class="category-toggle">
+              <input type="checkbox" [(ngModel)]="consent.functional">
+            </div>
+          </div>
+          <p class="category-description">
+            Estas cookies permiten mejorar la funcionalidad y personalización del sitio. Pueden ser establecidas 
+            por nosotros o por terceros cuyos servicios hemos añadido a nuestras páginas. Si no aceptas estas cookies, 
+            es posible que algunos servicios no funcionen correctamente.
+          </p>
+        </div>
+
+        <div class="cookie-category">
+          <div class="category-header">
+            <div class="category-title">
+              <h3>Cookies analíticas</h3>
+            </div>
+            <div class="category-toggle">
+              <input type="checkbox" [(ngModel)]="consent.analytics">
+            </div>
+          </div>
+          <p class="category-description">
+            Estas cookies nos permiten contar las visitas y fuentes de tráfico para medir y mejorar el rendimiento 
+            de nuestro sitio. Nos ayudan a saber qué páginas son las más y menos populares, y cómo se mueven los 
+            visitantes por el sitio. Si no permites estas cookies, no sabremos cuándo has visitado nuestro sitio.
+          </p>
+        </div>
+
+        <div class="cookie-category">
+          <div class="category-header">
+            <div class="category-title">
+              <h3>Cookies de marketing</h3>
+            </div>
+            <div class="category-toggle">
+              <input type="checkbox" [(ngModel)]="consent.marketing">
+            </div>
+          </div>
+          <p class="category-description">
+            Estas cookies pueden ser establecidas a través de nuestro sitio por nuestros socios publicitarios. 
+            Pueden ser utilizadas por estas empresas para crear un perfil de tus intereses y mostrarte anuncios 
+            relevantes en otros sitios. No almacenan directamente información personal, sino que se basan en la 
+            identificación única de tu navegador y dispositivo.
+          </p>
+        </div>
+
+        <div class="cookie-category">
+          <div class="category-header">
+            <div class="category-title">
+              <h3>Cookies de preferencias</h3>
+            </div>
+            <div class="category-toggle">
+              <input type="checkbox" [(ngModel)]="consent.preferences">
+            </div>
+          </div>
+          <p class="category-description">
+            Estas cookies permiten recordar información que cambia el aspecto o comportamiento del sitio, como 
+            tu idioma preferido o la región en la que te encuentras. Ayudan a personalizar tu experiencia pero 
+            no son esenciales para el uso del sitio web.
+          </p>
+        </div>
+      </div>
+
+      <div class="cookie-banner-actions details-actions">
+        <button class="btn-secondary" (click)="rejectAll()">Rechazar todas</button>
+        <button class="btn-primary" (click)="savePreferences()">Guardar preferencias</button>
+      </div>
+    </div>
+  </div>
+</div>

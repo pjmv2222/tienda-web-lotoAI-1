@@ -4,6 +4,7 @@ import { BehaviorSubject, Observable, tap, catchError, map } from 'rxjs';
 import { isPlatformBrowser } from '@angular/common';
 import { User, UserLogin, UserRegistration, UserPasswordReset, UserPasswordForgot } from '../models/user.model';
 import { environment } from '../../environments/environment';
+import { CookieService } from './cookie.service';
 
 interface UserProfile {
   id: string;
@@ -21,9 +22,12 @@ export class AuthService {
   private apiUrl = environment.apiUrl;
   private currentUserSubject: BehaviorSubject<User | null>;
   public currentUser: Observable<User | null>;
+  private userStorageKey = 'currentUser';
+  private tokenCookieKey = 'auth_token';
 
   constructor(
     private http: HttpClient,
+    private cookieService: CookieService,
     @Inject(PLATFORM_ID) private platformId: Object
   ) {
     this.currentUserSubject = new BehaviorSubject<User | null>(
@@ -34,12 +38,47 @@ export class AuthService {
 
   private getUserFromStorage(): User | null {
     try {
-      const userStr = localStorage.getItem('currentUser');
-      return userStr ? JSON.parse(userStr) : null;
+      // Intentar obtener el usuario del localStorage
+      let userStr = localStorage.getItem(this.userStorageKey);
+      let user: User | null = userStr ? JSON.parse(userStr) : null;
+
+      // Si no hay usuario en localStorage, verificar si hay un token en las cookies
+      if (!user) {
+        const token = this.cookieService.getCookie(this.tokenCookieKey);
+        if (token) {
+          // Si hay un token, intentar obtener el usuario
+          this.getCurrentUserFromToken(token).subscribe({
+            next: (userData) => {
+              if (userData) {
+                user = { ...userData, token };
+                this.setUserInStorage(user);
+                this.currentUserSubject.next(user);
+              }
+            },
+            error: (error) => {
+              console.error('Error al obtener usuario desde token:', error);
+              this.cookieService.deleteCookie(this.tokenCookieKey);
+            }
+          });
+        }
+      }
+
+      return user;
     } catch (error) {
-      console.error('Error al leer usuario del localStorage:', error);
+      console.error('Error al leer usuario del almacenamiento:', error);
       return null;
     }
+  }
+
+  private getCurrentUserFromToken(token: string): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/auth/profile`, {
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      })
+    }).pipe(
+      map(response => response.user)
+    );
   }
 
   public get currentUserValue(): User | null {
@@ -47,7 +86,7 @@ export class AuthService {
   }
 
   private getAuthHeaders(): HttpHeaders {
-    const token = this.currentUserValue?.token;
+    const token = this.currentUserValue?.token || this.cookieService.getCookie(this.tokenCookieKey);
     return new HttpHeaders({
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`
@@ -84,6 +123,21 @@ export class AuthService {
             ...response.user,
             token: response.token
           };
+
+          // Guardar el token en una cookie segura
+          this.cookieService.setConditionalCookie(
+            this.tokenCookieKey,
+            response.token,
+            'necessary',
+            {
+              expires: 7, // 7 días
+              path: '/',
+              secure: true,
+              sameSite: 'Strict'
+            }
+          );
+
+          // Guardar el usuario en localStorage (sin el token)
           this.setUserInStorage(user);
           this.currentUserSubject.next(user);
         }
@@ -104,7 +158,8 @@ export class AuthService {
 
   logout() {
     if (isPlatformBrowser(this.platformId)) {
-      localStorage.removeItem('currentUser');
+      localStorage.removeItem(this.userStorageKey);
+      this.cookieService.deleteCookie(this.tokenCookieKey, { path: '/' });
     }
     this.currentUserSubject.next(null);
   }
@@ -223,9 +278,11 @@ export class AuthService {
     if (isPlatformBrowser(this.platformId)) {
       try {
         if (user) {
-          localStorage.setItem('currentUser', JSON.stringify(user));
+          // Guardar usuario sin el token en localStorage
+          const { token, ...userWithoutToken } = user;
+          localStorage.setItem(this.userStorageKey, JSON.stringify(userWithoutToken));
         } else {
-          localStorage.removeItem('currentUser');
+          localStorage.removeItem(this.userStorageKey);
         }
       } catch (error) {
         console.error('Error al guardar usuario en localStorage:', error);
