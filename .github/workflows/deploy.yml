@@ -34,17 +34,20 @@ jobs:
         host: 212.227.230.103
         username: root
         key: ${{ secrets.SSH_PRIVATE_KEY }}
-        script_stop: true  # Detener si hay errores
         script: |
           echo "Pulling latest changes from GitHub..."
           cd /var/www/tienda-web-lotoAI-1
           git pull origin main
 
           echo "Restarting services..."
-          pm2 restart all
+          # Usar la ruta completa a pm2
+          export PATH=$PATH:/usr/local/bin:/usr/bin
+          # Verificar si pm2 está disponible
+          which pm2
+          # Reiniciar los servicios
+          /usr/local/bin/pm2 restart all || /usr/bin/pm2 restart all || echo "Error: pm2 command not found"
 
           echo "Deployment completed successfully!"
-          pm2 status
 
     - name: Deployment success notification
       if: success()
