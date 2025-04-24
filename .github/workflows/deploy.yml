@@ -27,28 +27,23 @@ jobs:
     - name: Build application
       run: npm run build:ssr
 
-    # Sincronizar los archivos compilados con el servidor
-    - name: Sync dist folder to server
-      uses: burnett01/rsync-deployments@5.2.1
-      with:
-        switches: -avzr --delete
-        path: dist/
-        remote_path: ${{ secrets.SERVER_PATH }}/dist/
-        remote_host: ${{ secrets.HOST }}
-        remote_user: ${{ secrets.USERNAME }}
-        remote_key: ${{ secrets.SSH_PRIVATE_KEY }}
-
-    # Usar una acción específica para SSH que maneja mejor los secretos
+    # Usar una única acción para el despliegue completo
     - name: Deploy to VPS
       uses: appleboy/ssh-action@master
       with:
-        host: ${{ secrets.HOST }}
-        username: ${{ secrets.USERNAME }}
+        host: 212.227.230.103
+        username: root
         key: ${{ secrets.SSH_PRIVATE_KEY }}
+        script_stop: true  # Detener si hay errores
         script: |
-          cd ${{ secrets.SERVER_PATH }}
+          echo "Pulling latest changes from GitHub..."
+          cd /var/www/tienda-web-lotoAI-1
           git pull origin main
+
+          echo "Restarting services..."
           pm2 restart all
+
+          echo "Deployment completed successfully!"
           pm2 status
 
     - name: Deployment success notification
