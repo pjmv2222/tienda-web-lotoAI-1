@@ -1,0 +1,51 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:  # Permite ejecutar manualmente desde la interfaz de GitHub
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0  # Obtener todo el historial para que git describe funcione correctamente
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18.x'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Build application
+      run: npm run build:ssr
+      
+    - name: Setup SSH key
+      uses: webfactory/ssh-agent@v0.7.0
+      with:
+        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+        
+    - name: Add host key to known_hosts
+      run: |
+        mkdir -p ~/.ssh
+        ssh-keyscan -H ${{ secrets.HOST }} >> ~/.ssh/known_hosts
+      
+    - name: Deploy to VPS
+      run: |
+        echo "Deploying to VPS..."
+        ssh ${{ secrets.USERNAME }}@${{ secrets.HOST }} "cd ${{ secrets.SERVER_PATH }} && git pull origin main && pm2 restart all"
+        
+    - name: Verify deployment
+      run: |
+        echo "Verifying deployment..."
+        ssh ${{ secrets.USERNAME }}@${{ secrets.HOST }} "pm2 status"
+        
+    - name: Deployment notification
+      run: echo "Deployment completed successfully!"
