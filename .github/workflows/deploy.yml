@@ -39,21 +39,33 @@ jobs:
           cd /var/www/tienda-web-lotoAI-1
           git pull origin main
 
-          echo "Compilando la aplicación en el servidor..."
+          echo "Limpiando caché y archivos antiguos..."
+          rm -rf dist node_modules/.cache
+
+          echo "Instalando dependencias..."
           export NVM_DIR="$HOME/.nvm"
           [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+          npm ci
+
+          echo "Compilando la aplicación en el servidor..."
           npm run build:ssr
 
           echo "Verificando archivos de componentes de cookies..."
           find dist -name "*cookie*" -type f
 
-          echo "Restarting services..."
-          # Usar la ruta completa a pm2
+          echo "Verificando el contenido del archivo principal..."
+          grep -r "cookie-banner" dist/
+
+          echo "Deteniendo servicios actuales..."
           export PATH=$PATH:/usr/local/bin:/usr/bin:/root/.nvm/versions/node/v18.19.0/bin
-          # Verificar si pm2 está disponible
           which pm2
-          # Reiniciar los servicios
-          pm2 restart all || echo "Error: pm2 command not found"
+          pm2 stop all || echo "Error: pm2 stop failed"
+
+          echo "Reiniciando servicios con la nueva compilación..."
+          pm2 start npm --name "loto-ia" -- run serve:ssr:loto-ia || echo "Error: pm2 start failed"
+
+          echo "Verificando estado de los servicios..."
+          pm2 list
 
           echo "Deployment completed successfully!"
 
