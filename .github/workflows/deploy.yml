@@ -73,14 +73,14 @@ jobs:
       uses: shimataro/ssh-key-action@v2
       with:
         key: ${{ secrets.SSH_PRIVATE_KEY }}
-        known_hosts: ${{ secrets.HOST }}
+        known_hosts: 'just-a-placeholder'
         if_key_exists: replace
 
-    - name: Add host key to known_hosts (hardcoded for testing)
+    - name: Configure known_hosts
       run: |
-        mkdir -p ~/.ssh
-        echo "Using hardcoded host for testing..."
-        ssh-keyscan -H 212.227.230.103 >> ~/.ssh/known_hosts || echo "ssh-keyscan with hardcoded IP failed"
+        ssh-keyscan -H ${{ secrets.HOST }} >> ~/.ssh/known_hosts
+
+    # Eliminado el paso redundante de "Add host key to known_hosts"
 
     - name: Deploy to VPS
       run: |
