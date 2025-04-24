@@ -39,13 +39,21 @@ jobs:
           cd /var/www/tienda-web-lotoAI-1
           git pull origin main
 
+          echo "Compilando la aplicación en el servidor..."
+          export NVM_DIR="$HOME/.nvm"
+          [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+          npm run build:ssr
+
+          echo "Verificando archivos de componentes de cookies..."
+          find dist -name "*cookie*" -type f
+
           echo "Restarting services..."
           # Usar la ruta completa a pm2
-          export PATH=$PATH:/usr/local/bin:/usr/bin
+          export PATH=$PATH:/usr/local/bin:/usr/bin:/root/.nvm/versions/node/v18.19.0/bin
           # Verificar si pm2 está disponible
           which pm2
           # Reiniciar los servicios
-          /usr/local/bin/pm2 restart all || /usr/bin/pm2 restart all || echo "Error: pm2 command not found"
+          pm2 restart all || echo "Error: pm2 command not found"
 
           echo "Deployment completed successfully!"
 
