@@ -22,6 +22,8 @@
   <link rel="stylesheet" href="assets/css/bootstrap-fixes.css">
   <!-- Correcciones específicas para dispositivos móviles -->
   <link rel="stylesheet" href="assets/css/mobile-fixes.css">
+  <!-- Solución para el problema de división vertical -->
+  <link rel="stylesheet" href="assets/css/vertical-split-fix.css">
   <style>
     /* Estilos base para todos los dispositivos */
     html, body {
@@ -113,6 +115,21 @@
             elements[i].style.boxSizing = 'border-box';
             elements[i].style.overflowX = 'hidden';
           }
+
+          // Solución radical: forzar ancho en todos los elementos
+          var allElements = document.querySelectorAll('*');
+          for (var i = 0; i < allElements.length; i++) {
+            var el = allElements[i];
+            var style = window.getComputedStyle(el);
+            var offsetWidth = el.offsetWidth;
+
+            // Si el elemento es más ancho que la ventana, forzar ancho
+            if (offsetWidth > window.innerWidth + 5) {
+              el.style.width = '100%';
+              el.style.maxWidth = '100%';
+              el.style.overflowX = 'hidden';
+            }
+          }
         }
       }
 
@@ -126,7 +143,11 @@
       setTimeout(applyMobileStyles, 500);
       setTimeout(applyMobileStyles, 1000);
       setTimeout(applyMobileStyles, 2000);
+      setTimeout(applyMobileStyles, 5000);
     })();
   </script>
+
+  <!-- Script de diagnóstico para dispositivos móviles -->
+  <script src="assets/js/mobile-debug.js"></script>
 </body>
 </html>
