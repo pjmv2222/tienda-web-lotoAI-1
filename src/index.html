@@ -46,6 +46,9 @@
         font-size: 16px;
         line-height: 1.4;
         -webkit-font-smoothing: antialiased;
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow-x: hidden !important;
       }
 
       /* Asegurarse de que los elementos no se salgan de la pantalla */
@@ -62,9 +65,13 @@
 
       /* Prevenir desbordamiento horizontal */
       .container, .container-fluid, .row, .col, [class*="col-"] {
+        width: 100% !important;
         max-width: 100% !important;
         padding-left: 10px !important;
         padding-right: 10px !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        float: none !important;
       }
 
       /* Ajustes específicos para el encabezado */
@@ -72,6 +79,19 @@
         width: 100% !important;
         max-width: 100% !important;
         overflow-x: hidden !important;
+        left: 0 !important;
+        right: 0 !important;
+      }
+
+      /* Solución específica para el problema de división vertical */
+      body * {
+        max-width: 100vw !important;
+      }
+
+      /* Forzar que no haya elementos con ancho fijo que causen división */
+      [style*="width:"], [style*="width: "] {
+        width: 100% !important;
+        max-width: 100% !important;
       }
     }
 
@@ -94,11 +114,14 @@
   <!-- Bootstrap JS Bundle with Popper (última versión) -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
-  <!-- Script para forzar la aplicación de estilos en dispositivos móviles -->
+  <!-- Script para forzar la aplicación de estilos en dispositivos móviles y diagnóstico integrado -->
   <script>
     (function() {
+      // Función para aplicar estilos móviles
       function applyMobileStyles() {
         if (window.innerWidth <= 768) {
+          console.log("Aplicando estilos móviles...");
+
           // Forzar ancho completo en elementos clave
           document.documentElement.style.width = '100%';
           document.documentElement.style.maxWidth = '100%';
@@ -125,12 +148,121 @@
 
             // Si el elemento es más ancho que la ventana, forzar ancho
             if (offsetWidth > window.innerWidth + 5) {
+              console.log("Elemento problemático encontrado:", el.tagName, el.className);
               el.style.width = '100%';
               el.style.maxWidth = '100%';
               el.style.overflowX = 'hidden';
             }
           }
+
+          // Crear botón de diagnóstico inline
+          createDiagnosticButton();
         }
+      }
+
+      // Función para crear botón de diagnóstico
+      function createDiagnosticButton() {
+        // Verificar si el botón ya existe
+        if (document.getElementById('mobile-diagnostic-button')) {
+          return;
+        }
+
+        // Crear el botón
+        var debugButton = document.createElement('button');
+        debugButton.id = 'mobile-diagnostic-button';
+        debugButton.textContent = 'Diagnosticar';
+        debugButton.style.position = 'fixed';
+        debugButton.style.bottom = '10px';
+        debugButton.style.right = '10px';
+        debugButton.style.zIndex = '9999';
+        debugButton.style.padding = '10px';
+        debugButton.style.backgroundColor = '#ff5722';
+        debugButton.style.color = 'white';
+        debugButton.style.border = 'none';
+        debugButton.style.borderRadius = '5px';
+        debugButton.style.fontSize = '12px';
+
+        // Crear el panel de información
+        var infoPanel = document.createElement('div');
+        infoPanel.id = 'mobile-diagnostic-panel';
+        infoPanel.style.position = 'fixed';
+        infoPanel.style.top = '0';
+        infoPanel.style.left = '0';
+        infoPanel.style.width = '100%';
+        infoPanel.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+        infoPanel.style.color = 'white';
+        infoPanel.style.padding = '10px';
+        infoPanel.style.fontFamily = 'monospace';
+        infoPanel.style.fontSize = '12px';
+        infoPanel.style.zIndex = '10000';
+        infoPanel.style.maxHeight = '80%';
+        infoPanel.style.overflowY = 'auto';
+        infoPanel.style.display = 'none';
+
+        // Añadir elementos al DOM
+        document.body.appendChild(debugButton);
+        document.body.appendChild(infoPanel);
+
+        // Evento para mostrar/ocultar el panel
+        debugButton.addEventListener('click', function() {
+          if (infoPanel.style.display === 'none') {
+            showDiagnosticInfo(infoPanel);
+          } else {
+            infoPanel.style.display = 'none';
+          }
+        });
+      }
+
+      // Función para mostrar información de diagnóstico
+      function showDiagnosticInfo(panel) {
+        // Información básica del viewport
+        var info = "Ancho de ventana: " + window.innerWidth + "px\n" +
+                   "Ancho de documento: " + document.documentElement.scrollWidth + "px\n" +
+                   "Ancho de body: " + document.body.scrollWidth + "px\n" +
+                   "Ancho de viewport: " + (window.visualViewport ? window.visualViewport.width : 'No disponible') + "px\n" +
+                   "Escala de viewport: " + (window.visualViewport ? window.visualViewport.scale : 'No disponible') + "\n";
+
+        // Buscar elementos problemáticos
+        var elements = document.querySelectorAll('*');
+        var problematicElements = [];
+
+        for (var i = 0; i < elements.length; i++) {
+          var el = elements[i];
+          var style = window.getComputedStyle(el);
+          var offsetWidth = el.offsetWidth;
+
+          if (offsetWidth > window.innerWidth + 5) {
+            problematicElements.push({
+              element: el.tagName + (el.id ? '#' + el.id : '') + (el.className ? '.' + el.className.replace(/\s+/g, '.') : ''),
+              computedWidth: style.width,
+              offsetWidth: offsetWidth + 'px',
+              overflowX: style.overflowX,
+              position: style.position
+            });
+          }
+        }
+
+        if (problematicElements.length > 0) {
+          info += '\n\nElementos problemáticos encontrados:\n\n';
+          for (var i = 0; i < problematicElements.length; i++) {
+            var e = problematicElements[i];
+            info += e.element + "\nAncho: " + e.computedWidth + " / " + e.offsetWidth + "\nOverflow-X: " + e.overflowX + "\nPosition: " + e.position + "\n\n";
+          }
+        } else {
+          info += '\n\nNo se encontraron elementos problemáticos.';
+        }
+
+        // Mostrar información
+        panel.textContent = info;
+        panel.style.display = 'block';
+
+        // Aplicar corrección automática
+        document.documentElement.style.width = '100%';
+        document.documentElement.style.maxWidth = '100%';
+        document.documentElement.style.overflowX = 'hidden';
+        document.body.style.width = '100%';
+        document.body.style.maxWidth = '100%';
+        document.body.style.overflowX = 'hidden';
       }
 
       // Aplicar al cargar la página
@@ -144,10 +276,14 @@
       setTimeout(applyMobileStyles, 1000);
       setTimeout(applyMobileStyles, 2000);
       setTimeout(applyMobileStyles, 5000);
+
+      // Asegurarse de que el botón de diagnóstico se cree incluso si hay retrasos en la carga
+      setTimeout(function() {
+        if (window.innerWidth <= 768 && !document.getElementById('mobile-diagnostic-button')) {
+          createDiagnosticButton();
+        }
+      }, 10000);
     })();
   </script>
-
-  <!-- Script de diagnóstico para dispositivos móviles -->
-  <script src="assets/js/mobile-debug.js"></script>
 </body>
 </html>
