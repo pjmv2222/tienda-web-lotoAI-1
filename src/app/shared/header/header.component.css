@@ -88,6 +88,12 @@ header.modulo-cabecera {
     border: 1px solid #ccc;
     border-radius: 4px;
     width: 180px;
+    box-sizing: border-box;
+}
+
+.input-field {
+    width: 100%;
+    max-width: 180px;
 }
 
 .forgot-password {
@@ -124,6 +130,10 @@ header.modulo-cabecera {
     border: none;
     border-radius: 4px;
     cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 100px;
 }
 
 .btn-registro {
@@ -133,6 +143,8 @@ header.modulo-cabecera {
     border: none;
     border-radius: 4px;
     cursor: pointer;
+    min-width: 100px;
+    text-align: center;
 }
 
 .idioma-container {
@@ -150,6 +162,9 @@ header.modulo-cabecera {
     padding: 6px 12px;
     border: 1px solid #ccc;
     border-radius: 4px;
+    width: 100%;
+    max-width: 180px;
+    box-sizing: border-box;
 }
 
 /* Estilos para la división inferior */
@@ -410,20 +425,113 @@ header.modulo-cabecera {
     .formato {
         font-size: 10px;
     }
-}
 
-@media screen and (max-width: 480px) {
-    .item-menu-juegos {
-        flex: 0 1 calc(50% - 10px); /* 2 elementos por fila */
-    }
-
-    .user-actions {
+    /* Mejoras para la visualización de juegos en tablets */
+    .modulo-menu-juegos {
         flex-wrap: wrap;
         justify-content: center;
     }
 
-    .btn-entrar, .btn-registro, .idioma-selector {
+    .item-menu-juegos {
+        flex: 0 1 calc(33.33% - 10px);
         margin: 5px;
+        min-width: 100px;
+        border-right: none;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 10px;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    /* Ajustes para el encabezado en móviles */
+    .cabecera-superior {
+        flex-direction: column;
+        padding: 10px;
+    }
+
+    .logo-container {
+        width: 100%;
+        justify-content: center;
+        margin-bottom: 10px;
+    }
+
+    .logo {
+        height: 80px;
+        margin: 0 auto;
+    }
+
+    .user-actions {
+        flex-direction: column;
+        width: 100%;
+        gap: 10px;
+    }
+
+    .login-container {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .input-group {
+        width: 100%;
+    }
+
+    .inputs-row {
+        flex-direction: column;
+        width: 100%;
+        gap: 10px;
+    }
+
+    .login-input {
+        width: 100%;
+    }
+
+    .password-input-container {
+        width: 100%;
+    }
+
+    .buttons-group {
+        width: 100%;
+        justify-content: space-between;
+        margin-top: 10px;
+    }
+
+    .btn-entrar, .btn-registro {
+        padding: 8px 12px;
+        font-size: 14px;
+        margin: 0;
+    }
+
+    .idioma-container {
+        width: 100%;
+        align-items: center;
+        margin-top: 10px;
+    }
+
+    #changeLanguage {
+        width: 100%;
+        max-width: 200px;
+    }
+
+    /* Ajustes para los juegos en móviles */
+    .item-menu-juegos {
+        flex: 0 1 calc(50% - 10px); /* 2 elementos por fila */
+    }
+
+    /* Ajustes para el menú de usuario en móviles */
+    .user-menu {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .user-info {
+        width: 100%;
+        justify-content: center;
+        margin-bottom: 10px;
+    }
+
+    .user-actions-menu {
+        width: 100%;
+        justify-content: center;
     }
 }
 
@@ -433,6 +541,41 @@ body, html {
     padding: 0;
     width: 100%;
     overflow-x: hidden; /* Evita el desplazamiento horizontal */
+}
+
+/* Estilos para dispositivos muy pequeños */
+@media screen and (max-width: 360px) {
+    .logo {
+        height: 70px;
+    }
+
+    .btn-entrar, .btn-registro {
+        padding: 6px 10px;
+        font-size: 12px;
+        min-width: 80px;
+    }
+
+    .icon-entrar {
+        height: 18px;
+    }
+
+    .login-input {
+        padding: 6px 8px;
+        font-size: 14px;
+    }
+
+    .forgot-password {
+        font-size: 11px;
+    }
+
+    .idioma-container label {
+        font-size: 12px;
+    }
+
+    #changeLanguage {
+        padding: 4px 8px;
+        font-size: 12px;
+    }
 }
 
 /* Estilos adicionales */

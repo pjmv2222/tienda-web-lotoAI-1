@@ -11,13 +11,15 @@
             <div class="login-container" *ngIf="!currentUser">
                 <div class="input-group">
                     <div class="inputs-row">
-                        <input type="text"
-                               id="header-username"
-                               name="header-username"
-                               placeholder="Correo electrónico o NIF/NIE"
-                               autocomplete="username"
-                               class="login-input"
-                               [(ngModel)]="username">
+                        <div class="input-field">
+                            <input type="text"
+                                   id="header-username"
+                                   name="header-username"
+                                   placeholder="Correo electrónico o NIF/NIE"
+                                   autocomplete="username"
+                                   class="login-input"
+                                   [(ngModel)]="username">
+                        </div>
                         <div class="password-input-container">
                             <input [type]="showPassword ? 'text' : 'password'"
                                    id="header-password"
@@ -43,8 +45,8 @@
                     </div>
                 </div>
                 <div class="buttons-group">
-                    <img src="/assets/img/boton_entrar.png" alt="Icono entrar" class="icon-entrar">
                     <button type="button" class="btn-entrar" (click)="login()" [disabled]="isLoggingIn">
+                        <img src="/assets/img/boton_entrar.png" alt="Icono entrar" class="icon-entrar">
                         <span *ngIf="!isLoggingIn">Entrar</span>
                         <span *ngIf="isLoggingIn">
                             <i class="fas fa-spinner fa-spin"></i>
