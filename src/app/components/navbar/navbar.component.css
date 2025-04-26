@@ -7,12 +7,15 @@
   left: 0;
   right: 0;
   z-index: 1000;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .navbar-brand {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  width: 100%;
 }
 
 .logo {
@@ -25,6 +28,7 @@
 .logo-img {
   height: 40px;
   margin-right: 0.5rem;
+  max-width: 100%;
 }
 
 .logo-text {
@@ -38,6 +42,7 @@
   align-items: center;
   justify-content: space-between;
   margin-top: 1rem;
+  width: 100%;
 }
 
 .nav-links {
@@ -179,8 +184,13 @@
   font-size: 1.5rem;
   color: #333;
   cursor: pointer;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0;
+  margin: 0;
 }
 
+/* Estilos específicos para móviles */
 @media (max-width: 768px) {
   .navbar {
     padding: 0.5rem;
@@ -201,6 +211,7 @@
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     flex-direction: column;
     gap: 1rem;
+    z-index: 1001;
   }
 
   .navbar-menu.is-active {
@@ -214,6 +225,8 @@
 
   .nav-links a {
     padding: 0.75rem;
+    width: 100%;
+    box-sizing: border-box;
   }
 
   .user-menu {
@@ -230,6 +243,7 @@
     box-shadow: none;
     border: 1px solid #ddd;
     margin-top: 0.5rem;
+    width: 100%;
   }
 
   .auth-buttons {
@@ -239,7 +253,14 @@
 
   .login-btn, .register-btn {
     justify-content: center;
+    width: 100%;
   }
+}
+
+/* Clase para cuando el menú móvil está abierto */
+.mobile-menu-open {
+  height: auto;
+  overflow: visible;
 }
 
 /* Animaciones */
@@ -256,4 +277,4 @@
 
 .dropdown-menu {
   animation: slideDown 0.2s ease-out;
-} 
+}

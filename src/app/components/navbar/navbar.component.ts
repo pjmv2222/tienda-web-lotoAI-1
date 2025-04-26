@@ -1,6 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Inject, PLATFORM_ID } from '@angular/core';
 import { Router } from '@angular/router';
-import { CommonModule } from '@angular/common';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { User } from '../../models/user.model';
@@ -18,12 +18,16 @@ import { User } from '../../models/user.model';
 export class NavbarComponent implements OnInit {
   currentUser: User | null = null;
   isMenuOpen = false;
-  isMobile = window.innerWidth < 768;
+  isMobile = false;
+  isBrowser: boolean;
 
   constructor(
     private authService: AuthService,
-    private router: Router
-  ) {}
+    private router: Router,
+    @Inject(PLATFORM_ID) private platformId: Object
+  ) {
+    this.isBrowser = isPlatformBrowser(this.platformId);
+  }
 
   ngOnInit() {
     // Suscribirse al observable del usuario actual
@@ -32,12 +36,17 @@ export class NavbarComponent implements OnInit {
       this.currentUser = user;
     });
     
-    window.addEventListener('resize', () => {
+    if (this.isBrowser) {
+      // Solo ejecutar código relacionado con window en el navegador
       this.isMobile = window.innerWidth < 768;
-      if (!this.isMobile) {
-        this.isMenuOpen = false;
-      }
-    });
+      
+      window.addEventListener('resize', () => {
+        this.isMobile = window.innerWidth < 768;
+        if (!this.isMobile) {
+          this.isMenuOpen = false;
+        }
+      });
+    }
   }
 
   toggleMenu() {
