@@ -121,6 +121,9 @@ header.modulo-cabecera {
     height: 24px;
     width: auto;
     margin-right: 4px;
+    max-height: 24px; /* Asegurar que no crezca más de lo esperado */
+    max-width: 24px; /* Limitar el ancho también */
+    object-fit: contain; /* Mantener la proporción */
 }
 
 .btn-entrar {
@@ -134,6 +137,12 @@ header.modulo-cabecera {
     align-items: center;
     justify-content: center;
     min-width: 100px;
+}
+
+.btn-entrar-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .btn-registro {
@@ -501,6 +510,14 @@ header.modulo-cabecera {
         margin: 0;
     }
 
+    .icon-entrar {
+        height: 20px !important;
+        width: 20px !important;
+        max-height: 20px !important;
+        max-width: 20px !important;
+        margin-right: 3px !important;
+    }
+
     .idioma-container {
         width: 100%;
         align-items: center;
@@ -556,7 +573,11 @@ body, html {
     }
 
     .icon-entrar {
-        height: 18px;
+        height: 16px !important;
+        width: 16px !important;
+        max-height: 16px !important;
+        max-width: 16px !important;
+        margin-right: 2px !important;
     }
 
     .login-input {
