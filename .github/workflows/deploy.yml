@@ -35,37 +35,52 @@ jobs:
         username: root
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         script: |
-          echo "Pulling latest changes from GitHub..."
-          cd /var/www/tienda-web-lotoAI-1
-          git pull origin main
+          echo "=== INICIO DEL DESPLIEGUE ==="
 
-          echo "Limpiando caché y archivos antiguos..."
-          rm -rf dist node_modules/.cache
+          echo "=== Verificando entorno ==="
+          echo "Directorio actual: $(pwd)"
+          echo "Usuario: $(whoami)"
+          echo "Versión de Node: $(node -v || echo 'Node no disponible')"
+          echo "Versión de NPM: $(npm -v || echo 'NPM no disponible')"
 
-          echo "Instalando dependencias..."
+          echo "=== Configurando NVM ==="
           export NVM_DIR="$HOME/.nvm"
           [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-          npm ci
+          echo "Versión de Node después de NVM: $(node -v || echo 'Node no disponible')"
 
-          echo "Compilando la aplicación en el servidor..."
-          npm run build:ssr
+          echo "=== Navegando al directorio del proyecto ==="
+          cd /var/www/tienda-web-lotoAI-1 || { echo "Error: No se pudo acceder al directorio del proyecto"; exit 1; }
 
-          echo "Verificando archivos de componentes de cookies..."
-          find dist -name "*cookie*" -type f
+          echo "=== Actualizando desde GitHub ==="
+          git pull origin main || { echo "Error: No se pudo actualizar desde GitHub"; exit 1; }
 
-          echo "Verificando el contenido del archivo principal..."
-          grep -r "cookie-banner" dist/
-
-          echo "Deteniendo servicios actuales..."
+          echo "=== Verificando PM2 ==="
           export PATH=$PATH:/usr/local/bin:/usr/bin:/root/.nvm/versions/node/v18.19.0/bin
-          which pm2
-          pm2 stop all || echo "Error: pm2 stop failed"
+          PM2_PATH=$(which pm2 || echo "PM2 no encontrado")
+          echo "Ruta de PM2: $PM2_PATH"
 
-          echo "Reiniciando servicios con la nueva compilación..."
-          pm2 start npm --name "loto-ia" -- run serve:ssr:loto-ia || echo "Error: pm2 start failed"
+          if [ -z "$PM2_PATH" ]; then
+            echo "Instalando PM2 globalmente..."
+            npm install -g pm2
+            PM2_PATH=$(which pm2 || echo "PM2 no encontrado después de instalación")
+            echo "Nueva ruta de PM2: $PM2_PATH"
+          fi
 
-          echo "Verificando estado de los servicios..."
-          pm2 list
+          echo "=== Reiniciando servicios ==="
+          if [ -n "$PM2_PATH" ]; then
+            echo "Listando procesos PM2 actuales:"
+            $PM2_PATH list
+
+            echo "Reiniciando todos los procesos..."
+            $PM2_PATH restart all || echo "Advertencia: No se pudieron reiniciar todos los procesos"
+
+            echo "Estado final de PM2:"
+            $PM2_PATH list
+          else
+            echo "Error: No se pudo encontrar o instalar PM2"
+          fi
+
+          echo "=== DESPLIEGUE COMPLETADO ==="
 
           echo "Deployment completed successfully!"
 
