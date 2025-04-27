@@ -324,8 +324,8 @@
 /* Wrapper para cada bola individual */
 .ball-wrapper {
   display: inline-block;
-  width: 80px;
-  height: 80px;
+  width: min(80px, 20vw); /* Tamaño responsivo */
+  height: min(80px, 20vw); /* Tamaño responsivo */
   position: relative;
   margin: 5px;
 }
@@ -338,8 +338,8 @@
 }
 
 .static-euromillones-ball {
-  width: 70px;
-  height: 70px;
+  width: min(70px, 18vw); /* Tamaño responsivo */
+  height: min(70px, 18vw); /* Tamaño responsivo */
   border-radius: 50%;
   background: linear-gradient(135deg, #ff3333, #cc0000);
   display: flex;
@@ -351,8 +351,8 @@
 }
 
 .static-euromillones-star {
-  width: 70px;
-  height: 70px;
+  width: min(70px, 18vw); /* Tamaño responsivo */
+  height: min(70px, 18vw); /* Tamaño responsivo */
   border-radius: 50%;
   background: linear-gradient(135deg, #ffcc00, #ff9900);
   display: flex;
@@ -391,8 +391,8 @@
 /* Asegurarse de que las bolas estén correctamente posicionadas - Corregido */
 .stats-card app-lottery-ball-3d-new {
   display: block;
-  width: 80px; /* Ancho fijo para las bolas */
-  height: 80px; /* Alto fijo para las bolas */
+  width: min(80px, 20vw); /* Tamaño responsivo */
+  height: min(80px, 20vw); /* Tamaño responsivo */
   margin: 0 auto; /* Centrar horizontalmente */
   position: relative; /* Asegurar posicionamiento correcto */
   z-index: 1; /* Asegurar que esté por encima de otros elementos */
@@ -410,8 +410,8 @@
 /* Asegurar que las bolas en los resultados también tengan tamaño fijo - Simplificado */
 .result-numbers app-lottery-ball-3d-new {
   display: inline-block;
-  width: 80px;
-  height: 80px;
+  width: min(80px, 20vw); /* Tamaño responsivo */
+  height: min(80px, 20vw); /* Tamaño responsivo */
 }
 
 .lottery-balls-separator {
@@ -601,5 +601,121 @@
     width: 35px;
     height: 35px;
     font-size: 14px;
+  }
+}
+
+/* Media queries para dispositivos móviles */
+@media (max-width: 768px) {
+  /* Ajustes para contenedores */
+  .page-container,
+  .content-container,
+  .section-container {
+    width: 100%;
+    max-width: 100%;
+    padding: 10px;
+    margin: 0;
+  }
+
+  /* Ajustes para las bolas */
+  .ball-wrapper {
+    width: min(60px, 15vw);
+    height: min(60px, 15vw);
+    margin: 3px;
+  }
+
+  .static-euromillones-ball,
+  .static-euromillones-star {
+    width: min(55px, 14vw);
+    height: min(55px, 14vw);
+  }
+
+  .static-ball-number {
+    font-size: min(24px, 6vw);
+  }
+
+  /* Ajustes para los contenedores de bolas */
+  .lottery-balls-container {
+    gap: 5px;
+    padding: 5px;
+  }
+
+  /* Ajustes para las tarjetas */
+  .card {
+    width: 100%;
+    max-width: 100%;
+    margin-bottom: 15px;
+  }
+
+  /* Ajustes para las opciones */
+  .options-container {
+    flex-direction: column;
+  }
+
+  .option-card {
+    width: 100%;
+    max-width: 100%;
+    margin: 0 0 15px 0;
+  }
+
+  /* Ajustes para las estadísticas */
+  .stats-container {
+    flex-direction: column;
+  }
+
+  .stats-card {
+    width: 100%;
+    max-width: 100%;
+    margin-bottom: 15px;
+  }
+
+  /* Ajustes para los componentes de bolas */
+  .stats-card app-lottery-ball-3d-new,
+  .result-numbers app-lottery-ball-3d-new {
+    width: min(60px, 15vw);
+    height: min(60px, 15vw);
+  }
+}
+
+/* Media queries para dispositivos muy pequeños */
+@media (max-width: 480px) {
+  /* Ajustes para las bolas */
+  .ball-wrapper {
+    width: min(45px, 12vw);
+    height: min(45px, 12vw);
+    margin: 2px;
+  }
+
+  .static-euromillones-ball,
+  .static-euromillones-star {
+    width: min(40px, 11vw);
+    height: min(40px, 11vw);
+  }
+
+  .static-ball-number {
+    font-size: min(18px, 5vw);
+  }
+
+  /* Ajustes para los componentes de bolas */
+  .stats-card app-lottery-ball-3d-new,
+  .result-numbers app-lottery-ball-3d-new {
+    width: min(45px, 12vw);
+    height: min(45px, 12vw);
+  }
+
+  /* Ajustes para el texto */
+  h1 {
+    font-size: 1.5rem;
+  }
+
+  h2 {
+    font-size: 1.3rem;
+  }
+
+  h3 {
+    font-size: 1.1rem;
+  }
+
+  p {
+    font-size: 0.9rem;
   }
 }

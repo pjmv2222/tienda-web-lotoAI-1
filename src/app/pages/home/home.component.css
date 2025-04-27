@@ -393,8 +393,8 @@ button:disabled {
   justify-content: center;
   align-items: center;
   gap: 20px;
-  padding: 0 40px;
-  height: 350px; /* Altura similar a la sección hero */
+  padding: 0 4%;
+  height: min(350px, 50vh); /* Altura responsiva */
 }
 
 .image-item {
@@ -424,11 +424,11 @@ button:disabled {
 /* Estilos para la imagen estática (alternativa para el servidor) */
 .static-image {
   width: 100%;
-  padding: 0 40px;
+  padding: 0 4%;
   display: flex;
   justify-content: center;
   gap: 20px;
-  height: 350px; /* Misma altura que el carrusel */
+  height: min(350px, 50vh); /* Altura responsiva */
 }
 
 .static-image img {
@@ -620,33 +620,39 @@ button:disabled {
   /* Ajustes para el carrusel en dispositivos móviles */
   .carousel-container {
     padding: 15px 0;
+    width: 100%;
+    max-width: 100%;
   }
 
   .multi-image-container {
     height: auto;
-    max-height: 250px;
+    max-height: none;
     padding: 0 10px;
     gap: 10px;
     flex-wrap: wrap;
+    width: 100%;
   }
 
   .image-item {
     flex: 0 0 calc(50% - 10px);
     max-width: calc(50% - 10px);
     height: 120px;
+    margin-bottom: 10px;
   }
 
   .static-image {
     height: auto;
-    max-height: 250px;
+    max-height: none;
     padding: 0 10px;
     flex-wrap: wrap;
     gap: 10px;
+    width: 100%;
   }
 
   .static-image img {
     width: calc(50% - 10px);
     height: 120px;
+    margin-bottom: 10px;
   }
 
   .image-title {
@@ -658,11 +664,30 @@ button:disabled {
   .hero-section {
     margin-top: 20px;
     padding: 2rem 1rem;
+    width: 100%;
+    max-width: 100%;
   }
 
   /* Ajustes para el espacio entre secciones */
   .slider-section {
     margin-bottom: 20px;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  /* Ajustes para las secciones */
+  .section {
+    width: 100%;
+    max-width: 100%;
+    padding: 2rem 1rem;
+  }
+
+  /* Ajustes para los contenedores */
+  .container, .container-fluid {
+    width: 100%;
+    max-width: 100%;
+    padding-left: 10px;
+    padding-right: 10px;
   }
 }
 
@@ -670,27 +695,41 @@ button:disabled {
   .home-container {
     margin: 0;
     padding: 0;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
   }
 
   .hero-section {
-    padding: 2rem 1rem;
+    padding: 1.5rem 1rem;
+    width: 100%;
+    max-width: 100%;
   }
 
   .section {
-    padding: 2rem 1rem;
+    padding: 1.5rem 1rem;
+    width: 100%;
+    max-width: 100%;
   }
 
   .process-item, .ai-card, .plan-card {
     flex: 0 0 100%;
     margin: 1rem 0;
+    width: 100%;
+    max-width: 100%;
   }
 
   .ai-team-container {
     gap: 1.5rem;
+    width: 100%;
+    max-width: 100%;
+    flex-direction: column;
   }
 
   .ai-card {
     margin-bottom: 1rem;
+    width: 100%;
+    max-width: 100%;
   }
 
   .btn-secondary {
@@ -715,10 +754,52 @@ button:disabled {
   .multi-image-container {
     flex-direction: column;
     height: auto;
+    max-height: none;
+    width: 100%;
+    max-width: 100%;
+    padding: 0 5px;
   }
 
   .static-image {
     flex-direction: column;
     height: auto;
+    max-height: none;
+    width: 100%;
+    max-width: 100%;
+    padding: 0 5px;
+  }
+
+  /* Ajustes para el texto */
+  h1 {
+    font-size: 1.5rem !important;
+  }
+
+  h2 {
+    font-size: 1.3rem !important;
+  }
+
+  h3 {
+    font-size: 1.1rem !important;
+  }
+
+  p {
+    font-size: 0.9rem !important;
+  }
+
+  /* Ajustes para los contenedores */
+  .container, .container-fluid {
+    width: 100%;
+    max-width: 100%;
+    padding-left: 5px;
+    padding-right: 5px;
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  /* Ajustes para el carrusel */
+  .carousel-container {
+    padding: 10px 0;
+    width: 100%;
+    max-width: 100%;
   }
 }
