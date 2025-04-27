@@ -207,19 +207,87 @@
     flex-direction: row;
     align-items: center;
   }
-  
+
   .cookie-banner-content {
     flex: 1;
     margin-bottom: 0;
     margin-right: 20px;
   }
-  
+
   .cookie-banner-actions {
     flex-direction: column;
     min-width: 150px;
   }
-  
+
   .details-actions {
     flex-direction: row;
+  }
+}
+
+/* Mejoras específicas para móviles */
+@media (max-width: 767px) {
+  .cookie-banner {
+    padding: 15px 0;
+  }
+
+  .cookie-banner-container {
+    padding: 0 15px;
+  }
+
+  .cookie-banner-content h2 {
+    font-size: 18px;
+  }
+
+  .cookie-banner-content p {
+    font-size: 13px;
+  }
+
+  .cookie-banner-actions {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .btn-primary, .btn-secondary {
+    width: 100%;
+    margin-bottom: 10px;
+    text-align: center;
+  }
+
+  .cookie-banner-links {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .cookie-banner-links a {
+    margin-right: 0;
+    margin-bottom: 10px;
+  }
+
+  .cookie-categories {
+    max-height: 300px;
+  }
+
+  .category-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .category-toggle {
+    margin-top: 10px;
+  }
+}
+
+/* Ajustes para pantallas muy pequeñas */
+@media (max-width: 480px) {
+  .cookie-banner-content h2 {
+    font-size: 16px;
+  }
+
+  .cookie-banner-content p {
+    font-size: 12px;
+  }
+
+  .cookie-banner-details {
+    padding: 15px;
   }
 }

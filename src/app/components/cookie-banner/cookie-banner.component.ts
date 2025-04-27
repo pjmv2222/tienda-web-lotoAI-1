@@ -25,12 +25,18 @@ export class CookieBannerComponent implements OnInit {
   constructor(private cookieService: CookieService) {}
 
   ngOnInit(): void {
-    // Verificar si se debe mostrar el banner
-    this.showBanner = this.cookieService.shouldShowCookieBanner();
-    
+    // Forzar la visualización del banner para pruebas
+    this.showBanner = true;
+
+    // También verificar con el servicio (comentado para pruebas)
+    // this.showBanner = this.cookieService.shouldShowCookieBanner();
+
+    console.log('CookieBannerComponent inicializado, showBanner:', this.showBanner);
+
     // Obtener el consentimiento actual
     this.cookieService.consent$.subscribe(consent => {
       this.consent = { ...consent };
+      console.log('Consentimiento actual:', this.consent);
     });
   }
 
