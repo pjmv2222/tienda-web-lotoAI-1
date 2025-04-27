@@ -52,7 +52,14 @@ jobs:
           cd /var/www/tienda-web-lotoAI-1 || { echo "Error: No se pudo acceder al directorio del proyecto"; exit 1; }
 
           echo "=== Actualizando desde GitHub ==="
-          git pull origin main || { echo "Error: No se pudo actualizar desde GitHub"; exit 1; }
+          echo "Descartando cambios locales..."
+          git reset --hard HEAD
+          git clean -fd
+          echo "Cambiando a la rama main..."
+          git checkout main
+          echo "Actualizando desde el repositorio remoto..."
+          git fetch origin
+          git reset --hard origin/main || { echo "Error: No se pudo actualizar desde GitHub"; exit 1; }
 
           echo "=== Verificando PM2 ==="
           export PATH=$PATH:/usr/local/bin:/usr/bin:/root/.nvm/versions/node/v18.19.0/bin
