@@ -87,6 +87,12 @@ jobs:
             echo "Error: No se pudo encontrar o instalar PM2"
           fi
 
+          echo "=== Ejecutando script de scraping para actualizar montos de botes ==="
+          cd /var/www/tienda-web-lotoAI-1/scraper
+          echo "Ejecutando script de scraping..."
+          timeout 600 xvfb-run -a --server-args="-screen 0 1920x1080x24 -ac" /root/.nvm/versions/node/v18.20.5/bin/ts-node scraper.ts
+          echo "Script de scraping ejecutado correctamente."
+
           echo "=== DESPLIEGUE COMPLETADO ==="
 
           echo "Deployment completed successfully!"
