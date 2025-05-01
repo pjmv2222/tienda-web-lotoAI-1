@@ -83,8 +83,26 @@ jobs:
             echo "Deteniendo procesos existentes..."
             $PM2_PATH delete loto-ia-backend || echo "Advertencia: No se pudo detener loto-ia-backend"
 
-            echo "Iniciando procesos con ecosystem.config.js..."
+            echo "Creando archivo ecosystem.config.js con variables de entorno..."
             cd /var/www/tienda-web-lotoAI-1/src/backend
+            cat > ecosystem.config.js << 'EOL'
+module.exports = {
+  apps: [{
+    name: 'loto-ia-backend',
+    script: 'dist/index.js',
+    instances: 1,
+    autorestart: true,
+    watch: false,
+    env: {
+      NODE_ENV: 'production',
+      PORT: 3001,
+      STRIPE_SECRET_KEY: 'sk_test_51RBei6LtOcaQbzqZEkaU8we5YSlxaXQCjO8mK3mWHMer2AvRSyLJucWhlnIVAMILHgVV09j2JcwgwmfmQT80Lumt00S34DcSs1',
+      STRIPE_WEBHOOK_SECRET: 'whsec_7e6dc08bbfafd3969b5730c348ab2e8aeb3f290daf1cac6ddc78424310dc856e'
+    }
+  }]
+};
+EOL
+            echo "Iniciando procesos con ecosystem.config.js..."
             $PM2_PATH start ecosystem.config.js || echo "Advertencia: No se pudo iniciar con ecosystem.config.js"
 
             echo "Reiniciando el proceso SSR..."
