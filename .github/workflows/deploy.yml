@@ -25,7 +25,9 @@ jobs:
       run: npm ci
 
     - name: Build application
-      run: npm run build:ssr
+      run: |
+        npm run build:ssr
+        npm run build:backend
 
     # Usar una única acción para el despliegue completo
     - name: Deploy to VPS
