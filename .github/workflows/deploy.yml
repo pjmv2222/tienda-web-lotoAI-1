@@ -95,21 +95,19 @@ jobs:
             fi
 
             echo "Creando archivo ecosystem.config.js para cargar variables desde .env..."
-            cat > ecosystem.config.js << EOL
-module.exports = {
-  apps: [{
-    name: 'loto-ia-backend',
-    script: 'dist/index.js',
-    instances: 1,
-    autorestart: true,
-    watch: false,
-    env: {
-      NODE_ENV: 'production',
-      PORT: 3001
-    }
-  }]
-};
-EOL
+            echo 'module.exports = {' > ecosystem.config.js
+            echo '  apps: [{' >> ecosystem.config.js
+            echo '    name: "loto-ia-backend",' >> ecosystem.config.js
+            echo '    script: "dist/index.js",' >> ecosystem.config.js
+            echo '    instances: 1,' >> ecosystem.config.js
+            echo '    autorestart: true,' >> ecosystem.config.js
+            echo '    watch: false,' >> ecosystem.config.js
+            echo '    env: {' >> ecosystem.config.js
+            echo '      NODE_ENV: "production",' >> ecosystem.config.js
+            echo '      PORT: 3001' >> ecosystem.config.js
+            echo '    }' >> ecosystem.config.js
+            echo '  }]' >> ecosystem.config.js
+            echo '};' >> ecosystem.config.js
             echo "Iniciando procesos con ecosystem.config.js..."
             $PM2_PATH start ecosystem.config.js || echo "Advertencia: No se pudo iniciar con ecosystem.config.js"
 
