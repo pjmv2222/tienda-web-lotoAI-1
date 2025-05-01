@@ -55,6 +55,7 @@ Thumbs.db
 /src/backend/.env
 /src/backend/.env.*
 !src/backend/.env.example
+/src/backend/ecosystem.config.js
 
 # Logs
 logs

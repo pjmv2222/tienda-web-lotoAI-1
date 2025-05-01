@@ -5,10 +5,17 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
+const dotenv_1 = __importDefault(require("dotenv"));
 const auth_routes_1 = __importDefault(require("./routes/auth.routes"));
 const product_routes_1 = __importDefault(require("./routes/product.routes"));
 const webhook_routes_1 = __importDefault(require("./routes/webhook.routes"));
 const payment_routes_1 = __importDefault(require("./routes/payment.routes"));
+// Cargar variables de entorno
+dotenv_1.default.config();
+// Verificar que las variables de entorno se han cargado correctamente
+console.log('Variables de entorno cargadas:');
+console.log('NODE_ENV:', process.env.NODE_ENV);
+console.log('STRIPE_SECRET_KEY:', process.env.STRIPE_SECRET_KEY ? 'Definida' : 'No definida');
 const app = (0, express_1.default)();
 console.log('Iniciando configuración del servidor...');
 // Middleware especial para webhooks de Stripe (debe estar antes del express.json())

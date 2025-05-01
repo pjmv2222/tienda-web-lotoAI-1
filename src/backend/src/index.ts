@@ -9,6 +9,11 @@ import paymentRoutes from './routes/payment.routes';
 // Cargar variables de entorno
 dotenv.config();
 
+// Verificar que las variables de entorno se han cargado correctamente
+console.log('Variables de entorno cargadas:');
+console.log('NODE_ENV:', process.env.NODE_ENV);
+console.log('STRIPE_SECRET_KEY:', process.env.STRIPE_SECRET_KEY ? 'Definida' : 'No definida');
+
 const app = express();
 
 console.log('Iniciando configuración del servidor...');

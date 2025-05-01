@@ -15,6 +15,14 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.handleStripeWebhook = void 0;
 const stripe_1 = __importDefault(require("stripe"));
 // Inicializar Stripe con la clave secreta
+if (!process.env.STRIPE_SECRET_KEY) {
+    console.error('ADVERTENCIA: Variable de entorno STRIPE_SECRET_KEY no encontrada');
+    console.error('Asegúrate de que el archivo .env existe y contiene STRIPE_SECRET_KEY');
+}
+if (!process.env.STRIPE_WEBHOOK_SECRET) {
+    console.error('ADVERTENCIA: Variable de entorno STRIPE_WEBHOOK_SECRET no encontrada');
+    console.error('Asegúrate de que el archivo .env existe y contiene STRIPE_WEBHOOK_SECRET');
+}
 const stripe = new stripe_1.default(process.env.STRIPE_SECRET_KEY || '', {
     apiVersion: '2025-03-31.basil',
 });
@@ -30,6 +38,9 @@ const handleStripeWebhook = (req, res) => __awaiter(void 0, void 0, void 0, func
     let event;
     try {
         // Verificar la firma del webhook
+        if (!process.env.STRIPE_WEBHOOK_SECRET) {
+            console.error('Error: No se encontró la variable de entorno STRIPE_WEBHOOK_SECRET');
+        }
         event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET || '');
     }
     catch (err) {
