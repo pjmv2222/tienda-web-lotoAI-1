@@ -75,13 +75,23 @@ jobs:
             echo "Nueva ruta de PM2: $PM2_PATH"
           fi
 
-          echo "=== Reiniciando servicios ==="
+          echo "=== Reiniciando servicios con ecosystem.config.js ==="
           if [ -n "$PM2_PATH" ]; then
             echo "Listando procesos PM2 actuales:"
             $PM2_PATH list
 
-            echo "Reiniciando todos los procesos..."
-            $PM2_PATH restart all || echo "Advertencia: No se pudieron reiniciar todos los procesos"
+            echo "Deteniendo procesos existentes..."
+            $PM2_PATH delete loto-ia-backend || echo "Advertencia: No se pudo detener loto-ia-backend"
+
+            echo "Iniciando procesos con ecosystem.config.js..."
+            cd /var/www/tienda-web-lotoAI-1/src/backend
+            $PM2_PATH start ecosystem.config.js || echo "Advertencia: No se pudo iniciar con ecosystem.config.js"
+
+            echo "Reiniciando el proceso SSR..."
+            $PM2_PATH restart loto-ia-ssr || echo "Advertencia: No se pudo reiniciar loto-ia-ssr"
+
+            echo "Guardando configuración de PM2..."
+            $PM2_PATH save
 
             echo "Estado final de PM2:"
             $PM2_PATH list
