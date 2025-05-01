@@ -83,9 +83,19 @@ jobs:
             echo "Deteniendo procesos existentes..."
             $PM2_PATH delete loto-ia-backend || echo "Advertencia: No se pudo detener loto-ia-backend"
 
-            echo "Creando archivo ecosystem.config.js con variables de entorno..."
+            echo "Verificando que el archivo .env existe..."
             cd /var/www/tienda-web-lotoAI-1/src/backend
-            cat > ecosystem.config.js << 'EOL'
+            if [ ! -f .env ]; then
+              echo "ADVERTENCIA: El archivo .env no existe. Creando uno básico..."
+              echo "NODE_ENV=production" > .env
+              echo "PORT=3001" >> .env
+              echo "ADVERTENCIA: Por favor, añade manualmente las claves de Stripe al archivo .env"
+            else
+              echo "El archivo .env existe."
+            fi
+
+            echo "Creando archivo ecosystem.config.js para cargar variables desde .env..."
+            cat > ecosystem.config.js << EOL
 module.exports = {
   apps: [{
     name: 'loto-ia-backend',
@@ -95,9 +105,7 @@ module.exports = {
     watch: false,
     env: {
       NODE_ENV: 'production',
-      PORT: 3001,
-      STRIPE_SECRET_KEY: 'sk_test_51RBei6LtOcaQbzqZEkaU8we5YSlxaXQCjO8mK3mWHMer2AvRSyLJucWhlnIVAMILHgVV09j2JcwgwmfmQT80Lumt00S34DcSs1',
-      STRIPE_WEBHOOK_SECRET: 'whsec_7e6dc08bbfafd3969b5730c348ab2e8aeb3f290daf1cac6ddc78424310dc856e'
+      PORT: 3001
     }
   }]
 };
