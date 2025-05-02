@@ -83,31 +83,45 @@ jobs:
             echo "Deteniendo procesos existentes..."
             $PM2_PATH delete loto-ia-backend || echo "Advertencia: No se pudo detener loto-ia-backend"
 
-            echo "Verificando que el archivo .env existe..."
+            echo "Verificando que el archivo .env.production existe..."
             cd /var/www/tienda-web-lotoAI-1/src/backend
-            if [ ! -f .env ]; then
-              echo "ADVERTENCIA: El archivo .env no existe. Creando uno básico..."
-              echo "NODE_ENV=production" > .env
-              echo "PORT=3001" >> .env
-              echo "ADVERTENCIA: Por favor, añade manualmente las claves de Stripe al archivo .env"
+            if [ -f .env.production ]; then
+              echo "Copiando .env.production a .env..."
+              cp .env.production .env
+              echo "Archivo .env actualizado correctamente."
             else
-              echo "El archivo .env existe."
+              echo "ADVERTENCIA: El archivo .env.production no existe."
+              if [ ! -f .env ]; then
+                echo "ADVERTENCIA: El archivo .env tampoco existe. Creando uno básico..."
+                echo "NODE_ENV=production" > .env
+                echo "PORT=3001" >> .env
+                echo "FRONTEND_URL=https://loto-ia.com" >> .env
+                echo "ADVERTENCIA: Por favor, añade manualmente las claves de Stripe al archivo .env"
+              else
+                echo "El archivo .env existe y se mantendrá."
+              fi
             fi
 
-            echo "Creando archivo ecosystem.config.js para cargar variables desde .env..."
-            echo 'module.exports = {' > ecosystem.config.js
-            echo '  apps: [{' >> ecosystem.config.js
-            echo '    name: "loto-ia-backend",' >> ecosystem.config.js
-            echo '    script: "dist/index.js",' >> ecosystem.config.js
-            echo '    instances: 1,' >> ecosystem.config.js
-            echo '    autorestart: true,' >> ecosystem.config.js
-            echo '    watch: false,' >> ecosystem.config.js
-            echo '    env: {' >> ecosystem.config.js
-            echo '      NODE_ENV: "production",' >> ecosystem.config.js
-            echo '      PORT: 3001' >> ecosystem.config.js
-            echo '    }' >> ecosystem.config.js
-            echo '  }]' >> ecosystem.config.js
-            echo '};' >> ecosystem.config.js
+            echo "Creando archivo ecosystem.config.js mejorado para cargar variables desde .env..."
+            cat > ecosystem.config.js << 'EOL'
+// Cargar variables de entorno desde .env
+require('dotenv').config();
+
+module.exports = {
+  apps: [{
+    name: 'loto-ia-backend',
+    script: 'dist/index.js',
+    instances: 1,
+    autorestart: true,
+    watch: false,
+    env: {
+      NODE_ENV: 'production',
+      PORT: 3001
+    },
+    env_file: '.env'
+  }]
+};
+EOL
             echo "Iniciando procesos con ecosystem.config.js..."
             $PM2_PATH start ecosystem.config.js || echo "Advertencia: No se pudo iniciar con ecosystem.config.js"
 

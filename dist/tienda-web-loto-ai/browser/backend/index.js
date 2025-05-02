@@ -23,12 +23,28 @@ app.use('/api/webhooks/stripe', express_1.default.raw({ type: 'application/json'
 // Middleware para parsear JSON - DEBE IR DESPUÉS DEL MIDDLEWARE DE STRIPE
 app.use(express_1.default.json());
 // Configuración CORS
+const NODE_ENV = process.env.NODE_ENV || 'development';
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:4000';
+// Definir orígenes permitidos según el entorno
+let allowedOrigins = [FRONTEND_URL];
+if (NODE_ENV === 'production') {
+    allowedOrigins = [
+        'https://loto-ia.com',
+        'http://loto-ia.com',
+        'https://www.loto-ia.com',
+        'http://www.loto-ia.com'
+    ];
+}
+else {
+    console.log(`Configurando CORS para desarrollo con origen: ${FRONTEND_URL}`);
+}
 app.use((0, cors_1.default)({
-    origin: ['http://localhost:4000'],
+    origin: allowedOrigins,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With'],
 }));
+console.log('Orígenes CORS permitidos:', allowedOrigins);
 // Log de todas las peticiones
 app.use((req, res, next) => {
     const timestamp = new Date().toISOString();
@@ -84,11 +100,13 @@ app.use((err, req, res, next) => {
         message: 'Error interno del servidor'
     });
 });
-const PORT = 3001;
+const PORT = parseInt(process.env.PORT || '3001', 10);
 const server = app.listen(PORT, '0.0.0.0', () => {
     console.log('='.repeat(50));
     console.log(`Servidor iniciado en http://localhost:${PORT}`);
     console.log(`API disponible en http://localhost:${PORT}/api`);
+    console.log(`Entorno: ${NODE_ENV}`);
+    console.log(`Frontend URL: ${FRONTEND_URL}`);
     console.log('Rutas disponibles:');
     console.log('- GET  /api/health');
     console.log('- POST /api/auth/login');

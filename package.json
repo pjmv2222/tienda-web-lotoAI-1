@@ -20,7 +20,9 @@
     "prerender": "ng run tienda-web-loto-ai:prerender",
     "clean": "rimraf dist node_modules package-lock.json",
     "clean:all": "npm run clean && cd src/backend && npm run clean",
-    "start:dev": "concurrently \"npm run dev:backend\" \"npm run dev:ssr\""
+    "start:dev": "concurrently \"npm run dev:backend\" \"npm run dev:ssr\"",
+    "start:prod:local": "concurrently \"cd src/backend && npm run dev\" \"npm run serve:ssr:dev\"",
+    "start:all": "concurrently \"cd src/backend && npm run dev\" \"npm run dev\""
   },
   "dependencies": {
     "@angular/animations": "^18.2.12",
