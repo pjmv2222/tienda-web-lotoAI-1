@@ -29,15 +29,22 @@ const NODE_ENV = process.env.NODE_ENV || 'development';
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:4000';
 
 // Definir orígenes permitidos según el entorno
-let allowedOrigins = [FRONTEND_URL];
+let allowedOrigins: string[] = [];
 if (NODE_ENV === 'production') {
-  allowedOrigins = [
-    'https://loto-ia.com',
-    'http://loto-ia.com',
-    'https://www.loto-ia.com',
-    'http://www.loto-ia.com'
-  ];
+  // Si FRONTEND_URL contiene múltiples URLs separadas por comas, dividirlas
+  if (FRONTEND_URL.includes(',')) {
+    allowedOrigins = FRONTEND_URL.split(',').map(url => url.trim());
+    console.log('Múltiples orígenes configurados:', allowedOrigins);
+  } else {
+    allowedOrigins = [
+      'https://loto-ia.com',
+      'http://loto-ia.com',
+      'https://www.loto-ia.com',
+      'http://www.loto-ia.com'
+    ];
+  }
 } else {
+  allowedOrigins = [FRONTEND_URL];
   console.log(`Configurando CORS para desarrollo con origen: ${FRONTEND_URL}`);
 }
 
