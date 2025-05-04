@@ -11,7 +11,7 @@ import confetti from 'canvas-confetti';
     <div class="welcome-container">
       <div class="welcome-content">
         <h1 class="main-title animate-up">¡Bienvenido a tu sitio web de pronósticos de loterías!</h1>
-        
+
         <div class="message-box animate-up-delay">
           <p class="welcome-message">Tu cuenta ha sido verificada exitosamente</p>
           <p class="sub-message">Estás a un paso de cambiar tu suerte</p>
@@ -136,7 +136,7 @@ export class WelcomeComponent implements OnInit {
   }
 
   shootConfetti() {
-    const duration = 3000;
+    const duration = 5000; // Duración más larga para un mejor efecto
     const end = Date.now() + duration;
 
     const interval: ReturnType<typeof setInterval> = setInterval(() => {
@@ -144,20 +144,37 @@ export class WelcomeComponent implements OnInit {
         return clearInterval(interval);
       }
 
+      // Confeti desde la parte superior (lluvia)
       confetti({
-        particleCount: 2,
-        angle: 60,
-        spread: 55,
-        origin: { x: 0 },
-        colors: ['#FFD700', '#FFA500', '#FF8C00']
+        particleCount: 5, // Más partículas
+        angle: 90, // Ángulo hacia abajo (lluvia)
+        spread: 70, // Mayor dispersión
+        origin: { x: 0.3, y: 0 }, // Origen en la parte superior izquierda
+        scalar: 1.5, // Partículas más grandes
+        gravity: 1.2, // Mayor gravedad para que caigan más rápido
+        colors: ['#FFD700', '#FFA500', '#FF8C00', '#FFC0CB', '#FF69B4'] // Más colores
       });
+
       confetti({
-        particleCount: 2,
-        angle: 120,
-        spread: 55,
-        origin: { x: 1 },
-        colors: ['#FFD700', '#FFA500', '#FF8C00']
+        particleCount: 5, // Más partículas
+        angle: 90, // Ángulo hacia abajo (lluvia)
+        spread: 70, // Mayor dispersión
+        origin: { x: 0.7, y: 0 }, // Origen en la parte superior derecha
+        scalar: 1.5, // Partículas más grandes
+        gravity: 1.2, // Mayor gravedad para que caigan más rápido
+        colors: ['#FFD700', '#FFA500', '#FF8C00', '#FFC0CB', '#FF69B4'] // Más colores
       });
-    }, 50);
+
+      // Confeti adicional desde el centro superior
+      confetti({
+        particleCount: 3, // Algunas partículas adicionales
+        angle: 90, // Ángulo hacia abajo
+        spread: 100, // Mayor dispersión
+        origin: { x: 0.5, y: 0 }, // Origen en el centro superior
+        scalar: 1.8, // Partículas aún más grandes
+        gravity: 1, // Gravedad normal
+        colors: ['#FFD700', '#FFA500', '#FF8C00', '#FFC0CB', '#FF69B4'] // Mismos colores
+      });
+    }, 40); // Intervalo más corto para más densidad
   }
-} 
+}
