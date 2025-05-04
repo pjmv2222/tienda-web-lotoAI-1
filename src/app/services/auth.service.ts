@@ -71,7 +71,7 @@ export class AuthService {
   }
 
   private getCurrentUserFromToken(token: string): Observable<any> {
-    return this.http.get<any>(`${this.apiUrl}/auth/profile`, {
+    return this.http.get<any>(`/api/auth/profile`, {
       headers: new HttpHeaders({
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
@@ -94,20 +94,18 @@ export class AuthService {
   }
 
   checkEmailExists(email: string): Observable<boolean> {
-    return this.http.post<boolean>(`${this.apiUrl}/auth/check-email`, { email });
+    return this.http.post<boolean>(`/api/auth/check-email`, { email });
   }
 
   register(userData: UserRegistration): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}/auth/register`, userData);
+    return this.http.post<any>(`/api/auth/register`, userData);
   }
 
   login(credentials: UserLogin): Observable<any> {
-    const url = `${this.apiUrl}/auth/login`;
+    const url = `/api/auth/login`;
     console.log('Intentando login:', {
       url,
       email: credentials.email,
-      apiUrl: this.apiUrl,
-      fullUrl: url,
       headers: { 'Content-Type': 'application/json' }
     });
 
@@ -165,7 +163,7 @@ export class AuthService {
   }
 
   getCurrentUser(): Observable<any> {
-    return this.http.get<any>(`${this.apiUrl}/auth/profile`, { headers: this.getAuthHeaders() })
+    return this.http.get<any>(`/api/auth/profile`, { headers: this.getAuthHeaders() })
       .pipe(
         tap(response => {
           if (response.success) {
@@ -187,16 +185,16 @@ export class AuthService {
   }
 
   forgotPassword(email: string): Observable<any> {
-    return this.http.post(`${this.apiUrl}/auth/forgot-password`, { email });
+    return this.http.post(`/api/auth/forgot-password`, { email });
   }
 
   resetPassword(resetData: UserPasswordReset): Observable<any> {
-    return this.http.post(`${this.apiUrl}/auth/reset-password`, resetData);
+    return this.http.post(`/api/auth/reset-password`, resetData);
   }
 
   verifyEmail(token: string): Observable<any> {
     console.log('Verificando email con token:', token);
-    return this.http.get(`${this.apiUrl}/auth/verify/${token}`).pipe(
+    return this.http.get(`/api/auth/verify/${token}`).pipe(
       tap(response => {
         console.log('Respuesta de verificación:', response);
       }),
@@ -213,7 +211,7 @@ export class AuthService {
       throw new Error('No hay usuario autenticado');
     }
 
-    return this.http.put<User>(`${this.apiUrl}/auth/users/${currentUser.id}`, userData).pipe(
+    return this.http.put<User>(`/api/auth/users/${currentUser.id}`, userData).pipe(
       tap(updatedUser => {
         const newUser = { ...currentUser, ...updatedUser };
         this.setUserInStorage(newUser);
@@ -228,7 +226,7 @@ export class AuthService {
       throw new Error('No hay usuario autenticado');
     }
 
-    return this.http.delete<void>(`${this.apiUrl}/auth/users/${currentUser.id}`).pipe(
+    return this.http.delete<void>(`/api/auth/users/${currentUser.id}`).pipe(
       tap(() => {
         this.logout();
       })
@@ -237,7 +235,7 @@ export class AuthService {
 
   updateProfile(userId: string, userData: Partial<User>): Observable<any> {
     return this.http.put<any>(
-      `${this.apiUrl}/auth/profile`,
+      `/api/auth/profile`,
       userData,
       { headers: this.getAuthHeaders() }
     ).pipe(
@@ -256,7 +254,7 @@ export class AuthService {
 
   deleteAccount(userId: string): Observable<any> {
     return this.http.delete<any>(
-      `${this.apiUrl}/auth/profile`,
+      `/api/auth/profile`,
       { headers: this.getAuthHeaders() }
     ).pipe(
       tap(() => {
@@ -268,7 +266,7 @@ export class AuthService {
 
   changePassword(passwordData: { currentPassword: string; newPassword: string }): Observable<any> {
     return this.http.post<any>(
-      `${this.apiUrl}/auth/change-password`,
+      `/api/auth/change-password`,
       passwordData,
       { headers: this.getAuthHeaders() }
     );

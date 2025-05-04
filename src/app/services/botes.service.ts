@@ -8,7 +8,7 @@ import { Bote } from '../models/bote.model';
   providedIn: 'root'
 })
 export class BotesService {
-  private apiUrl = `${environment.apiUrl}/botes`;
+  private apiUrl = `/api/botes`;
 
   constructor(private http: HttpClient) { }
 

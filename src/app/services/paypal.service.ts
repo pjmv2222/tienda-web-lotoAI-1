@@ -16,7 +16,7 @@ export class PaypalService {
    * Crea una orden de pago en PayPal
    */
   createOrder(planId: string): Observable<any> {
-    return this.http.post<any>(`${environment.apiUrl}/payments/create-paypal-order`, {
+    return this.http.post<any>(`/api/payments/create-paypal-order`, {
       planId
     }).pipe(
       catchError(error => {
@@ -30,7 +30,7 @@ export class PaypalService {
    * Procesa un pago con PayPal
    */
   processPayment(planId: string, paypalOrderId: string, userId?: string): Observable<any> {
-    return this.http.post<any>(`${environment.apiUrl}/payments/process-paypal`, {
+    return this.http.post<any>(`/api/payments/process-paypal`, {
       planId,
       paypalOrderId,
       userId

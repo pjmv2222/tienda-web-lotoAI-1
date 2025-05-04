@@ -16,7 +16,7 @@ export interface Subscription {
   providedIn: 'root'
 })
 export class SubscriptionService {
-  private apiUrl = environment.apiUrl;
+  private apiUrl = '/api';
 
   constructor(
     private http: HttpClient,
@@ -53,7 +53,7 @@ export class SubscriptionService {
     }
 
     // Verificar en las suscripciones del usuario
-    const hasActivePlan = currentUser.subscriptions.some(sub => 
+    const hasActivePlan = currentUser.subscriptions.some(sub =>
       sub.activa && sub.tipo === planId
     );
 
