@@ -136,7 +136,7 @@ export class WelcomeComponent implements OnInit {
   }
 
   shootConfetti() {
-    const duration = 5000; // Duración más larga para un mejor efecto
+    const duration = 60000; // Duración de 60 segundos
     const end = Date.now() + duration;
 
     const interval: ReturnType<typeof setInterval> = setInterval(() => {
@@ -150,8 +150,10 @@ export class WelcomeComponent implements OnInit {
         angle: 90, // Ángulo hacia abajo (lluvia)
         spread: 70, // Mayor dispersión
         origin: { x: 0.3, y: 0 }, // Origen en la parte superior izquierda
-        scalar: 1.5, // Partículas más grandes
-        gravity: 1.2, // Mayor gravedad para que caigan más rápido
+        scalar: 2, // Partículas más grandes
+        gravity: 0.8, // Menor gravedad para que caigan más lento y lleguen más abajo
+        ticks: 500, // Mayor duración de las partículas
+        disableForReducedMotion: false, // Asegurar que se muestre incluso con reducción de movimiento
         colors: ['#FFD700', '#FFA500', '#FF8C00', '#FFC0CB', '#FF69B4'] // Más colores
       });
 
@@ -160,8 +162,10 @@ export class WelcomeComponent implements OnInit {
         angle: 90, // Ángulo hacia abajo (lluvia)
         spread: 70, // Mayor dispersión
         origin: { x: 0.7, y: 0 }, // Origen en la parte superior derecha
-        scalar: 1.5, // Partículas más grandes
-        gravity: 1.2, // Mayor gravedad para que caigan más rápido
+        scalar: 2, // Partículas más grandes
+        gravity: 0.8, // Menor gravedad para que caigan más lento y lleguen más abajo
+        ticks: 500, // Mayor duración de las partículas
+        disableForReducedMotion: false, // Asegurar que se muestre incluso con reducción de movimiento
         colors: ['#FFD700', '#FFA500', '#FF8C00', '#FFC0CB', '#FF69B4'] // Más colores
       });
 
@@ -171,8 +175,10 @@ export class WelcomeComponent implements OnInit {
         angle: 90, // Ángulo hacia abajo
         spread: 100, // Mayor dispersión
         origin: { x: 0.5, y: 0 }, // Origen en el centro superior
-        scalar: 1.8, // Partículas aún más grandes
-        gravity: 1, // Gravedad normal
+        scalar: 2.5, // Partículas aún más grandes
+        gravity: 0.7, // Gravedad aún menor para que caigan más lento
+        ticks: 600, // Mayor duración de las partículas
+        disableForReducedMotion: false, // Asegurar que se muestre incluso con reducción de movimiento
         colors: ['#FFD700', '#FFA500', '#FF8C00', '#FFC0CB', '#FF69B4'] // Mismos colores
       });
     }, 40); // Intervalo más corto para más densidad
