@@ -3,6 +3,10 @@ name: Deploy to VPS with IAs
 on:
   push:
     branches: [ main ]
+    paths:
+      - 'IAs-Loto/**'
+      - '.github/workflows/deploy-with-ias.yml'
+      - 'ias/**'
   workflow_dispatch:  # Permite ejecutar manualmente desde la interfaz de GitHub
 
 jobs:

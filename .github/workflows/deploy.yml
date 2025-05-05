@@ -3,6 +3,17 @@ name: Deploy to VPS
 on:
   push:
     branches: [ main ]
+    paths:
+      - 'src/**'
+      - 'angular.json'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'tsconfig.json'
+      - 'server.ts'
+      - 'scraper/**'
+      - '.github/workflows/deploy.yml'
+      - '!IAs-Loto/**'
+      - '!ias/**'
   workflow_dispatch:  # Permite ejecutar manualmente desde la interfaz de GitHub
 
 jobs:
