@@ -139,48 +139,71 @@ export class WelcomeComponent implements OnInit {
     const duration = 60000; // Duración de 60 segundos
     const end = Date.now() + duration;
 
+    // Definir colores dorados resplandecientes (solo tonos dorados)
+    const goldenColors = [
+      '#FFD700', // Oro estándar
+      '#FFDF00', // Oro amarillo
+      '#FFCC00', // Oro brillante
+      '#FFB700', // Oro intenso
+      '#FFC430'  // Oro resplandeciente
+    ];
+
+    // Configuración común para el espumillón dorado
+    const commonConfig = {
+      angle: 90, // Ángulo hacia abajo (lluvia)
+      gravity: 0.55, // Gravedad reducida para caída más lenta
+      drift: 1.5, // Deriva para simular el movimiento del espumillón
+      ticks: 800, // Mayor duración de las partículas
+      scalar: 3, // Partículas más grandes
+      // Eliminamos la propiedad shapes que causa el error
+      colors: goldenColors, // Solo colores dorados
+      disableForReducedMotion: false, // Asegurar que se muestre incluso con reducción de movimiento
+      opacity: 0.9, // Alta opacidad para un brillo más intenso
+    };
+
+    // Crear un efecto de brillo inicial más intenso
+    const createInitialBurst = () => {
+      // Explosión inicial desde varios puntos
+      for (let i = 0.1; i <= 0.9; i += 0.2) {
+        confetti({
+          ...commonConfig,
+          particleCount: 15,
+          spread: 80,
+          origin: { x: i, y: 0 },
+          scalar: 3.5,
+          gravity: 0.5,
+          ticks: 1000
+        });
+      }
+    };
+
+    // Ejecutar la explosión inicial
+    createInitialBurst();
+
+    // Configurar el intervalo para la lluvia continua
     const interval: ReturnType<typeof setInterval> = setInterval(() => {
       if (Date.now() > end) {
         return clearInterval(interval);
       }
 
-      // Confeti desde la parte superior (lluvia)
-      confetti({
-        particleCount: 5, // Más partículas
-        angle: 90, // Ángulo hacia abajo (lluvia)
-        spread: 70, // Mayor dispersión
-        origin: { x: 0.3, y: 0 }, // Origen en la parte superior izquierda
-        scalar: 2, // Partículas más grandes
-        gravity: 0.8, // Menor gravedad para que caigan más lento y lleguen más abajo
-        ticks: 500, // Mayor duración de las partículas
-        disableForReducedMotion: false, // Asegurar que se muestre incluso con reducción de movimiento
-        colors: ['#FFD700', '#FFA500', '#FF8C00', '#FFC0CB', '#FF69B4'] // Más colores
-      });
+      // Distribuir el espumillón por toda la parte superior de la pantalla
+      // Generar posiciones aleatorias para un efecto más natural
+      const positions = [0.1, 0.25, 0.4, 0.5, 0.6, 0.75, 0.9];
 
-      confetti({
-        particleCount: 5, // Más partículas
-        angle: 90, // Ángulo hacia abajo (lluvia)
-        spread: 70, // Mayor dispersión
-        origin: { x: 0.7, y: 0 }, // Origen en la parte superior derecha
-        scalar: 2, // Partículas más grandes
-        gravity: 0.8, // Menor gravedad para que caigan más lento y lleguen más abajo
-        ticks: 500, // Mayor duración de las partículas
-        disableForReducedMotion: false, // Asegurar que se muestre incluso con reducción de movimiento
-        colors: ['#FFD700', '#FFA500', '#FF8C00', '#FFC0CB', '#FF69B4'] // Más colores
-      });
+      // Seleccionar 3 posiciones aleatorias para cada iteración
+      for (let i = 0; i < 3; i++) {
+        const randomIndex = Math.floor(Math.random() * positions.length);
+        const xPos = positions[randomIndex];
 
-      // Confeti adicional desde el centro superior
-      confetti({
-        particleCount: 3, // Algunas partículas adicionales
-        angle: 90, // Ángulo hacia abajo
-        spread: 100, // Mayor dispersión
-        origin: { x: 0.5, y: 0 }, // Origen en el centro superior
-        scalar: 2.5, // Partículas aún más grandes
-        gravity: 0.7, // Gravedad aún menor para que caigan más lento
-        ticks: 600, // Mayor duración de las partículas
-        disableForReducedMotion: false, // Asegurar que se muestre incluso con reducción de movimiento
-        colors: ['#FFD700', '#FFA500', '#FF8C00', '#FFC0CB', '#FF69B4'] // Mismos colores
-      });
-    }, 40); // Intervalo más corto para más densidad
+        confetti({
+          ...commonConfig,
+          particleCount: 5, // Cantidad de partículas
+          spread: 40 + Math.random() * 30, // Dispersión variable
+          origin: { x: xPos, y: 0 },
+          scalar: 2.5 + Math.random(), // Tamaño variable
+        });
+      }
+
+    }, 40); // Intervalo más corto para mayor densidad
   }
 }

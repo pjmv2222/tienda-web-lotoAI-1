@@ -40,11 +40,11 @@
       <p>Selecciona una de nuestras opciones para obtener combinaciones generadas por IA:</p>
 
       <div class="options-container">
-        <div class="option-card">
+        <div class="option-card" [class.active]="hasBasicPlan">
           <div class="option-header">
             <h3>Predicción Básica</h3>
-            <span class="option-price" *ngIf="!hasBasicPlan" style="display: none;">GRATIS</span>
-            <span class="option-price active" style="display: inline-block;">ACTIVADO</span>
+            <span class="option-price" *ngIf="!hasBasicPlan">1,22€</span>
+            <span class="option-price active" *ngIf="hasBasicPlan">ACTIVADO</span>
           </div>
           <div class="option-features">
             <ul>
@@ -53,9 +53,10 @@
               <li>Número clave optimizado</li>
             </ul>
           </div>
-          <button class="generate-btn" [disabled]="!isLoggedIn || !hasBasicPlan" (click)="generateBasicPrediction()">Generar</button>
+          <button class="generate-btn" *ngIf="hasBasicPlan" (click)="generateBasicPrediction()">Generar</button>
+          <button class="generate-btn" *ngIf="!hasBasicPlan" (click)="showSubscriptionOptions()">Suscribir</button>
           <p *ngIf="!isLoggedIn" class="login-required">Necesitas <a routerLink="/auth/login">iniciar sesión</a> para generar predicciones</p>
-          <p *ngIf="isLoggedIn && !hasBasicPlan && false" class="login-required">Necesitas <a routerLink="/planes">suscribir este plan</a> para generar predicciones</p>
+          <p *ngIf="isLoggedIn && !hasBasicPlan" class="login-required">Necesitas <a routerLink="/planes">suscribir este plan</a> para generar predicciones</p>
         </div>
 
         <!-- Plan Mensual -->

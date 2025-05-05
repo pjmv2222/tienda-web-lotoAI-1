@@ -119,7 +119,17 @@ export class VerifyEmailComponent implements OnInit {
     this.authService.verifyEmail(this.token).subscribe({
       next: (response) => {
         console.log('Respuesta de verificación:', response);
-        // Redirigir directamente a la página de bienvenida sin mostrar mensaje de éxito
+
+        // Iniciar sesión automáticamente con el token recibido
+        if (response && response.token && response.user) {
+          // Guardar el usuario y token en el servicio de autenticación
+          this.authService.storeAuthenticatedUser(response.user, response.token);
+          console.log('Usuario autenticado automáticamente después de verificación');
+        } else {
+          console.warn('No se recibió token o usuario en la respuesta de verificación');
+        }
+
+        // Redirigir a la página de bienvenida
         this.router.navigate(['/bienvenido']);
       },
       error: (error) => {

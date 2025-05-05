@@ -53,10 +53,11 @@ export class PrimitivaComponent implements OnInit, OnDestroy {
       });
       this.subscriptions.push(proSub);
     } else {
-      // Para pruebas: simular que el usuario tiene un plan básico
-      // Comentar o eliminar estas líneas en producción
-      this.hasBasicPlan = true;
-      console.log('Simulando que el usuario tiene plan básico (para pruebas)');
+      // El usuario no está autenticado, no tiene ningún plan
+      this.hasBasicPlan = false;
+      this.hasMonthlyPlan = false;
+      this.hasProPlan = false;
+      console.log('Usuario no autenticado, no tiene planes activos');
     }
   }
 

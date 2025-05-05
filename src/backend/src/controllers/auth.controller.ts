@@ -10,17 +10,17 @@ export class AuthController {
   async checkEmail(req: Request, res: Response) {
     try {
       const { email } = req.body;
-      
+
       if (!email) {
         return res.status(400).json({
           success: false,
           message: 'El email es requerido'
         });
       }
-      
+
       // Verificar si el usuario existe
       const user = await UserModel.findByEmail(email);
-      
+
       // Devolver true si el email ya existe, false si no
       res.json(!!user);
     } catch (error) {
@@ -41,11 +41,11 @@ export class AuthController {
 
       // Validar campos requeridos
       if (!email || !password || !nombre || !apellido) {
-        console.log('Campos faltantes:', { 
-          email: !email, 
-          password: !password, 
-          nombre: !nombre, 
-          apellido: !apellido 
+        console.log('Campos faltantes:', {
+          email: !email,
+          password: !password,
+          nombre: !nombre,
+          apellido: !apellido
         });
         return res.status(400).json({
           success: false,
@@ -91,7 +91,7 @@ export class AuthController {
       });
     } catch (error: any) {
       console.error('Error en registro:', error);
-      
+
       // Si el error es de duplicado de email
       if (error.code === '23505' && error.constraint === 'users_email_key') {
         return res.status(409).json({
@@ -114,15 +114,15 @@ export class AuthController {
     console.log('Headers recibidos:', req.headers);
     console.log('Body recibido:', req.body);
     console.log('='.repeat(50));
-    
+
     try {
       const { email, password } = req.body;
       console.log('Datos extraídos:', { email, password: '***' });
-      
+
       // Primero verificar si el usuario existe
       const user = await UserModel.findByEmail(email);
       console.log('Usuario encontrado:', user ? 'Sí' : 'No');
-      
+
       if (!user) {
         console.log('Usuario no encontrado');
         return res.status(404).json({
@@ -135,7 +135,7 @@ export class AuthController {
       // Verificar la contraseña
       const isValidPassword = await bcrypt.compare(password, user.password_hash);
       console.log('Contraseña válida:', isValidPassword);
-      
+
       if (!isValidPassword) {
         console.log('Contraseña incorrecta');
         return res.status(401).json({
@@ -147,7 +147,7 @@ export class AuthController {
 
       const token = AuthService.generateToken(user.id);
       console.log('Token generado');
-      
+
       // Excluir información sensible
       const { password_hash, ...userWithoutPassword } = user;
 
@@ -171,7 +171,7 @@ export class AuthController {
     try {
       const userId = req.user.id; // El middleware ya ha verificado el usuario
       const user = await UserModel.findById(userId);
-      
+
       if (!user) {
         return res.status(404).json({
           success: false,
@@ -297,7 +297,7 @@ export class AuthController {
     try {
       const { email } = req.body;
       const user = await UserModel.verifyEmail(email);
-      
+
       if (!user) {
         return res.status(404).json({
           success: false,
@@ -324,7 +324,7 @@ export class AuthController {
       console.log('Iniciando verificación de email con token');
       const { token } = req.params;
       console.log('Token recibido:', token);
-      
+
       // Verificar el token
       console.log('JWT_SECRET:', process.env.JWT_SECRET || 'your_jwt_secret');
       try {
@@ -332,11 +332,11 @@ export class AuthController {
         console.log('Token decodificado exitosamente:', decoded);
         const email = decoded.email;
         console.log('Email extraído del token:', email);
-      
+
         // Buscar el usuario por email
         const user = await UserModel.findByEmail(email);
         console.log('Usuario encontrado:', user ? 'Sí' : 'No');
-      
+
         if (!user) {
           console.log('Usuario no encontrado:', email);
           return res.status(404).json({
@@ -344,15 +344,24 @@ export class AuthController {
             message: 'Usuario no encontrado'
           });
         }
-      
+
         // Actualizar el estado de verificación del usuario
         await UserModel.verifyEmail(email);
         console.log('Email verificado correctamente');
-      
-        // Enviar respuesta exitosa
+
+        // Generar un nuevo token de autenticación para el usuario
+        const authToken = AuthService.generateToken(user.id);
+        console.log('Token de autenticación generado para el usuario verificado');
+
+        // Excluir información sensible
+        const { password_hash, ...userWithoutPassword } = user;
+
+        // Enviar respuesta exitosa con token y datos del usuario
         res.json({
           success: true,
-          message: 'Email verificado correctamente'
+          message: 'Email verificado correctamente',
+          token: authToken,
+          user: userWithoutPassword
         });
       } catch (jwtError) {
         console.error('Error al verificar el token JWT:', jwtError);
@@ -373,10 +382,10 @@ export class AuthController {
   async requestPasswordReset(req: Request, res: Response) {
     try {
       const { email } = req.body;
-      
+
       // Verificar si el usuario existe
       const user = await UserModel.findByEmail(email);
-      
+
       if (!user) {
         return res.status(404).json({
           success: false,

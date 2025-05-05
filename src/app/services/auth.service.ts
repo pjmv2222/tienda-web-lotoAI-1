@@ -287,4 +287,45 @@ export class AuthService {
       }
     }
   }
+
+  /**
+   * Almacena un usuario autenticado después de la verificación de email
+   * @param user Datos del usuario
+   * @param token Token de autenticación
+   */
+  storeAuthenticatedUser(user: any, token: string): void {
+    if (!user || !token) {
+      console.error('No se puede almacenar usuario sin datos o token');
+      return;
+    }
+
+    try {
+      // Crear objeto de usuario completo
+      const authenticatedUser = {
+        ...user,
+        token
+      };
+
+      // Guardar el token en una cookie segura
+      this.cookieService.setConditionalCookie(
+        this.tokenCookieKey,
+        token,
+        'necessary',
+        {
+          expires: 7, // 7 días
+          path: '/',
+          secure: true,
+          sameSite: 'Strict'
+        }
+      );
+
+      // Guardar el usuario en localStorage y actualizar el BehaviorSubject
+      this.setUserInStorage(authenticatedUser);
+      this.currentUserSubject.next(authenticatedUser);
+
+      console.log('Usuario autenticado almacenado correctamente');
+    } catch (error) {
+      console.error('Error al almacenar usuario autenticado:', error);
+    }
+  }
 }
