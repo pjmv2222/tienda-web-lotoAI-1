@@ -5,8 +5,17 @@ on:
     branches: [ main ]
     paths:
       - 'IAs-Loto/**'
-      - '.github/workflows/deploy-with-ias.yml'
       - 'ias/**'
+      - '.github/workflows/deploy-with-ias.yml'
+    paths-ignore:
+      - '.github/workflows/deploy.yml'
+      - 'src/**'
+      - 'angular.json'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'tsconfig.json'
+      - 'server.ts'
+      - 'scraper/**'
   workflow_dispatch:  # Permite ejecutar manualmente desde la interfaz de GitHub
 
 jobs:
