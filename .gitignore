@@ -60,3 +60,23 @@ Thumbs.db
 # Logs
 logs
 *.log
+
+# IA models and large files
+*.h5
+*.hdf5
+*.pkl
+*.joblib
+*.model
+*.bin
+*.onnx
+*.pt
+*.pth
+*.weights
+*.tflite
+*.pb
+*.savedmodel
+
+# Allow IA Python files but exclude large data files
+!IAs-Loto/**/*.py
+!IAs-Loto/**/*.json
+!IAs-Loto/server_base.py

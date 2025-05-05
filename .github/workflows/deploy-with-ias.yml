@@ -1,0 +1,549 @@
+name: Deploy to VPS with IAs
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:  # Permite ejecutar manualmente desde la interfaz de GitHub
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0  # Obtener todo el historial para que git describe funcione correctamente
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18.x'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Build application
+      run: |
+        npm run build:ssr
+        npm run build:backend
+
+    # Usar una única acción para el despliegue completo
+    - name: Deploy to VPS
+      uses: appleboy/ssh-action@master
+      with:
+        host: 212.227.230.103
+        username: root
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        script: |
+          echo "=== INICIO DEL DESPLIEGUE ==="
+
+          echo "=== Verificando entorno ==="
+          echo "Directorio actual: $(pwd)"
+          echo "Usuario: $(whoami)"
+          echo "Versión de Node: $(node -v || echo 'Node no disponible')"
+          echo "Versión de NPM: $(npm -v || echo 'NPM no disponible')"
+
+          echo "=== Configurando NVM ==="
+          export NVM_DIR="$HOME/.nvm"
+          [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+          echo "Versión de Node después de NVM: $(node -v || echo 'Node no disponible')"
+
+          echo "=== Actualizando repositorio ==="
+          cd /var/www/tienda-web-lotoAI-1
+          git fetch --all
+          git reset --hard origin/main
+
+          echo "=== Instalando dependencias ==="
+          npm ci --legacy-peer-deps
+
+          echo "=== Configurando backend ==="
+          cd /var/www/tienda-web-lotoAI-1/src/backend
+          npm ci
+
+          echo "=== Creando directorio para IAs si no existe ==="
+          mkdir -p /var/www/tienda-web-lotoAI-1/ias
+
+          echo "=== Creando subdirectorios para cada juego ==="
+          mkdir -p /var/www/tienda-web-lotoAI-1/ias/euromillon
+          mkdir -p /var/www/tienda-web-lotoAI-1/ias/bonoloto
+          mkdir -p /var/www/tienda-web-lotoAI-1/ias/eurodreams
+          mkdir -p /var/www/tienda-web-lotoAI-1/ias/gordo-primitiva
+          mkdir -p /var/www/tienda-web-lotoAI-1/ias/loteria-nacional
+          mkdir -p /var/www/tienda-web-lotoAI-1/ias/lototurf
+          mkdir -p /var/www/tienda-web-lotoAI-1/ias/primitiva
+
+          echo "=== Copiando archivos de IA ==="
+          cp -r /var/www/tienda-web-lotoAI-1/IAs-Loto/EuroMillon-CSV/* /var/www/tienda-web-lotoAI-1/ias/euromillon/
+          cp -r /var/www/tienda-web-lotoAI-1/IAs-Loto/Bonoloto/* /var/www/tienda-web-lotoAI-1/ias/bonoloto/
+          cp -r /var/www/tienda-web-lotoAI-1/IAs-Loto/EuroDreams/* /var/www/tienda-web-lotoAI-1/ias/eurodreams/
+          cp -r /var/www/tienda-web-lotoAI-1/IAs-Loto/ElGordo/* /var/www/tienda-web-lotoAI-1/ias/gordo-primitiva/
+          cp -r "/var/www/tienda-web-lotoAI-1/IAs-Loto/LOTERIA NACIONAL/"* /var/www/tienda-web-lotoAI-1/ias/loteria-nacional/
+          cp -r /var/www/tienda-web-lotoAI-1/IAs-Loto/Lototurf/* /var/www/tienda-web-lotoAI-1/ias/lototurf/
+          cp -r /var/www/tienda-web-lotoAI-1/IAs-Loto/LaPrimitiva/* /var/www/tienda-web-lotoAI-1/ias/primitiva/
+
+          echo "=== Verificando archivos server.py en cada directorio ==="
+          # Verificar Euromillón
+          if [ ! -f "/var/www/tienda-web-lotoAI-1/ias/euromillon/server.py" ]; then
+            echo "ADVERTENCIA: No se encontró server.py en el directorio de Euromillón"
+            # Si no existe, copiar el archivo server_base.py
+            cp /var/www/tienda-web-lotoAI-1/IAs-Loto/server_base.py /var/www/tienda-web-lotoAI-1/ias/euromillon/server.py
+          fi
+
+          # Verificar Bonoloto
+          if [ ! -f "/var/www/tienda-web-lotoAI-1/ias/bonoloto/server.py" ]; then
+            echo "ADVERTENCIA: No se encontró server.py en el directorio de Bonoloto"
+            # Renombrar Server-Bonoloto.py a server.py si existe
+            if [ -f "/var/www/tienda-web-lotoAI-1/ias/bonoloto/Server-Bonoloto.py" ]; then
+              cp /var/www/tienda-web-lotoAI-1/ias/bonoloto/Server-Bonoloto.py /var/www/tienda-web-lotoAI-1/ias/bonoloto/server.py
+            else
+              # Si no existe, copiar el archivo server_base.py
+              cp /var/www/tienda-web-lotoAI-1/IAs-Loto/server_base.py /var/www/tienda-web-lotoAI-1/ias/bonoloto/server.py
+            fi
+          fi
+
+          # Verificar EuroDreams
+          if [ ! -f "/var/www/tienda-web-lotoAI-1/ias/eurodreams/server.py" ]; then
+            echo "ADVERTENCIA: No se encontró server.py en el directorio de EuroDreams"
+            # Renombrar Server-EuroDreams.py a server.py si existe
+            if [ -f "/var/www/tienda-web-lotoAI-1/ias/eurodreams/Server-EuroDreams.py" ]; then
+              cp /var/www/tienda-web-lotoAI-1/ias/eurodreams/Server-EuroDreams.py /var/www/tienda-web-lotoAI-1/ias/eurodreams/server.py
+            else
+              # Si no existe, copiar el archivo server_base.py
+              cp /var/www/tienda-web-lotoAI-1/IAs-Loto/server_base.py /var/www/tienda-web-lotoAI-1/ias/eurodreams/server.py
+            fi
+          fi
+
+          # Verificar El Gordo
+          if [ ! -f "/var/www/tienda-web-lotoAI-1/ias/gordo-primitiva/server.py" ]; then
+            echo "ADVERTENCIA: No se encontró server.py en el directorio de El Gordo"
+            # Renombrar Server-ElGordo.py a server.py si existe
+            if [ -f "/var/www/tienda-web-lotoAI-1/ias/gordo-primitiva/Server-ElGordo.py" ]; then
+              cp /var/www/tienda-web-lotoAI-1/ias/gordo-primitiva/Server-ElGordo.py /var/www/tienda-web-lotoAI-1/ias/gordo-primitiva/server.py
+            else
+              # Si no existe, copiar el archivo server_base.py
+              cp /var/www/tienda-web-lotoAI-1/IAs-Loto/server_base.py /var/www/tienda-web-lotoAI-1/ias/gordo-primitiva/server.py
+            fi
+          fi
+
+          # Verificar Lotería Nacional
+          if [ ! -f "/var/www/tienda-web-lotoAI-1/ias/loteria-nacional/server.py" ]; then
+            echo "ADVERTENCIA: No se encontró server.py en el directorio de Lotería Nacional"
+            # Renombrar Server-LoteríaNacional.py a server.py si existe
+            if [ -f "/var/www/tienda-web-lotoAI-1/ias/loteria-nacional/Server-LoteríaNacional.py" ]; then
+              cp /var/www/tienda-web-lotoAI-1/ias/loteria-nacional/Server-LoteríaNacional.py /var/www/tienda-web-lotoAI-1/ias/loteria-nacional/server.py
+            else
+              # Si no existe, copiar el archivo server_base.py
+              cp /var/www/tienda-web-lotoAI-1/IAs-Loto/server_base.py /var/www/tienda-web-lotoAI-1/ias/loteria-nacional/server.py
+            fi
+          fi
+
+          # Verificar Lototurf
+          if [ ! -f "/var/www/tienda-web-lotoAI-1/ias/lototurf/server.py" ]; then
+            echo "ADVERTENCIA: No se encontró server.py en el directorio de Lototurf"
+            # Renombrar Server-Lototurf.py a server.py si existe
+            if [ -f "/var/www/tienda-web-lotoAI-1/ias/lototurf/Server-Lototurf.py" ]; then
+              cp /var/www/tienda-web-lotoAI-1/ias/lototurf/Server-Lototurf.py /var/www/tienda-web-lotoAI-1/ias/lototurf/server.py
+            else
+              # Si no existe, copiar el archivo server_base.py
+              cp /var/www/tienda-web-lotoAI-1/IAs-Loto/server_base.py /var/www/tienda-web-lotoAI-1/ias/lototurf/server.py
+            fi
+          fi
+
+          # Verificar La Primitiva
+          if [ ! -f "/var/www/tienda-web-lotoAI-1/ias/primitiva/server.py" ]; then
+            echo "ADVERTENCIA: No se encontró server.py en el directorio de La Primitiva"
+            # Renombrar Server-Primitiva.py a server.py si existe
+            if [ -f "/var/www/tienda-web-lotoAI-1/ias/primitiva/Server-Primitiva.py" ]; then
+              cp /var/www/tienda-web-lotoAI-1/ias/primitiva/Server-Primitiva.py /var/www/tienda-web-lotoAI-1/ias/primitiva/server.py
+            else
+              # Si no existe, copiar el archivo server_base.py
+              cp /var/www/tienda-web-lotoAI-1/IAs-Loto/server_base.py /var/www/tienda-web-lotoAI-1/ias/primitiva/server.py
+            fi
+          fi
+
+          echo "=== Configurando entorno virtual para Python ==="
+          cd /var/www/tienda-web-lotoAI-1/ias
+          python3 -m venv venv
+          source venv/bin/activate
+          pip install flask flask-cors pyjwt tensorflow numpy pandas scikit-learn gunicorn
+
+          echo "=== Configurando supervisor para los servidores de IA ==="
+          # Euromillón
+          cat > /etc/supervisor/conf.d/euromillon.conf << EOF
+          [program:euromillon]
+          command=/var/www/tienda-web-lotoAI-1/ias/venv/bin/gunicorn -b 127.0.0.1:5001 server:app --timeout 120 --workers 2
+          directory=/var/www/tienda-web-lotoAI-1/ias/euromillon
+          user=www-data
+          autostart=true
+          autorestart=true
+          startsecs=10
+          startretries=3
+          stopasgroup=true
+          killasgroup=true
+          stderr_logfile=/var/log/supervisor/euromillon.err.log
+          stdout_logfile=/var/log/supervisor/euromillon.out.log
+          environment=PORT=5001,MODEL_PATH="modelo_euromillon.h5",SKIP_AUTH="false",JWT_SECRET="lotoia_super_secret_key_2024_verification_token",DATA_PATH="DataFrame_Euromillones.csv"
+          EOF
+
+          # Bonoloto
+          cat > /etc/supervisor/conf.d/bonoloto.conf << EOF
+          [program:bonoloto]
+          command=/var/www/tienda-web-lotoAI-1/ias/venv/bin/gunicorn -b 127.0.0.1:5002 server:app --timeout 120 --workers 2
+          directory=/var/www/tienda-web-lotoAI-1/ias/bonoloto
+          user=www-data
+          autostart=true
+          autorestart=true
+          startsecs=10
+          startretries=3
+          stopasgroup=true
+          killasgroup=true
+          stderr_logfile=/var/log/supervisor/bonoloto.err.log
+          stdout_logfile=/var/log/supervisor/bonoloto.out.log
+          environment=PORT=5002,MODEL_PATH="modelo_Bonoloto.h5",SKIP_AUTH="false",JWT_SECRET="lotoia_super_secret_key_2024_verification_token",DATA_PATH="DataFrame_Bonoloto.csv"
+          EOF
+
+          # EuroDreams
+          cat > /etc/supervisor/conf.d/eurodreams.conf << EOF
+          [program:eurodreams]
+          command=/var/www/tienda-web-lotoAI-1/ias/venv/bin/gunicorn -b 127.0.0.1:5003 server:app --timeout 120 --workers 2
+          directory=/var/www/tienda-web-lotoAI-1/ias/eurodreams
+          user=www-data
+          autostart=true
+          autorestart=true
+          startsecs=10
+          startretries=3
+          stopasgroup=true
+          killasgroup=true
+          stderr_logfile=/var/log/supervisor/eurodreams.err.log
+          stdout_logfile=/var/log/supervisor/eurodreams.out.log
+          environment=PORT=5003,MODEL_PATH="modelo_EuroDreams.h5",SKIP_AUTH="false",JWT_SECRET="lotoia_super_secret_key_2024_verification_token",DATA_PATH="DataFrame_EuroDreams.csv"
+          EOF
+
+          # El Gordo
+          cat > /etc/supervisor/conf.d/elgordo.conf << EOF
+          [program:elgordo]
+          command=/var/www/tienda-web-lotoAI-1/ias/venv/bin/gunicorn -b 127.0.0.1:5004 server:app --timeout 120 --workers 2
+          directory=/var/www/tienda-web-lotoAI-1/ias/gordo-primitiva
+          user=www-data
+          autostart=true
+          autorestart=true
+          startsecs=10
+          startretries=3
+          stopasgroup=true
+          killasgroup=true
+          stderr_logfile=/var/log/supervisor/elgordo.err.log
+          stdout_logfile=/var/log/supervisor/elgordo.out.log
+          environment=PORT=5004,MODEL_PATH="modelo_ElGordo.h5",SKIP_AUTH="false",JWT_SECRET="lotoia_super_secret_key_2024_verification_token",DATA_PATH="DataFrame_ElGordo.csv"
+          EOF
+
+          # Lotería Nacional
+          cat > /etc/supervisor/conf.d/loterianacional.conf << EOF
+          [program:loterianacional]
+          command=/var/www/tienda-web-lotoAI-1/ias/venv/bin/gunicorn -b 127.0.0.1:5005 server:app --timeout 120 --workers 2
+          directory=/var/www/tienda-web-lotoAI-1/ias/loteria-nacional
+          user=www-data
+          autostart=true
+          autorestart=true
+          startsecs=10
+          startretries=3
+          stopasgroup=true
+          killasgroup=true
+          stderr_logfile=/var/log/supervisor/loterianacional.err.log
+          stdout_logfile=/var/log/supervisor/loterianacional.out.log
+          environment=PORT=5005,MODEL_PATH="modelo_LoteriaNacional.h5",SKIP_AUTH="false",JWT_SECRET="lotoia_super_secret_key_2024_verification_token",DATA_PATH="DataFrame_LOTERIA NACIONAL.csv"
+          EOF
+
+          # Lototurf
+          cat > /etc/supervisor/conf.d/lototurf.conf << EOF
+          [program:lototurf]
+          command=/var/www/tienda-web-lotoAI-1/ias/venv/bin/gunicorn -b 127.0.0.1:5006 server:app --timeout 120 --workers 2
+          directory=/var/www/tienda-web-lotoAI-1/ias/lototurf
+          user=www-data
+          autostart=true
+          autorestart=true
+          startsecs=10
+          startretries=3
+          stopasgroup=true
+          killasgroup=true
+          stderr_logfile=/var/log/supervisor/lototurf.err.log
+          stdout_logfile=/var/log/supervisor/lototurf.out.log
+          environment=PORT=5006,MODEL_PATH="modelo_Lototurf.h5",SKIP_AUTH="false",JWT_SECRET="lotoia_super_secret_key_2024_verification_token",DATA_PATH="DataFrame_Lototurf.csv"
+          EOF
+
+          # La Primitiva
+          cat > /etc/supervisor/conf.d/primitiva.conf << EOF
+          [program:primitiva]
+          command=/var/www/tienda-web-lotoAI-1/ias/venv/bin/gunicorn -b 127.0.0.1:5007 server:app --timeout 120 --workers 2
+          directory=/var/www/tienda-web-lotoAI-1/ias/primitiva
+          user=www-data
+          autostart=true
+          autorestart=true
+          startsecs=10
+          startretries=3
+          stopasgroup=true
+          killasgroup=true
+          stderr_logfile=/var/log/supervisor/primitiva.err.log
+          stdout_logfile=/var/log/supervisor/primitiva.out.log
+          environment=PORT=5007,MODEL_PATH="modelo_primitiva.h5",SKIP_AUTH="false",JWT_SECRET="lotoia_super_secret_key_2024_verification_token",DATA_PATH="DataFrame_primitiva_guardado.csv"
+          EOF
+
+          echo "=== Configurando Nginx para las APIs de IA ==="
+          cat > /etc/nginx/sites-available/ia-apis << EOF
+          server {
+              listen 80;
+              server_name api.loto-ia.com;
+
+              location / {
+                  return 301 https://\$host\$request_uri;
+              }
+          }
+
+          server {
+              listen 443 ssl;
+              server_name api.loto-ia.com;
+
+              ssl_certificate /etc/letsencrypt/live/loto-ia.com/fullchain.pem;
+              ssl_certificate_key /etc/letsencrypt/live/loto-ia.com/privkey.pem;
+
+              # Configuración SSL
+              ssl_protocols TLSv1.2 TLSv1.3;
+              ssl_prefer_server_ciphers on;
+              ssl_ciphers ECDHE-RSA-AES256-GCM-SHA512:DHE-RSA-AES256-GCM-SHA512:ECDHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-SHA384;
+              ssl_session_timeout 1d;
+              ssl_session_cache shared:SSL:10m;
+              ssl_session_tickets off;
+              ssl_stapling on;
+              ssl_stapling_verify on;
+
+              # Cabeceras de seguridad
+              add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload";
+              add_header X-Frame-Options DENY;
+              add_header X-Content-Type-Options nosniff;
+              add_header X-XSS-Protection "1; mode=block";
+
+              # Configuración global de proxy
+              proxy_connect_timeout 300s;
+              proxy_send_timeout 300s;
+              proxy_read_timeout 300s;
+              proxy_buffers 8 16k;
+              proxy_buffer_size 32k;
+
+              # Euromillón
+              location /euromillon/ {
+                  proxy_pass http://127.0.0.1:5001/;
+                  proxy_set_header Host \$host;
+                  proxy_set_header X-Real-IP \$remote_addr;
+                  proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+                  proxy_set_header X-Forwarded-Proto \$scheme;
+                  proxy_intercept_errors on;
+                  error_page 500 502 503 504 /50x.html;
+              }
+
+              # Bonoloto
+              location /bonoloto/ {
+                  proxy_pass http://127.0.0.1:5002/;
+                  proxy_set_header Host \$host;
+                  proxy_set_header X-Real-IP \$remote_addr;
+                  proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+                  proxy_set_header X-Forwarded-Proto \$scheme;
+                  proxy_intercept_errors on;
+                  error_page 500 502 503 504 /50x.html;
+              }
+
+              # EuroDreams
+              location /eurodreams/ {
+                  proxy_pass http://127.0.0.1:5003/;
+                  proxy_set_header Host \$host;
+                  proxy_set_header X-Real-IP \$remote_addr;
+                  proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+                  proxy_set_header X-Forwarded-Proto \$scheme;
+                  proxy_intercept_errors on;
+                  error_page 500 502 503 504 /50x.html;
+              }
+
+              # El Gordo
+              location /gordo-primitiva/ {
+                  proxy_pass http://127.0.0.1:5004/;
+                  proxy_set_header Host \$host;
+                  proxy_set_header X-Real-IP \$remote_addr;
+                  proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+                  proxy_set_header X-Forwarded-Proto \$scheme;
+                  proxy_intercept_errors on;
+                  error_page 500 502 503 504 /50x.html;
+              }
+
+              # Lotería Nacional
+              location /loteria-nacional/ {
+                  proxy_pass http://127.0.0.1:5005/;
+                  proxy_set_header Host \$host;
+                  proxy_set_header X-Real-IP \$remote_addr;
+                  proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+                  proxy_set_header X-Forwarded-Proto \$scheme;
+                  proxy_intercept_errors on;
+                  error_page 500 502 503 504 /50x.html;
+              }
+
+              # Lototurf
+              location /lototurf/ {
+                  proxy_pass http://127.0.0.1:5006/;
+                  proxy_set_header Host \$host;
+                  proxy_set_header X-Real-IP \$remote_addr;
+                  proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+                  proxy_set_header X-Forwarded-Proto \$scheme;
+                  proxy_intercept_errors on;
+                  error_page 500 502 503 504 /50x.html;
+              }
+
+              # La Primitiva
+              location /primitiva/ {
+                  proxy_pass http://127.0.0.1:5007/;
+                  proxy_set_header Host \$host;
+                  proxy_set_header X-Real-IP \$remote_addr;
+                  proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+                  proxy_set_header X-Forwarded-Proto \$scheme;
+                  proxy_intercept_errors on;
+                  error_page 500 502 503 504 /50x.html;
+              }
+          }
+          EOF
+
+          # Crear página de error personalizada
+          mkdir -p /var/www/html
+          cat > /var/www/html/50x.html << EOF
+          <!DOCTYPE html>
+          <html>
+          <head>
+              <title>Error del Servidor - LotoIA</title>
+              <style>
+                  body {
+                      font-family: Arial, sans-serif;
+                      text-align: center;
+                      padding: 50px;
+                      background-color: #f5f5f5;
+                  }
+                  .container {
+                      background-color: white;
+                      border-radius: 10px;
+                      padding: 30px;
+                      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+                      max-width: 600px;
+                      margin: 0 auto;
+                  }
+                  h1 {
+                      color: #e74c3c;
+                  }
+                  p {
+                      color: #333;
+                      line-height: 1.6;
+                  }
+                  .btn {
+                      display: inline-block;
+                      background-color: #3498db;
+                      color: white;
+                      padding: 10px 20px;
+                      text-decoration: none;
+                      border-radius: 5px;
+                      margin-top: 20px;
+                  }
+              </style>
+          </head>
+          <body>
+              <div class="container">
+                  <h1>Error del Servidor</h1>
+                  <p>Lo sentimos, pero el servidor está experimentando dificultades para procesar tu solicitud en este momento.</p>
+                  <p>Nuestro equipo técnico ha sido notificado y está trabajando para resolver el problema lo antes posible.</p>
+                  <p>Por favor, inténtalo de nuevo más tarde.</p>
+                  <a href="https://loto-ia.com" class="btn">Volver a la página principal</a>
+              </div>
+          </body>
+          </html>
+          EOF
+
+          # Habilitar el sitio
+          ln -sf /etc/nginx/sites-available/ia-apis /etc/nginx/sites-enabled/
+
+          # Verificar la configuración de Nginx
+          nginx -t
+
+          echo "=== Verificando modelos y datos históricos ==="
+          # Verificar Euromillón
+          if [ ! -f "/var/www/tienda-web-lotoAI-1/ias/euromillon/modelo_euromillon.h5" ]; then
+            echo "ADVERTENCIA: No se encontró el modelo de Euromillón"
+          fi
+          if [ ! -f "/var/www/tienda-web-lotoAI-1/ias/euromillon/DataFrame_Euromillones.csv" ]; then
+            echo "ADVERTENCIA: No se encontraron los datos históricos de Euromillón"
+          fi
+
+          # Verificar Bonoloto
+          if [ ! -f "/var/www/tienda-web-lotoAI-1/ias/bonoloto/modelo_Bonoloto.h5" ]; then
+            echo "ADVERTENCIA: No se encontró el modelo de Bonoloto"
+          fi
+          if [ ! -f "/var/www/tienda-web-lotoAI-1/ias/bonoloto/DataFrame_Bonoloto.csv" ]; then
+            echo "ADVERTENCIA: No se encontraron los datos históricos de Bonoloto"
+          fi
+
+          # Verificar EuroDreams
+          if [ ! -f "/var/www/tienda-web-lotoAI-1/ias/eurodreams/modelo_EuroDreams.h5" ]; then
+            echo "ADVERTENCIA: No se encontró el modelo de EuroDreams"
+          fi
+          if [ ! -f "/var/www/tienda-web-lotoAI-1/ias/eurodreams/DataFrame_EuroDreams.csv" ]; then
+            echo "ADVERTENCIA: No se encontraron los datos históricos de EuroDreams"
+          fi
+
+          # Verificar El Gordo
+          if [ ! -f "/var/www/tienda-web-lotoAI-1/ias/gordo-primitiva/modelo_ElGordo.h5" ]; then
+            echo "ADVERTENCIA: No se encontró el modelo de El Gordo"
+          fi
+          if [ ! -f "/var/www/tienda-web-lotoAI-1/ias/gordo-primitiva/DataFrame_ElGordo.csv" ]; then
+            echo "ADVERTENCIA: No se encontraron los datos históricos de El Gordo"
+          fi
+
+          # Verificar Lotería Nacional
+          if [ ! -f "/var/www/tienda-web-lotoAI-1/ias/loteria-nacional/modelo_LoteriaNacional.h5" ]; then
+            echo "ADVERTENCIA: No se encontró el modelo de Lotería Nacional"
+          fi
+          if [ ! -f "/var/www/tienda-web-lotoAI-1/ias/loteria-nacional/DataFrame_LOTERIA NACIONAL.csv" ]; then
+            echo "ADVERTENCIA: No se encontraron los datos históricos de Lotería Nacional"
+          fi
+
+          # Verificar Lototurf
+          if [ ! -f "/var/www/tienda-web-lotoAI-1/ias/lototurf/modelo_Lototurf.h5" ]; then
+            echo "ADVERTENCIA: No se encontró el modelo de Lototurf"
+          fi
+          if [ ! -f "/var/www/tienda-web-lotoAI-1/ias/lototurf/DataFrame_Lototurf.csv" ]; then
+            echo "ADVERTENCIA: No se encontraron los datos históricos de Lototurf"
+          fi
+
+          # Verificar La Primitiva
+          if [ ! -f "/var/www/tienda-web-lotoAI-1/ias/primitiva/modelo_primitiva.h5" ]; then
+            echo "ADVERTENCIA: No se encontró el modelo de La Primitiva"
+          fi
+          if [ ! -f "/var/www/tienda-web-lotoAI-1/ias/primitiva/DataFrame_primitiva_guardado.csv" ]; then
+            echo "ADVERTENCIA: No se encontraron los datos históricos de La Primitiva"
+          fi
+
+          echo "=== Reiniciando servicios ==="
+          systemctl restart supervisor
+          systemctl restart nginx
+
+          echo "=== Reiniciando PM2 ==="
+          cd /var/www/tienda-web-lotoAI-1
+          pm2 restart loto-ia-backend || pm2 start npm --name "loto-ia-backend" -- run start:prod
+          pm2 restart loto-ia-ssr || pm2 start npm --name "loto-ia-ssr" -- run serve:ssr
+          pm2 save
+
+          echo "=== DESPLIEGUE COMPLETADO ==="
+
+          echo "Deployment completed successfully!"
+
+    - name: Deployment success notification
+      if: success()
+      run: |
+        echo "::notice::Deployment completed successfully! The application has been deployed to the VPS."
+
+    - name: Deployment failure notification
+      if: failure()
+      run: |
+        echo "::error::Deployment failed! Please check the logs for more information."
