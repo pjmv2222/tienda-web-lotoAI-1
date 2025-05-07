@@ -75,6 +75,51 @@ jobs:
           cd /var/www/tienda-web-lotoAI-1/src/backend
           npm ci
 
+          echo "=== Verificando y actualizando configuración de producción ==="
+          if [ -f .env.production ]; then
+            echo "Copiando .env.production a .env..."
+            cp .env.production .env
+            echo "Archivo .env actualizado correctamente con las claves de producción."
+
+            # Verificar que las claves de Stripe sean las de producción
+            if grep -q "STRIPE_SECRET_KEY=sk_live_" .env; then
+              echo "✅ Clave secreta de Stripe en modo producción verificada."
+            else
+              echo "⚠️ ADVERTENCIA: La clave secreta de Stripe no parece estar en modo producción."
+              # Actualizar las claves de Stripe a producción
+              sed -i 's|STRIPE_SECRET_KEY=sk_test_.*|STRIPE_SECRET_KEY=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|g' .env
+            fi
+
+            # Verificar el modo de PayPal
+            if grep -q "PAYPAL_MODE=live" .env; then
+              echo "✅ PayPal configurado en modo producción."
+            else
+              echo "⚠️ ADVERTENCIA: PayPal no está configurado en modo producción."
+              # Actualizar el modo de PayPal a producción
+              sed -i 's/PAYPAL_MODE=sandbox/PAYPAL_MODE=live/g' .env
+              echo "✅ Modo de PayPal actualizado a producción."
+            fi
+          else
+            echo "ADVERTENCIA: El archivo .env.production no existe."
+            if [ ! -f .env ]; then
+              echo "ADVERTENCIA: El archivo .env tampoco existe. Creando uno básico..."
+              echo "NODE_ENV=production" > .env
+              echo "PORT=3001" >> .env
+              echo "FRONTEND_URL=https://loto-ia.com" >> .env
+              echo "STRIPE_SECRET_KEY=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" >> .env
+              echo "STRIPE_WEBHOOK_SECRET=whsec_7e6dc08bbfafd3969b5730c348ab2e8aeb3f290daf1cac6ddc78424310dc856e" >> .env
+              echo "PAYPAL_MODE=live" >> .env
+              echo "✅ Archivo .env creado con configuración básica y claves de Stripe en modo producción."
+            else
+              echo "El archivo .env existe. Verificando y actualizando claves de producción..."
+              # Actualizar las claves de Stripe a producción
+              sed -i 's|STRIPE_SECRET_KEY=sk_test_.*|STRIPE_SECRET_KEY=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|g' .env
+              # Actualizar el modo de PayPal a producción
+              sed -i 's/PAYPAL_MODE=sandbox/PAYPAL_MODE=live/g' .env
+              echo "✅ Claves de Stripe y modo de PayPal actualizados a producción."
+            fi
+          fi
+
           echo "=== Creando directorio para IAs si no existe ==="
           mkdir -p /var/www/tienda-web-lotoAI-1/ias
 
