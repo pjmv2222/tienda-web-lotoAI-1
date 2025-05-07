@@ -4,7 +4,10 @@ import { CommonModule } from '@angular/common';
 import { EuromillonesBallComponent } from '../../components/euromillones-ball/euromillones-ball.component';
 import { AuthService } from '../../services/auth.service';
 import { SubscriptionService } from '../../services/subscription.service';
+import { PredictionService } from '../../services/prediction.service';
+import { HttpClient } from '@angular/common/http';
 import { Subscription } from 'rxjs';
+import { LotteryBaseComponent } from '../../shared/lottery-base.component';
 
 @Component({
   selector: 'app-euromillon',
@@ -13,7 +16,9 @@ import { Subscription } from 'rxjs';
   templateUrl: './euromillon.component.html',
   styleUrl: './euromillon.component.css'
 })
-export class EuromillonComponent implements OnInit, OnDestroy {
+export class EuromillonComponent extends LotteryBaseComponent implements OnInit, OnDestroy {
+  protected override gameId: string = 'euromillones';
+
   isLoggedIn = false;
   hasBasicPlan = false;
   hasMonthlyPlan = false;
@@ -21,13 +26,24 @@ export class EuromillonComponent implements OnInit, OnDestroy {
   private mutationObserver: MutationObserver | null = null;
   private subscriptions: Subscription[] = [];
 
+  // Variables para las predicciones
+  isGeneratingPrediction = false;
+  predictionResult: any = null;
+  predictionError: string | null = null;
+
   constructor(
     private router: Router,
     private authService: AuthService,
-    private subscriptionService: SubscriptionService
-  ) {}
+    private subscriptionService: SubscriptionService,
+    private predictionService: PredictionService,
+    http: HttpClient
+  ) {
+    super(http);
+  }
 
-  ngOnInit(): void {
+  override ngOnInit(): void {
+    super.ngOnInit(); // Llama al método de la clase base para cargar la información del bote
+
     // Verificar si el usuario está autenticado
     this.isLoggedIn = !!this.authService.currentUserValue;
 
@@ -219,9 +235,38 @@ export class EuromillonComponent implements OnInit, OnDestroy {
   }
 
   generateBasicPrediction(): void {
-    // Lógica para generar una predicción básica
-    console.log('Generando predicción básica...');
-    // Aquí se implementaría la lógica para llamar al servicio de predicciones
+    // Verificar si el usuario tiene un plan activo
+    if (!this.hasBasicPlan && !this.hasMonthlyPlan && !this.hasProPlan) {
+      console.log('El usuario no tiene un plan activo');
+      this.predictionError = 'Necesitas una suscripción activa para generar predicciones';
+      return;
+    }
+
+    // Indicar que se está generando la predicción
+    this.isGeneratingPrediction = true;
+    this.predictionResult = null;
+    this.predictionError = null;
+
+    console.log('Generando predicción básica para Euromillón...');
+
+    // Llamar al servicio de predicciones
+    this.predictionService.generatePrediction('euromillon').subscribe({
+      next: (response) => {
+        console.log('Predicción generada:', response);
+        this.isGeneratingPrediction = false;
+
+        if (response.success) {
+          this.predictionResult = response.prediction;
+        } else {
+          this.predictionError = response.error || 'Error al generar la predicción';
+        }
+      },
+      error: (error) => {
+        console.error('Error al generar la predicción:', error);
+        this.isGeneratingPrediction = false;
+        this.predictionError = 'Error al comunicarse con el servidor de predicciones';
+      }
+    });
   }
 
   showSubscriptionOptions(): void {
@@ -342,4 +387,8 @@ export class EuromillonComponent implements OnInit, OnDestroy {
       this.checkBallsRendering();
     }, 5000);
   }
+
+
+
+
 }

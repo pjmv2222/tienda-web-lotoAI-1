@@ -5,6 +5,8 @@ import { AuthService } from '../../services/auth.service';
 import { SubscriptionService } from '../../services/subscription.service';
 import { Subscription } from 'rxjs';
 import { EuromillonesBallComponent } from '../../components/euromillones-ball/euromillones-ball.component';
+import { HttpClient } from '@angular/common/http';
+import { LotteryBaseComponent } from '../../shared/lottery-base.component';
 
 @Component({
   selector: 'app-bonoloto',
@@ -13,7 +15,9 @@ import { EuromillonesBallComponent } from '../../components/euromillones-ball/eu
   templateUrl: './bonoloto.component.html',
   styleUrl: './bonoloto.component.css'
 })
-export class BonolotoComponent implements OnInit, OnDestroy {
+export class BonolotoComponent extends LotteryBaseComponent implements OnInit, OnDestroy {
+  protected override gameId: string = 'bonoloto';
+
   isLoggedIn = false;
   hasBasicPlan = false;
   hasMonthlyPlan = false;
@@ -23,10 +27,15 @@ export class BonolotoComponent implements OnInit, OnDestroy {
   constructor(
     private router: Router,
     private authService: AuthService,
-    private subscriptionService: SubscriptionService
-  ) {}
+    private subscriptionService: SubscriptionService,
+    http: HttpClient
+  ) {
+    super(http);
+  }
 
-  ngOnInit(): void {
+  override ngOnInit(): void {
+    super.ngOnInit(); // Llama al método de la clase base para cargar la información del bote
+
     // Verificar si el usuario está autenticado
     this.isLoggedIn = !!this.authService.currentUserValue;
 

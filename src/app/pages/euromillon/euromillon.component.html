@@ -16,11 +16,11 @@
         <h1 class="lottery-title">Euromillones</h1>
         <div class="jackpot-info">
           <span class="jackpot-label">Bote actual:</span>
-          <span class="jackpot-amount">17 MILLONES €</span>
+          <span class="jackpot-amount">{{ boteActual }}</span>
         </div>
         <div class="next-draw">
           <span class="next-draw-label">Próximo sorteo:</span>
-          <span class="next-draw-date">Martes, 9 de abril</span>
+          <span class="next-draw-date">{{ proximoSorteo }}</span>
         </div>
       </div>
     </div>
@@ -53,10 +53,32 @@
               <li>Estrellas optimizadas</li>
             </ul>
           </div>
-          <button class="generate-btn" *ngIf="hasBasicPlan" (click)="generateBasicPrediction()">Generar</button>
+          <button class="generate-btn" *ngIf="hasBasicPlan" (click)="generateBasicPrediction()" [disabled]="isGeneratingPrediction">
+            <span *ngIf="!isGeneratingPrediction">Generar</span>
+            <span *ngIf="isGeneratingPrediction">Generando...</span>
+          </button>
           <button class="generate-btn" *ngIf="!hasBasicPlan" (click)="showSubscriptionOptions()">Suscribir</button>
           <p *ngIf="!isLoggedIn" class="login-required">Necesitas <a routerLink="/auth/login">iniciar sesión</a> para generar predicciones</p>
           <p *ngIf="isLoggedIn && !hasBasicPlan" class="login-required">Necesitas <a routerLink="/planes">suscribir este plan</a> para generar predicciones</p>
+
+          <!-- Mostrar error si hay alguno -->
+          <p *ngIf="predictionError" class="prediction-error">{{ predictionError }}</p>
+
+          <!-- Mostrar resultado de la predicción -->
+          <div *ngIf="predictionResult" class="prediction-result">
+            <h4>Tu predicción:</h4>
+            <div class="prediction-numbers">
+              <div class="lottery-balls-container">
+                <div *ngFor="let number of predictionResult.numeros" class="ball-wrapper">
+                  <app-euromillones-ball [number]="number" [size]="60" [staticRendering]="true"></app-euromillones-ball>
+                </div>
+                <span class="lottery-balls-separator">+</span>
+                <div *ngFor="let star of predictionResult.estrellas" class="ball-wrapper">
+                  <app-euromillones-ball [number]="star" [type]="'star'" [size]="60" [staticRendering]="true"></app-euromillones-ball>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- Plan Mensual -->
