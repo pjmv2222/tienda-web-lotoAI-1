@@ -5,6 +5,9 @@ import { AuthService } from '../../services/auth.service';
 import { SubscriptionService } from '../../services/subscription.service';
 import { Subscription } from 'rxjs';
 import { EuromillonesBallComponent } from '../../components/euromillones-ball/euromillones-ball.component';
+import { HttpClient } from '@angular/common/http';
+import { LotteryBaseComponent } from '../../shared/lottery-base.component';
+import { PredictionService } from '../../services/prediction.service';
 
 @Component({
   selector: 'app-eurodreams',
@@ -13,20 +16,33 @@ import { EuromillonesBallComponent } from '../../components/euromillones-ball/eu
   templateUrl: './eurodreams.component.html',
   styleUrl: './eurodreams.component.css'
 })
-export class EurodreamsComponent implements OnInit, OnDestroy {
+export class EurodreamsComponent extends LotteryBaseComponent implements OnInit, OnDestroy {
+  protected override gameId: string = 'eurodreams';
+
   isLoggedIn = false;
   hasBasicPlan = false;
   hasMonthlyPlan = false;
   hasProPlan = false;
   private subscriptions: Subscription[] = [];
 
+  // Variables para las predicciones
+  isGeneratingPrediction = false;
+  predictionResult: any = null;
+  predictionError: string | null = null;
+
   constructor(
     private router: Router,
     private authService: AuthService,
-    private subscriptionService: SubscriptionService
-  ) {}
+    private subscriptionService: SubscriptionService,
+    http: HttpClient,
+    predictionService: PredictionService
+  ) {
+    super(http, predictionService);
+  }
 
-  ngOnInit(): void {
+  override ngOnInit(): void {
+    super.ngOnInit(); // Llama al método de la clase base para cargar la información del bote
+
     // Verificar si el usuario está autenticado
     this.isLoggedIn = !!this.authService.currentUserValue;
 
@@ -62,9 +78,44 @@ export class EurodreamsComponent implements OnInit, OnDestroy {
   }
 
   generateBasicPrediction(): void {
-    // Lógica para generar una predicción básica
-    console.log('Generando predicción básica...');
-    // Aquí se implementaría la lógica para llamar al servicio de predicciones
+    // Verificar si el usuario tiene un plan activo
+    if (!this.hasBasicPlan && !this.hasMonthlyPlan && !this.hasProPlan) {
+      console.log('El usuario no tiene un plan activo');
+      this.predictionError = 'Necesitas una suscripción activa para generar predicciones';
+      return;
+    }
+
+    // Indicar que se está generando la predicción
+    this.isGeneratingPrediction = true;
+    this.predictionResult = null;
+    this.predictionError = null;
+
+    console.log('Generando predicción básica para EuroDreams...');
+
+    // Llamar al servicio de predicciones
+    if (this.predictionService) {
+      this.predictionService.generatePrediction('eurodreams').subscribe({
+        next: (response) => {
+          console.log('Predicción generada:', response);
+          this.isGeneratingPrediction = false;
+
+          if (response.success) {
+            this.predictionResult = response.prediction;
+          } else {
+            this.predictionError = response.error || 'Error al generar la predicción';
+          }
+        },
+        error: (error) => {
+          console.error('Error al generar la predicción:', error);
+          this.isGeneratingPrediction = false;
+          this.predictionError = 'Error al comunicarse con el servidor de predicciones';
+        }
+      });
+    } else {
+      console.error('El servicio de predicciones no está disponible');
+      this.isGeneratingPrediction = false;
+      this.predictionError = 'El servicio de predicciones no está disponible';
+    }
   }
 
   showSubscriptionOptions(): void {

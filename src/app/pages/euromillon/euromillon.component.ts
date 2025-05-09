@@ -35,10 +35,10 @@ export class EuromillonComponent extends LotteryBaseComponent implements OnInit,
     private router: Router,
     private authService: AuthService,
     private subscriptionService: SubscriptionService,
-    private predictionService: PredictionService,
+    predictionService: PredictionService,
     http: HttpClient
   ) {
-    super(http);
+    super(http, predictionService);
   }
 
   override ngOnInit(): void {
@@ -250,23 +250,29 @@ export class EuromillonComponent extends LotteryBaseComponent implements OnInit,
     console.log('Generando predicción básica para Euromillón...');
 
     // Llamar al servicio de predicciones
-    this.predictionService.generatePrediction('euromillon').subscribe({
-      next: (response) => {
-        console.log('Predicción generada:', response);
-        this.isGeneratingPrediction = false;
+    if (this.predictionService) {
+      this.predictionService.generatePrediction('euromillon').subscribe({
+        next: (response) => {
+          console.log('Predicción generada:', response);
+          this.isGeneratingPrediction = false;
 
-        if (response.success) {
-          this.predictionResult = response.prediction;
-        } else {
-          this.predictionError = response.error || 'Error al generar la predicción';
+          if (response.success) {
+            this.predictionResult = response.prediction;
+          } else {
+            this.predictionError = response.error || 'Error al generar la predicción';
+          }
+        },
+        error: (error) => {
+          console.error('Error al generar la predicción:', error);
+          this.isGeneratingPrediction = false;
+          this.predictionError = 'Error al comunicarse con el servidor de predicciones';
         }
-      },
-      error: (error) => {
-        console.error('Error al generar la predicción:', error);
-        this.isGeneratingPrediction = false;
-        this.predictionError = 'Error al comunicarse con el servidor de predicciones';
-      }
-    });
+      });
+    } else {
+      console.error('El servicio de predicciones no está disponible');
+      this.isGeneratingPrediction = false;
+      this.predictionError = 'El servicio de predicciones no está disponible';
+    }
   }
 
   showSubscriptionOptions(): void {

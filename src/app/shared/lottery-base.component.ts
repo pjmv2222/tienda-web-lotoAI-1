@@ -1,5 +1,6 @@
 import { Directive, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { PredictionService } from '../services/prediction.service';
 
 /**
  * Componente base para todas las páginas de lotería
@@ -25,7 +26,10 @@ export abstract class LotteryBaseComponent implements OnInit {
     'lototurf': [0] // Domingo
   };
 
-  constructor(protected http: HttpClient) {}
+  constructor(
+    protected http: HttpClient,
+    protected predictionService?: PredictionService
+  ) {}
 
   ngOnInit(): void {
     this.cargarInformacionBote();
@@ -61,13 +65,13 @@ export abstract class LotteryBaseComponent implements OnInit {
   private calcularProximoSorteo(): string {
     const hoy = new Date();
     let proximoSorteo = new Date(hoy);
-    
+
     // Obtener los días de sorteo para este juego
     const diasSorteo = this.sorteosDias[this.gameId] || [1]; // Por defecto, lunes
-    
+
     // Día actual de la semana (0 = domingo, 1 = lunes, ...)
     const diaSemana = hoy.getDay();
-    
+
     // Encontrar el próximo día de sorteo
     let diasHastaProximo = 7;
     for (const diaSorteo of diasSorteo) {
@@ -76,26 +80,26 @@ export abstract class LotteryBaseComponent implements OnInit {
         diasHastaProximo = diff;
       }
     }
-    
+
     // Si no encontramos un día futuro, tomamos el primer día de sorteo de la próxima semana
     if (diasHastaProximo === 7) {
       diasHastaProximo = 7 + diasSorteo[0] - diaSemana;
     }
-    
+
     // Establecer la fecha del próximo sorteo
     proximoSorteo.setDate(hoy.getDate() + diasHastaProximo);
-    
+
     // Formatear la fecha
-    const opciones: Intl.DateTimeFormatOptions = { 
-      weekday: 'long', 
-      day: 'numeric', 
-      month: 'long' 
+    const opciones: Intl.DateTimeFormatOptions = {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long'
     };
     let fechaFormateada = proximoSorteo.toLocaleDateString('es-ES', opciones);
-    
+
     // Capitalizar primera letra
     fechaFormateada = fechaFormateada.charAt(0).toUpperCase() + fechaFormateada.slice(1);
-    
+
     return fechaFormateada;
   }
 }
