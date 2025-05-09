@@ -10,6 +10,7 @@ const auth_routes_1 = __importDefault(require("./routes/auth.routes"));
 const product_routes_1 = __importDefault(require("./routes/product.routes"));
 const webhook_routes_1 = __importDefault(require("./routes/webhook.routes"));
 const payment_routes_1 = __importDefault(require("./routes/payment.routes"));
+const prediction_routes_1 = __importDefault(require("./routes/prediction.routes"));
 // Cargar variables de entorno
 dotenv_1.default.config();
 // Verificar que las variables de entorno se han cargado correctamente
@@ -88,6 +89,9 @@ app.use('/api/payments', payment_routes_1.default);
 // Montar rutas de webhook
 // Nota: La ruta principal para webhooks de Stripe ya está configurada arriba con express.raw
 app.use('/api/webhooks', webhook_routes_1.default);
+// Montar rutas de predicciones
+console.log('Montando rutas de predicciones en /api/predictions');
+app.use('/api/predictions', prediction_routes_1.default);
 // Manejador de rutas no encontradas
 app.use((req, res) => {
     const timestamp = new Date().toISOString();

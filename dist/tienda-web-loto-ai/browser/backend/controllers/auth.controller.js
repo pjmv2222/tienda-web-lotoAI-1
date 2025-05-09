@@ -347,10 +347,17 @@ class AuthController {
                     // Actualizar el estado de verificación del usuario
                     yield user_model_1.UserModel.verifyEmail(email);
                     console.log('Email verificado correctamente');
-                    // Enviar respuesta exitosa
+                    // Generar un nuevo token de autenticación para el usuario
+                    const authToken = auth_service_1.AuthService.generateToken(user.id);
+                    console.log('Token de autenticación generado para el usuario verificado');
+                    // Excluir información sensible
+                    const { password_hash } = user, userWithoutPassword = __rest(user, ["password_hash"]);
+                    // Enviar respuesta exitosa con token y datos del usuario
                     res.json({
                         success: true,
-                        message: 'Email verificado correctamente'
+                        message: 'Email verificado correctamente',
+                        token: authToken,
+                        user: userWithoutPassword
                     });
                 }
                 catch (jwtError) {
