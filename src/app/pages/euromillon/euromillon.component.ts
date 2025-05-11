@@ -4,7 +4,7 @@ import { CommonModule } from '@angular/common';
 import { EuromillonesBallComponent } from '../../components/euromillones-ball/euromillones-ball.component';
 import { AuthService } from '../../services/auth.service';
 import { SubscriptionService } from '../../services/subscription.service';
-import { PredictionService } from '../../services/prediction.service';
+import { PredictionService, PredictionResponse } from '../../services/prediction.service';
 import { HttpClient } from '@angular/common/http';
 import { Subscription } from 'rxjs';
 import { LotteryBaseComponent } from '../../shared/lottery-base.component';
@@ -28,7 +28,7 @@ export class EuromillonComponent extends LotteryBaseComponent implements OnInit,
 
   // Variables para las predicciones
   isGeneratingPrediction = false;
-  predictionResult: any = null;
+  predictionResult: PredictionResponse['prediction'] | null = null;
   predictionError: string | null = null;
 
   constructor(
@@ -252,7 +252,7 @@ export class EuromillonComponent extends LotteryBaseComponent implements OnInit,
     // Llamar al servicio de predicciones
     if (this.predictionService) {
       this.predictionService.generatePrediction('euromillon').subscribe({
-        next: (response) => {
+        next: (response: PredictionResponse) => {
           console.log('Predicción generada:', response);
           this.isGeneratingPrediction = false;
 
@@ -262,7 +262,7 @@ export class EuromillonComponent extends LotteryBaseComponent implements OnInit,
             this.predictionError = response.error || 'Error al generar la predicción';
           }
         },
-        error: (error) => {
+        error: (error: any) => {
           console.error('Error al generar la predicción:', error);
           this.isGeneratingPrediction = false;
           this.predictionError = 'Error al comunicarse con el servidor de predicciones';

@@ -70,9 +70,11 @@
             <div class="prediction-numbers">
               <div class="lottery-number-large-container">
                 <div class="lottery-number-row large">
-                  <div *ngFor="let digit of predictionResult.numero" class="ball-wrapper">
-                    <app-euromillones-ball [number]="digit" [size]="60" [staticRendering]="true" [customColor]="'#D32F2F'"></app-euromillones-ball>
-                  </div>
+                  <ng-container *ngIf="predictionResult?.numero">
+                    <div *ngFor="let digit of predictionResult.numero" class="ball-wrapper">
+                      <app-euromillones-ball [number]="digit" [size]="60" [staticRendering]="true" [customColor]="'#D32F2F'"></app-euromillones-ball>
+                    </div>
+                  </ng-container>
                 </div>
                 <div class="prize-info">Número recomendado</div>
               </div>

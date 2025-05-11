@@ -1,6 +1,6 @@
 import { Directive, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { PredictionService } from '../services/prediction.service';
+import { PredictionService, PredictionResponse } from '../services/prediction.service';
 
 /**
  * Componente base para todas las páginas de lotería

@@ -1,8 +1,10 @@
 export const environment = {
   production: true,
-  apiUrl: 'https://loto-ia.com/api',
+  apiUrl: 'https://loto-ia.com',
   frontendUrl: 'https://loto-ia.com',
   wsUrl: 'wss://loto-ia.com',
+  iaApiUrl: 'https://api.loto-ia.com',
+  useMockData: false,  // En producción no usamos datos simulados
   stripe: {
     publishableKey: 'pk_live_51RBei6LtOcaQbzqZAthZkp98WlLfW4G7KXfUhABtLnVZzKLFPvR8BqgYZuDC6LdIvRTt3Q4vlnyAwAyVgHDyZ5kN00JDj3QVnt'
   },
