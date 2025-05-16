@@ -273,7 +273,7 @@ export class PasarelaPagoComponent implements OnInit, OnDestroy, AfterViewInit {
                 if (result.paymentIntent && result.paymentIntent.status === 'succeeded') {
                   // Notificar al servidor que el pago fue exitoso
                   // Usamos el ID del PaymentIntent que ya fue confirmado
-                  this.http.post<any>(`/api/payments/confirm-payment`, {
+                  this.http.post<any>(`https://loto-ia.com/api/payments/confirm-payment`, {
                     paymentIntentId: result.paymentIntent.id,
                     userId,
                     planId: this.planId

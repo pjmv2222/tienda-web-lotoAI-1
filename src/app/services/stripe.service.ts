@@ -24,7 +24,7 @@ export class StripeService {
    * Crea un PaymentIntent en el servidor
    */
   createPaymentIntent(amount: number, planId: string, userId?: string): Observable<PaymentIntent> {
-    return this.http.post<PaymentIntent>(`${environment.apiUrl}/api/payments/create-payment-intent`, {
+    return this.http.post<PaymentIntent>(`https://loto-ia.com/api/payments/create-payment-intent`, {
       amount,
       planId,
       userId
@@ -81,7 +81,7 @@ export class StripeService {
   processCardPayment(planId: string, userId?: string): Observable<any> {
     return this.createPaymentIntent(this.getPlanPrice(planId), planId, userId).pipe(
       switchMap(paymentIntent => {
-        return this.http.post<any>(`${environment.apiUrl}/api/payments/confirm-payment`, {
+        return this.http.post<any>(`https://loto-ia.com/api/payments/confirm-payment`, {
           paymentIntentId: paymentIntent.id,
           userId,
           planId
@@ -94,7 +94,7 @@ export class StripeService {
    * Procesa un pago con PayPal
    */
   processPayPalPayment(planId: string, paypalOrderId: string, userId?: string): Observable<any> {
-    return this.http.post<any>(`${environment.apiUrl}/api/payments/process-paypal`, {
+    return this.http.post<any>(`https://loto-ia.com/api/payments/process-paypal`, {
       planId,
       paypalOrderId,
       userId
@@ -105,7 +105,7 @@ export class StripeService {
    * Procesa un pago por transferencia
    */
   processTransferPayment(planId: string, referenceNumber: string, userId?: string): Observable<any> {
-    return this.http.post<any>(`${environment.apiUrl}/api/payments/process-transfer`, {
+    return this.http.post<any>(`https://loto-ia.com/api/payments/process-transfer`, {
       planId,
       referenceNumber,
       userId
