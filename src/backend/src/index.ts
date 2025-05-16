@@ -5,6 +5,7 @@ import authRoutes from './routes/auth.routes';
 import productRoutes from './routes/product.routes';
 import webhookRoutes from './routes/webhook.routes';
 import paymentRoutes from './routes/payment.routes';
+import predictionRoutes from './routes/prediction.routes';
 
 // Cargar variables de entorno
 dotenv.config();
@@ -99,6 +100,10 @@ app.use('/api/payments', paymentRoutes);
 // Montar rutas de webhook
 // Nota: La ruta principal para webhooks de Stripe ya está configurada arriba con express.raw
 app.use('/api/webhooks', webhookRoutes);
+
+// Montar rutas de predicciones
+console.log('Montando rutas de predicciones en /api/predictions');
+app.use('/api/predictions', predictionRoutes);
 
 // Manejador de rutas no encontradas
 app.use((req, res) => {

@@ -232,6 +232,41 @@
   text-decoration: none;
 }
 
+/* Estilos para las predicciones */
+.prediction-error {
+  color: #e63946;
+  font-size: 14px;
+  margin-top: 10px;
+  text-align: center;
+}
+
+.prediction-result {
+  margin-top: 20px;
+  padding: 15px;
+  background-color: #f0f8ff;
+  border-radius: 8px;
+  border: 1px solid #0a7abf;
+}
+
+.prediction-result h4 {
+  color: #0a7abf;
+  margin-top: 0;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+.prediction-numbers {
+  display: flex;
+  justify-content: center;
+}
+
+.prediction-numbers .lottery-balls-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+
 /* How It Works Styles */
 .how-it-works {
   margin-bottom: 40px;
