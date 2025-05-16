@@ -1,6 +1,6 @@
 export const environment = {
   production: true,
-  apiUrl: 'https://loto-ia.com',
+  apiUrl: 'https://loto-ia.com/api',
   frontendUrl: 'https://loto-ia.com',
   wsUrl: 'wss://loto-ia.com',
   iaApiUrl: 'https://api.loto-ia.com',
