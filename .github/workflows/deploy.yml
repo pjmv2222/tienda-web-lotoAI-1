@@ -26,12 +26,25 @@ jobs:
         cache: 'npm'
 
     - name: Install dependencies
-      run: npm ci
+      run: |
+        # Instalar Angular CLI globalmente
+        npm install -g @angular/cli
+        # Instalar dependencias del proyecto
+        npm ci
 
     - name: Build application
       run: |
-        npm run build:ssr
+        # Asegurarse de que se está utilizando la configuración de producción
+        echo "Compilando frontend con SSR en modo producción..."
+        ng build --configuration production
+        ng run tienda-web-loto-ai:server:production
+
+        echo "Compilando backend..."
         npm run build:backend
+
+        echo "Verificando archivos compilados..."
+        echo "Buscando referencias a localhost:3001 en archivos compilados..."
+        ! grep -r "localhost:3001" dist/tienda-web-loto-ai/browser/ || echo "ADVERTENCIA: Se encontraron referencias a localhost:3001 en los archivos compilados."
 
     # Usar una única acción para el despliegue completo
     - name: Deploy to VPS

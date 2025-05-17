@@ -16,7 +16,7 @@
     "serve:ssr": "node dist/tienda-web-loto-ai/server/main.js",
     "serve:ssr:prod": "set NODE_ENV=production&& node dist/tienda-web-loto-ai/server/main.js",
     "serve:ssr:dev": "ng run tienda-web-loto-ai:serve-ssr:development",
-    "build:ssr": "ng build && ng run tienda-web-loto-ai:server",
+    "build:ssr": "ng build --configuration production && ng run tienda-web-loto-ai:server:production",
     "prerender": "ng run tienda-web-loto-ai:prerender",
     "clean": "rimraf dist node_modules package-lock.json",
     "clean:all": "npm run clean && cd src/backend && npm run clean",
