@@ -52,6 +52,9 @@ export class PasarelaPagoComponent implements OnInit, OnDestroy, AfterViewInit {
   // Elementos de PayPal
   @ViewChild('paypalButtonContainer') paypalButtonContainer!: ElementRef;
 
+  // Indica si hay una transacción de PayPal activa
+  hasActivePayPalTransaction: boolean = false;
+
   // Planes disponibles
   planes: Plan[] = [
     {
@@ -117,6 +120,43 @@ export class PasarelaPagoComponent implements OnInit, OnDestroy, AfterViewInit {
       this.planId = params['plan'];
       this.loadPlanInfo();
     });
+
+    // Verificar si hay una transacción de PayPal activa
+    this.checkActivePayPalTransaction();
+  }
+
+  /**
+   * Verifica si hay una transacción de PayPal activa en localStorage
+   */
+  private checkActivePayPalTransaction(): void {
+    const transactionData = localStorage.getItem('paypal_transaction');
+    if (transactionData) {
+      try {
+        const transaction = JSON.parse(transactionData);
+        // Verificar si la transacción no ha expirado (24 horas)
+        const now = Date.now();
+        const transactionTime = transaction.timestamp || 0;
+        const hoursSinceTransaction = (now - transactionTime) / (1000 * 60 * 60);
+
+        if (hoursSinceTransaction < 24) {
+          this.hasActivePayPalTransaction = true;
+          // Si hay una transacción activa, seleccionar automáticamente PayPal como método de pago
+          if (transaction.planId === this.planId) {
+            this.selectedPaymentMethod = 'paypal';
+          }
+        } else {
+          // La transacción ha expirado, eliminarla
+          localStorage.removeItem('paypal_transaction');
+          this.hasActivePayPalTransaction = false;
+        }
+      } catch (e) {
+        console.error('Error al procesar la transacción de PayPal:', e);
+        localStorage.removeItem('paypal_transaction');
+        this.hasActivePayPalTransaction = false;
+      }
+    } else {
+      this.hasActivePayPalTransaction = false;
+    }
   }
 
   ngOnDestroy(): void {
@@ -366,22 +406,92 @@ export class PasarelaPagoComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     this.isLoading = true;
-    this.cardError = 'Redirigiendo a PayPal...';
+    this.cardError = 'Abriendo PayPal en una nueva ventana...';
 
     // Construir la URL de PayPal para pago directo - versión más simple
     const amount = this.planInfo.price;
     const planName = encodeURIComponent(this.planInfo.name);
 
+    // Generar un ID de transacción único para seguimiento
+    const transactionId = 'txn_' + Date.now() + '_' + Math.floor(Math.random() * 1000000);
+
+    // Guardar información de la transacción en localStorage para recuperarla después
+    localStorage.setItem('paypal_transaction', JSON.stringify({
+      transactionId: transactionId,
+      planId: this.planId,
+      amount: amount,
+      timestamp: Date.now()
+    }));
+
+    // Actualizar el estado de la transacción activa
+    this.hasActivePayPalTransaction = true;
+
     // Usar la URL de PayPal.me que es más sencilla y directa
     // Esta URL redirecciona al usuario a PayPal para completar el pago
     const paypalUrl = `https://www.paypal.com/paypalme/lotoIA/${amount}EUR`;
 
-    console.log('Redirigiendo a PayPal con URL:', paypalUrl);
+    console.log('Abriendo PayPal con URL:', paypalUrl);
 
-    // Redireccionar a PayPal
-    setTimeout(() => {
-      window.location.href = paypalUrl;
-    }, 1000);
+    // Abrir PayPal en una nueva ventana/pestaña
+    const paypalWindow = window.open(paypalUrl, '_blank');
+
+    // Si el navegador bloquea la ventana emergente, ofrecer un enlace alternativo
+    if (!paypalWindow || paypalWindow.closed || typeof paypalWindow.closed === 'undefined') {
+      this.isLoading = false;
+      this.cardError = 'El navegador ha bloqueado la ventana emergente. Por favor, haz clic en el botón de nuevo para intentarlo o habilita las ventanas emergentes.';
+    } else {
+      // Iniciar un temporizador para verificar periódicamente si el usuario ha completado el pago
+      this.startPaymentCheckTimer();
+    }
+  }
+
+  /**
+   * Inicia un temporizador para verificar si el usuario ha completado el pago en PayPal
+   */
+  private startPaymentCheckTimer(): void {
+    this.isLoading = false;
+    this.cardError = 'Esperando confirmación de pago. Por favor, completa el pago en la ventana de PayPal y luego haz clic en "He completado el pago" cuando termines.';
+  }
+
+  /**
+   * Verifica si el pago de PayPal ha sido completado
+   */
+  checkPayPalPaymentStatus(): void {
+    this.isLoading = true;
+
+    // Recuperar información de la transacción
+    const transactionData = localStorage.getItem('paypal_transaction');
+    if (!transactionData) {
+      this.isLoading = false;
+      this.cardError = 'No se encontró información de la transacción.';
+      return;
+    }
+
+    const transaction = JSON.parse(transactionData);
+
+    // Notificar al servidor sobre el pago
+    this.http.post<any>(`${environment.apiUrl}/payments/verify-paypal-payment`, {
+      transactionId: transaction.transactionId,
+      planId: transaction.planId,
+      amount: transaction.amount,
+      userId: this.getUserId()
+    }).subscribe({
+      next: (result) => {
+        this.isLoading = false;
+        if (result.success) {
+          // Limpiar datos de la transacción
+          localStorage.removeItem('paypal_transaction');
+          // Navegar a la página de confirmación
+          this.navigateToConfirmation();
+        } else {
+          this.cardError = 'No se pudo verificar el pago. Por favor, contacta con soporte si ya has realizado el pago.';
+        }
+      },
+      error: (error) => {
+        this.isLoading = false;
+        this.cardError = 'Error al verificar el pago: ' + (error.message || 'Intente nuevamente');
+      }
+    });
   }
 
   processTransferPayment(): void {

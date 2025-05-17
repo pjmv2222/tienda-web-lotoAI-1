@@ -90,7 +90,13 @@
               <img src="assets/img/paypal.png" alt="PayPal" class="paypal-button-img">
               <span>Pagar con PayPal</span>
             </button>
-            <p class="paypal-info">Serás redirigido a PayPal para completar tu pago de forma segura.</p>
+            <p class="paypal-info">Se abrirá PayPal en una nueva ventana para completar tu pago de forma segura.</p>
+
+            <!-- Botón para confirmar pago completado -->
+            <button *ngIf="hasActivePayPalTransaction" class="paypal-confirm-button" (click)="checkPayPalPaymentStatus()">
+              <i class="fas fa-check-circle"></i>
+              <span>He completado el pago</span>
+            </button>
           </div>
           <div class="error-message" *ngIf="cardError">{{ cardError }}</div>
         </div>

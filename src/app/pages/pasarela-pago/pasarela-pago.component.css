@@ -270,10 +270,33 @@ input:focus {
   width: 100%;
   max-width: 300px;
   transition: background-color 0.3s ease;
+  margin-bottom: 10px;
 }
 
 .paypal-direct-button:hover {
   background-color: #005ea6;
+}
+
+.paypal-confirm-button {
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 25px;
+  padding: 12px 24px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 300px;
+  transition: background-color 0.3s ease;
+  margin-top: 15px;
+}
+
+.paypal-confirm-button:hover {
+  background-color: #218838;
 }
 
 .paypal-button-img {
