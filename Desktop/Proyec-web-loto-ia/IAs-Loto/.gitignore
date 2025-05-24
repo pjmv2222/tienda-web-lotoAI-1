@@ -1,0 +1,63 @@
+# Archivo .gitignore para la carpeta IAs-Loto
+# Excluye archivos no esenciales pero mantiene los necesarios para el funcionamiento de las IAs
+
+# Excluir archivos temporales y de sistema
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+.DS_Store
+Thumbs.db
+
+# Excluir archivos de documentación y recursos que no son esenciales
+*.pdf
+*.docx
+*.pptx
+*.xlsx
+*.xls
+*.doc
+*.ppt
+
+# Excluir directorios específicos con datos históricos o archivos de prueba
+**/Historico-Resultados-**/
+**/PRUEVAS SCRIPT/
+**/PDF-DESCARGADOS/
+**/NAVIDAD/
+**/loteria_nacional_descargas/
+
+# Excluir archivos de log y temporales
+*.log
+*.tmp
+*.temp
+*.bak
+
+# NO excluir archivos esenciales para el funcionamiento de las IAs
+!*.py
+!*.h5
+!*.csv
+!README.md
+!requirements.txt
+
+# Asegurarse de incluir los servidores y scripts principales
+!server.py
+!**/server.py
+!test_api.py
+!**/test_api.py
+!check_files.py
+!**/check_files.py
+
+# Asegurarse de incluir los modelos entrenados
+!modelo_*.h5
+!**/modelo_*.h5
+
+# Asegurarse de incluir los datos históricos necesarios
+!DataFrame_*.csv
+!**/DataFrame_*.csv
