@@ -1,0 +1,128 @@
+<header class="modulo-cabecera">
+    <!-- División superior -->
+    <div class="cabecera-superior">
+        <div class="logo-container">
+            <a routerLink="/home">
+                <img src="/assets/img/lotoIA-LOGO.jpg" alt="LotoIA Logo" class="logo">
+            </a>
+        </div>
+        <div class="user-actions">
+            <!-- Mostrar esto solo si NO hay usuario autenticado -->
+            <div class="login-container" *ngIf="!currentUser">
+                <div class="input-group">
+                    <div class="inputs-row">
+                        <div class="input-field">
+                            <input type="text"
+                                   id="header-username"
+                                   name="header-username"
+                                   placeholder="Correo electrónico o NIF/NIE"
+                                   autocomplete="username"
+                                   class="login-input"
+                                   [(ngModel)]="username">
+                        </div>
+                        <div class="password-input-container">
+                            <input [type]="showPassword ? 'text' : 'password'"
+                                   id="header-password"
+                                   name="header-password"
+                                   placeholder="••••••••••••"
+                                   autocomplete="current-password"
+                                   class="login-input"
+                                   [(ngModel)]="password"
+                                   (keyup.enter)="login()">
+                            <button type="button" class="toggle-password-btn" (click)="togglePasswordVisibility()">
+                                <i class="fas" [class.fa-eye]="!showPassword" [class.fa-eye-slash]="showPassword"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="forgot-password">
+                        <a (click)="goToForgotPassword()" style="cursor: pointer;">¿Has olvidado tu contraseña?</a>
+                    </div>
+                    <div *ngIf="loginError" class="login-error">
+                        {{ loginError }}
+                        <div *ngIf="loginError.includes('¿Deseas registrarte?')" class="register-link">
+                            <a [routerLink]="['/auth/register']" class="btn-register">Registrarse</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="buttons-group">
+                    <button type="button" class="btn-entrar" (click)="login()" [disabled]="isLoggingIn">
+                        <div class="btn-entrar-content">
+                            <img src="/assets/img/boton_entrar.png" alt="Icono entrar" class="icon-entrar">
+                            <span *ngIf="!isLoggingIn">Entrar</span>
+                            <span *ngIf="isLoggingIn">
+                                <i class="fas fa-spinner fa-spin"></i>
+                            </span>
+                        </div>
+                    </button>
+                    <button type="button" class="btn-registro" routerLink="/registro">REGISTRO</button>
+                </div>
+            </div>
+
+            <!-- Mostrar esto solo si hay usuario autenticado -->
+            <div class="user-menu" *ngIf="currentUser">
+                <div class="user-info">
+                    <span>Bienvenido, {{currentUser.nombre}}</span>
+                </div>
+                <div class="user-actions-menu">
+                    <button class="btn-profile" routerLink="/profile">Mi Perfil</button>
+                    <button class="btn-logout" (click)="logout()">Cerrar Sesión</button>
+                </div>
+            </div>
+
+            <div class="idioma-container">
+                <label for="changeLanguage">Idioma</label>
+                <select id="changeLanguage" name="changeLanguage">
+                    <option value="es" selected>Castellano</option>
+                    <option value="ca">Català</option>
+                    <option value="en">English</option>
+                    <option value="eu">Euskera</option>
+                    <option value="gl">Galego</option>
+                    <option value="va">Valencià</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- División inferior con juegos (versión dinámica) -->
+    <div class="cabecera-inferior">
+        <div class="juegos-container">
+            <ul class="modulo-menu-juegos">
+                <li class="item-menu-juegos" *ngFor="let juego of juegos" [class]="juego">
+                    <a [routerLink]="getRouterLink(juego)" class="link-cabecera-juego">
+                        <img class="logotipo-juego-cabecera web" [src]="getImageUrl(juego)" [alt]="juego">
+                        <div class="bote-juego">
+                            <div class="valor">
+                                <ng-container *ngIf="!loading; else loadingTemplate">
+                                    {{ botes[juego] }}
+                                </ng-container>
+                                <ng-template #loadingTemplate>
+                                    Cargando...
+                                </ng-template>
+                            </div>
+                            <div class="formato" *ngIf="!loading && juego === 'euromillones' || juego === 'primitiva' || juego === 'gordo' || juego === 'bonoloto'">
+                                MILLONES
+                            </div>
+                            <div class="formato" *ngIf="!loading && juego === 'loterianacional'">
+                                1ER PREMIO A LA SERIE
+                            </div>
+                            <div class="formato" *ngIf="!loading && juego === 'eurodreams'">
+                                AL MES DURANTE 30 AÑOS
+                            </div>
+                        </div>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="header-line-container">
+        <div class="header-line-segment line-blue"></div>
+        <div class="header-line-segment line-green"></div>
+        <div class="header-line-segment line-brown"></div>
+        <div class="header-line-segment line-red"></div>
+        <div class="header-line-segment line-orange"></div>
+        <div class="header-line-segment line-purple"></div>
+        <div class="header-line-segment line-cyan"></div>
+    </div>
+</header>
+

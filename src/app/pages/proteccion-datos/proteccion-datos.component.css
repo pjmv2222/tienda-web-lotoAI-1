@@ -1,0 +1,158 @@
+.page-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+  font-size: 14px;
+}
+
+.breadcrumb a {
+  color: #0a7abf;
+  text-decoration: none;
+}
+
+.breadcrumb .separator {
+  margin: 0 8px;
+  color: #0a7abf;
+}
+
+.breadcrumb .current {
+  color: #0a7abf;
+}
+
+.content-container {
+  background-color: #fff;
+  border-radius: 5px;
+  padding: 30px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.title {
+  color: #007ac0;
+  margin-bottom: 30px;
+  font-size: 24px;
+  font-weight: bold;
+  text-align: center;
+}
+
+.intro {
+  font-size: 16px;
+  line-height: 1.6;
+  margin-bottom: 20px;
+}
+
+.info-section {
+  margin-bottom: 40px;
+}
+
+.info-section h2 {
+  color: #007ac0;
+  font-size: 20px;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.info-section h3 {
+  color: #333;
+  font-size: 18px;
+  margin-top: 25px;
+  margin-bottom: 15px;
+}
+
+.table-container {
+  overflow-x: auto;
+  margin-bottom: 20px;
+}
+
+.info-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 20px;
+}
+
+.info-table th,
+.info-table td {
+  padding: 12px 15px;
+  border: 1px solid #ddd;
+  text-align: left;
+}
+
+.info-table th {
+  background-color: #f5f5f5;
+  font-weight: bold;
+}
+
+.table-header {
+  font-weight: bold;
+  background-color: #f5f5f5;
+  width: 30%;
+}
+
+.contact-info {
+  background-color: #f9f9f9;
+  padding: 20px;
+  border-radius: 5px;
+  margin-bottom: 20px;
+}
+
+.contact-info p {
+  margin-bottom: 10px;
+}
+
+.contact-info ul {
+  margin-bottom: 0;
+}
+
+p {
+  margin-bottom: 15px;
+  line-height: 1.6;
+}
+
+ul, ol {
+  margin-bottom: 20px;
+  padding-left: 20px;
+}
+
+li {
+  margin-bottom: 8px;
+  line-height: 1.6;
+}
+
+strong {
+  font-weight: bold;
+}
+
+a {
+  color: #0a7abf;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .content-container {
+    padding: 20px;
+  }
+
+  .title {
+    font-size: 22px;
+  }
+
+  .info-section h2 {
+    font-size: 18px;
+  }
+
+  .info-table th,
+  .info-table td {
+    padding: 8px;
+  }
+}

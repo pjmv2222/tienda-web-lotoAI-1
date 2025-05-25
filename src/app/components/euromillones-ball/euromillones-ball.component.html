@@ -1,0 +1,8 @@
+<div class="ball-container">
+  <!-- Renderizado 3D cuando sea necesario -->
+  <div *ngIf="!useStaticImage" #ballContainer [style.width.px]="size" [style.height.px]="size"></div>
+
+  <!-- Imagen estática para ahorrar recursos WebGL -->
+  <img *ngIf="useStaticImage && staticImageUrl" [src]="staticImageUrl" [alt]="'Bola ' + number"
+       class="static-ball-image" loading="eager" decoding="sync">
+</div>

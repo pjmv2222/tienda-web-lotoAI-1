@@ -1,0 +1,89 @@
+# See https://docs.github.com/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
+
+# Compiled output
+# /dist (Comentado para incluir la carpeta dist en el repositorio)
+/tmp
+/out-tsc
+/bazel-out
+
+# Node
+/node_modules
+npm-debug.log
+yarn-error.log
+
+# IDEs and editors
+.idea/
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+
+# Visual Studio Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.history/*
+
+# Miscellaneous
+/.angular/cache
+.sass-cache/
+/connect.lock
+/coverage
+/libpeerconnection.log
+testem.log
+/typings
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Scraper specific
+/scraper/node_modules
+/scraper/dist
+.specstory/
+
+# Environment variables and secrets
+.env
+*.env
+.env.*
+!.env.example
+/server/.env
+/src/backend/.env
+/src/backend/.env.*
+!src/backend/.env.example
+/src/backend/ecosystem.config.js
+
+# Logs
+logs
+*.log
+
+# IA models and large files
+*.h5
+*.hdf5
+*.pkl
+*.joblib
+*.model
+*.bin
+*.onnx
+*.pt
+*.pth
+*.weights
+*.tflite
+*.pb
+*.savedmodel
+
+# Allow IA Python files but exclude large data files
+!IAs-Loto/**/*.py
+!IAs-Loto/**/*.json
+!IAs-Loto/server_base.py
+
+# Sensitive files - correctamente formateados
+secrets.txt
+env.stripe
+**/secrets.txt
+**/stripe_keys.txt
+**/api_keys.txt

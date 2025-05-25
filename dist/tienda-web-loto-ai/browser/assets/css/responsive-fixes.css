@@ -1,0 +1,172 @@
+/* Soluciones específicas para problemas de visualización en dispositivos móviles */
+
+/* Solución para contenedores con tamaños fijos */
+@media (max-width: 768px) {
+  /* Solución para el carrusel */
+  .carousel-container,
+  .multi-image-container,
+  .static-image {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    max-height: none !important;
+    padding: 10px !important;
+  }
+  
+  .image-item,
+  .static-image img {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    max-height: 150px !important;
+    margin-bottom: 10px !important;
+  }
+  
+  /* Solución para las bolas de lotería */
+  .lottery-balls-container,
+  .number-balls {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    padding: 10px !important;
+    gap: 5px !important;
+  }
+  
+  .ball-wrapper {
+    width: auto !important;
+    height: auto !important;
+    max-width: 60px !important;
+    max-height: 60px !important;
+    margin: 5px !important;
+  }
+  
+  /* Forzar tamaño de las bolas */
+  app-euromillones-ball,
+  app-primitiva-ball,
+  app-bonoloto-ball,
+  app-gordo-primitiva-ball,
+  app-eurodreams-ball,
+  app-loteria-nacional-ball,
+  app-lototurf-ball {
+    width: 50px !important;
+    height: 50px !important;
+    max-width: 50px !important;
+    max-height: 50px !important;
+  }
+  
+  /* Solución para los contenedores de opciones */
+  .options-container {
+    flex-direction: column !important;
+    width: 100% !important;
+    gap: 15px !important;
+  }
+  
+  .option-card {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+  }
+  
+  /* Solución para los contenedores de estadísticas */
+  .stats-container {
+    flex-direction: column !important;
+    width: 100% !important;
+  }
+  
+  .stats-card {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-bottom: 15px !important;
+  }
+  
+  /* Solución para los pasos */
+  .steps-container {
+    flex-direction: column !important;
+    width: 100% !important;
+  }
+  
+  .step {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-bottom: 15px !important;
+  }
+  
+  /* Solución para los contenedores de resultados */
+  .result-card {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+  
+  /* Solución para las preguntas frecuentes */
+  .faq-container {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+  
+  /* Solución para el contenedor principal */
+  .page-container,
+  .content-container {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 10px !important;
+    margin: 0 !important;
+  }
+}
+
+/* Solución para dispositivos muy pequeños */
+@media (max-width: 480px) {
+  .ball-wrapper {
+    width: auto !important;
+    height: auto !important;
+    max-width: 40px !important;
+    max-height: 40px !important;
+    margin: 3px !important;
+  }
+  
+  app-euromillones-ball,
+  app-primitiva-ball,
+  app-bonoloto-ball,
+  app-gordo-primitiva-ball,
+  app-eurodreams-ball,
+  app-loteria-nacional-ball,
+  app-lototurf-ball {
+    width: 35px !important;
+    height: 35px !important;
+    max-width: 35px !important;
+    max-height: 35px !important;
+  }
+  
+  .lottery-balls-container,
+  .number-balls {
+    gap: 3px !important;
+    padding: 5px !important;
+  }
+  
+  .lottery-balls-separator {
+    font-size: 16px !important;
+    margin: 0 3px !important;
+  }
+}
+
+/* Solución para el problema de overflow horizontal */
+body, html {
+  overflow-x: hidden !important;
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+/* Solución para contenedores con posición absoluta */
+.position-absolute {
+  position: relative !important;
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+/* Solución para imágenes */
+img {
+  max-width: 100% !important;
+  height: auto !important;
+}

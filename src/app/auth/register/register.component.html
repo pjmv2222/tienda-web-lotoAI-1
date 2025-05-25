@@ -1,0 +1,123 @@
+<div class="register-container">
+  <div class="register-card">
+    <h2>Crear Cuenta</h2>
+    
+    <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
+      <div class="form-group">
+        <label for="nombre">Nombre *</label>
+        <input 
+          type="text" 
+          id="nombre"
+          formControlName="nombre" 
+          class="form-control"
+          [ngClass]="{ 'is-invalid': submitted && f['nombre'].errors }" 
+        />
+        <div *ngIf="submitted && f['nombre'].errors" class="invalid-feedback">
+          <div *ngIf="f['nombre'].errors['required']">El nombre es requerido</div>
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label for="apellido">Apellido *</label>
+        <input 
+          type="text" 
+          id="apellido"
+          formControlName="apellido" 
+          class="form-control"
+          [ngClass]="{ 'is-invalid': submitted && f['apellido'].errors }" 
+        />
+        <div *ngIf="submitted && f['apellido'].errors" class="invalid-feedback">
+          <div *ngIf="f['apellido'].errors['required']">El apellido es requerido</div>
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label for="email">Correo electrónico *</label>
+        <input 
+          type="email" 
+          id="email"
+          formControlName="email" 
+          class="form-control"
+          [ngClass]="{ 'is-invalid': submitted && f['email'].errors }" 
+        />
+        <div *ngIf="submitted && f['email'].errors" class="invalid-feedback">
+          <div *ngIf="f['email'].errors['required']">El correo electrónico es requerido</div>
+          <div *ngIf="f['email'].errors['email']">Ingrese un correo electrónico válido</div>
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label for="password">Contraseña *</label>
+        <div class="input-group">
+          <input 
+            [type]="showPassword ? 'text' : 'password'"
+            id="password"
+            formControlName="password" 
+            class="form-control"
+            [ngClass]="{ 'is-invalid': submitted && f['password'].errors }" 
+          />
+          <button 
+            type="button" 
+            class="btn btn-outline-secondary"
+            (click)="togglePasswordVisibility('password')">
+            <i class="fas" [ngClass]="showPassword ? 'fa-eye-slash' : 'fa-eye'"></i>
+          </button>
+        </div>
+        <div class="password-strength-bar" *ngIf="f['password'].value">
+          <div class="progress">
+            <div class="progress-bar" 
+                 [style.width.%]="passwordStrength"
+                 [style.background-color]="
+                   passwordStrength <= 25 ? '#dc3545' :
+                   passwordStrength <= 50 ? '#ffc107' :
+                   passwordStrength <= 75 ? '#17a2b8' : '#28a745'">
+            </div>
+          </div>
+          <small class="text-muted">
+            Fortaleza: {{
+              passwordStrength <= 25 ? 'Muy débil' :
+              passwordStrength <= 50 ? 'Débil' :
+              passwordStrength <= 75 ? 'Media' : 'Fuerte'
+            }}
+          </small>
+        </div>
+        <div *ngIf="submitted && f['password'].errors" class="invalid-feedback">
+          {{ getPasswordErrorMessage() }}
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="confirmPassword">Confirmar Contraseña *</label>
+        <div class="input-group">
+          <input 
+            [type]="showConfirmPassword ? 'text' : 'password'"
+            id="confirmPassword"
+            formControlName="confirmPassword" 
+            class="form-control"
+            [ngClass]="{ 'is-invalid': submitted && f['confirmPassword'].errors }" 
+          />
+          <button 
+            type="button" 
+            class="btn btn-outline-secondary"
+            (click)="togglePasswordVisibility('confirm')">
+            <i class="fas" [ngClass]="showConfirmPassword ? 'fa-eye-slash' : 'fa-eye'"></i>
+          </button>
+        </div>
+        <div *ngIf="submitted && f['confirmPassword'].errors" class="invalid-feedback">
+          <div *ngIf="f['confirmPassword'].errors['required']">La confirmación de contraseña es requerida</div>
+          <div *ngIf="f['confirmPassword'].errors['passwordMismatch']">Las contraseñas no coinciden</div>
+        </div>
+      </div>
+      
+      <div class="form-actions">
+        <button type="submit" [disabled]="loading" class="btn btn-primary">
+          <span *ngIf="loading" class="spinner-border spinner-border-sm mr-1"></span>
+          Registrarse
+        </button>
+        <a routerLink="/auth/login" class="btn btn-link">Cancelar</a>
+      </div>
+      
+      <div *ngIf="errorMessage" class="alert alert-danger mt-3">{{errorMessage}}</div>
+    </form>
+  </div>
+</div>
