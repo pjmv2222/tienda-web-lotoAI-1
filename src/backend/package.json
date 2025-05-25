@@ -21,9 +21,8 @@
     "backend"
   ],
   "author": "Your Name",
-  "license": "MIT",
-  "dependencies": {
-    "@sendgrid/mail": "^8.1.4",
+  "license": "MIT",  "dependencies": {
+    "@sendgrid/mail": "^8.1.5",
     "@types/pg": "^8.11.11",
     "axios": "^1.9.0",
     "bcrypt": "^5.1.1",
@@ -32,7 +31,7 @@
     "express": "^4.21.2",
     "node-mailjet": "^6.0.6",
     "pg": "^8.13.3",
-    "stripe": "^18.0.0"
+    "stripe": "^18.1.1"
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",
