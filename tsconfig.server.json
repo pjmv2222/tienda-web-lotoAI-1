@@ -11,11 +11,10 @@
     "server.ts",
     "src/app/app.config.server.ts"
   ],
-  "include": [
-    "src/backend/**/*"
-  ],
   "exclude": [
     "**/*.spec.ts",
-    "**/*.test.ts"
+    "**/*.test.ts",
+    "src/backend/**/*",
+    "backend/**/*"
   ]
 }

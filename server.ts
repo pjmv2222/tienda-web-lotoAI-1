@@ -7,22 +7,15 @@ import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import bootstrap from './src/main.server';
 
-// Importar rutas del backend directamente
+// Importar dependencias básicas
 import cors from 'cors';
 import dotenv from 'dotenv';
-import authRoutes from './src/backend/src/routes/auth.routes';
-import productRoutes from './src/backend/src/routes/product.routes';
-import webhookRoutes from './src/backend/src/routes/webhook.routes';
-import paymentRoutes from './src/backend/src/routes/payment.routes';
-import predictionRoutes from './src/backend/src/routes/prediction.routes';
-import subscriptionRoutes from './src/backend/src/routes/subscription.routes';
-import { pgPool, initializeTables } from './src/backend/src/config/database';
 
 // Cargar variables de entorno
 dotenv.config();
 
 // The Express app is exported so that it can be used by serverless Functions.
-export function app(): express.Express {
+export async function app(): Promise<express.Express> {
   const server = express();
   const distFolder = join(process.cwd(), 'dist/tienda-web-loto-ai/browser');
   const indexHtml = existsSync(join(distFolder, 'index.original.html'))
@@ -69,13 +62,26 @@ export function app(): express.Express {
     res.json({ status: 'OK', timestamp: new Date().toISOString() });
   });
 
-  // Montar rutas del backend
-  server.use('/api/auth', authRoutes);
-  server.use('/api/products', productRoutes);
-  server.use('/api/payments', paymentRoutes);
-  server.use('/api/webhooks', webhookRoutes);
-  server.use('/api/predictions', predictionRoutes);
-  server.use('/api/subscriptions', subscriptionRoutes);
+  // Cargar rutas del backend dinámicamente para evitar problemas de compilación SSR
+  try {
+    const { default: authRoutes } = await import('./src/backend/src/routes/auth.routes');
+    const { default: productRoutes } = await import('./src/backend/src/routes/product.routes');
+    const { default: webhookRoutes } = await import('./src/backend/src/routes/webhook.routes');
+    const { default: paymentRoutes } = await import('./src/backend/src/routes/payment.routes');
+    const { default: predictionRoutes } = await import('./src/backend/src/routes/prediction.routes');
+    const { default: subscriptionRoutes } = await import('./src/backend/src/routes/subscription.routes');
+
+    // Montar rutas del backend
+    server.use('/api/auth', authRoutes);
+    server.use('/api/products', productRoutes);
+    server.use('/api/payments', paymentRoutes);
+    server.use('/api/webhooks', webhookRoutes);
+    server.use('/api/predictions', predictionRoutes);
+    server.use('/api/subscriptions', subscriptionRoutes);
+  } catch (error) {
+    console.error('⚠️ Error cargando rutas del backend:', error);
+    // En caso de error, continuar sin las rutas del backend
+  }
 
   // Serve static files from /browser
   server.get('*.*', express.static(distFolder, {
@@ -108,11 +114,14 @@ function run(): void {
   const startServer = async () => {
     try {
       console.log('Inicializando base de datos PostgreSQL...');
+      
+      // Cargar configuración de base de datos dinámicamente
+      const { initializeTables } = await import('./src/backend/src/config/database');
       await initializeTables();
       console.log('✅ PostgreSQL inicializado correctamente');
       
       // Start up the Node server
-      const server = app();
+      const server = await app();
       server.listen(port, () => {
         console.log('='.repeat(50));
         console.log(`🚀 Servidor SSR + API iniciado en http://localhost:${port}`);
