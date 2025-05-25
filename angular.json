@@ -84,7 +84,37 @@
           "options": {
             "outputPath": "dist/tienda-web-loto-ai/server",
             "main": "server.ts",
-            "tsConfig": "tsconfig.server.json"
+            "tsConfig": "tsconfig.server.json",
+            "externalDependencies": [
+              "pg",
+              "pg-native",
+              "cors",
+              "multer",
+              "stripe",
+              "bcryptjs",
+              "jsonwebtoken",
+              "express",
+              "express-session",
+              "dotenv",
+              "bcrypt",
+              "node-mailjet",
+              "puppeteer",
+              "mock-aws-s3",
+              "aws-sdk",
+              "nock",
+              "@mapbox/node-pre-gyp",
+              "fsevents",
+              "chokidar",
+              "node-fetch",
+              "form-data",
+              "mime",
+              "sharp",
+              "canvas",
+              "encoding",
+              "bufferutil",
+              "utf-8-validate",
+              "supports-color"
+            ]
           },
           "configurations": {
             "production": {

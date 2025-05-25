@@ -1,5 +1,5 @@
 {
-  "extends": "./tsconfig.app.json",
+  "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "./out-tsc/server",
     "types": [
@@ -10,6 +10,9 @@
     "src/main.server.ts",
     "server.ts",
     "src/app/app.config.server.ts"
+  ],
+  "include": [
+    "src/backend/**/*"
   ],
   "exclude": [
     "**/*.spec.ts",

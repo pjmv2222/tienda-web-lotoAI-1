@@ -34,7 +34,9 @@
     "strictInputAccessModifiers": true,
     "strictNullChecks": true,
     "enableI18nLegacyMessageIdFormat": false
-  },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules"]
+  },  "include": ["src/**/*"],
+  "exclude": [
+    "node_modules",
+    "src/backend/**/*"
+  ]
 }
