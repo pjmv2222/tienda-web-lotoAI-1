@@ -4,7 +4,8 @@ import * as PayPalService from '../services/paypal.service';
 
 // Inicializar Stripe con la clave secreta
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2025-03-31.basil',
+  // Usar la versión de la API desde los tipos de Stripe para evitar errores de compilación
+  apiVersion: '2025-03-31.basil' as Stripe.LatestApiVersion,
 });
 
 // Obtener el precio según el plan
