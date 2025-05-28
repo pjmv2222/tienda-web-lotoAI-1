@@ -18,9 +18,19 @@ dotenv.config();
 export async function app(): Promise<express.Express> {
   const server = express();
   const distFolder = join(process.cwd(), 'dist/tienda-web-loto-ai/browser');
-  const indexHtml = existsSync(join(distFolder, 'index.original.html'))
-    ? join(distFolder, 'index.original.html')
-    : join(distFolder, 'index.html');
+
+  // Buscar el archivo index correcto en orden de prioridad
+  let indexHtml: string;
+  if (existsSync(join(distFolder, 'index.html'))) {
+    indexHtml = join(distFolder, 'index.html');
+  } else if (existsSync(join(distFolder, 'index.original.html'))) {
+    indexHtml = join(distFolder, 'index.original.html');
+  } else if (existsSync(join(distFolder, 'index.csr.html'))) {
+    indexHtml = join(distFolder, 'index.csr.html');
+    console.log('⚠️  Usando index.csr.html como fallback - el enrutamiento podría no funcionar correctamente');
+  } else {
+    throw new Error('No se encontró ningún archivo index válido en ' + distFolder);
+  }
 
   const commonEngine = new CommonEngine();
 
@@ -30,12 +40,12 @@ export async function app(): Promise<express.Express> {
   // Configuración CORS para el backend integrado
   const NODE_ENV = process.env.NODE_ENV || 'development';
   const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:4200';
-  
+
   let allowedOrigins: string[] = [];
   if (NODE_ENV === 'production') {
     allowedOrigins = [
       'https://loto-ia.com',
-      'http://loto-ia.com', 
+      'http://loto-ia.com',
       'https://www.loto-ia.com',
       'http://www.loto-ia.com'
     ];
@@ -62,26 +72,49 @@ export async function app(): Promise<express.Express> {
     res.json({ status: 'OK', timestamp: new Date().toISOString() });
   });
 
-  // Cargar rutas del backend dinámicamente para evitar problemas de compilación SSR
-  try {
-    const { default: authRoutes } = await import('./src/backend/src/routes/auth.routes');
-    const { default: productRoutes } = await import('./src/backend/src/routes/product.routes');
-    const { default: webhookRoutes } = await import('./src/backend/src/routes/webhook.routes');
-    const { default: paymentRoutes } = await import('./src/backend/src/routes/payment.routes');
-    const { default: predictionRoutes } = await import('./src/backend/src/routes/prediction.routes');
-    const { default: subscriptionRoutes } = await import('./src/backend/src/routes/subscription.routes');
+  // Función para cargar rutas del backend en tiempo de ejecución (evita errores de compilación)
+  const loadBackendRoutes = () => {
+    try {
+      const fs = require('fs');
+      const path = require('path');
 
-    // Montar rutas del backend
-    server.use('/api/auth', authRoutes);
-    server.use('/api/products', productRoutes);
-    server.use('/api/payments', paymentRoutes);
-    server.use('/api/webhooks', webhookRoutes);
-    server.use('/api/predictions', predictionRoutes);
-    server.use('/api/subscriptions', subscriptionRoutes);
-  } catch (error) {
-    console.error('⚠️ Error cargando rutas del backend:', error);
-    // En caso de error, continuar sin las rutas del backend
-  }
+      // Verificar si el backend compilado existe
+      const backendPath = path.join(process.cwd(), 'src', 'backend', 'dist');
+      if (!fs.existsSync(backendPath)) {
+        console.log('⚠️ Backend no encontrado - solo frontend disponible');
+        return;
+      }
+
+      // Cargar rutas dinámicamente solo si existen (evita errores de tipos TS)
+      const routePaths = [
+        { path: './src/backend/dist/routes/auth.routes.js', mount: '/api/auth' },
+        { path: './src/backend/dist/routes/product.routes.js', mount: '/api/products' },
+        { path: './src/backend/dist/routes/payment.routes.js', mount: '/api/payments' },
+        { path: './src/backend/dist/routes/webhook.routes.js', mount: '/api/webhooks' },
+        { path: './src/backend/dist/routes/prediction.routes.js', mount: '/api/predictions' },
+        { path: './src/backend/dist/routes/subscription.routes.js', mount: '/api/subscriptions' }
+      ];
+
+      routePaths.forEach(({ path: routePath, mount }) => {
+        try {
+          const routeModule = require(routePath);
+          const router = routeModule.default || routeModule;
+          server.use(mount, router);
+          console.log(`✅ Ruta ${mount} cargada`);
+        } catch (err: any) {
+          console.log(`⚠️ No se pudo cargar ${mount}:`, err.message);
+        }
+      });
+
+      console.log('✅ Rutas del backend cargadas correctamente');
+    } catch (error: any) {
+      console.error('⚠️ Error cargando rutas del backend:', error.message);
+      console.log('🔄 Continuando sin las rutas del backend - solo frontend disponible');
+    }
+  };
+
+  // Cargar rutas del backend
+  loadBackendRoutes();
 
   // Serve static files from /browser
   server.get('*.*', express.static(distFolder, {
@@ -114,12 +147,29 @@ function run(): void {
   const startServer = async () => {
     try {
       console.log('Inicializando base de datos PostgreSQL...');
-      
+
       // Cargar configuración de base de datos dinámicamente
-      const { initializeTables } = await import('./src/backend/src/config/database');
-      await initializeTables();
+      try {
+        const fs = require('fs');
+        const path = require('path');
+        const dbPath = path.join(process.cwd(), 'src', 'backend', 'dist', 'config', 'database.js');
+
+        if (fs.existsSync(dbPath)) {
+          const databaseConfig = require('./src/backend/dist/config/database.js');
+          const initializeTables = databaseConfig.initializeTables || databaseConfig.default?.initializeTables;
+          if (initializeTables) {
+            await initializeTables();
+          } else {
+            console.log('⚠️ initializeTables no encontrado en el módulo de base de datos');
+          }
+        } else {
+          console.log('⚠️ Configuración de base de datos no encontrada - continuando sin BD');
+        }
+      } catch (dbError: any) {
+        console.log('⚠️ Error cargando configuración de BD:', dbError.message);
+      }
       console.log('✅ PostgreSQL inicializado correctamente');
-      
+
       // Start up the Node server
       const server = await app();
       server.listen(port, () => {

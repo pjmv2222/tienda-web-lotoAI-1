@@ -1,0 +1,47 @@
+# Configuración de Cron para mantenimiento automático
+
+# Para configurar el cronjob en el servidor VPS, sigue estos pasos:
+
+1. Conéctate al servidor por SSH:
+   ```
+   ssh root@212.227.230.103
+   ```
+
+2. Asegúrate de que el script de mantenimiento tiene permisos de ejecución:
+   ```
+   cd /var/www/tienda-web-lotoAI-1
+   chmod +x mantenimiento-servidor.sh
+   ```
+
+3. Edita la tabla de cron del usuario root:
+   ```
+   crontab -e
+   ```
+
+4. Agrega una de estas líneas según la frecuencia que prefieras:
+
+   # Para ejecutar cada día a las 4:00 AM:
+   0 4 * * * /var/www/tienda-web-lotoAI-1/mantenimiento-servidor.sh
+
+   # Para ejecutar cada hora:
+   # 0 * * * * /var/www/tienda-web-lotoAI-1/mantenimiento-servidor.sh
+
+   # Para ejecutar cada 6 horas:
+   # 0 */6 * * * /var/www/tienda-web-lotoAI-1/mantenimiento-servidor.sh
+
+5. Guarda el archivo y sal del editor.
+
+6. Verifica que el cron se ha configurado correctamente:
+   ```
+   crontab -l
+   ```
+
+# Notas adicionales:
+
+- El script de mantenimiento registra su actividad en el archivo "mantenimiento.log"
+- Puedes ver los registros recientes con: `tail -n 50 /var/www/tienda-web-lotoAI-1/mantenimiento.log`
+- Si deseas ejecutar el mantenimiento manualmente:
+  ```
+  cd /var/www/tienda-web-lotoAI-1
+  ./mantenimiento-servidor.sh
+  ```
