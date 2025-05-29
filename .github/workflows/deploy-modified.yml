@@ -115,6 +115,7 @@ jobs:
 
             echo "Limpiando configuración de PM2 para evitar conflictos..."
             $PM2_PATH kill || echo "Advertencia: No se pudo limpiar PM2 completamente"
+            sleep 3
 
             echo "Verificando que el archivo .env.production existe..."
             cd /var/www/tienda-web-lotoAI-1/src/backend
@@ -122,7 +123,6 @@ jobs:
               echo "Copiando .env.production a .env..."
               cp .env.production .env
               echo "Archivo .env actualizado correctamente con las claves de producción."
-
               echo "✅ Configuración de pagos verificada."
             else
               echo "ADVERTENCIA: El archivo .env.production no existe."
@@ -137,95 +137,12 @@ jobs:
             cd /var/www/tienda-web-lotoAI-1
 
             echo "Verificando server-ssr.js..."
-            if [ -f server-ssr.js ]; then
-              file_size=$(stat -c%s "server-ssr.js")
-              echo "Tamaño de server-ssr.js: $file_size bytes"
-              if [ "$file_size" -lt 500 ]; then
-                echo "ADVERTENCIA: El archivo server-ssr.js parece estar incompleto (tamaño: $file_size bytes)"
-                echo "Creando una versión simplificada de server-ssr.js..."
-                cat > server-ssr.js << 'EOL'
-// server-ssr.js - Script de inicio del servidor Angular SSR
-const path = require('path');
-const fs = require('fs');
-
-// Configuración para evitar el error NG0908 con NgZone
-process.env.NODE_OPTIONS = '--no-zone';
-
-// Definir posibles rutas para el archivo .env
-const envPaths = [
-  '/var/www/tienda-web-lotoAI-1/src/backend/.env',
-  path.join(__dirname, 'src', 'backend', '.env')
-];
-
-// Intentar cargar el archivo .env si existe dotenv
-try {
-  const dotenv = require('dotenv');
-  let envLoaded = false;
-
-  for (const envPath of envPaths) {
-    try {
-      if (fs.existsSync(envPath)) {
-        console.log(`Cargando variables de entorno desde: ${envPath}`);
-        dotenv.config({ path: envPath });
-        envLoaded = true;
-        break;
-      }
-    } catch (err) {
-      console.error(`Error al verificar la ruta ${envPath}:`, err.message);
-    }
-  }
-
-  if (!envLoaded) {
-    console.warn('No se encontró ningún archivo .env. Se utilizarán las variables de entorno del sistema.');
-  }
-} catch (err) {
-  console.warn('No se pudo cargar dotenv:', err.message);
-  console.warn('Continuando sin cargar variables de entorno desde archivos .env');
-}
-
-// Valores por defecto para variables críticas
-if (!process.env.STRIPE_SECRET_KEY) {
-  process.env.STRIPE_SECRET_KEY = 'sk_dummy_key_for_ssr_startup_only';
-}
-if (!process.env.STRIPE_WEBHOOK_SECRET) {
-  process.env.STRIPE_WEBHOOK_SECRET = 'whsec_dummy_key_for_ssr_startup_only';
-}
-
-console.log('Iniciando servidor SSR...');
-
-// Importar y ejecutar el servidor
-require('./dist/tienda-web-loto-ai/server/main.js');
-EOL
-              fi
-            else
-              echo "ADVERTENCIA: No se encontró server-ssr.js. Creando el archivo..."
-              cat > server-ssr.js << 'EOL'
-// server-ssr.js - Script de inicio del servidor Angular SSR
-const path = require('path');
-
-// Configuración para evitar el error NG0908 con NgZone
-process.env.NODE_OPTIONS = '--no-zone';
-
-// Valores por defecto para variables críticas
-process.env.STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || 'sk_dummy_key_for_ssr_startup_only';
-process.env.STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET || 'whsec_dummy_key_for_ssr_startup_only';
-
-console.log('Iniciando servidor SSR...');
-
-// Importar y ejecutar el servidor
-require('./dist/tienda-web-loto-ai/server/main.js');
-EOL
+            if [ ! -f server-ssr.js ]; then
+              echo "ADVERTENCIA: No se encontró server-ssr.js. Usando el archivo del repositorio."
             fi
 
             echo "Creando archivo ecosystem-backend.config.js para el backend..."
-            cat > ecosystem-backend.config.js << 'EOL'
-// Cargar variables de entorno desde .env
-try {
-  require('dotenv').config({ path: './src/backend/.env' });
-} catch (err) {
-  console.warn('Error al cargar dotenv:', err.message);
-}
-
+            cat > ecosystem-backend.config.js << 'BACKEND_EOF'
 module.exports = {
   apps: [{
     name: 'loto-ia-backend',
@@ -241,14 +158,14 @@ module.exports = {
     }
   }]
 };
-EOL
+BACKEND_EOF
 
             echo "Usando archivo ecosystem-ssr.config.js existente del repositorio..."
             if [ -f ecosystem-ssr.config.js ]; then
               echo "Archivo ecosystem-ssr.config.js encontrado en el repositorio."
             else
               echo "ADVERTENCIA: No se encontró ecosystem-ssr.config.js. Creando configuración por defecto..."
-              cat > ecosystem-ssr.config.js << 'EOL'
+              cat > ecosystem-ssr.config.js << 'SSR_EOF'
 module.exports = {
   apps: [{
     name: 'loto-ia-ssr',
@@ -263,7 +180,7 @@ module.exports = {
     }
   }]
 };
-EOL
+SSR_EOF
             fi
 
             echo "Iniciando backend con ecosystem-backend.config.js..."
