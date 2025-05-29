@@ -1,4 +1,4 @@
-name: Deploy to VPS
+name: Deploy LotoIA to VPS
 
 on:
   push:
@@ -100,7 +100,7 @@ jobs:
           fi
           echo "Instalando dependencias del proyecto principal..."
           npm install
-          
+
           echo "Verificando/instalando dotenv específicamente..."
           npm list dotenv || npm install dotenv
 
@@ -112,6 +112,9 @@ jobs:
             echo "Deteniendo procesos existentes..."
             $PM2_PATH delete loto-ia-backend || echo "Advertencia: No se pudo detener loto-ia-backend"
             $PM2_PATH delete loto-ia-ssr || echo "Advertencia: No se pudo detener loto-ia-ssr"
+
+            echo "Limpiando configuración de PM2 para evitar conflictos..."
+            $PM2_PATH kill || echo "Advertencia: No se pudo limpiar PM2 completamente"
 
             echo "Verificando que el archivo .env.production existe..."
             cd /var/www/tienda-web-lotoAI-1/src/backend
@@ -130,7 +133,7 @@ jobs:
                 echo "✅ Usando configuración .env existente en el servidor."
               fi
             fi
-            
+
             cd /var/www/tienda-web-lotoAI-1
 
             echo "Verificando server-ssr.js..."
@@ -158,7 +161,7 @@ const envPaths = [
 try {
   const dotenv = require('dotenv');
   let envLoaded = false;
-  
+
   for (const envPath of envPaths) {
     try {
       if (fs.existsSync(envPath)) {
@@ -171,7 +174,7 @@ try {
       console.error(`Error al verificar la ruta ${envPath}:`, err.message);
     }
   }
-  
+
   if (!envLoaded) {
     console.warn('No se encontró ningún archivo .env. Se utilizarán las variables de entorno del sistema.');
   }
@@ -240,8 +243,12 @@ module.exports = {
 };
 EOL
 
-            echo "Creando archivo ecosystem-ssr.config.js para el servidor SSR..."
-            cat > ecosystem-ssr.config.js << 'EOL'
+            echo "Usando archivo ecosystem-ssr.config.js existente del repositorio..."
+            if [ -f ecosystem-ssr.config.js ]; then
+              echo "Archivo ecosystem-ssr.config.js encontrado en el repositorio."
+            else
+              echo "ADVERTENCIA: No se encontró ecosystem-ssr.config.js. Creando configuración por defecto..."
+              cat > ecosystem-ssr.config.js << 'EOL'
 module.exports = {
   apps: [{
     name: 'loto-ia-ssr',
@@ -257,6 +264,7 @@ module.exports = {
   }]
 };
 EOL
+            fi
 
             echo "Iniciando backend con ecosystem-backend.config.js..."
             $PM2_PATH start ecosystem-backend.config.js || echo "Advertencia: No se pudo iniciar con ecosystem-backend.config.js"
