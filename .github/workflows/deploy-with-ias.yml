@@ -1,0 +1,43 @@
+name: Deploy LotoIA with IAs to VPS
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'IAs-Loto/**'
+      - 'ias/**'
+  workflow_dispatch:
+
+jobs:
+  deploy-ias:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Deploy IAs to VPS
+      uses: appleboy/ssh-action@master
+      with:
+        host: 212.227.230.103
+        username: root
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        script: |
+          echo "=== DESPLIEGUE DE IAs ==="
+          cd /var/www/tienda-web-lotoAI-1
+
+          echo "Actualizando IAs desde GitHub..."
+          git fetch origin
+          git reset --hard origin/main
+
+          echo "IAs actualizadas correctamente"
+
+    - name: Deployment success notification
+      if: success()
+      run: |
+        echo "::notice::IAs deployed successfully!"
+
+    - name: Deployment failure notification
+      if: failure()
+      run: |
+        echo "::error::IAs deployment failed!"
