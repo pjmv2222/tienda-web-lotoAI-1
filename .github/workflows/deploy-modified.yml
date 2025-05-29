@@ -169,7 +169,7 @@ BACKEND_EOF
 module.exports = {
   apps: [{
     name: 'loto-ia-ssr',
-    script: 'server-ssr.js',
+    script: 'dist/tienda-web-loto-ai/server/main.js',
     instances: 1,
     autorestart: true,
     watch: false,
