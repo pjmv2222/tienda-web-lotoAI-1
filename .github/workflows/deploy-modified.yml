@@ -143,22 +143,22 @@ jobs:
 
             echo "Creando archivo ecosystem-backend.config.js para el backend..."
             cat > ecosystem-backend.config.js << 'BACKEND_EOF'
-module.exports = {
-  apps: [{
-    name: 'loto-ia-backend',
-    script: 'src/backend/dist/index.js',
-    instances: 1,
-    autorestart: true,
-    watch: false,
-    max_restarts: 10,
-    min_uptime: '20s',
-    env: {
-      NODE_ENV: 'production',
-      PORT: 3001
-    }
-  }]
-};
-BACKEND_EOF
+            module.exports = {
+              apps: [{
+                name: 'loto-ia-backend',
+                script: 'src/backend/dist/index.js',
+                instances: 1,
+                autorestart: true,
+                watch: false,
+                max_restarts: 10,
+                min_uptime: '20s',
+                env: {
+                  NODE_ENV: 'production',
+                  PORT: 3001
+                }
+              }]
+            };
+            BACKEND_EOF
 
             echo "Usando archivo ecosystem-ssr.config.js existente del repositorio..."
             if [ -f ecosystem-ssr.config.js ]; then
@@ -166,21 +166,21 @@ BACKEND_EOF
             else
               echo "ADVERTENCIA: No se encontró ecosystem-ssr.config.js. Creando configuración por defecto..."
               cat > ecosystem-ssr.config.js << 'SSR_EOF'
-module.exports = {
-  apps: [{
-    name: 'loto-ia-ssr',
-    script: 'dist/tienda-web-loto-ai/server/main.js',
-    instances: 1,
-    autorestart: true,
-    watch: false,
-    max_restarts: 10,
-    min_uptime: '20s',
-    env: {
-      NODE_ENV: 'production'
-    }
-  }]
-};
-SSR_EOF
+              module.exports = {
+                apps: [{
+                  name: 'loto-ia-ssr',
+                  script: 'dist/tienda-web-loto-ai/server/main.js',
+                  instances: 1,
+                  autorestart: true,
+                  watch: false,
+                  max_restarts: 10,
+                  min_uptime: '20s',
+                  env: {
+                    NODE_ENV: 'production'
+                  }
+                }]
+              };
+              SSR_EOF
             fi
 
             echo "Iniciando backend con ecosystem-backend.config.js..."
