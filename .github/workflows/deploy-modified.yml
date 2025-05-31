@@ -104,6 +104,11 @@ jobs:
           echo "Verificando/instalando dotenv específicamente..."
           npm list dotenv || npm install dotenv
 
+          echo "=== Compilando backend en el servidor ==="
+          echo "Compilando backend..."
+          npm run build:backend || { echo "Error: No se pudo compilar el backend"; exit 1; }
+          echo "✅ Backend compilado correctamente"
+
           echo "=== Reiniciando servicios con ecosystem.config.js ==="
           if [ -n "$PM2_PATH" ]; then
             echo "Listando procesos PM2 actuales:"
