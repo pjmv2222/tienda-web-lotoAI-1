@@ -141,15 +141,18 @@ jobs:
               echo "ADVERTENCIA: No se encontró server-ssr.js. Usando el archivo del repositorio."
             fi
 
-            echo "Creando archivo ecosystem-backend.config.js para el backend..."
-            echo "module.exports = { apps: [{ name: 'loto-ia-backend', script: 'src/backend/dist/index.js', instances: 1, autorestart: true, watch: false, max_restarts: 10, min_uptime: '20s', env: { NODE_ENV: 'production', PORT: 3001 } }] };" > ecosystem-backend.config.js
+            echo "Usando archivo ecosystem-backend.config.js del repositorio..."
+            if [ ! -f ecosystem-backend.config.js ]; then
+              echo "ADVERTENCIA: No se encontró ecosystem-backend.config.js. Creando configuración por defecto..."
+              echo "module.exports = { apps: [{ name: 'loto-ia-backend', script: 'src/backend/dist/index.js', instances: 1, autorestart: true, watch: false, max_restarts: 10, min_uptime: '20s', env: { NODE_ENV: 'production', PORT: 3001 } }] };" > ecosystem-backend.config.js
+            fi
 
             echo "Usando archivo ecosystem-ssr.config.js existente del repositorio..."
             if [ -f ecosystem-ssr.config.js ]; then
               echo "Archivo ecosystem-ssr.config.js encontrado en el repositorio."
             else
               echo "ADVERTENCIA: No se encontró ecosystem-ssr.config.js. Creando configuración por defecto..."
-              echo "module.exports = { apps: [{ name: 'loto-ia-ssr', script: 'dist/tienda-web-loto-ai/server/main.js', instances: 1, autorestart: true, watch: false, max_restarts: 10, min_uptime: '20s', env: { NODE_ENV: 'production' } }] };" > ecosystem-ssr.config.js
+              echo "module.exports = { apps: [{ name: 'loto-ia-ssr', script: 'server-ssr.js', instances: 1, autorestart: true, watch: false, max_restarts: 10, min_uptime: '20s', env: { NODE_ENV: 'production' } }] };" > ecosystem-ssr.config.js
             fi
 
             echo "Iniciando backend con ecosystem-backend.config.js..."
