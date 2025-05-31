@@ -39,7 +39,7 @@ if (!envLoaded) {
 if (!process.env.STRIPE_SECRET_KEY) {
   console.error('ADVERTENCIA: Variable de entorno STRIPE_SECRET_KEY no encontrada en el archivo .env ni en el ambiente');
   console.error('El servidor SSR podría fallar si esta variable es requerida');
-  
+
   // Asignar un valor por defecto solo para evitar errores al iniciar
   // (esto permitirá que el servidor inicie aunque Stripe no funcione correctamente)
   process.env.STRIPE_SECRET_KEY = 'sk_dummy_key_for_ssr_startup_only';
@@ -48,12 +48,42 @@ if (!process.env.STRIPE_SECRET_KEY) {
 if (!process.env.STRIPE_WEBHOOK_SECRET) {
   console.error('ADVERTENCIA: Variable de entorno STRIPE_WEBHOOK_SECRET no encontrada en el archivo .env ni en el ambiente');
   console.error('El servidor SSR podría fallar si esta variable es requerida');
-  
+
   // Asignar un valor por defecto solo para evitar errores al iniciar
   process.env.STRIPE_WEBHOOK_SECRET = 'whsec_dummy_key_for_ssr_startup_only';
 }
 
 console.log('Iniciando servidor SSR...');
+console.log('📁 Directorio actual:', process.cwd());
+console.log('📁 __dirname:', __dirname);
 
-// Importar y ejecutar el servidor
-require('./dist/tienda-web-loto-ai/server/main.js');
+// Verificar que el archivo main.js existe antes de cargarlo
+const mainJsPath = path.join(__dirname, 'dist', 'tienda-web-loto-ai', 'server', 'main.js');
+console.log('🔍 Verificando ruta del servidor principal:', mainJsPath);
+
+if (fs.existsSync(mainJsPath)) {
+  console.log('✅ Archivo main.js encontrado, cargando servidor...');
+  try {
+    // Importar y ejecutar el servidor
+    require('./dist/tienda-web-loto-ai/server/main.js');
+    console.log('🚀 Servidor principal cargado exitosamente');
+  } catch (error) {
+    console.error('❌ Error al cargar el servidor principal:', error);
+    console.error('Stack trace:', error.stack);
+    process.exit(1);
+  }
+} else {
+  console.error('❌ ERROR CRÍTICO: No se encontró el archivo main.js en:', mainJsPath);
+  console.error('📋 Contenido del directorio dist:');
+  try {
+    const distPath = path.join(__dirname, 'dist');
+    if (fs.existsSync(distPath)) {
+      console.log(fs.readdirSync(distPath));
+    } else {
+      console.error('❌ El directorio dist no existe');
+    }
+  } catch (err) {
+    console.error('Error al listar directorio:', err);
+  }
+  process.exit(1);
+}
