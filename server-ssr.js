@@ -14,28 +14,22 @@ const envPaths = [
   path.join(__dirname, '.env')
 ];
 
-// Intentar cargar el archivo .env desde diferentes ubicaciones
+// Intentar cargar el archivo .env desde las rutas definidas
 let envLoaded = false;
 for (const envPath of envPaths) {
-  try {
-    if (fs.existsSync(envPath)) {
-      console.log(`Cargando variables de entorno desde: ${envPath}`);
-      dotenv.config({ path: envPath });
-      envLoaded = true;
-      break;
-    }
-  } catch (error) {
-    console.error(`Error al verificar la ruta ${envPath}:`, error.message);
+  if (fs.existsSync(envPath)) {
+    console.log(`Cargando variables de entorno desde: ${envPath}`);
+    dotenv.config({ path: envPath });
+    envLoaded = true;
+    break;
   }
 }
 
 if (!envLoaded) {
-  console.warn('No se encontró ningún archivo .env. Se utilizarán las variables de entorno del sistema.');
-  // Si no hay archivo .env, al menos intentamos cargar las variables del ambiente
-  dotenv.config();
+  console.log('No se encontró archivo .env en las rutas especificadas. Usando variables de entorno del sistema.');
 }
 
-// Verificar las variables críticas de Stripe
+// Verificar variables de entorno críticas y asignar valores por defecto si es necesario
 if (!process.env.STRIPE_SECRET_KEY) {
   console.error('ADVERTENCIA: Variable de entorno STRIPE_SECRET_KEY no encontrada en el archivo .env ni en el ambiente');
   console.error('El servidor SSR podría fallar si esta variable es requerida');
@@ -54,36 +48,6 @@ if (!process.env.STRIPE_WEBHOOK_SECRET) {
 }
 
 console.log('Iniciando servidor SSR...');
-console.log('📁 Directorio actual:', process.cwd());
-console.log('📁 __dirname:', __dirname);
 
-// Verificar que el archivo main.js existe antes de cargarlo
-const mainJsPath = path.join(__dirname, 'dist', 'tienda-web-loto-ai', 'server', 'main.js');
-console.log('🔍 Verificando ruta del servidor principal:', mainJsPath);
-
-if (fs.existsSync(mainJsPath)) {
-  console.log('✅ Archivo main.js encontrado, cargando servidor...');
-  try {
-    // Importar y ejecutar el servidor
-    require('./dist/tienda-web-loto-ai/server/main.js');
-    console.log('🚀 Servidor principal cargado exitosamente');
-  } catch (error) {
-    console.error('❌ Error al cargar el servidor principal:', error);
-    console.error('Stack trace:', error.stack);
-    process.exit(1);
-  }
-} else {
-  console.error('❌ ERROR CRÍTICO: No se encontró el archivo main.js en:', mainJsPath);
-  console.error('📋 Contenido del directorio dist:');
-  try {
-    const distPath = path.join(__dirname, 'dist');
-    if (fs.existsSync(distPath)) {
-      console.log(fs.readdirSync(distPath));
-    } else {
-      console.error('❌ El directorio dist no existe');
-    }
-  } catch (err) {
-    console.error('Error al listar directorio:', err);
-  }
-  process.exit(1);
-}
+// Importar y ejecutar el servidor
+require('./dist/tienda-web-loto-ai/server/main.js');

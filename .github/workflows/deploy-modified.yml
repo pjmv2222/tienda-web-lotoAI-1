@@ -160,17 +160,111 @@ jobs:
               echo "module.exports = { apps: [{ name: 'loto-ia-ssr', script: 'server-ssr.js', instances: 1, autorestart: true, watch: false, max_restarts: 10, min_uptime: '20s', env: { NODE_ENV: 'production' } }] };" > ecosystem-ssr.config.js
             fi
 
-            echo "Iniciando backend con ecosystem-backend.config.js..."
-            $PM2_PATH start ecosystem-backend.config.js || echo "Advertencia: No se pudo iniciar con ecosystem-backend.config.js"
+            echo "=== WORKFLOW ROBUSTO CON ROLLBACK AUTOMÁTICO ==="
 
-            echo "Iniciando SSR con ecosystem-ssr.config.js..."
-            $PM2_PATH start ecosystem-ssr.config.js || echo "Advertencia: No se pudo iniciar con ecosystem-ssr.config.js"
+            # Crear backup del estado actual antes de cualquier cambio
+            echo "1. Creando backup del estado actual..."
+            BACKUP_DIR="/var/www/backup-pre-deploy-$(date +%Y%m%d_%H%M%S)"
+            mkdir -p $BACKUP_DIR
+            cp -r /var/www/tienda-web-lotoAI-1 $BACKUP_DIR/
+            echo "✅ Backup creado en: $BACKUP_DIR"
 
-            echo "Guardando configuración de PM2..."
-            $PM2_PATH save
+            # Función de rollback automático
+            rollback_deployment() {
+              echo "🚨 INICIANDO ROLLBACK AUTOMÁTICO..."
+              echo "1. Deteniendo procesos actuales..."
+              $PM2_PATH kill || true
+              pkill -f "node dist/tienda-web-loto-ai/server/main.js" || true
 
-            echo "Estado final de PM2:"
-            $PM2_PATH list
+              echo "2. Restaurando desde backup..."
+              cd /var/www
+              rm -rf tienda-web-lotoAI-1
+              cp -r $BACKUP_DIR/tienda-web-lotoAI-1 .
+
+              echo "3. Iniciando servidor desde backup..."
+              cd tienda-web-lotoAI-1
+              nohup node dist/tienda-web-loto-ai/server/main.js > server.log 2>&1 &
+
+              echo "4. Verificando rollback..."
+              sleep 10
+              if netstat -tlnp | grep -q 4000; then
+                echo "✅ Rollback exitoso - Servidor restaurado en puerto 4000"
+                curl -I http://localhost:4000 || echo "Advertencia: No se pudo verificar HTTP"
+              else
+                echo "❌ ERROR CRÍTICO: Rollback falló - Ejecutando restauración de emergencia"
+                /var/www/loto-ia-backup-funcional-20250531_201249/restaurar_estado_funcional.sh
+              fi
+            }
+
+            # Detener procesos existentes de forma segura
+            echo "2. Deteniendo procesos existentes..."
+            $PM2_PATH kill || true
+            pkill -f "node dist/tienda-web-loto-ai/server/main.js" || true
+
+            echo "=== COMPILANDO APLICACIÓN EN EL SERVIDOR ==="
+            echo "3. Instalando dependencias..."
+            if ! npm install --production=false; then
+              echo "❌ ERROR: Falló la instalación de dependencias"
+              rollback_deployment
+              exit 1
+            fi
+
+            echo "4. Compilando backend..."
+            if ! (cd src/backend && npm run build && cd ../..); then
+              echo "❌ ERROR: Falló la compilación del backend"
+              rollback_deployment
+              exit 1
+            fi
+
+            echo "5. Compilando aplicación SSR..."
+            if ! npm run build:ssr; then
+              echo "❌ ERROR: Falló la compilación SSR"
+              rollback_deployment
+              exit 1
+            fi
+
+            echo "6. Verificando que la compilación fue exitosa..."
+            if [ -f "dist/tienda-web-loto-ai/server/main.js" ]; then
+              echo "✅ Compilación exitosa: main.js encontrado"
+            else
+              echo "❌ ERROR: La compilación falló - main.js no encontrado"
+              rollback_deployment
+              exit 1
+            fi
+
+            echo "7. Iniciando backend con ecosystem-backend.config.js..."
+            if ! $PM2_PATH start ecosystem-backend.config.js; then
+              echo "⚠️ Advertencia: No se pudo iniciar backend con PM2"
+            fi
+
+            echo "8. Iniciando SSR con ecosystem-ssr.config.js..."
+            if ! $PM2_PATH start ecosystem-ssr.config.js; then
+              echo "⚠️ Advertencia: No se pudo iniciar SSR con PM2, intentando método directo..."
+              nohup node dist/tienda-web-loto-ai/server/main.js > server.log 2>&1 &
+            fi
+
+            echo "9. Verificando que el servidor está funcionando..."
+            sleep 15
+            if netstat -tlnp | grep -q 4000; then
+              echo "✅ Servidor funcionando correctamente en puerto 4000"
+              if curl -I http://localhost:4000; then
+                echo "✅ Verificación HTTP exitosa"
+              else
+                echo "⚠️ Advertencia: Servidor activo pero verificación HTTP falló"
+              fi
+            else
+              echo "❌ ERROR: Servidor no está activo en puerto 4000"
+              rollback_deployment
+              exit 1
+            fi
+
+            echo "10. Guardando configuración de PM2..."
+            $PM2_PATH save || echo "Advertencia: No se pudo guardar configuración PM2"
+
+            echo "11. Estado final de PM2:"
+            $PM2_PATH list || echo "Advertencia: No se pudo listar procesos PM2"
+
+            echo "✅ DESPLIEGUE ROBUSTO COMPLETADO EXITOSAMENTE"
           else
             echo "Error: No se pudo encontrar o instalar PM2"
           fi
