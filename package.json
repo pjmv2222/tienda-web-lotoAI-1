@@ -5,6 +5,7 @@
     "build": "ng build --configuration production",
     "build:ssr": "ng build --configuration production && npm run build:server",
     "build:server": "ng build --configuration production --ssr",
+    "build:backend": "cd src/backend && npm install && npm run build",
     "serve:ssr": "node dist/tienda-web-loto-ai/server/server.mjs",
     "start": "ng serve",
     "start:prod": "npm run serve:ssr",
