@@ -9,8 +9,6 @@
     "serve:ssr": "node dist/tienda-web-loto-ai/server/server.mjs",
     "start": "ng serve",
     "start:prod": "npm run serve:ssr",
-    "preinstall": "npm install -g @angular/cli",
-    "postinstall": "npm run build:ssr",
     "deploy:frontend": "bash scripts/deploy-frontend.sh"
   },
   "dependencies": {

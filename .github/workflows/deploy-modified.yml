@@ -79,12 +79,15 @@ jobs:
           fi
 
           echo "=== Instalación de dependencias ==="
+          echo "Instalando Angular CLI globalmente..."
+          npm install -g @angular/cli
+          
           echo "Instalando dependencias del proyecto..."
           if [ -d "node_modules" ]; then
             echo "Eliminando node_modules existentes para limpieza completa..."
             rm -rf node_modules
           fi
-          npm ci || npm install
+          npm ci --ignore-scripts || npm install --ignore-scripts
 
           echo "=== Compilando aplicación en el servidor ==="
           echo "Configurando límites de memoria para Node.js..."
