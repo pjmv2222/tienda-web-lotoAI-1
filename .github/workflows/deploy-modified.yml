@@ -25,28 +25,12 @@ jobs:
         node-version: '18.x'
         cache: 'npm'
 
-    - name: Install dependencies
+    - name: Prepare for deployment
       run: |
-        # Instalar Angular CLI globalmente
-        npm install -g @angular/cli
-        # Instalar dependencias del proyecto
-        npm ci
-
-    - name: Build application
-      run: |
-        # Compilar aplicación completa con SSR
-        echo "Compilando frontend con SSR en modo producción..."
-        npm run build:ssr
-
-        echo "Compilando backend..."
-        npm run build:backend
-
-        echo "Verificando archivos compilados..."
-        echo "Archivos generados en dist:"
-        ls -la dist/tienda-web-loto-ai/ || echo "Directorio dist no encontrado"
-        
-        echo "Verificando servidor SSR:"
-        ls -la dist/tienda-web-loto-ai/server/ || echo "Directorio server no encontrado"
+        echo "Preparando para despliegue..."
+        echo "La compilación se realizará directamente en el servidor VPS para evitar limitaciones de memoria"
+        echo "Verificando estructura del proyecto..."
+        ls -la
 
     # Usar una única acción para el despliegue completo
     - name: Deploy to VPS
@@ -103,12 +87,15 @@ jobs:
           npm ci || npm install
 
           echo "=== Compilando aplicación en el servidor ==="
+          echo "Configurando límites de memoria para Node.js..."
+          export NODE_OPTIONS="--max-old-space-size=4096"
+          
           echo "Compilando backend..."
           npm run build:backend || { echo "Error: No se pudo compilar el backend"; exit 1; }
           echo "✅ Backend compilado correctamente"
 
-          echo "Compilando aplicación SSR..."
-          npm run build:ssr || { echo "Error: No se pudo compilar la aplicación SSR"; exit 1; }
+          echo "Compilando aplicación SSR con límites de memoria optimizados..."
+          timeout 1800 npm run build:ssr || { echo "Error: No se pudo compilar la aplicación SSR (timeout 30min)"; exit 1; }
           echo "✅ Aplicación SSR compilada correctamente"
 
           echo "=== Verificando archivos compilados ==="
