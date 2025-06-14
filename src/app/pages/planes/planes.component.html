@@ -1,0 +1,166 @@
+<div class="page-container">
+  <div class="breadcrumb">
+    <a routerLink="/home"><i class="fas fa-home"></i></a>
+    <span class="separator">></span>
+    <a routerLink="/home" class="link">Inicio</a>
+    <span class="separator">></span>
+    <span class="current">Planes y Suscripciones</span>
+  </div>
+
+  <div class="content-container">
+    <div class="header">
+      <h1 class="title">Planes y Suscripciones</h1>
+      <p class="subtitle">Elige el plan que mejor se adapte a tus necesidades</p>
+    </div>
+
+    <div class="plans-container">
+      <div class="plan-card" [class.popular]="plan.popular" *ngFor="let plan of planes">
+        <div class="plan-header">
+          <div class="plan-badge" *ngIf="plan.popular">MÁS POPULAR</div>
+          <h2 class="plan-title">{{ plan.name }}</h2>
+          <div class="plan-price">
+            <span class="price">{{ plan.price }}€</span>
+            <span class="period">{{ plan.period }}</span>
+          </div>
+          <p class="plan-description">{{ plan.description }}</p>
+        </div>
+
+        <div class="plan-features">
+          <h3>Características:</h3>
+          <ul>
+            <li *ngFor="let feature of plan.features">
+              <i class="fas fa-check"></i> {{ feature }}
+            </li>
+          </ul>
+        </div>
+
+        <div class="plan-footer">
+          <button class="subscribe-btn" [class.primary-btn]="plan.popular" (click)="selectPlan(plan)">
+            {{ plan.buttonText }}
+          </button>
+          <p class="plan-note" *ngIf="plan.note">{{ plan.note }}</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="ai-systems">
+      <h2>Nuestras Inteligencias Artificiales Especializadas</h2>
+      <p class="ai-intro">Cada una de nuestras IAs ha sido entrenada y especializada en un sorteo específico para ofrecerte las mejores predicciones posibles.</p>
+
+      <div class="ai-container">
+        <div class="ai-card" *ngFor="let ai of aiSystems">
+          <div class="ai-icon">
+            <i class="fas {{ ai.icon }}"></i>
+          </div>
+          <div class="ai-content">
+            <h3 class="ai-name">{{ ai.name }}</h3>
+            <h4 class="ai-lottery">Especializada en {{ ai.lottery }}</h4>
+            <p class="ai-description">{{ ai.description }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="comparison-table">
+      <h2>Comparativa de planes</h2>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Característica</th>
+              <th>Plan Básico</th>
+              <th>Plan Mensual</th>
+              <th>Plan Pro</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Combinaciones por sorteo</td>
+              <td>3</td>
+              <td>Hasta 4</td>
+              <td>Ilimitadas</td>
+            </tr>
+            <tr>
+              <td>Validez</td>
+              <td>Próximo sorteo</td>
+              <td>Mes en curso</td>
+              <td>365 días</td>
+            </tr>
+            <tr>
+              <td>Acceso a IAs especializadas</td>
+              <td><i class="fas fa-check"></i></td>
+              <td><i class="fas fa-check"></i></td>
+              <td><i class="fas fa-check"></i> Prioritario</td>
+            </tr>
+            <tr>
+              <td>Predicciones para premios secundarios</td>
+              <td><i class="fas fa-check"></i></td>
+              <td><i class="fas fa-check"></i></td>
+              <td><i class="fas fa-check"></i></td>
+            </tr>
+            <tr>
+              <td>Notificaciones de sorteos</td>
+              <td><i class="fas fa-times"></i></td>
+              <td><i class="fas fa-check"></i></td>
+              <td><i class="fas fa-check"></i> Personalizadas</td>
+            </tr>
+            <tr>
+              <td>Análisis estadísticos avanzados</td>
+              <td><i class="fas fa-times"></i></td>
+              <td><i class="fas fa-check"></i></td>
+              <td><i class="fas fa-check"></i> Premium</td>
+            </tr>
+            <tr>
+              <td>Soporte prioritario 24/7</td>
+              <td><i class="fas fa-times"></i></td>
+              <td><i class="fas fa-times"></i></td>
+              <td><i class="fas fa-check"></i></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="faq-section">
+      <h2>Preguntas frecuentes</h2>
+      <div class="faq-container">
+        <div class="faq-item" *ngFor="let faq of faqs; let i = index" [class.active]="faq.active">
+          <div class="faq-question" (click)="toggleFaq(i)">
+            <h3>{{ faq.question }}</h3>
+            <span class="faq-toggle">+</span>
+          </div>
+          <div class="faq-answer">
+            <p>{{ faq.answer }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="testimonials">
+      <h2>Lo que dicen nuestros usuarios</h2>
+      <div class="testimonials-container">
+        <div class="testimonial-card" *ngFor="let testimonial of testimonials">
+          <div class="testimonial-rating">
+            <i class="fas fa-star" *ngFor="let star of [1, 2, 3, 4, 5]"></i>
+          </div>
+          <p class="testimonial-text">"{{ testimonial.text }}"</p>
+          <div class="testimonial-author">
+            <div class="testimonial-avatar">
+              <img [src]="testimonial.avatar" alt="{{ testimonial.name }}">
+            </div>
+            <div class="testimonial-info">
+              <h4>{{ testimonial.name }}</h4>
+              <p>{{ testimonial.plan }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="cta-section">
+      <h2>Comienza a generar predicciones optimizadas hoy mismo</h2>
+      <p>Elige el plan que mejor se adapte a tus necesidades y aumenta tus probabilidades de ganar.</p>
+      <button class="cta-btn" (click)="scrollToPlans()">Ver planes</button>
+    </div>
+  </div>
+</div>

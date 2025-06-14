@@ -1,0 +1,81 @@
+/* You can add global styles to this file, and also import other style files */
+
+/* Importar estilos de las bolas de lotería */
+@import './assets/css/lottery-balls.css';
+
+/* Estilos base */
+html {
+  box-sizing: border-box;
+  font-size: 16px;
+}
+
+*, *:before, *:after {
+  box-sizing: inherit;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  font-family: Arial, sans-serif;
+  overflow-x: hidden; /* Prevenir scroll horizontal */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.main {
+  flex: 1;
+  display: block;
+  width: 100%;
+  padding: 0 15px; /* Añadir padding para evitar que el contenido toque los bordes */
+}
+
+/* Estilos responsive generales */
+img, video, canvas, svg, iframe {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Media queries para diferentes tamaños de pantalla */
+@media (max-width: 576px) {
+  html {
+    font-size: 14px; /* Reducir tamaño de fuente en pantallas muy pequeñas */
+  }
+
+  .container, .container-fluid {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+}
+
+/* Estilos para botones */
+.cta-button, .btn-primary {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.3s;
+}
+
+.cta-button:hover, .btn-primary:hover {
+  background-color: #0056b3;
+}
+
+.btn-secondary {
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.3s;
+}
+
+.btn-secondary:hover {
+  background-color: #5a6268;
+}

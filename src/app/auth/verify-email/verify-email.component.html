@@ -1,0 +1,38 @@
+<div class="verify-email-container">
+  <div class="verify-email-card">
+    <h2>Verificación de Email</h2>
+
+    <!-- Loading State -->
+    <div *ngIf="loading" class="loading-state">
+      <div class="spinner"></div>
+      <p>Verificando tu cuenta...</p>
+    </div>
+
+    <!-- Success State -->
+    <div *ngIf="!loading && verified" class="success-state">
+      <div class="icon-container success">
+        <i class="fas fa-check-circle"></i>
+      </div>
+      <h3>¡Email Verificado!</h3>
+      <p>Tu cuenta ha sido verificada exitosamente.</p>
+      <p class="redirect-message">Serás redirigido al inicio de sesión en unos momentos...</p>
+    </div>
+
+    <!-- Error State -->
+    <div *ngIf="!loading && !verified && errorMessage" class="error-state">
+      <div class="icon-container error">
+        <i class="fas fa-exclamation-circle"></i>
+      </div>
+      <h3>Error de Verificación</h3>
+      <p>{{ errorMessage }}</p>
+      <div class="action-buttons">
+        <button class="btn btn-primary" (click)="resendVerification()">
+          Reenviar correo de verificación
+        </button>
+        <a routerLink="/auth/login" class="btn btn-secondary">
+          Volver al inicio de sesión
+        </a>
+      </div>
+    </div>
+  </div>
+</div> 

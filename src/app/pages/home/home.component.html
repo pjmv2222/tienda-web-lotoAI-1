@@ -1,0 +1,342 @@
+<!-- Slider de imágenes múltiples a ancho completo (solo en navegador) -->
+<section class="slider-section" *ngIf="isBrowser">
+  <div class="carousel-container">
+    <carousel [noPause]="false" [noWrap]="noWrapSlides" [showIndicators]="showIndicators" [interval]="interval">
+      <slide *ngFor="let group of imageGroups">
+        <div class="multi-image-container">
+          <div class="image-item" *ngFor="let slide of group">
+            <img [src]="slide.src" [alt]="slide.alt" class="slider-image">
+            <div class="image-title">{{ slide.alt }}</div>
+          </div>
+        </div>
+      </slide>
+    </carousel>
+  </div>
+</section>
+
+<!-- Alternativa estática para el servidor -->
+<section class="slider-section" *ngIf="!isBrowser">
+  <div class="carousel-container">
+    <div class="static-image">
+      <img *ngFor="let slide of sliderImages.slice(0, 4)" [src]="slide.src" [alt]="slide.alt" class="slider-image">
+    </div>
+  </div>
+</section>
+
+<div class="home-container">
+  <!-- Sección Hero con contenido principal -->
+  <section class="hero-section">
+    <div class="hero-content">
+      <h1>La Revolución de los Pronósticos con Inteligencia Artificial ✨ [Prueba de Despliegue]</h1>
+      <p>¿Cansado de elegir números al azar? Bienvenido a LOTO IA.COM, la plataforma donde la Inteligencia Artificial de vanguardia trabaja para ti. Analizamos décadas de resultados históricos de Loterías y Apuestas del Estado para descubrir patrones ocultos y frecuencias significativas.</p>
+      <button class="cta-button" routerLink="/planes">Descubre Nuestros Planes de Suscripción</button>
+    </div>
+  </section>
+
+  <main class="home-content">
+    <section class="left-section">
+      <div class="info-container">
+        <h2>Ventajas de la Inteligencia Artificial</h2>
+        <p>La utilización de inteligencia artificial mejora e incrementa las probabilidades de obtener combinaciones para los sorteos de las 10 loterías de LOTO IA.COM, con mayores posibilidades de obtener premios.</p>
+      </div>
+      <div class="info-container">
+        <h2>Funcionamiento de LOTO IA.COM</h2>
+        <p>LOTO IA.COM ofrece mecanismos y ventajas de suscripción para obtener combinaciones de predicciones avanzadas mediante 10 inteligencias artificiales, entrenadas exhaustivamente y específicamente, con algoritmos de la más avanzada tecnología.</p>
+      </div>
+      <div class="info-container">
+        <h2>Nuestros Algoritmos</h2>
+        <p>Los algoritmos de LOTO IA.COM aprovechan patrones y estadísticas de los datos históricos de los 10 sorteos de loterías españolas. Nuestras dos IAs, "Da Vinci" y "Fortunata", forman el equipo de inteligencia artificial de LOTO IA.COM.</p>
+      </div>
+    </section>
+
+    <section class="right-section">
+      <div class="plan-container green">
+        <h3>Plan Básico: 1.22 €. IVA incluido.</h3>
+        <p>Permite obtener una combinación ganadora para cada uno de los 10 sorteos, tanto de primeros premios, como de premios secundarios, única y exclusivamente para el sorteo inmediato a la fecha en qué se inscribe.</p>
+        <button class="subscribe-btn" data-plan="basico" (click)="navigateToPlans('basico')">SUSCRIBIRME</button>
+      </div>
+      <div class="plan-container blue">
+        <h3>Plan Mensual: 10.22 €. IVA incluido.</h3>
+        <p>Permite obtener hasta 4 combinaciones ganadoras para cada uno de los 10 sorteos, tanto de primeros premios, como de premios secundarios. Única y exclusivamente para los sorteos del mes en curso, desde la fecha en qué se inscribe.</p>
+        <button class="subscribe-btn" data-plan="mensual" (click)="navigateToPlans('mensual')">SUSCRIBIRME</button>
+      </div>
+      <div class="plan-container yellow">
+        <h3>Plan Pro: 122 €. IVA incluido.</h3>
+        <p>Permite obtener combinaciones ganadoras ilimitadas para cada uno de los 10 sorteos, tanto de primeros premios, como de premios secundarios, desde la fecha en qué se inscriba y durante los siguientes 365 días.</p>
+        <button class="subscribe-btn" data-plan="pro" (click)="navigateToPlans('pro')">SUSCRIBIRME</button>
+      </div>
+    </section>
+  </main>
+
+  <!-- Sección 1: Cómo Loto-IA Revoluciona tu Juego -->
+  <section class="section">
+    <h2 class="section-title">Cómo Loto-IA Revoluciona tu Juego</h2>
+    <div class="section-content">
+      <p>En LOTO IA.COM, hemos desarrollado 7 Inteligencias Artificiales únicas, cada una entrenada exhaustivamente con algoritmos avanzados y datos históricos específicos de los principales sorteos españoles. Nuestro sistema no se basa en la suerte, sino en el análisis profundo.</p>
+      <p>Al suscribirte, desbloqueas el acceso a pronósticos generados por estas IAs. Simplemente elige tu plan, solicita tus combinaciones y recibe pronósticos calculados para maximizar tus probabilidades, basados en la tecnología más puntera. Olvídate de las corazonadas, apuesta por la inteligencia.</p>
+    </div>
+  </section>
+
+  <!-- Sección 2: El Proceso Inteligente -->
+  <section class="section" style="background-color: #f9f9f9;">
+    <h2 class="section-title">El Proceso Inteligente Detrás de tus Pronósticos</h2>
+    <div class="section-content">
+      <p>Nuestro poder reside en nuestro equipo de Inteligencia Artificial: "Da Vinci", "Prognosis", "Ástrid", "Sináptica", "Nóvax", "Axioma" y "Fortunata". Cada una de estas IAs ha sido meticulosamente entrenada y especializada en los patrones, estadísticas y frecuencias de los 7 sorteos de lotería española más importantes, utilizando datos históricos que abarcan décadas.</p>
+      <p>Su misión es identificar tendencias invisibles para el ojo humano y convertirlas en pronósticos con mayor probabilidad estadística de éxito. Son la inteligencia detrás de tus futuras jugadas.</p>
+    </div>
+
+    <h3 class="section-title">Conoce a Nuestro Equipo de Expertos en IA</h3>
+    <div class="ai-team-container">
+      <div class="ai-card ai-euromillones">
+        <div class="ai-card-header">
+          <h4 class="ai-name">Da Vinci</h4>
+          <p class="ai-specialty">Especialista en Euromillones</p>
+        </div>
+        <div class="ai-card-body">
+          <p class="ai-description">Analiza patrones complejos y relaciones numéricas para predecir combinaciones con mayor probabilidad estadística.</p>
+        </div>
+      </div>
+
+      <div class="ai-card ai-primitiva">
+        <div class="ai-card-header">
+          <h4 class="ai-name">Prognosis</h4>
+          <p class="ai-specialty">Especialista en Primitiva</p>
+        </div>
+        <div class="ai-card-body">
+          <p class="ai-description">Utiliza modelos predictivos avanzados para identificar tendencias en los resultados históricos.</p>
+        </div>
+      </div>
+
+      <div class="ai-card ai-bonoloto">
+        <div class="ai-card-header">
+          <h4 class="ai-name">Ástrid</h4>
+          <p class="ai-specialty">Especialista en Bonoloto</p>
+        </div>
+        <div class="ai-card-body">
+          <p class="ai-description">Especializada en análisis de frecuencias y distribuciones probabilísticas para optimizar combinaciones.</p>
+        </div>
+      </div>
+
+      <div class="ai-card ai-gordo">
+        <div class="ai-card-header">
+          <h4 class="ai-name">Sináptica</h4>
+          <p class="ai-specialty">Especialista en Gordo de la Primitiva</p>
+        </div>
+        <div class="ai-card-body">
+          <p class="ai-description">Utiliza redes neuronales para detectar patrones ocultos en décadas de resultados históricos.</p>
+        </div>
+      </div>
+
+      <div class="ai-card ai-eurodreams">
+        <div class="ai-card-header">
+          <h4 class="ai-name">Nóvax</h4>
+          <p class="ai-specialty">Especialista en EuroDreams</p>
+        </div>
+        <div class="ai-card-body">
+          <p class="ai-description">Implementa algoritmos de aprendizaje profundo para analizar tendencias internacionales y patrones emergentes.</p>
+        </div>
+      </div>
+
+      <div class="ai-card ai-lototurf">
+        <div class="ai-card-header">
+          <h4 class="ai-name">Axioma</h4>
+          <p class="ai-specialty">Especialista en Lototurf</p>
+        </div>
+        <div class="ai-card-body">
+          <p class="ai-description">Combina análisis estadístico con modelos predictivos especializados en sorteos hípicos y deportivos.</p>
+        </div>
+      </div>
+
+      <div class="ai-card ai-loteria-nacional">
+        <div class="ai-card-header">
+          <h4 class="ai-name">Fortunata</h4>
+          <p class="ai-specialty">Especialista en Lotería Nacional</p>
+        </div>
+        <div class="ai-card-body">
+          <p class="ai-description">Analiza históricamente los números premiados y terminaciones más frecuentes en la Lotería Nacional.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Sección 3: Planes de Suscripción -->
+  <section class="section">
+    <h2 class="section-title">Desbloquea el Poder de la Inteligencia en tus Apuestas</h2>
+    <div class="section-content">
+      <p>¿Listo para dejar atrás la incertidumbre y jugar con la ventaja que te ofrece la inteligencia artificial? En LOTO IA.COM, te proporcionamos las herramientas para tomar decisiones más informadas en tus sorteos favoritos. Explora nuestros diferentes planes de suscripción y elige el que mejor se adapte a tus necesidades.</p>
+    </div>
+
+    <div class="plans-container">
+      <div class="plan-card">
+        <div class="plan-header">
+          <h3 class="plan-name">Plan Básico</h3>
+          <div class="plan-price">1.22€</div>
+          <div class="plan-period">Pago único</div>
+        </div>
+        <div class="plan-features">
+          <ul>
+            <li>3 combinaciones para cada 1 de los 7 juegos</li>
+            <li>Acceso a 1 IA especializada</li>
+            <li>Validez de 7 días</li>
+            <li>Soporte por email</li>
+          </ul>
+        </div>
+        <div class="plan-cta">
+          <button class="cta-button" routerLink="/pasarela-pago/basic">Suscribirse</button>
+        </div>
+      </div>
+
+      <div class="plan-card">
+        <div class="plan-header">
+          <h3 class="plan-name">Plan Mensual</h3>
+          <div class="plan-price">10.22€</div>
+          <div class="plan-period">Mensual</div>
+        </div>
+        <div class="plan-features">
+          <ul>
+            <li>5 combinaciones para 3 sorteos</li>
+            <li>Acceso a 3 IAs especializadas</li>
+            <li>Validez de 30 días</li>
+            <li>Soporte prioritario</li>
+            <li>Análisis de tendencias</li>
+          </ul>
+        </div>
+        <div class="plan-cta">
+          <button class="cta-button" routerLink="/pasarela-pago/monthly">Suscribirse</button>
+        </div>
+      </div>
+
+      <div class="plan-card">
+        <div class="plan-header">
+          <h3 class="plan-name">Plan Pro</h3>
+          <div class="plan-price">122€</div>
+          <div class="plan-period">Anual</div>
+        </div>
+        <div class="plan-features">
+          <ul>
+            <li>Combinaciones ilimitadas</li>
+            <li>Acceso a todas las IAs</li>
+            <li>Validez de 365 días</li>
+            <li>Soporte VIP 24/7</li>
+            <li>Análisis avanzado de tendencias</li>
+            <li>Estrategias personalizadas</li>
+          </ul>
+        </div>
+        <div class="plan-cta">
+          <button class="cta-button" routerLink="/pasarela-pago/pro">Suscribirse</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Sección de Usuario (si está logueado) -->
+  <div *ngIf="currentUser" class="user-section">
+    <h2>Estimado {{currentUser.nombre}} {{currentUser.apellido}}</h2>
+
+    <div *ngIf="hasSubscriptions && currentUser.subscriptions?.length">
+      <h3>Tus suscripciones activas:</h3>
+      <ul>
+        <li *ngFor="let sub of currentUser.subscriptions">
+          <span *ngIf="sub.activa">
+            {{sub.tipo}} - Válida hasta: {{sub.fechaFin | date:'dd/MM/yyyy'}}
+          </span>
+        </li>
+      </ul>
+    </div>
+
+    <div *ngIf="!hasSubscriptions || !currentUser.subscriptions?.length">
+      <p>No tienes suscripciones activas.</p>
+      <button class="btn-primary" routerLink="/planes">Adquirir una suscripción</button>
+
+      <!-- Información de depuración (solo visible en desarrollo) -->
+      <div *ngIf="!environment.production" class="debug-info">
+        <h4>Información de depuración:</h4>
+        <p>ID de usuario: {{currentUser.id}}</p>
+        <p>Suscripciones: {{currentUser.subscriptions ? currentUser.subscriptions.length : 0}}</p>
+        <p>hasSubscriptions: {{hasSubscriptions}}</p>
+        <button class="btn-secondary" (click)="checkSubscriptionStatus()">Verificar estado de suscripción</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sección de Login (si no está logueado) -->
+  <div *ngIf="!currentUser" class="user-section" style="text-align: center;">
+    <h2>¿Ya estás listo para empezar?</h2>
+    <p>Inicia sesión para ver tus pronósticos personalizados o regístrate para comenzar a utilizar nuestro servicio.</p>
+    <div style="margin-top: 2rem;">
+      <button class="btn-primary" routerLink="/auth/login">Iniciar sesión</button>
+      <button class="btn-secondary" routerLink="/auth/register">Registrarse</button>
+    </div>
+  </div>
+
+  <!-- Sección de Juegos Disponibles -->
+  <section id="juegos" class="section">
+    <h2 class="section-title">Nuestros Juegos</h2>
+    <p class="section-subtitle">Selecciona tu juego favorito y genera predicciones con nuestras IAs especializadas</p>
+
+    <div class="games-container">
+      <div class="game-card">
+        <div class="game-icon">
+          <i class="fas fa-star"></i>
+        </div>
+        <h3>Euromillones</h3>
+        <p>Predicciones generadas por nuestra IA "Da Vinci"</p>
+        <button class="game-btn" routerLink="/euromillon/prediccion">Generar predicción</button>
+      </div>
+
+      <div class="game-card">
+        <div class="game-icon">
+          <i class="fas fa-dice"></i>
+        </div>
+        <h3>La Primitiva</h3>
+        <p>Predicciones generadas por nuestra IA "Prognosis"</p>
+        <button class="game-btn" routerLink="/primitiva">Generar predicción</button>
+      </div>
+
+      <div class="game-card">
+        <div class="game-icon">
+          <i class="fas fa-dice-d6"></i>
+        </div>
+        <h3>Bonoloto</h3>
+        <p>Predicciones generadas por nuestra IA "Ástrid"</p>
+        <button class="game-btn" routerLink="/bonoloto">Generar predicción</button>
+      </div>
+
+      <div class="game-card">
+        <div class="game-icon">
+          <i class="fas fa-gem"></i>
+        </div>
+        <h3>El Gordo</h3>
+        <p>Predicciones generadas por nuestra IA "Sináptica"</p>
+        <button class="game-btn" routerLink="/gordo-primitiva">Generar predicción</button>
+      </div>
+
+      <div class="game-card">
+        <div class="game-icon">
+          <i class="fas fa-moon"></i>
+        </div>
+        <h3>EuroDreams</h3>
+        <p>Predicciones generadas por nuestra IA "Nóvax"</p>
+        <button class="game-btn" routerLink="/eurodreams">Generar predicción</button>
+      </div>
+
+      <div class="game-card">
+        <div class="game-icon">
+          <i class="fas fa-horse"></i>
+        </div>
+        <h3>Lototurf</h3>
+        <p>Predicciones generadas por nuestra IA "Axioma"</p>
+        <button class="game-btn" routerLink="/lototurf">Generar predicción</button>
+      </div>
+
+      <div class="game-card">
+        <div class="game-icon">
+          <i class="fas fa-ticket-alt"></i>
+        </div>
+        <h3>Lotería Nacional</h3>
+        <p>Predicciones generadas por nuestra IA "Fortunata"</p>
+        <button class="game-btn" routerLink="/loteria-nacional">Generar predicción</button>
+      </div>
+    </div>
+  </section>
+</div>

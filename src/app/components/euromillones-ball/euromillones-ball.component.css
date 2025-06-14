@@ -1,0 +1,54 @@
+.ball-container {
+  display: inline-block;
+  position: relative;
+  margin: 0;
+  border-radius: 50%;
+  overflow: hidden;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  width: var(--ball-size, 80px);
+  height: var(--ball-size, 80px);
+}
+
+:host {
+  display: inline-block;
+}
+
+/* Estilo para la imagen estática */
+.static-ball-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover; /* Cambiado de contain a cover para mejor apariencia */
+  animation: pulse 2s infinite ease-in-out;
+  transition: transform 0.3s ease;
+  image-rendering: -webkit-optimize-contrast; /* Mejora la nitidez en Chrome */
+  image-rendering: crisp-edges; /* Mejora la nitidez en Firefox */
+  -ms-interpolation-mode: nearest-neighbor; /* Mejora la nitidez en IE */
+}
+
+/* Efecto hover para las bolas estáticas */
+.static-ball-image:hover {
+  transform: scale(1.05);
+}
+
+/* Animación de pulso para la imagen estática */
+@keyframes pulse {
+  0% { transform: scale(1); box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); }
+  50% { transform: scale(1.02); box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25); }
+  100% { transform: scale(1); box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); }
+}
+
+/* Estilos adicionales para mejorar la apariencia */
+.ball-container::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 50%;
+  box-shadow: inset 0 -2px 10px rgba(0, 0, 0, 0.2), inset 0 2px 10px rgba(255, 255, 255, 0.2);
+  pointer-events: none; /* Permite que los clics pasen a través */
+  z-index: 2;
+}

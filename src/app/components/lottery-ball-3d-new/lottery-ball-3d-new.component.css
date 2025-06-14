@@ -1,0 +1,31 @@
+.lottery-ball-container {
+  display: inline-block;
+  margin: 0; /* Eliminar margen para que se ajuste mejor a los contenedores */
+  position: relative;
+  width: 100%; /* Ocupar todo el ancho disponible */
+  height: 100%; /* Ocupar todo el alto disponible */
+}
+
+/* Estilo para la imagen estática de la bola */
+.static-ball-image {
+  display: block;
+  border-radius: 50%; /* Asegurar que la imagen se vea como una bola */
+  object-fit: cover; /* Mantener la proporción de la imagen */
+  margin: 0 auto; /* Centrar horizontalmente */
+}
+
+.highlight {
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}

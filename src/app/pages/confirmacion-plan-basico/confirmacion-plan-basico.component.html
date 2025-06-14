@@ -1,0 +1,99 @@
+<div class="page-container">
+  <div class="breadcrumb">
+    <a routerLink="/home"><i class="fas fa-home"></i></a>
+    <span class="separator">></span>
+    <a routerLink="/planes" class="link">Planes y Suscripciones</a>
+    <span class="separator">></span>
+    <span class="current">Confirmación Plan Básico</span>
+  </div>
+
+  <div class="content-container">
+    <div class="confirmation-header">
+      <div class="confirmation-icon">
+        <i class="fas fa-check-circle"></i>
+      </div>
+      <h1 class="confirmation-title">¡Plan Básico activado con éxito!</h1>
+      <p class="confirmation-subtitle">Gracias por elegir LOTO IA. Tu cuenta ha sido actualizada al Plan Básico.</p>
+    </div>
+
+    <div class="plan-details">
+      <h2>Detalles del plan</h2>
+      <div class="details-card">
+        <div class="detail-row">
+          <span class="detail-label">Plan:</span>
+          <span class="detail-value">Plan Básico</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Precio:</span>
+          <span class="detail-value">1,22€ (IVA incluido)</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Fecha de activación:</span>
+          <span class="detail-value">{{ currentDate | date:'dd/MM/yyyy' }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Estado:</span>
+          <span class="detail-value status-active">Activo</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="features-included">
+      <h2>Características incluidas</h2>
+      <ul class="features-list">
+        <li>
+          <i class="fas fa-check"></i>
+          <span>1 combinación ganadora para cada uno de los 7 sorteos</span>
+        </li>
+        <li>
+          <i class="fas fa-check"></i>
+          <span>Predicciones para primeros premios y premios secundarios</span>
+        </li>
+        <li>
+          <i class="fas fa-check"></i>
+          <span>Válido únicamente para el sorteo inmediato a la fecha de inscripción</span>
+        </li>
+        <li>
+          <i class="fas fa-check"></i>
+          <span>Acceso a todas nuestras IAs especializadas</span>
+        </li>
+      </ul>
+    </div>
+
+    <div class="next-steps">
+      <h2>¿Qué hacer ahora?</h2>
+      <div class="steps-container">
+        <div class="step-card">
+          <div class="step-icon">
+            <i class="fas fa-dice"></i>
+          </div>
+          <h3>Generar predicciones</h3>
+          <p>Comienza a generar predicciones para tu lotería favorita.</p>
+          <button class="step-btn" routerLink="/euromillon/prediccion">Generar ahora</button>
+        </div>
+        <div class="step-card">
+          <div class="step-icon">
+            <i class="fas fa-user-cog"></i>
+          </div>
+          <h3>Configurar preferencias</h3>
+          <p>Personaliza tus preferencias de lotería y notificaciones.</p>
+          <button class="step-btn" routerLink="/profile">Ir a mi perfil</button>
+        </div>
+        <div class="step-card">
+          <div class="step-icon">
+            <i class="fas fa-crown"></i>
+          </div>
+          <h3>Mejorar tu plan</h3>
+          <p>Actualiza a un plan premium para obtener más predicciones y funciones avanzadas.</p>
+          <button class="step-btn upgrade-btn" routerLink="/planes">Ver planes premium</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="support-section">
+      <h2>¿Necesitas ayuda?</h2>
+      <p>Si tienes alguna pregunta o necesitas asistencia, no dudes en contactar con nuestro equipo de soporte.</p>
+      <button class="support-btn" routerLink="/contacto">Contactar soporte</button>
+    </div>
+  </div>
+</div>

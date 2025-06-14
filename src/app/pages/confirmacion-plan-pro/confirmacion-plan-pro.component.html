@@ -1,0 +1,174 @@
+<div class="page-container">
+  <div class="breadcrumb">
+    <a routerLink="/home"><i class="fas fa-home"></i></a>
+    <span class="separator">></span>
+    <a routerLink="/planes" class="link">Planes y Suscripciones</a>
+    <span class="separator">></span>
+    <span class="current">Confirmación Plan Pro</span>
+  </div>
+
+  <div class="content-container">
+    <div class="confirmation-header">
+      <div class="confirmation-icon">
+        <i class="fas fa-crown"></i>
+      </div>
+      <h1 class="confirmation-title">¡Plan Pro activado con éxito!</h1>
+      <p class="confirmation-subtitle">Gracias por elegir LOTO IA. Tu cuenta ha sido actualizada al Plan Pro.</p>
+    </div>
+
+    <div class="order-summary">
+      <h2>Resumen del pedido</h2>
+      <div class="summary-card">
+        <div class="summary-row">
+          <span class="summary-label">Plan:</span>
+          <span class="summary-value">Plan Pro</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">Precio:</span>
+          <span class="summary-value">122€ (IVA incluido)</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">Fecha de activación:</span>
+          <span class="summary-value">{{ currentDate | date:'dd/MM/yyyy' }}</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">Próxima facturación:</span>
+          <span class="summary-value">{{ nextBillingDate | date:'dd/MM/yyyy' }}</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">Método de pago:</span>
+          <span class="summary-value">Tarjeta terminada en {{ lastFourDigits }}</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">Estado:</span>
+          <span class="summary-value status-active">Activo</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="payment-details">
+      <h2>Detalles del pago</h2>
+      <div class="payment-card">
+        <div class="payment-row">
+          <span class="payment-label">Subtotal:</span>
+          <span class="payment-value">100,83€</span>
+        </div>
+        <div class="payment-row">
+          <span class="payment-label">IVA (21%):</span>
+          <span class="payment-value">21,17€</span>
+        </div>
+        <div class="payment-row total">
+          <span class="payment-label">Total:</span>
+          <span class="payment-value">122€</span>
+        </div>
+      </div>
+      <p class="payment-note">Pago único de 122€ válido durante 365 días desde la fecha de inscripción.</p>
+    </div>
+
+    <div class="features-included">
+      <h2>Características incluidas</h2>
+      <ul class="features-list">
+        <li>
+          <i class="fas fa-check"></i>
+          <span>Combinaciones ganadoras ilimitadas para cada uno de los 7 sorteos</span>
+        </li>
+        <li>
+          <i class="fas fa-check"></i>
+          <span>Predicciones para primeros premios y premios secundarios</span>
+        </li>
+        <li>
+          <i class="fas fa-check"></i>
+          <span>Válido durante 365 días desde la fecha de inscripción</span>
+        </li>
+        <li>
+          <i class="fas fa-check"></i>
+          <span>Acceso prioritario a todas nuestras IAs especializadas</span>
+        </li>
+        <li>
+          <i class="fas fa-check"></i>
+          <span>Notificaciones personalizadas de sorteos</span>
+        </li>
+        <li>
+          <i class="fas fa-check"></i>
+          <span>Soporte prioritario 24/7</span>
+        </li>
+        <li>
+          <i class="fas fa-check"></i>
+          <span>Análisis estadísticos avanzados premium</span>
+        </li>
+      </ul>
+    </div>
+
+    <div class="vip-benefits">
+      <h2>Beneficios VIP</h2>
+      <div class="benefits-container">
+        <div class="benefit-card">
+          <div class="benefit-icon">
+            <i class="fas fa-chart-line"></i>
+          </div>
+          <h3>Análisis avanzado</h3>
+          <p>Accede a análisis estadísticos detallados y patrones históricos para cada lotería.</p>
+        </div>
+        <div class="benefit-card">
+          <div class="benefit-icon">
+            <i class="fas fa-brain"></i>
+          </div>
+          <h3>IA mejorada</h3>
+          <p>Algoritmos de IA más precisos y personalizados para generar combinaciones con mayor probabilidad de acierto.</p>
+        </div>
+        <div class="benefit-card">
+          <div class="benefit-icon">
+            <i class="fas fa-headset"></i>
+          </div>
+          <h3>Soporte prioritario</h3>
+          <p>Acceso a atención al cliente prioritaria con tiempos de respuesta garantizados.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="next-steps">
+      <h2>¿Qué hacer ahora?</h2>
+      <div class="steps-container">
+        <div class="step-card">
+          <div class="step-icon">
+            <i class="fas fa-dice"></i>
+          </div>
+          <h3>Generar predicciones</h3>
+          <p>Comienza a generar predicciones para todas las loterías disponibles.</p>
+          <button class="step-btn" routerLink="/euromillon/prediccion">Generar ahora</button>
+        </div>
+        <div class="step-card">
+          <div class="step-icon">
+            <i class="fas fa-user-cog"></i>
+          </div>
+          <h3>Configurar preferencias</h3>
+          <p>Personaliza tus preferencias de lotería y notificaciones.</p>
+          <button class="step-btn" routerLink="/profile">Ir a mi perfil</button>
+        </div>
+        <div class="step-card">
+          <div class="step-icon">
+            <i class="fas fa-receipt"></i>
+          </div>
+          <h3>Ver factura</h3>
+          <p>Descarga la factura de tu suscripción para tus registros.</p>
+          <button class="step-btn invoice-btn">Descargar factura</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="subscription-management">
+      <h2>Gestión de suscripción</h2>
+      <p>Puedes gestionar tu suscripción en cualquier momento desde tu perfil. Recuerda que puedes cancelar cuando quieras sin compromiso.</p>
+      <div class="management-buttons">
+        <button class="management-btn" routerLink="/profile/subscription">Gestionar suscripción</button>
+        <button class="management-btn cancel-btn">Cancelar suscripción</button>
+      </div>
+    </div>
+
+    <div class="support-section">
+      <h2>¿Necesitas ayuda?</h2>
+      <p>Como miembro Pro, tienes acceso a soporte prioritario. Si tienes alguna pregunta o necesitas asistencia, no dudes en contactar con nuestro equipo de soporte.</p>
+      <button class="support-btn" routerLink="/contacto">Contactar soporte prioritario</button>
+    </div>
+  </div>
+</div>

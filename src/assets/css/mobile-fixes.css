@@ -1,0 +1,200 @@
+/* Mobile fixes for LotoIA */
+
+/* Reset básico para dispositivos móviles */
+@media screen and (max-width: 768px) {
+  html, body {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-sizing: border-box !important;
+    -webkit-text-size-adjust: 100% !important;
+    -ms-text-size-adjust: 100% !important;
+  }
+
+  *, *:before, *:after {
+    box-sizing: inherit !important;
+  }
+
+  /* Forzar ancho completo en todos los contenedores principales */
+  header, .header, main, .main, footer, .footer,
+  .container, .container-fluid, .row, .col, [class*="col-"],
+  .modulo-cabecera, .cabecera-superior, .cabecera-inferior, .juegos-container {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+    box-sizing: border-box !important;
+    overflow-x: hidden !important;
+  }
+
+  /* Ajustes específicos para el header */
+  .modulo-cabecera {
+    display: block !important;
+  }
+
+  .cabecera-superior {
+    flex-direction: column !important;
+    align-items: center !important;
+  }
+
+  .logo-container {
+    width: 100% !important;
+    max-width: 100% !important;
+    text-align: center !important;
+    margin-bottom: 10px !important;
+  }
+
+  .logo {
+    height: 80px !important;
+    max-width: 80% !important;
+    margin: 0 auto !important;
+    object-fit: contain !important;
+  }
+
+  .user-actions {
+    flex-direction: column !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    align-items: center !important;
+  }
+
+  .login-container {
+    flex-direction: column !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .input-group {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .inputs-row {
+    flex-direction: column !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    gap: 10px !important;
+  }
+
+  .login-input, .password-input-container, .input-field {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .buttons-group {
+    width: 100% !important;
+    max-width: 100% !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    margin-top: 10px !important;
+  }
+
+  .btn-entrar, .btn-registro {
+    flex: 1 !important;
+    max-width: 48% !important;
+    padding: 8px 12px !important;
+    font-size: 14px !important;
+    margin: 0 !important;
+  }
+
+  .icon-entrar {
+    height: 20px !important;
+    width: 20px !important;
+    max-height: 20px !important;
+    max-width: 20px !important;
+    margin-right: 3px !important;
+  }
+
+  .btn-entrar-content {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .idioma-container {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-top: 10px !important;
+    text-align: center !important;
+  }
+
+  /* Ajustes para los juegos */
+  .modulo-menu-juegos {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 10px 0 !important;
+  }
+
+  .item-menu-juegos {
+    flex: 0 1 calc(50% - 10px) !important;
+    margin-bottom: 10px !important;
+    border-right: none !important;
+    border-bottom: 1px solid #eee !important;
+    padding-bottom: 10px !important;
+  }
+
+  /* Ajustes para imágenes y media */
+  img, video, canvas, svg, iframe {
+    max-width: 100% !important;
+    height: auto !important;
+  }
+
+  /* Ajustes para botones e inputs */
+  button, a, input, select, textarea {
+    max-width: 100% !important;
+  }
+
+  /* Ajustes para contenedores de carrusel y módulos */
+  .carousel-container, .slider-section, .multi-image-container, .static-image {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+  }
+
+  /* Ajustes para los contenedores de módulos */
+  .process-container, .ai-team-container, .plans-container {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    gap: 10px !important;
+  }
+
+  /* Ajustes para elementos dentro de los contenedores */
+  .process-item, .ai-card, .plan-card {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 5px 0 !important;
+  }
+}
+
+/* Ajustes específicos para dispositivos muy pequeños */
+@media screen and (max-width: 360px) {
+  body {
+    font-size: 14px !important;
+  }
+
+  .container, .container-fluid, .row, .col, [class*="col-"] {
+    padding-left: 5px !important;
+    padding-right: 5px !important;
+  }
+
+  .icon-entrar {
+    height: 16px !important;
+    width: 16px !important;
+    max-height: 16px !important;
+    max-width: 16px !important;
+    margin-right: 2px !important;
+  }
+
+  .btn-entrar, .btn-registro {
+    padding: 6px 10px !important;
+    font-size: 12px !important;
+  }
+}

@@ -1,0 +1,7 @@
+<div class="lottery-ball-container" [ngClass]="{'highlight': highlight}">
+  <!-- Renderizado 3D normal -->
+  <div *ngIf="!staticRendering || !staticImageUrl" #rendererContainer [style.width.px]="size" [style.height.px]="size"></div>
+
+  <!-- Imagen estática cuando está disponible -->
+  <img *ngIf="staticRendering && staticImageUrl" [src]="staticImageUrl" [width]="size" [height]="size" [alt]="'Bola ' + number" class="static-ball-image">
+</div>

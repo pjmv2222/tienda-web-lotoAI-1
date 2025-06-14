@@ -1,0 +1,144 @@
+<div class="pasarela-container">
+  <div class="loading-overlay" *ngIf="isLoading">
+    <div class="loading-spinner"></div>
+  </div>
+  <div class="breadcrumb">
+    <a routerLink="/">Inicio</a> &gt; <a routerLink="/planes">Planes</a> &gt; <span>Pasarela de Pago</span>
+  </div>
+
+  <div class="pasarela-content">
+    <div class="pasarela-header">
+      <h1>Completar tu compra</h1>
+      <p class="subtitle">Estás a un paso de mejorar tus probabilidades de ganar</p>
+    </div>
+
+    <div class="pasarela-grid">
+      <div class="payment-details">
+        <div class="order-summary">
+          <h2>Resumen del pedido</h2>
+          <div class="summary-card">
+            <div class="summary-row">
+              <span class="summary-label">Plan:</span>
+              <span class="summary-value">{{ planInfo?.name }}</span>
+            </div>
+            <div class="summary-row">
+              <span class="summary-label">Precio:</span>
+              <span class="summary-value">{{ planInfo?.price }}€ (IVA incluido)</span>
+            </div>
+            <div class="summary-row">
+              <span class="summary-label">Fecha:</span>
+              <span class="summary-value">{{ currentDate | date:'dd/MM/yyyy' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="payment-methods">
+          <h2>Método de pago</h2>
+          <div class="payment-options">
+            <div class="payment-option" [class.selected]="selectedPaymentMethod === 'card'" (click)="selectPaymentMethod('card')">
+              <div class="option-radio">
+                <div class="radio-inner" *ngIf="selectedPaymentMethod === 'card'"></div>
+              </div>
+              <div class="option-icon">
+                <i class="fas fa-credit-card"></i>
+              </div>
+              <div class="option-label">Tarjeta de crédito/débito</div>
+            </div>
+
+            <div class="payment-option" [class.selected]="selectedPaymentMethod === 'paypal'" (click)="selectPaymentMethod('paypal')">
+              <div class="option-radio">
+                <div class="radio-inner" *ngIf="selectedPaymentMethod === 'paypal'"></div>
+              </div>
+              <div class="option-icon">
+                <i class="fab fa-paypal"></i>
+              </div>
+              <div class="option-label">PayPal</div>
+            </div>
+
+            <div class="payment-option" [class.selected]="selectedPaymentMethod === 'transfer'" (click)="selectPaymentMethod('transfer')">
+              <div class="option-radio">
+                <div class="radio-inner" *ngIf="selectedPaymentMethod === 'transfer'"></div>
+              </div>
+              <div class="option-icon">
+                <i class="fas fa-university"></i>
+              </div>
+              <div class="option-label">Transferencia bancaria</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-details" *ngIf="selectedPaymentMethod === 'card'">
+          <h3>Detalles de la tarjeta</h3>
+          <div class="form-group">
+            <label for="cardNumber">Número de tarjeta</label>
+            <div id="card-element" class="stripe-element"></div>
+            <div id="card-errors" class="error-message" *ngIf="cardError">{{ cardError }}</div>
+          </div>
+          <div class="form-group">
+            <label for="cardName">Nombre en la tarjeta</label>
+            <input type="text" id="cardName" placeholder="NOMBRE APELLIDOS" [(ngModel)]="cardName">
+          </div>
+        </div>
+
+        <div class="paypal-details" *ngIf="selectedPaymentMethod === 'paypal'">
+          <p>Completa tu pago de forma segura con PayPal:</p>
+          <div class="paypal-logo">
+            <img src="assets/img/paypal.png" alt="PayPal">
+          </div>
+          <div class="paypal-custom-button">
+            <button class="paypal-direct-button" (click)="redirectToPayPal()">
+              <img src="assets/img/paypal.png" alt="PayPal" class="paypal-button-img">
+              <span>Pagar con PayPal</span>
+            </button>
+            <p class="paypal-info">Se abrirá PayPal en una nueva ventana para completar tu pago de forma segura.</p>
+
+            <!-- Botón para confirmar pago completado -->
+            <button *ngIf="hasActivePayPalTransaction" class="paypal-confirm-button" (click)="checkPayPalPaymentStatus()">
+              <i class="fas fa-check-circle"></i>
+              <span>He completado el pago</span>
+            </button>
+          </div>
+          <div class="error-message" *ngIf="cardError">{{ cardError }}</div>
+        </div>
+
+        <div class="transfer-details" *ngIf="selectedPaymentMethod === 'transfer'">
+          <h3>Datos bancarios para la transferencia</h3>
+          <p>Realiza una transferencia con los siguientes datos:</p>
+          <ul>
+            <li><strong>Beneficiario:</strong> LotoAI Predicciones S.L.</li>
+            <li><strong>IBAN:</strong> ES12 3456 7890 1234 5678 9012</li>
+            <li><strong>Concepto:</strong> {{ referenceNumber }}</li>
+            <li><strong>Importe:</strong> {{ planInfo?.price }}€</li>
+          </ul>
+          <p class="note">Una vez realizada la transferencia, tu plan se activará en un plazo máximo de 24 horas laborables tras verificar el pago.</p>
+        </div>
+
+        <div class="payment-actions">
+          <button class="back-btn" routerLink="/planes">Volver</button>
+          <button class="pay-btn" (click)="processPay()">Pagar ahora</button>
+        </div>
+      </div>
+
+      <div class="plan-features">
+        <h2>{{ planInfo?.name }}</h2>
+        <p class="plan-description">{{ planInfo?.description }}</p>
+        <h3>Características incluidas:</h3>
+        <ul class="features-list">
+          <li *ngFor="let feature of planInfo?.features">
+            <i class="fas fa-check"></i>
+            <span>{{ feature }}</span>
+          </li>
+        </ul>
+        <div class="secure-payment">
+          <i class="fas fa-lock"></i>
+          <span>Pago 100% seguro</span>
+        </div>
+        <div class="payment-logos">
+          <img src="assets/img/visa.png" alt="Visa">
+          <img src="assets/img/mastercard.png" alt="Mastercard">
+          <img src="assets/img/paypal.png" alt="PayPal">
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

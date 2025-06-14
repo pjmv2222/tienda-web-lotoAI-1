@@ -1,0 +1,134 @@
+:host {
+  display: block;
+  width: 100%;
+  background-color: #f8f9fa;
+  border-top: 1px solid #ddd;
+  margin-top: 2rem;
+  position: relative;
+}
+
+.footer {
+  padding: 15px 40px;
+  font-family: Arial, sans-serif;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.footer-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 10px 0;
+}
+
+/* Enlaces */
+.links {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.links a {
+  color: #666;
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.links a:hover {
+  text-decoration: underline;
+}
+
+.vertical-separator {
+  color: #666;
+  margin: 0 5px;
+}
+
+/* Redes sociales y pagos */
+.social-payment {
+  justify-content: center;
+  gap: 30px;
+  margin: 20px 0;
+}
+
+.social-icons {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.social-icons img {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+}
+
+.payment-methods {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.payment-methods img {
+  height: 25px;
+  width: auto;
+}
+
+.payment-methods img[alt="PayPal"] {
+  height: 40px;
+}
+
+/* Certificaciones */
+.certifications {
+  gap: 20px;
+}
+
+.cert-icon {
+  height: 35px;
+  width: auto;
+}
+
+/* Contacto */
+.contact-icon {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  text-decoration: none;
+  color: #666;
+}
+
+.contact-icon img {
+  width: 20px;
+  height: 20px;
+}
+
+.contact-icon span {
+  font-size: 14px;
+}
+
+/* Copyright */
+.copyright {
+  text-align: center;
+  color: #666;
+  font-size: 12px;
+  margin-top: 15px;
+  padding-top: 10px;
+  border-top: 1px solid #ddd;
+  width: 100%;
+}
+
+.copyright-container {
+  width: 100%;
+  padding: 10px 0;
+  margin-top: 10px;
+  border-top: 1px solid #ddd;
+}
+
+.copyright-text {
+  text-align: center;
+  color: #666;
+  font-size: 12px;
+  margin: 0;
+  padding: 0 15px;
+}

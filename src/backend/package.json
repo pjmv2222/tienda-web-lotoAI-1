@@ -1,0 +1,50 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "main": "dist/server.js",
+  "scripts": {
+    "start": "node dist/index.js",
+    "dev": "nodemon src/index.ts",
+    "build": "tsc",
+    "postinstall": "npm run build",
+    "deploy:backend": "bash scripts/deploy-backend.sh",
+    "start:prod": "node dist/server.js",
+    "pm2:start": "node_modules/.bin/pm2 start dist/server.js --name loto-ia -f",
+    "pm2:stop": "node_modules/.bin/pm2 stop loto-ia",
+    "pm2:restart": "node_modules/.bin/pm2 restart loto-ia",
+    "pm2:logs": "node_modules/.bin/pm2 logs loto-ia",
+    "pm2:status": "node_modules/.bin/pm2 status",
+    "clean": "rimraf dist node_modules package-lock.json",
+    "init-db": "ts-node src/config/init-db.ts"
+  },
+  "keywords": [
+    "backend"
+  ],
+  "author": "Your Name",
+  "license": "MIT",  "dependencies": {
+    "@sendgrid/mail": "^8.1.5",
+    "@types/pg": "^8.11.11",
+    "axios": "^1.9.0",
+    "bcrypt": "^5.1.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "node-mailjet": "^6.0.6",
+    "pg": "^8.13.3",
+    "stripe": "^18.1.1"
+  },
+  "devDependencies": {
+    "@types/bcrypt": "^5.0.2",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/jsonwebtoken": "^9.0.9",
+    "@types/node": "^20.17.7",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2",
+    "nodemon": "^3.1.7",
+    "rimraf": "^6.0.1",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.7.2"
+  }
+}

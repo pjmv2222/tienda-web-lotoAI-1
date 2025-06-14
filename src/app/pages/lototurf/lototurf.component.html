@@ -1,0 +1,300 @@
+<div class="page-container">
+  <div class="breadcrumb">
+    <a routerLink="/home"><i class="fas fa-home"></i></a>
+    <span class="separator">></span>
+    <a routerLink="/home" class="link">Inicio</a>
+    <span class="separator">></span>
+    <span class="current">Lototurf</span>
+  </div>
+
+  <div class="content-container">
+    <div class="lottery-header">
+      <div class="lottery-logo">
+        <img src="assets/img/cabecera_LototurfAJ_topaz.png" alt="Lototurf Logo" class="lottery-image">
+      </div>
+      <div class="lottery-info">
+        <h1 class="lottery-title">Lototurf</h1>
+        <div class="jackpot-info">
+          <span class="jackpot-label">Bote actual:</span>
+          <span class="jackpot-amount">{{ boteActual }}</span>
+        </div>
+        <div class="next-draw">
+          <span class="next-draw-label">Próximo sorteo:</span>
+          <span class="next-draw-date">{{ proximoSorteo }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="lottery-description">
+      <h2>Predicciones para Lototurf con IA</h2>
+      <p>
+        Nuestro sistema de inteligencia artificial analiza los resultados históricos de Lototurf para generar combinaciones con mayor probabilidad estadística de acierto. Utilizamos algoritmos avanzados de machine learning que identifican patrones y tendencias en los sorteos anteriores.
+      </p>
+      <p>
+        <strong>Lototurf</strong> es una lotería española vinculada a las carreras de caballos. Para ganar el premio mayor, debes acertar 6 números (de 1 a 31) y un caballo ganador (de 1 a 12).
+      </p>
+    </div>
+
+    <div class="prediction-options">
+      <h2>Genera tus predicciones</h2>
+      <p>Selecciona una de nuestras opciones para obtener combinaciones generadas por IA:</p>
+
+      <div class="options-container">
+        <div class="option-card" [class.active]="hasBasicPlan">
+          <div class="option-header">
+            <h3>Predicción Básica</h3>
+            <span class="option-price" *ngIf="!hasBasicPlan">1,22€</span>
+            <span class="option-price active" *ngIf="hasBasicPlan">ACTIVADO</span>
+          </div>
+          <div class="option-features">
+            <ul>
+              <li>3 combinaciones para cada 1 de los 7 juegos</li>
+              <li>Análisis básico</li>
+              <li>Caballo ganador optimizado</li>
+            </ul>
+          </div>
+          <button class="generate-btn" *ngIf="hasBasicPlan" (click)="generateBasicPrediction()" [disabled]="isGeneratingPrediction">
+            <span *ngIf="!isGeneratingPrediction">Generar</span>
+            <span *ngIf="isGeneratingPrediction">Generando...</span>
+          </button>
+          <button class="generate-btn" *ngIf="!hasBasicPlan" (click)="showSubscriptionOptions()">Suscribir</button>
+          <p *ngIf="!isLoggedIn" class="login-required">Necesitas <a routerLink="/auth/login">iniciar sesión</a> para generar predicciones</p>
+          <p *ngIf="isLoggedIn && !hasBasicPlan" class="login-required">Necesitas <a routerLink="/planes">suscribir este plan</a> para generar predicciones</p>
+
+          <!-- Mostrar error si lo hay -->
+          <p *ngIf="predictionError" class="prediction-error">{{ predictionError }}</p>
+
+          <!-- Mostrar resultado de la predicción -->
+          <div *ngIf="predictionResult" class="prediction-result">
+            <h4>Tu predicción:</h4>
+            <div class="prediction-numbers">
+              <div class="lottery-balls-container">
+                <div *ngFor="let number of predictionResult.numeros" class="ball-wrapper">
+                  <app-euromillones-ball [number]="number" [size]="60" [staticRendering]="true" [customColor]="'#4CAF50'"></app-euromillones-ball>
+                </div>
+                <span class="lottery-balls-separator">+</span>
+                <div *ngIf="predictionResult.caballo" class="ball-wrapper">
+                  <app-euromillones-ball [number]="predictionResult.caballo" [type]="'star'" [size]="60" [staticRendering]="true" [customColor]="'#8B4513'"></app-euromillones-ball>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Plan Mensual -->
+        <div class="option-card premium" [class.active]="hasMonthlyPlan">
+          <div class="option-header">
+            <h3>Plan Mensual</h3>
+            <span class="option-price" *ngIf="!hasMonthlyPlan">10,22€</span>
+            <span class="option-price active" *ngIf="hasMonthlyPlan">ACTIVADO</span>
+          </div>
+          <div class="option-features">
+            <ul>
+              <li>Combinaciones optimizadas ilimitadas durante el mes de suscripción</li>
+              <li>Análisis avanzado de patrones</li>
+              <li>Caballo ganador optimizado</li>
+              <li>Estadísticas detalladas</li>
+              <li>Histórico de resultados</li>
+            </ul>
+          </div>
+          <button class="generate-btn premium-btn" *ngIf="!hasMonthlyPlan" (click)="showSubscriptionOptions()">Suscribir</button>
+          <button class="generate-btn premium-btn" *ngIf="hasMonthlyPlan" [disabled]="true">Generar</button>
+          <p *ngIf="!isLoggedIn" class="login-required">Necesitas <a routerLink="/auth/login">iniciar sesión</a> para generar predicciones premium</p>
+        </div>
+
+        <!-- Plan Pro -->
+        <div class="option-card premium pro" [class.active]="hasProPlan">
+          <div class="option-header">
+            <h3>Plan Pro</h3>
+            <span class="option-price" *ngIf="!hasProPlan">122€</span>
+            <span class="option-price active" *ngIf="hasProPlan">ACTIVADO</span>
+          </div>
+          <div class="option-features">
+            <ul>
+              <li>Combinaciones optimizadas ilimitadas durante los 12 meses de la suscripción</li>
+              <li>Análisis avanzado de patrones</li>
+              <li>Caballo ganador optimizado</li>
+              <li>Estadísticas detalladas</li>
+              <li>Histórico de resultados</li>
+              <li>Acceso a todas las loterías</li>
+            </ul>
+          </div>
+          <button class="generate-btn premium-btn" *ngIf="!hasProPlan" (click)="showSubscriptionOptions()">Suscribir</button>
+          <button class="generate-btn premium-btn" *ngIf="hasProPlan" [disabled]="true">Generar</button>
+          <p *ngIf="!isLoggedIn" class="login-required">Necesitas <a routerLink="/auth/login">iniciar sesión</a> para generar predicciones premium</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="how-it-works">
+      <h2>Cómo funciona</h2>
+      <div class="steps-container">
+        <div class="step">
+          <div class="step-number">1</div>
+          <div class="step-content">
+            <h3>Regístrate</h3>
+            <p>Crea una cuenta gratuita para acceder a nuestras predicciones básicas o suscríbete a un plan premium.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">2</div>
+          <div class="step-content">
+            <h3>Genera predicciones</h3>
+            <p>Utiliza nuestra IA para generar combinaciones optimizadas para Lototurf.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">3</div>
+          <div class="step-content">
+            <h3>Juega tus números</h3>
+            <p>Utiliza las combinaciones generadas para participar en los sorteos oficiales de Lototurf.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="statistics">
+      <h2>Estadísticas de Lototurf</h2>
+      <div class="stats-container">
+        <div class="stats-card">
+          <h3>Números más frecuentes</h3>
+          <div class="lottery-balls-container" id="most-frequent-numbers-container">
+            <div class="ball-wrapper">
+              <app-euromillones-ball [number]="4" [size]="80" [staticRendering]="true" [customColor]="'#4CAF50'"></app-euromillones-ball>
+            </div>
+            <div class="ball-wrapper">
+              <app-euromillones-ball [number]="9" [size]="80" [staticRendering]="true" [customColor]="'#4CAF50'"></app-euromillones-ball>
+            </div>
+            <div class="ball-wrapper">
+              <app-euromillones-ball [number]="15" [size]="80" [staticRendering]="true" [customColor]="'#4CAF50'"></app-euromillones-ball>
+            </div>
+            <div class="ball-wrapper">
+              <app-euromillones-ball [number]="21" [size]="80" [staticRendering]="true" [customColor]="'#4CAF50'"></app-euromillones-ball>
+            </div>
+            <div class="ball-wrapper">
+              <app-euromillones-ball [number]="27" [size]="80" [staticRendering]="true" [customColor]="'#4CAF50'"></app-euromillones-ball>
+            </div>
+            <div class="ball-wrapper">
+              <app-euromillones-ball [number]="30" [size]="80" [staticRendering]="true" [customColor]="'#4CAF50'"></app-euromillones-ball>
+            </div>
+          </div>
+        </div>
+        <div class="stats-card">
+          <h3>Caballos más frecuentes</h3>
+          <div class="lottery-balls-container" id="most-frequent-horses-container">
+            <div class="ball-wrapper">
+              <app-euromillones-ball [number]="3" [type]="'star'" [size]="80" [priority]="1" [customColor]="'#8B4513'"></app-euromillones-ball>
+            </div>
+            <div class="ball-wrapper">
+              <app-euromillones-ball [number]="7" [type]="'star'" [size]="80" [priority]="1" [customColor]="'#8B4513'"></app-euromillones-ball>
+            </div>
+            <div class="ball-wrapper">
+              <app-euromillones-ball [number]="10" [type]="'star'" [size]="80" [priority]="1" [customColor]="'#8B4513'"></app-euromillones-ball>
+            </div>
+          </div>
+        </div>
+        <div class="stats-card">
+          <h3>Números menos frecuentes</h3>
+          <div class="lottery-balls-container" id="least-frequent-numbers-container">
+            <div class="ball-wrapper">
+              <app-euromillones-ball [number]="1" [size]="80" [priority]="0" [customColor]="'#4CAF50'"></app-euromillones-ball>
+            </div>
+            <div class="ball-wrapper">
+              <app-euromillones-ball [number]="8" [size]="80" [priority]="0" [customColor]="'#4CAF50'"></app-euromillones-ball>
+            </div>
+            <div class="ball-wrapper">
+              <app-euromillones-ball [number]="13" [size]="80" [priority]="0" [customColor]="'#4CAF50'"></app-euromillones-ball>
+            </div>
+            <div class="ball-wrapper">
+              <app-euromillones-ball [number]="19" [size]="80" [priority]="0" [customColor]="'#4CAF50'"></app-euromillones-ball>
+            </div>
+            <div class="ball-wrapper">
+              <app-euromillones-ball [number]="25" [size]="80" [priority]="0" [customColor]="'#4CAF50'"></app-euromillones-ball>
+            </div>
+            <div class="ball-wrapper">
+              <app-euromillones-ball [number]="31" [size]="80" [priority]="0" [customColor]="'#4CAF50'"></app-euromillones-ball>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="view-more">
+        <a href="#" class="view-more-link">Ver estadísticas completas</a>
+      </div>
+    </div>
+
+    <div class="last-results">
+      <h2>Últimos resultados</h2>
+      <div class="result-card">
+        <div class="result-date">Domingo, 7 de abril de 2024</div>
+        <div class="result-numbers">
+          <div class="lottery-balls-container" id="last-results-container">
+            <div class="ball-wrapper">
+              <app-euromillones-ball [number]="3" [size]="80" [priority]="2" [customColor]="'#4CAF50'"></app-euromillones-ball>
+            </div>
+            <div class="ball-wrapper">
+              <app-euromillones-ball [number]="10" [size]="80" [priority]="2" [customColor]="'#4CAF50'"></app-euromillones-ball>
+            </div>
+            <div class="ball-wrapper">
+              <app-euromillones-ball [number]="17" [size]="80" [priority]="2" [customColor]="'#4CAF50'"></app-euromillones-ball>
+            </div>
+            <div class="ball-wrapper">
+              <app-euromillones-ball [number]="22" [size]="80" [priority]="2" [customColor]="'#4CAF50'"></app-euromillones-ball>
+            </div>
+            <div class="ball-wrapper">
+              <app-euromillones-ball [number]="26" [size]="80" [priority]="2" [customColor]="'#4CAF50'"></app-euromillones-ball>
+            </div>
+            <div class="ball-wrapper">
+              <app-euromillones-ball [number]="29" [size]="80" [priority]="2" [customColor]="'#4CAF50'"></app-euromillones-ball>
+            </div>
+            <span class="lottery-balls-separator">+</span>
+            <div class="ball-wrapper">
+              <app-euromillones-ball [number]="5" [type]="'star'" [size]="80" [priority]="2" [customColor]="'#8B4513'"></app-euromillones-ball>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="view-more">
+        <a href="#" class="view-more-link">Ver resultados anteriores</a>
+      </div>
+    </div>
+
+    <div class="faq-section">
+      <h2>Preguntas frecuentes</h2>
+      <div class="faq-container">
+        <div class="faq-item">
+          <div class="faq-question">
+            <h3>¿Cómo se generan las predicciones?</h3>
+            <span class="faq-toggle">+</span>
+          </div>
+          <div class="faq-answer">
+            <p>Nuestras predicciones se generan utilizando algoritmos de inteligencia artificial que analizan los resultados históricos, frecuencias, patrones y tendencias estadísticas de los sorteos de Lototurf.</p>
+          </div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-question">
+            <h3>¿Garantizan que voy a ganar?</h3>
+            <span class="faq-toggle">+</span>
+          </div>
+          <div class="faq-answer">
+            <p>No podemos garantizar premios ya que los sorteos de lotería son juegos de azar. Nuestro sistema mejora las probabilidades estadísticas, pero el resultado final siempre será aleatorio.</p>
+          </div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-question">
+            <h3>¿Cuántas combinaciones puedo generar?</h3>
+            <span class="faq-toggle">+</span>
+          </div>
+          <div class="faq-answer">
+            <p>Con la cuenta gratuita puedes generar 1 combinación básica por sorteo. Los planes premium permiten generar entre 5 y 20 combinaciones optimizadas por sorteo, dependiendo del plan elegido.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="disclaimer">
+      <p>
+        <strong>Aviso importante:</strong> LOTO IA no está afiliado con los operadores oficiales de Lototurf. Nuestro servicio proporciona predicciones basadas en análisis estadístico e inteligencia artificial, pero no garantiza resultados. Juega con responsabilidad.
+      </p>
+    </div>
+  </div>
+</div>

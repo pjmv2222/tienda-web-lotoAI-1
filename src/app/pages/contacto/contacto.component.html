@@ -1,0 +1,107 @@
+<div class="page-container">
+  <div class="breadcrumb">
+    <a routerLink="/home"><i class="fas fa-home"></i></a>
+    <span class="separator">></span>
+    <a routerLink="/home" class="link">Inicio</a>
+    <span class="separator">></span>
+    <span class="current">Contacto</span>
+  </div>
+
+  <div class="content-container">
+    <h1 class="title">ASISTENCIA AL CLIENTE DE LOTO IA.COM</h1>
+    <p class="subtitle">
+      Para consultas relacionadas con la web: tu cuenta de usuario, tus predicciones, así como cualquier consulta relacionada con LOTO IA.COM, te es posible hacerlo, por escrito, a través de este FORMULARIO DE CONTACTO, seleccionando un tema del desplegable y sin utilizar comillas en el Mensaje:
+    </p>
+
+    <h2 class="form-title">Formulario de contacto:</h2>
+
+    <form [formGroup]="contactForm" (ngSubmit)="onSubmit()" class="contact-form">
+      <!-- Campo de selección de tema -->
+      <div class="form-group">
+        <label for="tema">Seleccione un tema*</label>
+        <select id="tema" formControlName="tema" class="form-control">
+          <option value="" disabled selected>Seleccione un tema</option>
+          <option value="1">1.- La página no funciona con mi navegador.</option>
+          <option value="2">2.- No consigo darme de alta como usuario registrado.</option>
+          <option value="3">3.- Se ha bloqueado mi cuenta o no recuerdo la contraseña.</option>
+          <option value="4">4.- Mi tarjeta no es aceptada o tengo problemas para pagar mis medios de pago.</option>
+          <option value="5">5.- Dudas o problemas con mis suscripciones.</option>
+          <option value="6">6.- Soy usuario y quiero darme de baja.</option>
+          <option value="7">7.- Información sobre nuestros juegos, sorteos y servicios.</option>
+          <option value="8">8.- Me ha llegado carta, email o llamada con aviso de premio.</option>
+          <option value="9">9.- Sugerencias generales para LOTO IA.COM.</option>
+          <option value="10">10.- Información sobre juego responsable.</option>
+        </select>
+        <div *ngIf="submitted && f['tema'].errors" class="error-message">
+          <div *ngIf="f['tema'].errors['required']">Por favor, debes elegir un tema.</div>
+        </div>
+      </div>
+
+      <!-- Campo de nombre -->
+      <div class="form-group">
+        <label for="nombre">Nombre</label>
+        <input type="text" id="nombre" formControlName="nombre" class="form-control">
+        <div *ngIf="submitted && f['nombre'].errors" class="error-message">
+          <div *ngIf="f['nombre'].errors['required']">Por favor, revisa el campo nombre.</div>
+        </div>
+      </div>
+
+      <!-- Campo de email -->
+      <div class="form-group">
+        <label for="email">Email de Contacto</label>
+        <input type="email" id="email" formControlName="email" class="form-control">
+        <div *ngIf="submitted && f['email'].errors" class="error-message">
+          <div *ngIf="f['email'].errors['required']">Por favor, revisa el campo email.</div>
+          <div *ngIf="f['email'].errors['email']">Por favor, introduce un email válido.</div>
+        </div>
+      </div>
+
+      <!-- Campo de mensaje -->
+      <div class="form-group message-group">
+        <label for="mensaje">Mensaje</label>
+        <div class="message-info">
+          A fin de poder atenderte adecuadamente, <br>
+          te agradecemos que nos envíes tu <br>
+          consulta en castellano. No se permiten comillas.
+        </div>
+        <textarea id="mensaje" formControlName="mensaje" class="form-control" rows="6"></textarea>
+        <div *ngIf="submitted && f['mensaje'].errors" class="error-message">
+          <div *ngIf="f['mensaje'].errors['required']">Por favor, revisa el campo mensaje.</div>
+          <div *ngIf="f['mensaje'].errors['maxlength']">El mensaje no puede exceder los 1000 caracteres.</div>
+        </div>
+      </div>
+
+      <!-- Campo de adjuntar archivo -->
+      <div class="form-group file-group">
+        <label>Adjuntar archivo de imagen (opcional)</label>
+        <div class="file-input-container">
+          <button type="button" class="file-select-btn" (click)="fileInput.click()">Seleccionar archivo</button>
+          <span class="file-name">{{ fileName || 'Ningún archivo selec.' }}</span>
+          <input type="file" #fileInput (change)="onFileSelected($event)" accept="image/*" style="display: none;">
+        </div>
+      </div>
+
+      <!-- Casilla de verificación de política de privacidad -->
+      <div class="form-group checkbox-group">
+        <div class="checkbox-container">
+          <input type="checkbox" id="privacidad" formControlName="privacidad">
+          <label for="privacidad">He leído y acepto la <a routerLink="/proteccion-datos">Política de Privacidad</a></label>
+        </div>
+        <div *ngIf="submitted && f['privacidad'].errors" class="error-message">
+          <div *ngIf="f['privacidad'].errors['required']">Debes aceptar la política de privacidad.</div>
+        </div>
+      </div>
+
+      <!-- Mensaje de éxito -->
+      <div *ngIf="submitSuccess" class="success-message">
+        GRACIAS POR CONTACTAR CON LOTO IA.COM
+      </div>
+
+      <!-- Botones de enviar y borrar -->
+      <div class="form-buttons">
+        <button type="submit" class="btn-submit" [disabled]="!f['privacidad'].value">ENVIAR</button>
+        <button type="button" class="btn-reset" (click)="resetForm()">BORRAR</button>
+      </div>
+    </form>
+  </div>
+</div>

@@ -1,0 +1,285 @@
+name: Deploy LotoIA to VPS
+
+on:
+  push:
+    branches: [ main ]
+    paths-ignore:
+      - 'IAs-Loto/**'
+      - 'ias/**'
+      - '.github/workflows/deploy-with-ias.yml'
+  workflow_dispatch:  # Permite ejecutar manualmente desde la interfaz de GitHub
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0  # Obtener todo el historial para que git describe funcione correctamente
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18.x'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: |
+        # Instalar Angular CLI globalmente
+        npm install -g @angular/cli
+        # Instalar dependencias del proyecto
+        npm ci
+
+    - name: Build application
+      run: |
+        # Compilar aplicación completa con SSR
+        echo "Compilando frontend con SSR en modo producción..."
+        npm run build:ssr
+
+        echo "Compilando backend..."
+        npm run build:backend
+
+        echo "Verificando archivos compilados..."
+        echo "Archivos generados en dist:"
+        ls -la dist/tienda-web-loto-ai/ || echo "Directorio dist no encontrado"
+        
+        echo "Verificando servidor SSR:"
+        ls -la dist/tienda-web-loto-ai/server/ || echo "Directorio server no encontrado"
+
+    # Usar una única acción para el despliegue completo
+    - name: Deploy to VPS
+      uses: appleboy/ssh-action@master
+      with:
+        host: 212.227.230.103
+        username: root
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        script: |
+          echo "=== INICIO DEL DESPLIEGUE ==="
+
+          echo "=== Verificando entorno ==="
+          echo "Directorio actual: $(pwd)"
+          echo "Usuario: $(whoami)"
+          echo "Versión de Node: $(node -v || echo 'Node no disponible')"
+          echo "Versión de NPM: $(npm -v || echo 'NPM no disponible')"
+
+          echo "=== Configurando NVM ==="
+          export NVM_DIR="$HOME/.nvm"
+          [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+          echo "Versión de Node después de NVM: $(node -v || echo 'Node no disponible')"
+
+          echo "=== Navegando al directorio del proyecto ==="
+          cd /var/www/tienda-web-lotoAI-1 || { echo "Error: No se pudo acceder al directorio del proyecto"; exit 1; }
+
+          echo "=== Actualizando desde GitHub ==="
+          echo "Descartando cambios locales..."
+          git reset --hard HEAD
+          git clean -fd
+          echo "Cambiando a la rama main..."
+          git checkout main
+          echo "Actualizando desde el repositorio remoto..."
+          git fetch origin
+          git reset --hard origin/main || { echo "Error: No se pudo actualizar desde GitHub"; exit 1; }
+
+          echo "=== Verificando PM2 ==="
+          export PATH=$PATH:/usr/local/bin:/usr/bin:/root/.nvm/versions/node/v18.19.0/bin
+          PM2_PATH=$(which pm2 || echo "PM2 no encontrado")
+          echo "Ruta de PM2: $PM2_PATH"
+
+          if [ -z "$PM2_PATH" ]; then
+            echo "Instalando PM2 globalmente..."
+            npm install -g pm2
+            PM2_PATH=$(which pm2 || echo "PM2 no encontrado después de instalación")
+            echo "Nueva ruta de PM2: $PM2_PATH"
+          fi
+
+          echo "=== Instalación de dependencias ==="
+          echo "Instalando dependencias del proyecto..."
+          if [ -d "node_modules" ]; then
+            echo "Eliminando node_modules existentes para limpieza completa..."
+            rm -rf node_modules
+          fi
+          npm ci || npm install
+
+          echo "=== Compilando aplicación en el servidor ==="
+          echo "Compilando backend..."
+          npm run build:backend || { echo "Error: No se pudo compilar el backend"; exit 1; }
+          echo "✅ Backend compilado correctamente"
+
+          echo "Compilando aplicación SSR..."
+          npm run build:ssr || { echo "Error: No se pudo compilar la aplicación SSR"; exit 1; }
+          echo "✅ Aplicación SSR compilada correctamente"
+
+          echo "=== Verificando archivos compilados ==="
+          if [ -f "dist/tienda-web-loto-ai/server/server.mjs" ]; then
+            echo "✅ Archivo servidor SSR encontrado: dist/tienda-web-loto-ai/server/server.mjs"
+          else
+            echo "❌ ERROR: Archivo servidor SSR no encontrado"
+            ls -la dist/tienda-web-loto-ai/server/ || echo "Directorio server no existe"
+            exit 1
+          fi
+
+          if [ -f "src/backend/dist/index.js" ]; then
+            echo "✅ Archivo backend encontrado: src/backend/dist/index.js"
+          else
+            echo "❌ ERROR: Archivo backend no encontrado"
+            ls -la src/backend/dist/ || echo "Directorio backend/dist no existe"
+            exit 1
+          fi
+
+          echo "=== Configurando archivos de entorno ==="
+          cd /var/www/tienda-web-lotoAI-1/src/backend
+          if [ -f .env.production ]; then
+            echo "Copiando .env.production a .env..."
+            cp .env.production .env
+            echo "✅ Configuración de producción aplicada"
+          else
+            echo "⚠️ Advertencia: .env.production no encontrado, usando .env existente"
+          fi
+          cd /var/www/tienda-web-lotoAI-1
+
+          echo "=== Creando configuraciones PM2 actualizadas ==="
+          
+          # Crear configuración para el backend
+          cat > ecosystem-backend.config.js << 'EOFBACKEND'
+          module.exports = {
+            apps: [
+              {
+                name: 'loto-ia-backend',
+                script: 'src/backend/dist/index.js',
+                instances: 1,
+                autorestart: true,
+                watch: false,
+                max_restarts: 10,
+                min_uptime: '20s',
+                env: {
+                  NODE_ENV: 'production',
+                  PORT: 3001
+                }
+              }
+            ]
+          };
+          EOFBACKEND
+
+          # Crear configuración para el SSR
+          cat > ecosystem-ssr.config.js << 'EOFSSR'
+          module.exports = {
+            apps: [
+              {
+                name: 'loto-ia-ssr',
+                script: 'dist/tienda-web-loto-ai/server/server.mjs',
+                instances: 1,
+                autorestart: true,
+                watch: false,
+                max_restarts: 10,
+                min_uptime: '20s',
+                env: {
+                  NODE_ENV: 'production',
+                  PORT: 4000
+                }
+              }
+            ]
+          };
+          EOFSSR
+
+          echo "✅ Configuraciones PM2 creadas correctamente"
+
+          echo "=== WORKFLOW ROBUSTO CON ROLLBACK AUTOMÁTICO ==="
+
+          # Crear backup del estado actual antes de cualquier cambio
+          echo "1. Creando backup del estado actual..."
+          BACKUP_DIR="/var/www/backup-pre-deploy-$(date +%Y%m%d_%H%M%S)"
+          mkdir -p $BACKUP_DIR
+          cp -r /var/www/tienda-web-lotoAI-1 $BACKUP_DIR/
+          echo "✅ Backup creado en: $BACKUP_DIR"
+
+          # Función de rollback automático
+          rollback_deployment() {
+            echo "🚨 INICIANDO ROLLBACK AUTOMÁTICO..."
+            echo "1. Deteniendo procesos actuales..."
+            $PM2_PATH kill || true
+            pkill -f "node dist/tienda-web-loto-ai/server/server.mjs" || true
+
+            echo "2. Restaurando desde backup..."
+            cd /var/www
+            rm -rf tienda-web-lotoAI-1
+            cp -r $BACKUP_DIR/tienda-web-lotoAI-1 .
+
+            echo "3. Iniciando servidor desde backup..."
+            cd tienda-web-lotoAI-1
+            if [ -f "dist/tienda-web-loto-ai/server/server.mjs" ]; then
+              nohup node dist/tienda-web-loto-ai/server/server.mjs > server.log 2>&1 &
+            fi
+
+            echo "4. Verificando rollback..."
+            sleep 10
+            if netstat -tlnp | grep -q 4000; then
+              echo "✅ Rollback exitoso - Servidor restaurado en puerto 4000"
+              curl -I http://localhost:4000 || echo "Advertencia: No se pudo verificar HTTP"
+            else
+              echo "❌ ERROR CRÍTICO: Rollback falló"
+            fi
+          }
+
+          # Detener procesos existentes de forma segura
+          echo "2. Deteniendo procesos existentes..."
+          $PM2_PATH kill || true
+          pkill -f "node dist/tienda-web-loto-ai/server/server.mjs" || true
+          sleep 3
+
+          echo "3. Iniciando backend con PM2..."
+          if $PM2_PATH start ecosystem-backend.config.js; then
+            echo "✅ Backend iniciado correctamente"
+          else
+            echo "⚠️ Advertencia: No se pudo iniciar backend con PM2"
+          fi
+
+          echo "4. Iniciando SSR con PM2..."
+          if $PM2_PATH start ecosystem-ssr.config.js; then
+            echo "✅ SSR iniciado correctamente con PM2"
+          else
+            echo "⚠️ Advertencia: No se pudo iniciar SSR con PM2, intentando método directo..."
+            nohup node dist/tienda-web-loto-ai/server/server.mjs > server.log 2>&1 &
+          fi
+
+          echo "5. Verificando que el servidor está funcionando..."
+          sleep 15
+          if netstat -tlnp | grep -q 4000; then
+            echo "✅ Servidor funcionando correctamente en puerto 4000"
+            if curl -I http://localhost:4000; then
+              echo "✅ Verificación HTTP exitosa"
+            else
+              echo "⚠️ Advertencia: Servidor activo pero verificación HTTP falló"
+            fi
+          else
+            echo "❌ ERROR: Servidor no está activo en puerto 4000"
+            rollback_deployment
+            exit 1
+          fi
+
+          echo "6. Guardando configuración de PM2..."
+          $PM2_PATH save || echo "Advertencia: No se pudo guardar configuración PM2"
+
+          echo "7. Estado final de PM2:"
+          $PM2_PATH list || echo "Advertencia: No se pudo listar procesos PM2"
+
+          echo "✅ DESPLIEGUE ROBUSTO COMPLETADO EXITOSAMENTE"
+
+          echo "=== Ejecutando script de scraping para actualizar montos de botes ==="
+          cd /var/www/tienda-web-lotoAI-1/scraper
+          echo "Ejecutando script de scraping..."
+          timeout 600 xvfb-run -a --server-args="-screen 0 1920x1080x24 -ac" /root/.nvm/versions/node/v18.20.5/bin/ts-node scraper.ts || echo "Advertencia: Script de scraping falló"
+          echo "Script de scraping completado."
+
+          echo "=== DESPLIEGUE COMPLETADO ==="
+
+    - name: Deployment success notification
+      if: success()
+      run: |
+        echo "::notice::Deployment completed successfully! The application has been deployed to the VPS."
+
+    - name: Deployment failure notification
+      if: failure()
+      run: |
+        echo "::error::Deployment failed! Please check the logs for more information."

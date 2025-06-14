@@ -1,0 +1,63 @@
+<footer class="footer">
+  <!-- Primera fila: enlaces -->
+  <div class="footer-row links">
+    <a routerLink="/conocenos">Conócenos</a>
+    <span class="vertical-separator">|</span>
+    <a routerLink="/ayuda">Ayuda</a>
+    <span class="vertical-separator">|</span>
+    <a routerLink="/juego-seguro">Juego más seguro</a>
+    <span class="vertical-separator">|</span>
+    <a routerLink="/aviso-legal">Aviso Legal</a>
+    <span class="vertical-separator">|</span>
+    <a routerLink="/proteccion-datos">Protección de datos</a>
+    <span class="vertical-separator">|</span>
+    <a routerLink="/uso-web">Uso Web</a>
+    <span class="vertical-separator">|</span>
+    <a routerLink="/accesibilidad">Accesibilidad</a>
+    <span class="vertical-separator">|</span>
+    <a routerLink="/gestion-cookies">Gestión de cookies</a>
+  </div>
+
+  <!-- Segunda fila: redes sociales y métodos de pago -->
+  <div class="footer-row social-payment">
+    <div class="social-icons">
+      <a href="#"><img src="assets/img/facebook.png" alt="Facebook"></a>
+      <a href="#"><img src="assets/img/youtube.svg" alt="YouTube"></a>
+      <a href="#"><img src="assets/img/X.png" alt="X"></a>
+      <a routerLink="/contacto" class="contact-icon">
+        <img src="assets/img/icono_msg_header.svg" alt="Contacto">
+        <span>Contacto</span>
+      </a>
+    </div>
+    <div class="vertical-separator">|</div>
+    <div class="payment-methods">
+      <img src="assets/img/visa.png" alt="Visa">
+      <img src="assets/img/mastercard.png" alt="Mastercard">
+      <img src="assets/img/traspaso.png" alt="Traspaso Rápido">
+      <img src="assets/img/paypal.png" alt="PayPal">
+    </div>
+  </div>
+
+  <!-- Tercera fila: certificaciones -->
+  <div class="footer-row certifications">
+    <a routerLink="/restriccion-edad">
+      <img src="assets/img/major18.jpg" alt="Mayor 18" class="cert-icon">
+    </a>
+    <a href="https://www.ordenacionjuego.es/participantes-juego/juego-seguro" target="_blank">
+      <img src="assets/img/juego-seguro.png" alt="Juego Seguro" class="cert-icon">
+    </a>
+    <a href="https://www.ordenacionjuego.es/participantes-juego/juego-seguro/rgiaj" target="_blank">
+      <img src="assets/img/warning.svg" alt="Juego Autorizado" class="cert-icon">
+    </a>
+    <a href="https://www.ordenacionjuego.es/participantes-juego" target="_blank">
+      <img src="assets/img/jugar-bien.png" alt="Jugar Bien" class="cert-icon">
+    </a>
+  </div>
+
+  <!-- Copyright con clase específica -->
+  <div class="copyright-container">
+    <p class="copyright-text">
+      © {{ currentYear }} Todas las marcas de LOTO IA están registradas y está prohibido el uso de estas por terceros sin autorización expresa de LOTO IA
+    </p>
+  </div>
+</footer>

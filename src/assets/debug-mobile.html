@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
+  <title>Diagnóstico Móvil LotoIA</title>
+  <style>
+    /* Reset básico */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    html, body {
+      width: 100%;
+      max-width: 100%;
+      overflow-x: hidden;
+      font-family: Arial, sans-serif;
+    }
+    
+    /* Contenedores de prueba */
+    .container {
+      width: 100%;
+      max-width: 100%;
+      padding: 10px;
+      margin-bottom: 20px;
+      border: 1px solid #ccc;
+    }
+    
+    .test-box {
+      width: 100%;
+      height: 50px;
+      background-color: #f0f0f0;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-weight: bold;
+    }
+    
+    .full-width {
+      width: 100vw;
+      background-color: #e0e0e0;
+      padding: 10px;
+      text-align: center;
+      margin-bottom: 10px;
+    }
+    
+    .debug-info {
+      padding: 10px;
+      background-color: #f8f8f8;
+      border: 1px solid #ddd;
+      margin-bottom: 10px;
+      font-family: monospace;
+      white-space: pre-wrap;
+    }
+    
+    button {
+      padding: 10px;
+      margin: 5px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    
+    button:hover {
+      background-color: #45a049;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Diagnóstico Móvil LotoIA</h1>
+    <p>Esta página ayuda a diagnosticar problemas de visualización en dispositivos móviles.</p>
+    
+    <div class="debug-info" id="viewport-info"></div>
+    
+    <div class="test-box">Caja de prueba 1 - Ancho normal</div>
+    <div class="test-box" style="width: 200%;">Caja de prueba 2 - Ancho 200%</div>
+    <div class="full-width">Caja de prueba 3 - Ancho 100vw</div>
+    
+    <button id="fix-button">Aplicar corrección</button>
+    <button id="check-elements">Verificar elementos problemáticos</button>
+  </div>
+  
+  <script>
+    // Mostrar información del viewport
+    function updateViewportInfo() {
+      const info = document.getElementById('viewport-info');
+      info.textContent = `
+Ancho de ventana: ${window.innerWidth}px
+Ancho de documento: ${document.documentElement.scrollWidth}px
+Ancho de body: ${document.body.scrollWidth}px
+Ancho de viewport: ${window.visualViewport ? window.visualViewport.width : 'No disponible'}px
+Escala de viewport: ${window.visualViewport ? window.visualViewport.scale : 'No disponible'}
+      `;
+    }
+    
+    // Aplicar corrección
+    document.getElementById('fix-button').addEventListener('click', function() {
+      document.documentElement.style.width = '100%';
+      document.documentElement.style.maxWidth = '100%';
+      document.documentElement.style.overflowX = 'hidden';
+      document.body.style.width = '100%';
+      document.body.style.maxWidth = '100%';
+      document.body.style.overflowX = 'hidden';
+      
+      // Actualizar información
+      updateViewportInfo();
+    });
+    
+    // Verificar elementos problemáticos
+    document.getElementById('check-elements').addEventListener('click', function() {
+      const elements = document.querySelectorAll('*');
+      const problematicElements = [];
+      
+      for (let i = 0; i < elements.length; i++) {
+        const el = elements[i];
+        const style = window.getComputedStyle(el);
+        const width = parseFloat(style.width);
+        const offsetWidth = el.offsetWidth;
+        
+        if (offsetWidth > window.innerWidth + 5) {
+          problematicElements.push({
+            element: el.tagName + (el.id ? '#' + el.id : '') + (el.className ? '.' + el.className.replace(/\s+/g, '.') : ''),
+            computedWidth: style.width,
+            offsetWidth: offsetWidth + 'px',
+            overflowX: style.overflowX
+          });
+        }
+      }
+      
+      const info = document.getElementById('viewport-info');
+      if (problematicElements.length > 0) {
+        info.textContent = 'Elementos problemáticos encontrados:\n\n' + 
+          problematicElements.map(e => `${e.element}\nAncho: ${e.computedWidth} / ${e.offsetWidth}\nOverflow-X: ${e.overflowX}`).join('\n\n');
+      } else {
+        info.textContent += '\n\nNo se encontraron elementos problemáticos.';
+      }
+    });
+    
+    // Inicializar
+    updateViewportInfo();
+    
+    // Actualizar al cambiar el tamaño
+    window.addEventListener('resize', updateViewportInfo);
+  </script>
+</body>
+</html>
