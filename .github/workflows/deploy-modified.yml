@@ -33,159 +33,124 @@ jobs:
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         script: |
           echo "=== INICIO DEL DESPLIEGUE ==="
-
+          
           echo "=== Configurando entorno ==="
-          export NVM_DIR="$HOME/.nvm"
-          [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-          export PATH=$PATH:/usr/local/bin:/usr/bin:/root/.nvm/versions/node/v18.19.0/bin
-          export NODE_OPTIONS="--max-old-space-size=4096"
-
+          export NODE_ENV=production
+          export PATH=$PATH:/usr/local/bin:/usr/bin
+          
           echo "=== Navegando al directorio del proyecto ==="
-          cd /var/www/tienda-web-lotoAI-1 || { echo "Error: No se pudo acceder al directorio del proyecto"; exit 1; }
-
+          cd /var/www/tienda-web-lotoAI-1
+          
           echo "=== Actualizando desde GitHub ==="
-          git reset --hard HEAD
-          git clean -fd
-          git checkout main
           git fetch origin
-          git reset --hard origin/main || { echo "Error: No se pudo actualizar desde GitHub"; exit 1; }
-
+          git reset --hard origin/main
+          git pull origin main
+          
           echo "=== Verificando archivos críticos ==="
-          if [ ! -f "fix-build.js" ]; then
-            echo "❌ ERROR: fix-build.js no encontrado"
+          if [ -f "fix-build.js" ] && [ -f "server.ts" ] && [ -f "nginx.conf" ]; then
+            echo "✅ Archivos críticos verificados"
+          else
+            echo "❌ Faltan archivos críticos"
             exit 1
           fi
           
-          if [ ! -f "server.ts" ]; then
-            echo "❌ ERROR: server.ts no encontrado"
+          echo "=== Verificando archivos CSS ==="
+          if [ -f "src/assets/css/bootstrap-fixes.css" ] && [ -f "src/assets/css/mobile-styles.css" ] && [ -f "src/assets/css/container-fixes.css" ]; then
+            echo "✅ Archivos CSS encontrados"
+            echo "📋 Archivos CSS disponibles:"
+            ls -la src/assets/css/
+          else
+            echo "❌ Faltan archivos CSS críticos"
+            echo "📋 Contenido de src/assets/css/:"
+            ls -la src/assets/css/ || echo "Directorio CSS no existe"
             exit 1
           fi
           
-          if [ ! -f "nginx.conf" ]; then
-            echo "❌ ERROR: nginx.conf no encontrado"
+          echo "=== Verificando configuración angular.json ==="
+          if grep -q "bootstrap-fixes.css" angular.json && grep -q "mobile-styles.css" angular.json && grep -q "container-fixes.css" angular.json; then
+            echo "✅ Configuración CSS en angular.json correcta"
+          else
+            echo "❌ Configuración CSS en angular.json incorrecta"
+            echo "📋 Configuración styles en angular.json:"
+            grep -A 10 '"styles"' angular.json || echo "No se encontró sección styles"
             exit 1
           fi
           
-          echo "✅ Archivos críticos verificados"
-
           echo "=== Actualizando configuración NGINX ==="
-          # Backup de la configuración actual
-          cp /etc/nginx/sites-available/loto-ia.com /etc/nginx/sites-available/loto-ia.com.backup.$(date +%Y%m%d_%H%M%S)
-          
-          # Copiar nueva configuración
-          cp nginx.conf /etc/nginx/sites-available/loto-ia.com
-          
-          # Verificar configuración de nginx
-          nginx -t || { echo "❌ ERROR: Configuración de nginx inválida"; exit 1; }
-          
+          sudo cp nginx.conf /etc/nginx/sites-enabled/loto-ia.com
+          sudo nginx -t
           echo "✅ Configuración NGINX actualizada"
-
-          echo "=== Instalación de dependencias ==="
-          npm install -g @angular/cli pm2
           
-          if [ -d "node_modules" ]; then
-            rm -rf node_modules
-          fi
-          npm ci --ignore-scripts || npm install --ignore-scripts
-
-          echo "=== Compilando backend ==="
-          npm run build:backend || { echo "Error: No se pudo compilar el backend"; exit 1; }
-          echo "✅ Backend compilado"
-
-          echo "=== Compilando aplicación SSR ==="
-          timeout 1800 npm run build:ssr || { echo "Error: No se pudo compilar la aplicación SSR"; exit 1; }
-          echo "✅ Aplicación SSR compilada"
-
+          echo "=== Instalación de dependencias ==="
+          npm install --production=false
+          
+          echo "=== Compilación del proyecto ==="
+          npm run build:ssr
+          
           echo "=== Verificando archivos compilados ==="
           if [ -f "dist/tienda-web-loto-ai/server/main.server.mjs" ]; then
             echo "✅ Servidor SSR encontrado"
           else
-            echo "❌ ERROR: Servidor SSR no encontrado"
+            echo "❌ Servidor SSR NO encontrado"
             ls -la dist/tienda-web-loto-ai/server/ || echo "Directorio server no existe"
             exit 1
           fi
-
+          
           if [ -f "dist/tienda-web-loto-ai/browser/index.csr.html" ]; then
             echo "✅ index.csr.html encontrado (creado por fix-build.js)"
           else
-            echo "❌ ERROR: index.csr.html no encontrado"
-            ls -la dist/tienda-web-loto-ai/browser/ | grep index || echo "No hay archivos index"
+            echo "❌ index.csr.html NO encontrado"
+            ls -la dist/tienda-web-loto-ai/browser/ || echo "Directorio browser no existe"
             exit 1
           fi
-
-          echo "=== Configurando PM2 ==="
-          PM2_PATH=$(which pm2)
           
-          # Detener procesos existentes
-          $PM2_PATH stop all || true
-          $PM2_PATH delete all || true
-
-          # Configurar backend
-          cat > ecosystem-backend.config.js << 'EOF'
-          module.exports = {
-            apps: [{
-              name: 'loto-ia-backend',
-              script: 'src/backend/dist/index.js',
-              instances: 1,
-              autorestart: true,
-              watch: false,
-              max_restarts: 10,
-              min_uptime: '20s',
-              env: {
-                NODE_ENV: 'production',
-                PORT: 3001
-              }
-            }]
-          };
-          EOF
-
-          # Configurar SSR
-          cat > ecosystem-ssr.config.js << 'EOF'
-          module.exports = {
-            apps: [{
-              name: 'loto-ia-ssr',
-              script: 'dist/tienda-web-loto-ai/server/main.server.mjs',
-              instances: 1,
-              autorestart: true,
-              watch: false,
-              max_restarts: 10,
-              min_uptime: '20s',
-              env: {
-                NODE_ENV: 'production',
-                PORT: 4000
-              }
-            }]
-          };
-          EOF
-
+          echo "=== Compilación del backend ==="
+          npm run build:backend
+          
+          echo "=== Configurando PM2 ==="
+          pm2 stop all || true
+          pm2 delete all || true
+          
           echo "=== Iniciando servicios ==="
-          $PM2_PATH start ecosystem-backend.config.js
-          $PM2_PATH start ecosystem-ssr.config.js
-          $PM2_PATH save
-
+          pm2 start src/backend/dist/server.js --name "loto-ia-backend" --env production
+          pm2 start dist/tienda-web-loto-ai/server/main.server.mjs --name "loto-ia-ssr" --env production
+          pm2 save
+          
           echo "=== Reiniciando NGINX ==="
-          systemctl reload nginx || { echo "❌ ERROR: No se pudo recargar nginx"; exit 1; }
+          sudo systemctl reload nginx
           echo "✅ NGINX recargado"
-
+          
           echo "=== Verificando servicios ==="
-          sleep 10
-          $PM2_PATH status
-
-          # Verificar que los puertos estén escuchando
-          if netstat -tuln | grep -q ":3001 "; then
+          pm2 list
+          
+          # Verificar logs del backend si está fallando
+          echo "=== DIAGNÓSTICO DE BACKEND ==="
+          if pm2 list | grep -q "errored.*loto-ia-backend"; then
+            echo "❌ Backend en estado de error - Mostrando logs:"
+            pm2 logs loto-ia-backend --lines 20 --nostream || true
+            echo "=== Verificando archivo del backend ==="
+            ls -la src/backend/dist/server.js || echo "❌ Archivo del backend no existe"
+            echo "=== Verificando dependencias del backend ==="
+            cd src/backend && npm list --depth=0 || true
+            cd /var/www/tienda-web-lotoAI-1
+          fi
+          
+          # Verificar puertos
+          if netstat -tlnp | grep -q ":3001.*LISTEN"; then
             echo "✅ Backend escuchando en puerto 3001"
           else
             echo "❌ Backend NO está escuchando en puerto 3001"
           fi
-
-          if netstat -tuln | grep -q ":4000 "; then
+          
+          if netstat -tlnp | grep -q ":4000.*LISTEN"; then
             echo "✅ SSR escuchando en puerto 4000"
           else
             echo "❌ SSR NO está escuchando en puerto 4000"
           fi
-
+          
           echo "=== DESPLIEGUE COMPLETADO ==="
           echo "🚀 Aplicación disponible en: https://loto-ia.com"
+          echo "==============================================="
 
     - name: Deployment success notification
       if: success()
