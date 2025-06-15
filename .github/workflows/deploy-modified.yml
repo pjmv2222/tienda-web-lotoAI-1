@@ -88,6 +88,13 @@ jobs:
           echo "=== Instalación de dependencias ==="
           npm install --production=false
           
+          echo "=== Limpiando caché y archivos compilados ==="
+          rm -rf dist/ || true
+          rm -rf .angular/ || true
+          rm -rf node_modules/.cache/ || true
+          npm run clean || true
+          echo "✅ Caché limpiada"
+          
           echo "=== Compilación del proyecto ==="
           npm run build:ssr
           

@@ -12,9 +12,13 @@ let isConfigured = false;
  * Configura el entorno del servidor para ngx-bootstrap
  */
 export function configureNgxBootstrapForServer(): void {
+  console.log('🔧 [DEBUG] configureNgxBootstrapForServer ejecutándose - versión actualizada');
+  
   if (typeof window === 'undefined' && !isConfigured) {
     // Solo ejecutar en el servidor (SSR) y solo una vez
     try {
+      console.log('🔧 [DEBUG] Configurando ngx-bootstrap por primera vez...');
+      
       // Crear un objeto document simulado
       (global as any).document = {
         querySelector: () => ({}),
@@ -71,5 +75,7 @@ export function configureNgxBootstrapForServer(): void {
   } else if (isConfigured) {
     // Ya está configurado, no hacer nada
     console.log('⚠️ ngx-bootstrap ya está configurado, omitiendo configuración duplicada');
+  } else {
+    console.log('🔧 [DEBUG] Ejecutándose en el cliente, omitiendo configuración de servidor');
   }
 }
