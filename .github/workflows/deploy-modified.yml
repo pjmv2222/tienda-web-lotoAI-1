@@ -215,30 +215,55 @@ jobs:
 
           # Detener procesos existentes de forma segura
           echo "2. Deteniendo procesos existentes..."
-          $PM2_PATH stop all || true
-          $PM2_PATH delete all || true
-          pkill -f "node dist/tienda-web-loto-ai/server/main.server.mjs" || true
+          echo "Listando procesos PM2 actuales:"
+          $PM2_PATH list || true
+          echo "Deteniendo procesos PM2..."
+          $PM2_PATH stop all || echo "No hay procesos PM2 para detener"
+          echo "Eliminando procesos PM2..."
+          $PM2_PATH delete all || echo "No hay procesos PM2 para eliminar"
+          echo "Deteniendo procesos Node.js restantes..."
+          pkill -f "node dist/tienda-web-loto-ai/server/main.server.mjs" || echo "No hay procesos Node.js para detener"
+          echo "Esperando limpieza de procesos..."
           sleep 3
+          echo "✅ Limpieza de procesos completada"
 
           echo "3. Iniciando backend con PM2..."
+          echo "Configuración backend: $(cat ecosystem-backend.config.js)"
           if $PM2_PATH start ecosystem-backend.config.js; then
             echo "✅ Backend iniciado correctamente"
+            $PM2_PATH show loto-ia-backend || echo "No se pudo mostrar info del backend"
           else
             echo "⚠️ Advertencia: No se pudo iniciar backend con PM2"
+            echo "Error de PM2 backend: $?"
           fi
 
           echo "4. Iniciando SSR con PM2..."
+          echo "Configuración SSR: $(cat ecosystem-ssr.config.js)"
           if $PM2_PATH start ecosystem-ssr.config.js; then
             echo "✅ SSR iniciado correctamente con PM2"
+            $PM2_PATH show loto-ia-ssr || echo "No se pudo mostrar info del SSR"
           else
             echo "⚠️ Advertencia: No se pudo iniciar SSR con PM2, intentando método directo..."
+            echo "Error de PM2 SSR: $?"
             nohup node dist/tienda-web-loto-ai/server/main.server.mjs > server.log 2>&1 &
+            echo "✅ SSR iniciado con método directo"
           fi
 
           echo "5. Verificando que el servidor está funcionando..."
+          echo "Estado de procesos antes de verificación:"
+          $PM2_PATH list || echo "No se pudo listar procesos PM2"
+          ps aux | grep node || echo "No hay procesos Node.js"
+          echo "Verificando puertos en uso:"
+          netstat -tlnp | grep -E ":(3001|4000)" || echo "Puertos 3001 y 4000 no están en uso"
+          
+          echo "Esperando 15 segundos para que los servicios se estabilicen..."
           sleep 15
+          
+          echo "Verificación final de puerto 4000:"
           if netstat -tlnp | grep -q 4000; then
             echo "✅ Servidor funcionando correctamente en puerto 4000"
+            echo "Detalles del proceso en puerto 4000:"
+            netstat -tlnp | grep 4000
             if curl -I http://localhost:4000; then
               echo "✅ Verificación HTTP exitosa"
             else
@@ -246,6 +271,9 @@ jobs:
             fi
           else
             echo "❌ ERROR: Servidor no está activo en puerto 4000"
+            echo "Información de debug:"
+            $PM2_PATH list || echo "No se pudo listar procesos PM2"
+            ps aux | grep node || echo "No hay procesos Node.js"
             rollback_deployment
             exit 1
           fi
