@@ -27,7 +27,10 @@
               "src/assets"
             ],
             "styles": [
-              "src/styles.css"
+              "src/styles.css",
+              "src/assets/css/bootstrap-fixes.css",
+              "src/assets/css/mobile-styles.css",
+              "src/assets/css/container-fixes.css"
             ],
             "scripts": []
           },
