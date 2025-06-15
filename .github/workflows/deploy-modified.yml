@@ -188,7 +188,8 @@ jobs:
           rollback_deployment() {
             echo "🚨 INICIANDO ROLLBACK AUTOMÁTICO..."
             echo "1. Deteniendo procesos actuales..."
-            $PM2_PATH kill || true
+            $PM2_PATH stop all || true
+            $PM2_PATH delete all || true
             pkill -f "node dist/tienda-web-loto-ai/server/main.server.mjs" || true
 
             echo "2. Restaurando desde backup..."
@@ -214,7 +215,8 @@ jobs:
 
           # Detener procesos existentes de forma segura
           echo "2. Deteniendo procesos existentes..."
-          $PM2_PATH kill || true
+          $PM2_PATH stop all || true
+          $PM2_PATH delete all || true
           pkill -f "node dist/tienda-web-loto-ai/server/main.server.mjs" || true
           sleep 3
 
