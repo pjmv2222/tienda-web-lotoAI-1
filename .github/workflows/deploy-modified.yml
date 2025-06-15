@@ -115,9 +115,47 @@ jobs:
           pm2 stop all || true
           pm2 delete all || true
           
+          # Crear configuración PM2 para backend
+          cat > ecosystem.backend.config.js << 'EOF'
+          module.exports = {
+            apps: [{
+              name: 'loto-ia-backend',
+              script: 'src/backend/dist/server.js',
+              instances: 1,
+              autorestart: true,
+              watch: false,
+              max_restarts: 10,
+              min_uptime: '10s',
+              env: {
+                NODE_ENV: 'production',
+                PORT: '3001'
+              }
+            }]
+          };
+          EOF
+          
+          # Crear configuración PM2 para SSR
+          cat > ecosystem.ssr.config.js << 'EOF'
+          module.exports = {
+            apps: [{
+              name: 'loto-ia-ssr',
+              script: 'dist/tienda-web-loto-ai/server/main.server.mjs',
+              instances: 1,
+              autorestart: true,
+              watch: false,
+              max_restarts: 10,
+              min_uptime: '10s',
+              env: {
+                NODE_ENV: 'production',
+                PORT: '4000'
+              }
+            }]
+          };
+          EOF
+          
           echo "=== Iniciando servicios ==="
-          pm2 start src/backend/dist/server.js --name "loto-ia-backend" --env production
-          pm2 start dist/tienda-web-loto-ai/server/main.server.mjs --name "loto-ia-ssr" --env production
+          pm2 start ecosystem.backend.config.js
+          pm2 start ecosystem.ssr.config.js
           pm2 save
           
           echo "=== Reiniciando NGINX ==="
@@ -125,6 +163,7 @@ jobs:
           echo "✅ NGINX recargado"
           
           echo "=== Verificando servicios ==="
+          sleep 5
           pm2 list
           
           # Verificar logs del backend si está fallando
@@ -137,19 +176,39 @@ jobs:
             echo "=== Verificando dependencias del backend ==="
             cd src/backend && npm list --depth=0 || true
             cd /var/www/tienda-web-lotoAI-1
+          else
+            echo "✅ Backend en estado online - Mostrando logs recientes:"
+            pm2 logs loto-ia-backend --lines 10 --nostream || true
           fi
+          
+          echo "=== DIAGNÓSTICO DE SSR ==="
+          if pm2 list | grep -q "errored.*loto-ia-ssr"; then
+            echo "❌ SSR en estado de error - Mostrando logs:"
+            pm2 logs loto-ia-ssr --lines 20 --nostream || true
+          else
+            echo "✅ SSR en estado online - Mostrando logs recientes:"
+            pm2 logs loto-ia-ssr --lines 10 --nostream || true
+          fi
+          
+          # Verificar puertos después de dar tiempo a los servicios
+          echo "=== Esperando a que los servicios se inicialicen ==="
+          sleep 10
           
           # Verificar puertos
           if netstat -tlnp | grep -q ":3001.*LISTEN"; then
             echo "✅ Backend escuchando en puerto 3001"
           else
             echo "❌ Backend NO está escuchando en puerto 3001"
+            echo "📋 Puertos activos:"
+            netstat -tlnp | grep LISTEN | head -10
           fi
           
           if netstat -tlnp | grep -q ":4000.*LISTEN"; then
             echo "✅ SSR escuchando en puerto 4000"
           else
             echo "❌ SSR NO está escuchando en puerto 4000"
+            echo "📋 Puertos activos:"
+            netstat -tlnp | grep LISTEN | head -10
           fi
           
           echo "=== DESPLIEGUE COMPLETADO ==="
