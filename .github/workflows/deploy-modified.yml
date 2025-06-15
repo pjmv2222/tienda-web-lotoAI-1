@@ -200,11 +200,33 @@ jobs:
           if pm2 list | grep -q "errored.*loto-ia-ssr"; then
             echo "❌ SSR en estado de error - Mostrando logs:"
             pm2 logs loto-ia-ssr --lines 20 --nostream || true
-          else
-            echo "✅ SSR en estado online - Mostrando logs recientes:"
-            pm2 logs loto-ia-ssr --lines 20 --nostream || true
             echo "=== Verificando logs de error del SSR ==="
             pm2 logs loto-ia-ssr --err --lines 10 --nostream || true
+          else
+            echo "✅ SSR en estado online - Mostrando logs recientes:"
+            pm2 logs loto-ia-ssr --lines 30 --nostream || true
+            echo "=== Verificando logs de error del SSR ==="
+            pm2 logs loto-ia-ssr --err --lines 20 --nostream || true
+            
+            echo "=== Verificando logs desde el inicio del proceso ==="
+            pm2 flush loto-ia-ssr || true
+            sleep 2
+            pm2 logs loto-ia-ssr --lines 50 --nostream || true
+            
+            echo "=== Verificando si el proceso está realmente ejecutándose ==="
+            ps aux | grep main.server.mjs | grep -v grep || echo "❌ Proceso main.server.mjs no encontrado"
+            
+            echo "=== Intentando conectar al puerto 4000 ==="
+            timeout 5 nc -zv localhost 4000 || echo "❌ No se puede conectar al puerto 4000"
+            
+            echo "=== Verificando qué está usando el puerto 4000 ==="
+            lsof -i :4000 || echo "❌ Nada está usando el puerto 4000"
+            
+            echo "=== Reiniciando SSR para ver logs de inicio ==="
+            pm2 restart loto-ia-ssr
+            sleep 5
+            echo "=== Logs después del reinicio ==="
+            pm2 logs loto-ia-ssr --lines 20 --nostream || true
           fi
           
           # Verificar si el proceso SSR está realmente escuchando
