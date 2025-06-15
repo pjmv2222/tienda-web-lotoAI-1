@@ -280,6 +280,15 @@ jobs:
             echo "Información de debug:"
             $PM2_PATH list || echo "No se pudo listar procesos PM2"
             ps aux | grep node || echo "No hay procesos Node.js"
+            
+            echo "=== LOGS DE ERROR PARA DIAGNÓSTICO ==="
+            echo "--- Logs de error del backend ---"
+            $PM2_PATH logs loto-ia-backend --err --lines 20 || echo "No se pudieron obtener logs del backend"
+            echo "--- Logs de error del SSR ---"
+            $PM2_PATH logs loto-ia-ssr --err --lines 20 || echo "No se pudieron obtener logs del SSR"
+            echo "--- Logs de salida del SSR ---"
+            $PM2_PATH logs loto-ia-ssr --out --lines 10 || echo "No se pudieron obtener logs de salida del SSR"
+            
             rollback_deployment
             exit 1
           fi
