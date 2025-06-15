@@ -102,8 +102,8 @@ jobs:
           echo "✅ Aplicación SSR compilada correctamente"
 
           echo "=== Verificando archivos compilados ==="
-          if [ -f "dist/tienda-web-loto-ai/server/server.mjs" ]; then
-            echo "✅ Archivo servidor SSR encontrado: dist/tienda-web-loto-ai/server/server.mjs"
+          if [ -f "dist/tienda-web-loto-ai/server/main.server.mjs" ]; then
+            echo "✅ Archivo servidor SSR encontrado: dist/tienda-web-loto-ai/server/main.server.mjs"
           else
             echo "❌ ERROR: Archivo servidor SSR no encontrado"
             ls -la dist/tienda-web-loto-ai/server/ || echo "Directorio server no existe"
@@ -158,7 +158,7 @@ jobs:
             apps: [
               {
                 name: 'loto-ia-ssr',
-                script: 'dist/tienda-web-loto-ai/server/server.mjs',
+                script: 'dist/tienda-web-loto-ai/server/main.server.mjs',
                 instances: 1,
                 autorestart: true,
                 watch: false,
@@ -189,7 +189,7 @@ jobs:
             echo "🚨 INICIANDO ROLLBACK AUTOMÁTICO..."
             echo "1. Deteniendo procesos actuales..."
             $PM2_PATH kill || true
-            pkill -f "node dist/tienda-web-loto-ai/server/server.mjs" || true
+            pkill -f "node dist/tienda-web-loto-ai/server/main.server.mjs" || true
 
             echo "2. Restaurando desde backup..."
             cd /var/www
@@ -198,8 +198,8 @@ jobs:
 
             echo "3. Iniciando servidor desde backup..."
             cd tienda-web-lotoAI-1
-            if [ -f "dist/tienda-web-loto-ai/server/server.mjs" ]; then
-              nohup node dist/tienda-web-loto-ai/server/server.mjs > server.log 2>&1 &
+            if [ -f "dist/tienda-web-loto-ai/server/main.server.mjs" ]; then
+              nohup node dist/tienda-web-loto-ai/server/main.server.mjs > server.log 2>&1 &
             fi
 
             echo "4. Verificando rollback..."
@@ -215,7 +215,7 @@ jobs:
           # Detener procesos existentes de forma segura
           echo "2. Deteniendo procesos existentes..."
           $PM2_PATH kill || true
-          pkill -f "node dist/tienda-web-loto-ai/server/server.mjs" || true
+          pkill -f "node dist/tienda-web-loto-ai/server/main.server.mjs" || true
           sleep 3
 
           echo "3. Iniciando backend con PM2..."
@@ -230,7 +230,7 @@ jobs:
             echo "✅ SSR iniciado correctamente con PM2"
           else
             echo "⚠️ Advertencia: No se pudo iniciar SSR con PM2, intentando método directo..."
-            nohup node dist/tienda-web-loto-ai/server/server.mjs > server.log 2>&1 &
+            nohup node dist/tienda-web-loto-ai/server/main.server.mjs > server.log 2>&1 &
           fi
 
           echo "5. Verificando que el servidor está funcionando..."
