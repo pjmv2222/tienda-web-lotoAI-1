@@ -190,7 +190,13 @@ jobs:
             echo "1. Deteniendo procesos actuales..."
             $PM2_PATH stop all || true
             $PM2_PATH delete all || true
-            pkill -f "node dist/tienda-web-loto-ai/server/main.server.mjs" || true
+            # Detener procesos Node.js de forma segura
+            PIDS=$(pgrep -f "main.server.mjs" || echo "")
+            if [ -n "$PIDS" ]; then
+              kill -TERM $PIDS || true
+              sleep 2
+              kill -KILL $PIDS 2>/dev/null || true
+            fi
 
             echo "2. Restaurando desde backup..."
             cd /var/www
@@ -222,7 +228,17 @@ jobs:
           echo "Eliminando procesos PM2..."
           $PM2_PATH delete all || echo "No hay procesos PM2 para eliminar"
           echo "Deteniendo procesos Node.js restantes..."
-          pkill -f "node dist/tienda-web-loto-ai/server/main.server.mjs" || echo "No hay procesos Node.js para detener"
+          # Buscar procesos específicos antes de terminarlos
+          PIDS=$(pgrep -f "main.server.mjs" || echo "")
+          if [ -n "$PIDS" ]; then
+            echo "Procesos encontrados: $PIDS"
+            kill -TERM $PIDS || echo "No se pudieron terminar algunos procesos"
+            sleep 2
+            # Forzar si aún están corriendo
+            kill -KILL $PIDS 2>/dev/null || echo "Procesos ya terminados"
+          else
+            echo "No hay procesos Node.js específicos para detener"
+          fi
           echo "Esperando limpieza de procesos..."
           sleep 3
           echo "✅ Limpieza de procesos completada"
