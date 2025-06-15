@@ -2,6 +2,9 @@
   "name": "backend",
   "version": "1.0.0",
   "main": "dist/server.js",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "scripts": {
     "start": "node dist/index.js",
     "dev": "nodemon src/index.ts",
@@ -21,7 +24,8 @@
     "backend"
   ],
   "author": "Your Name",
-  "license": "MIT",  "dependencies": {
+  "license": "MIT",
+  "dependencies": {
     "@sendgrid/mail": "^8.1.5",
     "@types/pg": "^8.11.11",
     "axios": "^1.9.0",
@@ -29,6 +33,7 @@
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
     "node-mailjet": "^6.0.6",
     "pg": "^8.13.3",
     "stripe": "^18.1.1"
@@ -39,11 +44,12 @@
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
     "@types/jsonwebtoken": "^9.0.9",
-    "@types/node": "^20.17.7",
+    "@types/node": "^18.19.0",
     "bcryptjs": "^2.4.3",
-    "jsonwebtoken": "^9.0.2",
+    "glob": "^8.1.0",
+    "minimatch": "^9.0.5",
     "nodemon": "^3.1.7",
-    "rimraf": "^6.0.1",
+    "rimraf": "^3.0.2",
     "ts-node": "^10.9.1",
     "typescript": "^5.7.2"
   }

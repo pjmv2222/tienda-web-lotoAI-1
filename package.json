@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "scripts": {
     "build": "ng build --configuration production",
-    "build:ssr": "ng build --configuration production && ng build --configuration production --ssr && node fix-build.js",
+    "build:ssr": "ng build && ng build --ssr && node fix-build.js",
     "build:server": "ng build --configuration production --ssr",
-    "build:backend": "cd src/backend && npm install && npm run build",
+    "build:backend": "cd src/backend && npm install --production=false && npm run build",
     "serve:ssr": "node dist/tienda-web-loto-ai/server/main.server.mjs",
     "serve:express": "node express-server.js",
     "start": "ng serve",
