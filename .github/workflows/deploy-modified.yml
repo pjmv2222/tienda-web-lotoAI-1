@@ -122,6 +122,7 @@ jobs:
               name: 'loto-ia-backend',
               script: 'src/backend/dist/server.js',
               instances: 1,
+              exec_mode: 'fork',
               autorestart: true,
               watch: false,
               max_restarts: 10,
@@ -129,7 +130,10 @@ jobs:
               env: {
                 NODE_ENV: 'production',
                 PORT: '3001'
-              }
+              },
+              error_file: '/root/.pm2/logs/loto-ia-backend-error.log',
+              out_file: '/root/.pm2/logs/loto-ia-backend-out.log',
+              log_file: '/root/.pm2/logs/loto-ia-backend-combined.log'
             }]
           };
           EOF
@@ -141,6 +145,7 @@ jobs:
               name: 'loto-ia-ssr',
               script: 'dist/tienda-web-loto-ai/server/main.server.mjs',
               instances: 1,
+              exec_mode: 'fork',
               autorestart: true,
               watch: false,
               max_restarts: 10,
@@ -148,7 +153,10 @@ jobs:
               env: {
                 NODE_ENV: 'production',
                 PORT: '4000'
-              }
+              },
+              error_file: '/root/.pm2/logs/loto-ia-ssr-error.log',
+              out_file: '/root/.pm2/logs/loto-ia-ssr-out.log',
+              log_file: '/root/.pm2/logs/loto-ia-ssr-combined.log'
             }]
           };
           EOF
@@ -187,8 +195,18 @@ jobs:
             pm2 logs loto-ia-ssr --lines 20 --nostream || true
           else
             echo "✅ SSR en estado online - Mostrando logs recientes:"
-            pm2 logs loto-ia-ssr --lines 10 --nostream || true
+            pm2 logs loto-ia-ssr --lines 20 --nostream || true
+            echo "=== Verificando logs de error del SSR ==="
+            pm2 logs loto-ia-ssr --err --lines 10 --nostream || true
           fi
+          
+          # Verificar si el proceso SSR está realmente escuchando
+          echo "=== Verificando proceso SSR ==="
+          ps aux | grep "main.server.mjs" | grep -v grep || echo "Proceso SSR no encontrado"
+          
+          # Verificar si hay errores en el archivo del servidor
+          echo "=== Verificando archivo servidor SSR ==="
+          ls -la dist/tienda-web-loto-ai/server/main.server.mjs || echo "❌ Archivo SSR no existe"
           
           # Verificar puertos después de dar tiempo a los servicios
           echo "=== Esperando a que los servicios se inicialicen ==="
