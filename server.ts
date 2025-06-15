@@ -143,33 +143,11 @@ export async function app(): Promise<express.Express> {
 function run(): void {
   const port = process.env['PORT'] || 4000;
 
-  // Inicializar PostgreSQL y luego arrancar el servidor
+  // Inicializar servidor SSR sin base de datos (el backend maneja la BD)
   const startServer = async () => {
     try {
-      console.log('Inicializando base de datos PostgreSQL...');
-
-      // Cargar configuración de base de datos dinámicamente
-      try {
-        const fs = require('fs');
-        const path = require('path');
-        const dbPath = path.join(process.cwd(), 'src', 'backend', 'dist', 'config', 'database.js');
-
-        if (fs.existsSync(dbPath)) {
-          const databaseConfig = require('./src/backend/dist/config/database.js');
-          const initializeTables = databaseConfig.initializeTables || databaseConfig.default?.initializeTables;
-          if (initializeTables) {
-            await initializeTables();
-          } else {
-            console.log('⚠️ initializeTables no encontrado en el módulo de base de datos');
-          }
-        } else {
-          console.log('⚠️ Configuración de base de datos no encontrada - continuando sin BD');
-        }
-      } catch (dbError: any) {
-        console.log('⚠️ Error cargando configuración de BD:', dbError.message);
-      }
-      console.log('✅ PostgreSQL inicializado correctamente');
-
+      console.log('🚀 Iniciando servidor SSR...');
+      
       // Start up the Node server
       const server = await app();
       server.listen(port, () => {
@@ -189,7 +167,7 @@ function run(): void {
         console.log('='.repeat(50));
       });
     } catch (error) {
-      console.error('❌ Error al inicializar el servidor:', error);
+      console.error('❌ Error al inicializar el servidor SSR:', error);
       process.exit(1);
     }
   };
