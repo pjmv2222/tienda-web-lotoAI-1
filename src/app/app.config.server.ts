@@ -5,14 +5,21 @@ import { provideClientHydration } from '@angular/platform-browser';
 import { suppressCssErrors } from './universal-fixes';
 import { configureNgxBootstrapForServer } from './ngx-bootstrap-server';
 
-// Configurar el entorno del servidor
+// Configurar el entorno del servidor solo una vez
 suppressCssErrors();
-configureNgxBootstrapForServer();
 
 const serverConfig: ApplicationConfig = {
   providers: [
     provideServerRendering(),
-    provideClientHydration()
+    provideClientHydration(),
+    // Configurar ngx-bootstrap como provider para que se ejecute solo cuando sea necesario
+    {
+      provide: 'NGX_BOOTSTRAP_CONFIG',
+      useFactory: () => {
+        configureNgxBootstrapForServer();
+        return true;
+      }
+    }
   ]
 };
 

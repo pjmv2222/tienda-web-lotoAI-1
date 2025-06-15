@@ -5,12 +5,15 @@
  * funcione correctamente en el entorno de servidor (SSR).
  */
 
+// Variable para evitar ejecución múltiple
+let isConfigured = false;
+
 /**
  * Configura el entorno del servidor para ngx-bootstrap
  */
 export function configureNgxBootstrapForServer(): void {
-  if (typeof window === 'undefined') {
-    // Solo ejecutar en el servidor (SSR)
+  if (typeof window === 'undefined' && !isConfigured) {
+    // Solo ejecutar en el servidor (SSR) y solo una vez
     try {
       // Crear un objeto document simulado
       (global as any).document = {
@@ -59,9 +62,14 @@ export function configureNgxBootstrapForServer(): void {
         disconnect() {}
       };
       
-      console.log('Configuración de ngx-bootstrap para el servidor aplicada correctamente');
+      // Marcar como configurado
+      isConfigured = true;
+      console.log('✅ Configuración de ngx-bootstrap para el servidor aplicada correctamente (una sola vez)');
     } catch (e) {
-      console.error('Error al configurar ngx-bootstrap para el servidor:', e);
+      console.error('❌ Error al configurar ngx-bootstrap para el servidor:', e);
     }
+  } else if (isConfigured) {
+    // Ya está configurado, no hacer nada
+    console.log('⚠️ ngx-bootstrap ya está configurado, omitiendo configuración duplicada');
   }
 }
