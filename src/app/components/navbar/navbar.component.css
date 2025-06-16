@@ -99,6 +99,14 @@
   background-color: #f8f9fa;
 }
 
+.dropdown-trigger .fa-chevron-down {
+  transition: transform 0.3s ease;
+}
+
+.dropdown-trigger .fa-chevron-down.rotated {
+  transform: rotate(180deg);
+}
+
 .dropdown-menu {
   position: absolute;
   top: 100%;
@@ -111,7 +119,7 @@
   z-index: 1000;
 }
 
-.dropdown:hover .dropdown-menu {
+.dropdown-menu.show {
   display: block;
 }
 

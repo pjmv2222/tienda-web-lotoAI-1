@@ -1,4 +1,4 @@
-import { Component, OnInit, Inject, PLATFORM_ID } from '@angular/core';
+import { Component, OnInit, Inject, PLATFORM_ID, HostListener } from '@angular/core';
 import { Router } from '@angular/router';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { RouterModule } from '@angular/router';
@@ -18,6 +18,7 @@ import { User } from '../../models/user.model';
 export class NavbarComponent implements OnInit {
   currentUser: User | null = null;
   isMenuOpen = false;
+  isDropdownOpen = false;
   isMobile = false;
   isBrowser: boolean;
 
@@ -55,6 +56,25 @@ export class NavbarComponent implements OnInit {
 
   closeMenu() {
     this.isMenuOpen = false;
+    this.isDropdownOpen = false;
+  }
+
+  toggleDropdown() {
+    this.isDropdownOpen = !this.isDropdownOpen;
+  }
+
+  closeDropdown() {
+    this.isDropdownOpen = false;
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: any) {
+    const target = event.target as HTMLElement;
+    const dropdown = target.closest('.dropdown');
+    
+    if (!dropdown && this.isDropdownOpen) {
+      this.isDropdownOpen = false;
+    }
   }
 
   onLogout() {

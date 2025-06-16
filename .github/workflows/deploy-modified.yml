@@ -150,7 +150,7 @@ jobs:
           module.exports = {
             apps: [{
               name: 'loto-ia-ssr',
-              script: 'dist/tienda-web-loto-ai/server/main.server.mjs',
+              script: 'express-server.js',
               instances: 1,
               exec_mode: 'fork',
               autorestart: true,
@@ -214,7 +214,7 @@ jobs:
             pm2 logs loto-ia-ssr --lines 50 --nostream || true
             
             echo "=== Verificando si el proceso está realmente ejecutándose ==="
-            ps aux | grep main.server.mjs | grep -v grep || echo "❌ Proceso main.server.mjs no encontrado"
+            ps aux | grep express-server.js | grep -v grep || echo "❌ Proceso express-server.js no encontrado"
             
             echo "=== Intentando conectar al puerto 4000 ==="
             timeout 5 nc -zv localhost 4000 || echo "❌ No se puede conectar al puerto 4000"
@@ -231,11 +231,11 @@ jobs:
           
           # Verificar si el proceso SSR está realmente escuchando
           echo "=== Verificando proceso SSR ==="
-          ps aux | grep "main.server.mjs" | grep -v grep || echo "Proceso SSR no encontrado"
+          ps aux | grep "express-server.js" | grep -v grep || echo "Proceso SSR no encontrado"
           
           # Verificar si hay errores en el archivo del servidor
           echo "=== Verificando archivo servidor SSR ==="
-          ls -la dist/tienda-web-loto-ai/server/main.server.mjs || echo "❌ Archivo SSR no existe"
+          ls -la express-server.js || echo "❌ Archivo SSR no existe"
           
           # Verificar puertos después de dar tiempo a los servicios
           echo "=== Esperando a que los servicios se inicialicen ==="

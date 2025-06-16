@@ -34,21 +34,21 @@
     <div class="user-menu">
       <ng-container *ngIf="currentUser; else loginButtons">
         <div class="dropdown">
-          <button class="dropdown-trigger">
+          <button class="dropdown-trigger" (click)="toggleDropdown()">
             <i class="fas fa-user-circle"></i>
             <span>{{ userName }}</span>
-            <i class="fas fa-chevron-down"></i>
+            <i class="fas fa-chevron-down" [class.rotated]="isDropdownOpen"></i>
           </button>
-          <div class="dropdown-menu">
-            <a routerLink="/perfil" (click)="closeMenu()">
+          <div class="dropdown-menu" [class.show]="isDropdownOpen">
+            <a routerLink="/perfil" (click)="closeDropdown()">
               <i class="fas fa-user"></i>
               Mi Perfil
             </a>
-            <a routerLink="/mis-numeros" (click)="closeMenu()">
+            <a routerLink="/mis-numeros" (click)="closeDropdown()">
               <i class="fas fa-ticket-alt"></i>
               Mis Números
             </a>
-            <a routerLink="/configuracion" (click)="closeMenu()">
+            <a routerLink="/configuracion" (click)="closeDropdown()">
               <i class="fas fa-cog"></i>
               Configuración
             </a>
