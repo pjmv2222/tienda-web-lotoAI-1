@@ -274,12 +274,13 @@ button:disabled {
 
 .ai-specialty {
   font-size: 0.9rem;
+  color: #000000;
   opacity: 0.8;
   margin-top: 0.5rem;
 }
 
 .ai-description {
-  color: #666;
+  color: #000000;
   line-height: 1.6;
 }
 
