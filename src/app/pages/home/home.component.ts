@@ -21,6 +21,9 @@ export class HomeComponent implements OnInit, OnDestroy {
   hasSubscriptions: boolean = false;
   private authSubscription: Subscription | null = null;
   isBrowser: boolean;
+  isProduction: boolean = environment.production; // Variable para controlar el modo de producción
+  userId: string | null = null;
+  subscriptionsCount: number = 0;
   environment = environment; // Exponer environment para usar en la plantilla
 
   // Imágenes para el slider con títulos descriptivos
@@ -109,11 +112,11 @@ export class HomeComponent implements OnInit, OnDestroy {
       this.authSubscription = this.authService.currentUser.subscribe({
         next: (user) => {
           this.currentUser = user;
-
-          // Verificar si el usuario existe y tiene suscripciones de forma segura
-          this.hasSubscriptions = !!this.currentUser?.subscriptions?.length;
-
-          if (this.currentUser?.subscriptions) {
+          
+          if (this.currentUser) {
+            this.userId = this.currentUser.id;
+            this.subscriptionsCount = this.currentUser.subscriptions?.length ?? 0;
+            this.hasSubscriptions = this.subscriptionsCount > 0;
             console.log('Suscripciones del usuario:', this.currentUser.subscriptions);
           } else {
             console.log('El usuario no tiene suscripciones activas');
