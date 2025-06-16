@@ -97,6 +97,17 @@ jobs:
           
           echo "=== Compilación del proyecto ==="
           npm run build:ssr
+
+          echo "=== DIAGNÓSTICO DE ESTILOS (POST-COMPILACIÓN) ==="
+          echo "1. Verificando contenido de home.component.css en el servidor:"
+          cat src/app/pages/home/home.component.css | grep -C 3 "ai-description" || echo "Regla .ai-description no encontrada en home.component.css"
+          echo "----------------------------------------------------"
+          echo "2. Buscando la regla .ai-description en los archivos CSS compilados:"
+          grep -r ".ai-description" dist/tienda-web-loto-ai/browser/styles.*.css || echo "Regla .ai-description no encontrada en los CSS compilados."
+          echo "----------------------------------------------------"
+          echo "3. Listando archivos CSS compilados y sus timestamps:"
+          ls -l dist/tienda-web-loto-ai/browser/*.css || echo "No se encontraron archivos .css en el directorio de build."
+          echo "=== FIN DEL DIAGNÓSTICO DE ESTILOS ==="
           
           echo "=== Verificando archivos compilados ==="
           if [ -f "dist/tienda-web-loto-ai/server/main.server.mjs" ]; then
