@@ -12,7 +12,6 @@
     "server.ts"
   ],
   "include": [
-    "src/backend/src/**/*.ts",
     "src/**/*.d.ts"
   ]
 }
