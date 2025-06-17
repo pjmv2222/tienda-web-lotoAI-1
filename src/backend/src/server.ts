@@ -1,37 +1,49 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import authRoutes from './routes/auth.routes';
+import db from './config/database';
+import setupRoutes from './routes';
 
+// Cargar variables de entorno
 dotenv.config();
 
 const app = express();
-const NODE_ENV = process.env.NODE_ENV || 'development';
-const PORT = parseInt(process.env.PORT || '3000', 10);
-const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:4000';
+const port = process.env['PORT'] || 3000;
 
-// Configurar CORS
-const corsOptions = {
-  origin: NODE_ENV === 'production' 
-    ? 'https://www.loto-ia.com' 
-    : FRONTEND_URL,
+// Middlewares
+const NODE_ENV = process.env['NODE_ENV'] || 'development';
+const allowedOrigins = NODE_ENV === 'production'
+  ? ['https://loto-ia.com', 'http://loto-ia.com', 'https://www.loto-ia.com', 'http://www.loto-ia.com']
+  : ['http://localhost:4200', 'http://localhost:4000'];
+
+app.use(cors({
+  origin: allowedOrigins,
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-};
+}));
 
-app.use(cors(corsOptions));
+// El webhook de Stripe necesita el body en formato raw, por lo que debe ir antes de express.json()
+const webhookRoutes = require('./routes/webhook.routes').default;
+app.use('/api/webhooks', webhookRoutes);
+
+// El resto de las rutas usan JSON
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-// Rutas
-app.get('/api', (req, res) => {
-  res.json({ message: 'API Backend funcionando correctamente' });
-});
 
-// Rutas de autenticación
-app.use('/api/auth', authRoutes);
-
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Servidor corriendo en el puerto ${PORT}`);
-  console.log(`Frontend URL configurada: ${corsOptions.origin}`);
-});
+// Verificar conexión a la base de datos e iniciar el servidor
+db.connect()
+  .then(client => {
+    console.log('✅ (Backend) Conexión a la base de datos establecida.');
+    client.release(); // Liberar el cliente inmediatamente después de la prueba
+    
+    // Configurar las rutas de la API
+    setupRoutes(app);
+    
+    app.listen(port, () => {
+      console.log(`🚀 (Backend) Servidor API iniciado en el puerto ${port}`);
+    });
+  })
+  .catch((error: Error) => {
+    console.error('❌ (Backend) Error fatal al conectar con la base de datos:', error);
+    process.exit(1);
+  });
