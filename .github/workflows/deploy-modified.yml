@@ -19,8 +19,8 @@ jobs:
     - name: Deploy to VPS via SSH
       uses: appleboy/ssh-action@master
       with:
-        host: ${{ secrets.VPS_HOST }}
-        username: ${{ secrets.VPS_USERNAME }}
+        host: 212.227.230.103
+        username: root
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         script: |
           echo "=== INICIO DEL DESPLIEGUE UNIFICADO ==="
