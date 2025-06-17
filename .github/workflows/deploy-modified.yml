@@ -25,7 +25,6 @@ jobs:
         script: |
           echo "=== INICIO DEL DESPLIEGUE UNIFICADO ==="
           
-          # Ir al directorio del proyecto
           cd /var/www/tienda-web-lotoAI-1 || { echo "❌ Error: No se pudo encontrar el directorio del proyecto."; exit 1; }
           
           echo "=== 1. Actualizando desde GitHub ==="
@@ -33,12 +32,21 @@ jobs:
           git reset --hard origin/main
           git pull origin main
           
-          echo "=== 2. Verificando archivo .env existente ==="
-          if [ ! -f ".env" ]; then
+          echo "=== 2. Limpieza de artefactos y reubicación de .env ==="
+          # Eliminar node_modules anidados que causan conflictos de compilación
+          rm -rf src/backend/node_modules || true
+          rm -f src/backend/package-lock.json || true
+          echo "✅ Limpieza de backend anidado completada."
+
+          # Mover .env a la raíz si se encuentra en la ubicación antigua
+          if [ -f "server/.env" ] && [ ! -f ".env" ]; then
+            echo "ℹ️  Archivo .env encontrado en 'server/.env'. Moviéndolo a la raíz..."
+            mv server/.env .env
+            echo "✅ Archivo .env reubicado."
+          elif [ ! -f ".env" ]; then
             echo "⚠️  ADVERTENCIA: No se encontró el archivo .env en el servidor."
-            echo "La aplicación podría no funcionar sin las variables de entorno."
           else
-            echo "✅ Archivo .env encontrado. El despliegue continuará usándolo."
+            echo "✅ Archivo .env ya está en la ubicación correcta."
           fi
           
           echo "=== 3. Instalando dependencias (NPM) ==="
