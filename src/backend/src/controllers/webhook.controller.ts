@@ -11,9 +11,7 @@ if (!process.env['STRIPE_WEBHOOK_SECRET']) {
     throw new Error('STRIPE_WEBHOOK_SECRET is not set');
 }
 
-const stripe = new Stripe(process.env['STRIPE_SECRET_KEY'] || '', {
-    apiVersion: '2025-05-28.basil',
-});
+const stripe = new Stripe(process.env['STRIPE_SECRET_KEY'] || '');
 
 /**
  * Maneja los eventos de webhook de Stripe

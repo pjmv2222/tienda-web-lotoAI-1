@@ -1,4 +1,4 @@
-name: Deploy to Production (Modified)
+name: Deploy Production (2-Phase)
 
 on:
   push:
@@ -13,50 +13,62 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Deploy to Server
+      - name: Deploy to Server via SSH
         uses: appleboy/ssh-action@master
         with:
           host: 212.227.230.103
           username: root
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            echo "=== INICIO DEL DESPLIEGUE EN DOS FASES ==="
+            echo "=== INICIO: DESPLIEGUE EN DOS FASES ==="
             
             # 1. Navegar al directorio del proyecto
-            cd /var/www/tienda-web-lotoAI-1 || { echo "❌ Error: No se pudo encontrar el directorio del proyecto."; exit 1; }
+            cd /var/www/tienda-web-lotoAI-1 || exit 1
             
             # 2. Actualizar desde GitHub
-            echo "--- 2. Actualizando desde GitHub ---"
+            echo "--- Fase 1: Actualizando código fuente ---"
             git fetch origin main
             git reset --hard origin/main
             git pull origin main
             
-            # 3. Mover .env si es necesario (medida de seguridad)
+            # 3. Mover .env si es necesario
             if [ -f "server/.env" ] && [ ! -f ".env" ]; then
               echo "ℹ️  Moviendo .env de server/ a la raíz..."
               mv server/.env .env
             fi
 
-            # 4. Instalar todas las dependencias (incluidas devDependencies)
-            echo "--- 4. Instalando dependencias (NPM) ---"
+            # 4. Instalar dependencias
+            echo "--- Fase 2: Instalando dependencias ---"
             npm install --production=false
             
-            # 5. Compilar el Backend de forma independiente
-            echo "--- 5. Compilando el Backend (TSC) ---"
+            # 5. Limpiar builds anteriores
+            echo "--- Fase 3: Limpiando artefactos ---"
+            rm -rf dist/
+            
+            # 6. Compilar el Backend (TSC)
+            echo "--- Fase 4: Compilando Backend ---"
             npx tsc --project src/backend/tsconfig.backend.json
+            if [ $? -ne 0 ]; then
+              echo "❌ Error de compilación en el Backend. Abortando despliegue."
+              exit 1
+            fi
             
-            # 6. Compilar el Frontend y el Servidor SSR de Angular
-            echo "--- 6. Compilando el Frontend (Angular) ---"
-            ng build
+            # 7. Compilar el Frontend (Angular SSR)
+            echo "--- Fase 5: Compilando Frontend ---"
+            npx ng build
+            if [ $? -ne 0 ]; then
+              echo "❌ Error de compilación en el Frontend. Abortando despliegue."
+              exit 1
+            fi
             
-            # 7. Reiniciar los servicios con PM2
-            echo "--- 7. Reiniciando los servicios (PM2) ---"
-            pm2 restart ecosystem.config.js || {
+            # 8. Reiniciar los servicios con PM2
+            echo "--- Fase 6: Reiniciando servicios con PM2 ---"
+            pm2 restart ecosystem.config.js --env production || {
               echo "ℹ️  No se pudo reiniciar, intentando iniciar de nuevo..."
-              pm2 start ecosystem.config.js
+              pm2 start ecosystem.config.js --env production
             }
             
-            echo "✅ DESPLIEGUE COMPLETADO CON ÉXITO"
+            echo "✅ FIN: DESPLIEGUE COMPLETADO CON ÉXITO"
 
       - name: Deployment success notification
         if: success()
