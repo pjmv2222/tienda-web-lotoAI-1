@@ -1,94 +1,62 @@
-name: Deploy LotoIA to VPS (Unified Server)
+name: Deploy to Production (Modified)
 
 on:
   push:
-    branches: [ main ]
-    paths-ignore:
-      - 'IAs-Loto/**'
-      - '.github/workflows/deploy-with-ias.yml'
+    branches:
+      - main
   workflow_dispatch:
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Deploy to VPS via SSH
-      uses: appleboy/ssh-action@master
-      with:
-        host: 212.227.230.103
-        username: root
-        key: ${{ secrets.SSH_PRIVATE_KEY }}
-        script: |
-          echo "=== INICIO DEL DESPLIEGUE UNIFICADO ==="
-          
-          cd /var/www/tienda-web-lotoAI-1 || { echo "❌ Error: No se pudo encontrar el directorio del proyecto."; exit 1; }
-          
-          echo "=== 1. Actualizando desde GitHub ==="
-          git fetch origin main
-          git reset --hard origin/main
-          git pull origin main
-          
-          echo "=== 2. Limpieza de artefactos y reubicación de .env ==="
-          # Eliminar node_modules anidados que causan conflictos de compilación
-          rm -rf src/backend/node_modules || true
-          rm -f src/backend/package-lock.json || true
-          echo "✅ Limpieza de backend anidado completada."
+      - name: Deploy to Server
+        uses: appleboy/ssh-action@master
+        with:
+          host: 212.227.230.103
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            echo "=== INICIO DEL DESPLIEGUE EN DOS FASES ==="
+            
+            # 1. Navegar al directorio del proyecto
+            cd /var/www/tienda-web-lotoAI-1 || { echo "❌ Error: No se pudo encontrar el directorio del proyecto."; exit 1; }
+            
+            # 2. Actualizar desde GitHub
+            echo "--- 2. Actualizando desde GitHub ---"
+            git fetch origin main
+            git reset --hard origin/main
+            git pull origin main
+            
+            # 3. Mover .env si es necesario (medida de seguridad)
+            if [ -f "server/.env" ] && [ ! -f ".env" ]; then
+              echo "ℹ️  Moviendo .env de server/ a la raíz..."
+              mv server/.env .env
+            fi
 
-          # Mover .env a la raíz si se encuentra en la ubicación antigua
-          if [ -f "server/.env" ] && [ ! -f ".env" ]; then
-            echo "ℹ️  Archivo .env encontrado en 'server/.env'. Moviéndolo a la raíz..."
-            mv server/.env .env
-            echo "✅ Archivo .env reubicado."
-          elif [ ! -f ".env" ]; then
-            echo "⚠️  ADVERTENCIA: No se encontró el archivo .env en el servidor."
-          else
-            echo "✅ Archivo .env ya está en la ubicación correcta."
-          fi
-          
-          echo "=== 3. Instalando dependencias (NPM) ==="
-          npm install --production=false
-          
-          echo "=== 4. Limpiando artefactos de builds anteriores ==="
-          rm -rf dist/
-          rm -rf .angular/
-          
-          echo "=== 5. Compilando la aplicación (SSR + Backend unificado) ==="
-          npm run build:ssr
-          
-          # Verificar que el build se ha completado correctamente
-          if [ ! -f "dist/tienda-web-loto-ai/server/main.server.mjs" ]; then
-            echo "❌ Error de compilación: El archivo 'main.server.mjs' no fue generado."
-            exit 1
-          else
-            echo "✅ Compilación completada con éxito."
-          fi
-          
-          echo "=== 6. Gestionando la aplicación con PM2 ==="
-          # Instalar PM2 si no está presente
-          npm install -g pm2
-          
-          # Detener y eliminar la configuración antigua si existe
-          pm2 stop loto-ia || true
-          pm2 delete loto-ia || true
-          
-          echo "Iniciando/Reiniciando el servidor con la nueva configuración..."
-          pm2 start ecosystem.config.js --env production
-          
-          # Guardar la configuración de PM2 para que se reinicie con el servidor
-          pm2 save
-          
-          echo "=== 7. Reiniciando NGINX ==="
-          sudo systemctl reload nginx
-          
-          echo "=== 8. Verificando estado final de la aplicación ==="
-          sleep 5 # Dar tiempo a que el servidor se inicie
-          pm2 list
-          
-          echo "=== ✅ DESPLIEGUE COMPLETADO ==="
+            # 4. Instalar todas las dependencias (incluidas devDependencies)
+            echo "--- 4. Instalando dependencias (NPM) ---"
+            npm install --production=false
+            
+            # 5. Compilar el Backend de forma independiente
+            echo "--- 5. Compilando el Backend (TSC) ---"
+            npx tsc --project src/backend/tsconfig.backend.json
+            
+            # 6. Compilar el Frontend y el Servidor SSR de Angular
+            echo "--- 6. Compilando el Frontend (Angular) ---"
+            ng build
+            
+            # 7. Reiniciar los servicios con PM2
+            echo "--- 7. Reiniciando los servicios (PM2) ---"
+            pm2 restart ecosystem.config.js || {
+              echo "ℹ️  No se pudo reiniciar, intentando iniciar de nuevo..."
+              pm2 start ecosystem.config.js
+            }
+            
+            echo "✅ DESPLIEGUE COMPLETADO CON ÉXITO"
 
     - name: Deployment success notification
       if: success()
