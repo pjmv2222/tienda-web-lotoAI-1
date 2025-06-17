@@ -58,12 +58,12 @@ jobs:
             
             echo "✅ DESPLIEGUE COMPLETADO CON ÉXITO"
 
-    - name: Deployment success notification
-      if: success()
-      run: |
-        echo "::notice::Deployment completed successfully! The application has been deployed to the VPS."
+      - name: Deployment success notification
+        if: success()
+        run: |
+          echo "::notice::Deployment completed successfully! The application has been deployed to the VPS."
 
-    - name: Deployment failure notification
-      if: failure()
-      run: |
-        echo "::error::Deployment failed! Please check the logs for more information."
+      - name: Deployment failure notification
+        if: failure()
+        run: |
+          echo "::error::Deployment failed! Please check the logs for more information."
