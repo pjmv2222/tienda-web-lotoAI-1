@@ -21,8 +21,9 @@ pgPool.on('connect', () => {
   console.log('✅ Conectado a PostgreSQL');
 });
 
-pgPool.on('error', (err) => {
+pgPool.on('error', (err: Error) => {
   console.error('❌ Error en PostgreSQL:', err);
+  process.exit(-1);
 });
 
 // Función para inicializar las tablas si no existen

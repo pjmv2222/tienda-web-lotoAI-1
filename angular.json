@@ -23,7 +23,17 @@
             "externalDependencies": [
               "mock-aws-s3",
               "aws-sdk",
-              "nock"
+              "nock",
+              "express",
+              "cors",
+              "dotenv",
+              "pg",
+              "sequelize",
+              "bcrypt",
+              "jsonwebtoken",
+              "stripe",
+              "node-mailjet",
+              "node-fetch"
             ],
             "polyfills": ["zone.js"],
             "tsConfig": "tsconfig.app.json",
