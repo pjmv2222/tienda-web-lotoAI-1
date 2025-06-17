@@ -1,13 +1,12 @@
-name: Deploy LotoIA to VPS
+name: Deploy LotoIA to VPS (Unified Server)
 
 on:
   push:
     branches: [ main ]
     paths-ignore:
       - 'IAs-Loto/**'
-      - 'ias/**'
       - '.github/workflows/deploy-with-ias.yml'
-  workflow_dispatch:  # Permite ejecutar manualmente desde la interfaz de GitHub
+  workflow_dispatch:
 
 jobs:
   build-and-deploy:
@@ -15,274 +14,73 @@ jobs:
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v3
-      with:
-        fetch-depth: 0  # Obtener todo el historial para que git describe funcione correctamente
+      uses: actions/checkout@v4
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: '18.x'
-        cache: 'npm'
-
-    - name: Deploy to VPS
+    - name: Deploy to VPS via SSH
       uses: appleboy/ssh-action@master
       with:
-        host: 212.227.230.103
-        username: root
+        host: ${{ secrets.VPS_HOST }}
+        username: ${{ secrets.VPS_USERNAME }}
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         script: |
-          echo "=== INICIO DEL DESPLIEGUE ==="
+          echo "=== INICIO DEL DESPLIEGUE UNIFICADO ==="
           
-          echo "=== Configurando entorno ==="
-          export NODE_ENV=production
-          export PATH=$PATH:/usr/local/bin:/usr/bin
+          # Ir al directorio del proyecto
+          cd /var/www/tienda-web-lotoAI-1 || { echo "❌ Error: No se pudo encontrar el directorio del proyecto."; exit 1; }
           
-          echo "=== Instalando herramientas globales ==="
-          npm install -g pm2@latest
-          echo "✅ PM2 instalado globalmente"
-          
-          echo "=== Navegando al directorio del proyecto ==="
-          cd /var/www/tienda-web-lotoAI-1
-          
-          echo "=== Actualizando desde GitHub ==="
-          git fetch origin
+          echo "=== 1. Actualizando desde GitHub ==="
+          git fetch origin main
           git reset --hard origin/main
           git pull origin main
           
-          echo "=== Verificando archivos críticos ==="
-          if [ -f "fix-build.js" ] && [ -f "server.ts" ] && [ -f "nginx.conf" ]; then
-            echo "✅ Archivos críticos verificados"
+          echo "=== 2. Verificando archivo .env existente ==="
+          if [ ! -f ".env" ]; then
+            echo "⚠️  ADVERTENCIA: No se encontró el archivo .env en el servidor."
+            echo "La aplicación podría no funcionar sin las variables de entorno."
           else
-            echo "❌ Faltan archivos críticos"
-            exit 1
+            echo "✅ Archivo .env encontrado. El despliegue continuará usándolo."
           fi
           
-          echo "=== Verificando archivos CSS ==="
-          if [ -f "src/assets/css/bootstrap-fixes.css" ] && [ -f "src/assets/css/mobile-styles.css" ] && [ -f "src/assets/css/container-fixes.css" ]; then
-            echo "✅ Archivos CSS encontrados"
-            echo "📋 Archivos CSS disponibles:"
-            ls -la src/assets/css/
-          else
-            echo "❌ Faltan archivos CSS críticos"
-            echo "📋 Contenido de src/assets/css/:"
-            ls -la src/assets/css/ || echo "Directorio CSS no existe"
-            exit 1
-          fi
-          
-          echo "=== Verificando configuración angular.json ==="
-          if grep -q "bootstrap-fixes.css" angular.json && grep -q "mobile-styles.css" angular.json && grep -q "container-fixes.css" angular.json; then
-            echo "✅ Configuración CSS en angular.json correcta"
-          else
-            echo "❌ Configuración CSS en angular.json incorrecta"
-            echo "📋 Configuración styles en angular.json:"
-            grep -A 10 '"styles"' angular.json || echo "No se encontró sección styles"
-            exit 1
-          fi
-          
-          echo "=== DIAGNÓSTICO DE RUTAS (PRE-COMPILACIÓN) ==="
-          echo "1. Mostrando contenido de la sección 'styles' en angular.json:"
-          grep -A 10 '"styles"' angular.json || echo "No se encontró la sección 'styles'"
-          echo "----------------------------------------------------"
-          echo "2. Verificando la existencia de los archivos CSS globales:"
-          ls -l src/styles.css
-          ls -l src/assets/css/bootstrap-fixes.css
-          ls -l src/assets/css/mobile-styles.css
-          ls -l src/assets/css/container-fixes.css
-          echo "=== FIN DEL DIAGNÓSTICO DE RUTAS ==="
-
-          echo "=== Actualizando configuración NGINX ==="
-          sudo cp nginx.conf /etc/nginx/sites-enabled/loto-ia.com
-          sudo nginx -t
-          echo "✅ Configuración NGINX actualizada"
-          
-          echo "=== Instalación de dependencias ==="
+          echo "=== 3. Instalando dependencias (NPM) ==="
           npm install --production=false
           
-          echo "=== Limpiando caché y archivos compilados ==="
-          rm -rf dist/ || true
-          rm -rf .angular/ || true
-          rm -rf node_modules/.cache/ || true
-          npm run clean || true
-          echo "✅ Caché limpiada"
+          echo "=== 4. Limpiando artefactos de builds anteriores ==="
+          rm -rf dist/
+          rm -rf .angular/
           
-          echo "=== Compilación del proyecto ==="
+          echo "=== 5. Compilando la aplicación (SSR + Backend unificado) ==="
           npm run build:ssr
-
-          echo "=== DIAGNÓSTICO DE ESTILOS (POST-COMPILACIÓN) ==="
-          echo "1. Verificando contenido de home.component.css en el servidor:"
-          cat src/app/pages/home/home.component.css | grep -C 3 "ai-description" || echo "Regla .ai-description no encontrada en home.component.css"
-          echo "----------------------------------------------------"
-          echo "2. Buscando la regla .ai-description en los archivos CSS compilados (método robusto):"
-          find dist/tienda-web-loto-ai/browser/ -name "styles.*.css" -exec grep -H ".ai-description" {} + || echo "Regla .ai-description no encontrada en los CSS compilados."
-          echo "----------------------------------------------------"
-          echo "3. Listando archivos CSS compilados y sus timestamps:"
-          ls -l dist/tienda-web-loto-ai/browser/*.css || echo "No se encontraron archivos .css en el directorio de build."
-          echo "=== FIN DEL DIAGNÓSTICO DE ESTILOS ==="
           
-          echo "=== Verificando archivos compilados ==="
-          if [ -f "dist/tienda-web-loto-ai/server/main.server.mjs" ]; then
-            echo "✅ Servidor SSR encontrado"
-          else
-            echo "❌ Servidor SSR NO encontrado"
-            ls -la dist/tienda-web-loto-ai/server/ || echo "Directorio server no existe"
+          # Verificar que el build se ha completado correctamente
+          if [ ! -f "dist/tienda-web-loto-ai/server/main.server.mjs" ]; then
+            echo "❌ Error de compilación: El archivo 'main.server.mjs' no fue generado."
             exit 1
+          else
+            echo "✅ Compilación completada con éxito."
           fi
           
-          if [ -f "dist/tienda-web-loto-ai/browser/index.csr.html" ]; then
-            echo "✅ index.csr.html encontrado (creado por fix-build.js)"
-          else
-            echo "❌ index.csr.html NO encontrado"
-            ls -la dist/tienda-web-loto-ai/browser/ || echo "Directorio browser no existe"
-            exit 1
-          fi
+          echo "=== 6. Gestionando la aplicación con PM2 ==="
+          # Instalar PM2 si no está presente
+          npm install -g pm2
           
-          echo "=== Compilación del backend ==="
-          npm run build:backend
+          # Detener y eliminar la configuración antigua si existe
+          pm2 stop loto-ia || true
+          pm2 delete loto-ia || true
           
-          echo "=== Configurando PM2 ==="
-          pm2 stop all || true
-          pm2 delete all || true
+          echo "Iniciando/Reiniciando el servidor con la nueva configuración..."
+          pm2 start ecosystem.config.js --env production
           
-          # Crear configuración PM2 para backend
-          cat > ecosystem.backend.config.js << 'EOF'
-          module.exports = {
-            apps: [{
-              name: 'loto-ia-backend',
-              script: 'src/backend/dist/server.js',
-              instances: 1,
-              exec_mode: 'fork',
-              autorestart: true,
-              watch: false,
-              max_restarts: 10,
-              min_uptime: '10s',
-              env: {
-                NODE_ENV: 'production',
-                PORT: '3001'
-              },
-              error_file: '/root/.pm2/logs/loto-ia-backend-error.log',
-              out_file: '/root/.pm2/logs/loto-ia-backend-out.log',
-              log_file: '/root/.pm2/logs/loto-ia-backend-combined.log'
-            }]
-          };
-          EOF
-          
-          # Crear configuración PM2 para SSR
-          cat > ecosystem.ssr.config.js << 'EOF'
-          module.exports = {
-            apps: [{
-              name: 'loto-ia-ssr',
-              script: 'express-server.js',
-              instances: 1,
-              exec_mode: 'fork',
-              autorestart: true,
-              watch: false,
-              max_restarts: 10,
-              min_uptime: '10s',
-              env: {
-                NODE_ENV: 'production',
-                PORT: '4000'
-              },
-              error_file: '/root/.pm2/logs/loto-ia-ssr-error.log',
-              out_file: '/root/.pm2/logs/loto-ia-ssr-out.log',
-              log_file: '/root/.pm2/logs/loto-ia-ssr-combined.log'
-            }]
-          };
-          EOF
-          
-          echo "=== Iniciando servicios ==="
-          pm2 start ecosystem.backend.config.js
-          pm2 start ecosystem.ssr.config.js
+          # Guardar la configuración de PM2 para que se reinicie con el servidor
           pm2 save
           
-          echo "=== Reiniciando NGINX ==="
+          echo "=== 7. Reiniciando NGINX ==="
           sudo systemctl reload nginx
-          echo "✅ NGINX recargado"
           
-          echo "=== Verificando servicios ==="
-          sleep 5
+          echo "=== 8. Verificando estado final de la aplicación ==="
+          sleep 5 # Dar tiempo a que el servidor se inicie
           pm2 list
           
-          # Verificar logs del backend si está fallando
-          echo "=== DIAGNÓSTICO DE BACKEND ==="
-          if pm2 list | grep -q "errored.*loto-ia-backend"; then
-            echo "❌ Backend en estado de error - Mostrando logs:"
-            pm2 logs loto-ia-backend --lines 20 --nostream || true
-            echo "=== Verificando archivo del backend ==="
-            ls -la src/backend/dist/server.js || echo "❌ Archivo del backend no existe"
-            echo "=== Verificando dependencias del backend ==="
-            cd src/backend && npm list --depth=0 || true
-            cd /var/www/tienda-web-lotoAI-1
-          else
-            echo "✅ Backend en estado online - Mostrando logs recientes:"
-            pm2 logs loto-ia-backend --lines 10 --nostream || true
-          fi
-          
-          echo "=== DIAGNÓSTICO DE SSR ==="
-          if pm2 list | grep -q "errored.*loto-ia-ssr"; then
-            echo "❌ SSR en estado de error - Mostrando logs:"
-            pm2 logs loto-ia-ssr --lines 20 --nostream || true
-            echo "=== Verificando logs de error del SSR ==="
-            pm2 logs loto-ia-ssr --err --lines 10 --nostream || true
-          else
-            echo "✅ SSR en estado online - Mostrando logs recientes:"
-            pm2 logs loto-ia-ssr --lines 30 --nostream || true
-            echo "=== Verificando logs de error del SSR ==="
-            pm2 logs loto-ia-ssr --err --lines 20 --nostream || true
-            
-            echo "=== Verificando logs desde el inicio del proceso ==="
-            pm2 flush loto-ia-ssr || true
-            sleep 2
-            pm2 logs loto-ia-ssr --lines 50 --nostream || true
-            
-            echo "=== Verificando si el proceso está realmente ejecutándose ==="
-            ps aux | grep express-server.js | grep -v grep || echo "❌ Proceso express-server.js no encontrado"
-            
-            echo "=== Intentando conectar al puerto 4000 ==="
-            timeout 5 nc -zv localhost 4000 || echo "❌ No se puede conectar al puerto 4000"
-            
-            echo "=== Verificando qué está usando el puerto 4000 ==="
-            lsof -i :4000 || echo "❌ Nada está usando el puerto 4000"
-            
-            echo "=== Reiniciando SSR para ver logs de inicio ==="
-            pm2 restart loto-ia-ssr
-            sleep 5
-            echo "=== Logs después del reinicio ==="
-            pm2 logs loto-ia-ssr --lines 20 --nostream || true
-          fi
-          
-          # Verificar si el proceso SSR está realmente escuchando
-          echo "=== Verificando proceso SSR ==="
-          ps aux | grep "express-server.js" | grep -v grep || echo "Proceso SSR no encontrado"
-          
-          # Verificar si hay errores en el archivo del servidor
-          echo "=== Verificando archivo servidor SSR ==="
-          ls -la express-server.js || echo "❌ Archivo SSR no existe"
-          
-          # Verificar puertos después de dar tiempo a los servicios
-          echo "=== Esperando a que los servicios se inicialicen ==="
-          sleep 10
-          
-          # Verificar puertos
-          if netstat -tlnp | grep -q ":3001.*LISTEN"; then
-            echo "✅ Backend escuchando en puerto 3001"
-          else
-            echo "❌ Backend NO está escuchando en puerto 3001"
-            echo "📋 Puertos activos:"
-            netstat -tlnp | grep LISTEN | head -10
-          fi
-          
-          if netstat -tlnp | grep -q ":4000.*LISTEN"; then
-            echo "✅ SSR escuchando en puerto 4000"
-          else
-            echo "❌ SSR NO está escuchando en puerto 4000"
-            echo "📋 Puertos activos:"
-            netstat -tlnp | grep LISTEN | head -10
-          fi
-          
-          echo "=== DESPLIEGUE COMPLETADO ==="
-          echo "🚀 Aplicación disponible en: https://loto-ia.com"
-          echo "==============================================="
+          echo "=== ✅ DESPLIEGUE COMPLETADO ==="
 
     - name: Deployment success notification
       if: success()
