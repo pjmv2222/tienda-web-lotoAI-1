@@ -1,20 +1,21 @@
-import Mailjet from 'node-mailjet';
+import mailjet from 'node-mailjet';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
-const mailjet = new Mailjet({
-  apiKey: process.env.MAILJET_API_KEY || '6d0949fe3bebd9e83bdca5d4ec3e19db',
-  apiSecret: process.env.MAILJET_API_SECRET || 'fcd11e866b78ed68526fd750a7bd6138'
-});
+const mj = mailjet.apiConnect(
+  process.env['MAILJET_API_KEY'] || '6d0949fe3bebd9e83bdca5d4e1669402',
+  process.env['MAILJET_API_SECRET'] || 'fcd11e866b78ed68526543b355823103'
+);
 
 export async function sendVerificationEmail(email: string, token: string): Promise<boolean> {
   try {
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:4000';
-    const verificationLink = `${frontendUrl}/verificar/${token}`;
+    const subject = 'Verifica tu dirección de correo electrónico';
+    const frontendUrl = process.env['FRONTEND_URL'] || 'http://localhost:4000';
+    const verificationLink = `${frontendUrl}/verify-email?token=${token}`;
     console.log('Link de verificación:', verificationLink);
 
-    const result = await mailjet.post('send', { version: 'v3.1' }).request({
+    const result = await mj.post('send', { version: 'v3.1' }).request({
       Messages: [
         {
           From: {
@@ -27,7 +28,7 @@ export async function sendVerificationEmail(email: string, token: string): Promi
               Name: email
             }
           ],
-          Subject: "Verifica tu cuenta en LotoIA",
+          Subject: subject,
           TextPart: "Por favor verifica tu cuenta de LotoIA",
           HTMLPart: `
             <h3>Bienvenido a LotoIA</h3>
@@ -52,10 +53,10 @@ export async function sendVerificationEmail(email: string, token: string): Promi
 
 export async function sendPasswordResetEmail(email: string, token: string): Promise<boolean> {
   try {
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:4000';
+    const frontendUrl = process.env['FRONTEND_URL'] || 'http://localhost:4000';
     const resetLink = `${frontendUrl}/reset-password/${token}`;
     
-    const result = await mailjet.post('send', { version: 'v3.1' }).request({
+    const result = await mj.post('send', { version: 'v3.1' }).request({
       Messages: [
         {
           From: {

@@ -1,11 +1,11 @@
 import { Request, Response } from 'express';
 import Stripe from 'stripe';
 import * as PayPalService from '../services/paypal.service';
+import { pgPool } from '../config/database';
 
-// Inicializar Stripe con la clave secreta
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  // Usar la versión de la API desde los tipos de Stripe para evitar errores de compilación
-  apiVersion: '2025-03-31.basil' as Stripe.LatestApiVersion,
+// Inicializar Stripe
+const stripe = new Stripe(process.env['STRIPE_SECRET_KEY'] || '', {
+  apiVersion: '2025-05-28.basil',
 });
 
 // Obtener el precio según el plan
@@ -27,36 +27,19 @@ const getPlanPrice = (planId: string): number => {
  */
 export const createPaymentIntent = async (req: Request, res: Response) => {
   try {
-    const { amount, planId, userId } = req.body;
-
-    if (!planId) {
-      return res.status(400).json({ error: 'Se requiere el ID del plan' });
+    const { amount, currency, plan, userId } = req.body;
+    if (!amount || !currency || !plan || !userId) {
+      return res.status(400).json({ error: 'Faltan parámetros requeridos' });
     }
-
-    // Usar el monto proporcionado o calcular basado en el planId
-    const finalAmount = amount || getPlanPrice(planId);
-
-    // Crear el PaymentIntent
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: finalAmount,
-      currency: 'eur',
-      metadata: {
-        planId,
-        userId: userId || 'guest'
-      }
+      amount: amount * 100,
+      currency: currency,
+      metadata: { plan, userId },
     });
-
-    // Guardar el registro de pago en la base de datos (si tienes un modelo)
-    // const payment = new Payment({...});
-    // await payment.save();
-
-    res.status(200).json({
-      clientSecret: paymentIntent.client_secret,
-      id: paymentIntent.id
-    });
+    return res.status(200).json({ clientSecret: paymentIntent.client_secret });
   } catch (error: any) {
-    console.error('Error al crear PaymentIntent:', error);
-    res.status(500).json({ error: 'Error al procesar el pago' });
+    console.error('Error al crear el PaymentIntent:', error);
+    return res.status(500).json({ error: error.message });
   }
 };
 
@@ -65,43 +48,32 @@ export const createPaymentIntent = async (req: Request, res: Response) => {
  */
 export const confirmPayment = async (req: Request, res: Response) => {
   try {
-    const { paymentIntentId, userId, planId } = req.body;
-
-    if (!paymentIntentId) {
-      return res.status(400).json({ error: 'Se requiere el ID del PaymentIntent' });
+    const { paymentIntentId, userId, planType, endDate, amount, currency } = req.body;
+    const client = await pgPool.connect();
+    try {
+      await client.query('BEGIN');
+      const subResult = await client.query(
+        `INSERT INTO subscriptions (user_id, plan_type, amount, currency, status, payment_intent_id, start_date, end_date)
+         VALUES ($1, $2, $3, $4, 'active', $5, CURRENT_TIMESTAMP, $6) RETURNING id`,
+        [userId, planType, amount, currency, paymentIntentId, endDate]
+      );
+      const subscriptionId = subResult.rows[0].id;
+      await client.query(
+        `INSERT INTO payments (user_id, subscription_id, payment_intent_id, amount, currency, status)
+         VALUES ($1, $2, $3, $4, $5, 'succeeded')`,
+        [userId, subscriptionId, paymentIntentId, amount, currency]
+      );
+      await client.query('COMMIT');
+      return res.status(200).json({ success: true, message: 'Pago confirmado y suscripción creada.' });
+    } catch (e) {
+      await client.query('ROLLBACK');
+      throw e;
+    } finally {
+      client.release();
     }
-
-    // Recuperar el PaymentIntent
-    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
-
-    if (paymentIntent.status !== 'succeeded') {
-      return res.status(400).json({
-        success: false,
-        error: 'El pago no ha sido completado correctamente'
-      });
-    }
-
-    // Actualizar el registro de pago en la base de datos (si tienes un modelo)
-    // const payment = await Payment.findOne({ stripePaymentIntentId: paymentIntentId });
-    // if (payment) {
-    //   payment.status = 'succeeded';
-    //   await payment.save();
-    // }
-
-    // Crear una suscripción (si corresponde)
-    // const subscription = new Subscription({...});
-    // await subscription.save();
-
-    res.status(200).json({
-      success: true,
-      paymentIntent: {
-        id: paymentIntent.id,
-        status: paymentIntent.status
-      }
-    });
   } catch (error: any) {
     console.error('Error al confirmar el pago:', error);
-    res.status(500).json({ error: 'Error al confirmar el pago' });
+    return res.status(500).json({ error: error.message });
   }
 };
 
@@ -127,7 +99,7 @@ export const processTransferPayment = async (req: Request, res: Response) => {
     // const subscription = new Subscription({...});
     // await subscription.save();
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       payment: {
         referenceNumber,
@@ -136,7 +108,7 @@ export const processTransferPayment = async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     console.error('Error al procesar el pago por transferencia:', error);
-    res.status(500).json({ error: 'Error al procesar el pago por transferencia' });
+    return res.status(500).json({ error: error.message });
   }
 };
 
@@ -145,35 +117,15 @@ export const processTransferPayment = async (req: Request, res: Response) => {
  */
 export const createPayPalOrder = async (req: Request, res: Response) => {
   try {
-    const { planId } = req.body;
-
-    if (!planId) {
-      return res.status(400).json({ error: 'Se requiere el ID del plan' });
+    const { amount, description } = req.body;
+    if (!amount || !description) {
+      return res.status(400).json({ error: 'Amount and description are required' });
     }
-
-    // Obtener el precio del plan
-    const amount = getPlanPrice(planId) / 100; // Convertir de céntimos a euros
-
-    // Crear la descripción del plan
-    let planName = 'Plan Básico';
-    if (planId === 'monthly') planName = 'Plan Mensual';
-    if (planId === 'pro') planName = 'Plan Pro';
-
-    // Crear la orden en PayPal
-    const order = await PayPalService.createOrder(
-      amount,
-      'EUR',
-      `LotoIA - ${planName}`
-    );
-
-    res.status(200).json({
-      success: true,
-      orderId: order.id,
-      approvalUrl: order.links.find((link: any) => link.rel === 'approve').href
-    });
+    const order = await PayPalService.createOrder(amount, 'EUR', description);
+    return res.status(201).json(order);
   } catch (error: any) {
-    console.error('Error al crear la orden de PayPal:', error);
-    res.status(500).json({ error: 'Error al crear la orden de PayPal' });
+    console.error('Error creating PayPal order:', error);
+    return res.status(500).json({ error: error.message });
   }
 };
 
@@ -182,47 +134,14 @@ export const createPayPalOrder = async (req: Request, res: Response) => {
  */
 export const processPayPalPayment = async (req: Request, res: Response) => {
   try {
-    const { userId, planId, paypalOrderId } = req.body;
-
-    if (!planId || !paypalOrderId) {
-      return res.status(400).json({ error: 'Se requieren el ID del plan y el ID de la orden de PayPal' });
+    const { orderId } = req.body;
+    if (!orderId) {
+      return res.status(400).json({ error: 'Order ID is required' });
     }
-
-    // Verificar el estado de la orden
-    const orderDetails = await PayPalService.getOrderDetails(paypalOrderId);
-
-    if (orderDetails.status !== 'COMPLETED') {
-      // Capturar la orden si aún no está completada
-      const captureResult = await PayPalService.captureOrder(paypalOrderId);
-
-      if (captureResult.status !== 'COMPLETED') {
-        return res.status(400).json({
-          success: false,
-          error: 'No se pudo completar el pago con PayPal'
-        });
-      }
-    }
-
-    // Obtener el precio del plan
-    const amount = getPlanPrice(planId) / 100; // Convertir de céntimos a euros
-
-    // Crear el registro de pago en la base de datos (si tienes un modelo)
-    // const payment = new Payment({...});
-    // await payment.save();
-
-    // Crear la suscripción
-    // const subscription = new Subscription({...});
-    // await subscription.save();
-
-    res.status(200).json({
-      success: true,
-      payment: {
-        status: 'succeeded',
-        orderId: paypalOrderId
-      }
-    });
+    const capture = await PayPalService.captureOrder(orderId);
+    return res.status(200).json(capture);
   } catch (error: any) {
-    console.error('Error al procesar el pago con PayPal:', error);
-    res.status(500).json({ error: 'Error al procesar el pago con PayPal' });
+    console.error('Error processing PayPal payment:', error);
+    return res.status(500).json({ error: error.message });
   }
 };

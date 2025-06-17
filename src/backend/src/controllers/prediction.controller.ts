@@ -136,43 +136,27 @@ setInterval(cleanupInactiveServers, 60 * 1000);
  * Controlador para obtener una predicción
  */
 export const getPrediction = async (req: Request, res: Response) => {
-  try {
-    const { game } = req.params;
-    const userId = (req as any).user.id;
+    try {
+        const { game } = req.params;
+        const { count } = req.query;
 
-    console.log(`Solicitud de predicción para ${game} del usuario ${userId}`);
+        // Aquí iría la lógica para obtener la predicción de tu IA
+        // Por ahora, devolvemos datos de ejemplo
+        
+        const predictions = [
+            { numbers: [1, 2, 3, 4, 5], stars: [1, 2] },
+            { numbers: [6, 7, 8, 9, 10], stars: [3, 4] }
+        ];
 
-    // Verificar que el juego es válido
-    const validGames = Object.keys(gamePorts);
-    if (!validGames.includes(game)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Juego no válido'
-      });
+        if (predictions) {
+            return res.status(200).json(predictions);
+        } else {
+            return res.status(404).json({ message: "Could not generate prediction." });
+        }
+    } catch (error) {
+        console.error('Error in getPrediction:', error);
+        return res.status(500).json({ message: 'Internal server error' });
     }
-
-    // Iniciar el servidor Python si no está en ejecución
-    const port = await startPythonServer(game);
-
-    // Realizar la solicitud a la API de IA
-    const response = await axios.post(`http://localhost:${port}/predict`, {
-      input: [1, 2, 3, 4, 5, 6, 7] // Datos de entrada para la IA (podrían ser personalizados)
-    });
-
-    // Devolver la respuesta al cliente
-    res.json({
-      success: true,
-      message: `Predicción para ${game} obtenida correctamente`,
-      prediction: response.data.prediction || response.data
-    });
-  } catch (error) {
-    console.error('Error al obtener predicción:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error al obtener predicción',
-      error: error instanceof Error ? error.message : 'Error desconocido'
-    });
-  }
 };
 
 /**

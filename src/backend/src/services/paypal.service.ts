@@ -1,17 +1,14 @@
 import axios from 'axios';
 import dotenv from 'dotenv';
+import fetch from 'node-fetch';
 
 dotenv.config();
 
 // Configuración de PayPal
-const PAYPAL_CLIENT_ID = process.env.PAYPAL_CLIENT_ID;
-const PAYPAL_CLIENT_SECRET = process.env.PAYPAL_CLIENT_SECRET;
-const PAYPAL_MODE = process.env.PAYPAL_MODE || 'sandbox';
-
-// URLs de la API de PayPal
-const BASE_URL = PAYPAL_MODE === 'live'
-  ? 'https://api.paypal.com'
-  : 'https://api.sandbox.paypal.com';
+const PAYPAL_CLIENT_ID = process.env['PAYPAL_CLIENT_ID'];
+const PAYPAL_CLIENT_SECRET = process.env['PAYPAL_CLIENT_SECRET'];
+const PAYPAL_MODE = process.env['PAYPAL_MODE'] || 'sandbox';
+const base = PAYPAL_MODE === 'sandbox' ? 'https://api-m.sandbox.paypal.com' : 'https://api-m.paypal.com';
 
 /**
  * Obtiene un token de acceso para la API de PayPal
@@ -32,7 +29,7 @@ export const getAccessToken = async (): Promise<string> => {
 
     const response = await axios({
       method: 'post',
-      url: `${BASE_URL}/v1/oauth2/token`,
+      url: `${base}/v1/oauth2/token`,
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
         'Authorization': `Basic ${auth}`
@@ -55,14 +52,13 @@ export const createOrder = async (amount: number, currency: string = 'EUR', desc
   try {
     const accessToken = await getAccessToken();
 
-    const response = await axios({
-      method: 'post',
-      url: `${BASE_URL}/v2/checkout/orders`,
+    const response = await fetch(`${base}/v2/checkout/orders`, {
+      method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${accessToken}`
       },
-      data: {
+      body: JSON.stringify({
         intent: 'CAPTURE',
         purchase_units: [
           {
@@ -77,13 +73,13 @@ export const createOrder = async (amount: number, currency: string = 'EUR', desc
           brand_name: 'LotoIA',
           landing_page: 'BILLING',
           user_action: 'PAY_NOW',
-          return_url: `${process.env.FRONTEND_URL}/confirmacion-pago`,
-          cancel_url: `${process.env.FRONTEND_URL}/cancelar-pago`
+          return_url: `${process.env['FRONTEND_URL']}/confirmacion-pago`,
+          cancel_url: `${process.env['FRONTEND_URL']}/cancelar-pago`
         }
-      }
+      })
     });
 
-    return response.data;
+    return await response.json();
   } catch (error) {
     console.error('Error al crear la orden de PayPal:', error);
     throw new Error('No se pudo crear la orden de PayPal');
@@ -99,7 +95,7 @@ export const captureOrder = async (orderId: string): Promise<any> => {
 
     const response = await axios({
       method: 'post',
-      url: `${BASE_URL}/v2/checkout/orders/${orderId}/capture`,
+      url: `${base}/v2/checkout/orders/${orderId}/capture`,
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${accessToken}`
@@ -122,7 +118,7 @@ export const getOrderDetails = async (orderId: string): Promise<any> => {
 
     const response = await axios({
       method: 'get',
-      url: `${BASE_URL}/v2/checkout/orders/${orderId}`,
+      url: `${base}/v2/checkout/orders/${orderId}`,
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${accessToken}`

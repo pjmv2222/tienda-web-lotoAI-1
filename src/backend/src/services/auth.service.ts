@@ -30,7 +30,7 @@ export const AuthService = {
         ]
       );
 
-      const jwtSecret: Secret = process.env.JWT_SECRET || 'your-secret-key';
+      const jwtSecret: Secret = process.env['JWT_SECRET'] || 'your-secret-key';
       const verificationToken = jwt.sign(
         { userId: result.rows[0].id } as JwtPayload,
         jwtSecret
@@ -72,7 +72,7 @@ export const AuthService = {
   },
 
   generateToken(userId: number) {
-    const jwtSecret: Secret = process.env.JWT_SECRET || 'your-secret-key';
+    const jwtSecret: Secret = process.env['JWT_SECRET'] || 'your-secret-key';
     return jwt.sign(
       { userId } as JwtPayload,
       jwtSecret,
