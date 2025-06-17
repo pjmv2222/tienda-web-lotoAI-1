@@ -1,93 +1,85 @@
 import { Request, Response } from 'express';
 import Stripe from 'stripe';
+import { pgPool } from '../config/database';
 
 // Inicializar Stripe con la clave secreta
-if (!process.env.STRIPE_SECRET_KEY) {
-  console.error('ADVERTENCIA: Variable de entorno STRIPE_SECRET_KEY no encontrada');
-  console.error('Asegúrate de que el archivo .env existe y contiene STRIPE_SECRET_KEY');
+if (!process.env['STRIPE_SECRET_KEY']) {
+  throw new Error('STRIPE_SECRET_KEY is not set');
 }
 
-if (!process.env.STRIPE_WEBHOOK_SECRET) {
-  console.error('ADVERTENCIA: Variable de entorno STRIPE_WEBHOOK_SECRET no encontrada');
-  console.error('Asegúrate de que el archivo .env existe y contiene STRIPE_WEBHOOK_SECRET');
+if (!process.env['STRIPE_WEBHOOK_SECRET']) {
+    throw new Error('STRIPE_WEBHOOK_SECRET is not set');
 }
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  // Usar la versión de la API desde los tipos de Stripe para evitar errores de compilación
-  apiVersion: '2025-03-31.basil' as Stripe.LatestApiVersion,
+const stripe = new Stripe(process.env['STRIPE_SECRET_KEY'] || '', {
+    apiVersion: '2025-05-28.basil',
 });
 
 /**
  * Maneja los eventos de webhook de Stripe
  */
 export const handleStripeWebhook = async (req: Request, res: Response) => {
-  const sig = req.headers['stripe-signature'] as string;
-
-  if (!sig) {
-    console.error('No se encontró la firma de Stripe en el encabezado');
-    return res.status(400).send('Webhook Error: No se encontró la firma de Stripe');
-  }
-
-  let event: Stripe.Event;
+  const sig = req.headers['stripe-signature'];
 
   try {
-    // Verificar la firma del webhook
-    if (!process.env.STRIPE_WEBHOOK_SECRET) {
-      console.error('Error: No se encontró la variable de entorno STRIPE_WEBHOOK_SECRET');
+    if (!sig) {
+        throw new Error('No stripe-signature header');
+    }
+    if (!process.env['STRIPE_WEBHOOK_SECRET']) {
+        throw new Error('STRIPE_WEBHOOK_SECRET is not set');
     }
 
-    event = stripe.webhooks.constructEvent(
-      req.body,
-      sig,
-      process.env.STRIPE_WEBHOOK_SECRET || ''
+    const event = stripe.webhooks.constructEvent(
+      req.body, 
+      sig, 
+      process.env['STRIPE_WEBHOOK_SECRET'] || ''
     );
-  } catch (err: any) {
-    console.error(`Error de firma del webhook: ${err.message}`);
-    return res.status(400).send(`Webhook Error: ${err.message}`);
-  }
 
-  // Manejar diferentes tipos de eventos
-  try {
-    console.log(`Evento recibido: ${event.type}`);
+    // Handle the event
+    if (event.type === 'payment_intent.succeeded') {
+      const paymentIntent = event.data.object as Stripe.PaymentIntent;
+      console.log('✅ PaymentIntent was successful!', paymentIntent.id);
+      
+      const { userId, plan, endDate, amount, currency } = paymentIntent.metadata;
 
-    switch (event.type) {
-      case 'payment_intent.succeeded':
-        await handlePaymentIntentSucceeded(event.data.object as Stripe.PaymentIntent);
-        break;
+      // Usar una transacción de base de datos para asegurar la atomicidad
+      const client = await pgPool.connect();
+      try {
+        await client.query('BEGIN');
+        
+        // Crear la suscripción
+        const subResult = await client.query(
+            `INSERT INTO subscriptions (user_id, plan_type, amount, currency, status, payment_intent_id, start_date, end_date)
+             VALUES ($1, $2, $3, $4, 'active', $5, to_timestamp($6), to_timestamp($7)) RETURNING id`,
+            [userId, plan, amount, currency, paymentIntent.id, paymentIntent.created, endDate]
+        );
+        const subscriptionId = subResult.rows[0].id;
 
-      case 'payment_intent.payment_failed':
-        await handlePaymentIntentFailed(event.data.object as Stripe.PaymentIntent);
-        break;
+        // Crear el registro del pago
+        await client.query(
+            `INSERT INTO payments (user_id, subscription_id, payment_intent_id, amount, currency, status, payment_method)
+             VALUES ($1, $2, $3, $4, $5, 'succeeded', $6)`,
+            [userId, subscriptionId, paymentIntent.id, paymentIntent.amount / 100, paymentIntent.currency, paymentIntent.latest_charge]
+        );
+        
+        await client.query('COMMIT');
+        console.log(`Subscription ${subscriptionId} and payment for ${paymentIntent.id} saved to DB.`);
 
-      case 'charge.succeeded':
-        await handleChargeSucceeded(event.data.object as Stripe.Charge);
-        break;
-
-      case 'charge.refunded':
-        await handleChargeRefunded(event.data.object as Stripe.Charge);
-        break;
-
-      case 'customer.subscription.created':
-        await handleSubscriptionCreated(event.data.object as Stripe.Subscription);
-        break;
-
-      case 'customer.subscription.updated':
-        await handleSubscriptionUpdated(event.data.object as Stripe.Subscription);
-        break;
-
-      case 'customer.subscription.deleted':
-        await handleSubscriptionDeleted(event.data.object as Stripe.Subscription);
-        break;
-
-      default:
-        console.log(`Evento no manejado: ${event.type}`);
+      } catch (dbError) {
+        await client.query('ROLLBACK');
+        console.error('Database transaction failed:', dbError);
+        // No se devuelve un res(500) para no dar una respuesta de error a Stripe,
+        // ya que el webhook podría ser reenviado. El error ya está logueado.
+      } finally {
+        client.release();
+      }
     }
 
-    // Responder con éxito
-    res.status(200).json({ received: true });
-  } catch (error: any) {
-    console.error(`Error al manejar el evento ${event.type}:`, error);
-    res.status(500).json({ error: 'Error al procesar el webhook' });
+    return res.status(200).json({ received: true });
+
+  } catch (err: any) {
+    console.error(`❌ Error message: ${err.message}`);
+    return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 };
 

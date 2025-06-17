@@ -6,11 +6,11 @@ dotenv.config();
 
 // Configuración de PostgreSQL
 const pgPool = new Pool({
-  user: process.env.POSTGRES_USER || 'postgres',
-  password: process.env.POSTGRES_PASSWORD,
-  host: process.env.POSTGRES_HOST || 'localhost',
-  database: process.env.POSTGRES_DB || 'lotoai_dev',
-  port: parseInt(process.env.POSTGRES_PORT || '5432'),
+  user: process.env['POSTGRES_USER'] || 'postgres',
+  password: process.env['POSTGRES_PASSWORD'],
+  host: process.env['POSTGRES_HOST'] || 'localhost',
+  database: process.env['POSTGRES_DB'] || 'lotoai_dev',
+  port: parseInt(process.env['POSTGRES_PORT'] || '5432'),
   max: 20, // Máximo número de conexiones
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 2000,
