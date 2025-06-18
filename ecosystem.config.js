@@ -16,9 +16,9 @@ module.exports = {
         POSTGRES_HOST: 'localhost',
         POSTGRES_PORT: 5432,
         POSTGRES_USER: 'postgres',
-        POSTGRES_PASSWORD: '"bM+40404040"',
+        POSTGRES_PASSWORD: 'bM+40404040',
         POSTGRES_DB: 'lotoia',
-        JWT_SECRET: '"8011471e-90c3-4af3-bc53-452557b92001"',
+        JWT_SECRET: '8011471e-90c3-4af3-bc53-452557b92001',
       },
     },
     {
