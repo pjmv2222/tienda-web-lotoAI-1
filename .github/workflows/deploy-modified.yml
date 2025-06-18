@@ -68,6 +68,18 @@ jobs:
               pm2 start ecosystem.config.js --env production
             }
             
+            # 9. Actualizar y recargar NGINX
+            echo "--- Fase 7: Actualizando configuración de NGINX ---"
+            cp nginx.conf /etc/nginx/sites-available/default
+            nginx -t # Probar la sintaxis de la configuración
+            if [ $? -eq 0 ]; then
+              echo "✅ Sintaxis de NGINX correcta. Recargando NGINX..."
+              systemctl reload nginx
+            else
+              echo "❌ Error de sintaxis en nginx.conf. No se recargará NGINX."
+              exit 1
+            fi
+
             echo "✅ FIN: DESPLIEGUE COMPLETADO CON ÉXITO"
 
       - name: Deployment success notification
