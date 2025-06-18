@@ -277,6 +277,9 @@ button:disabled {
 
 .ai-card-body {
   padding: 1.5rem;
+  background-color: white;
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
 }
 
 .ai-name {
@@ -599,6 +602,7 @@ button:disabled {
   background-color: #f8f9fa;
   border: 1px dashed #ccc;
   border-radius: 5px;
+  display: none !important;
 }
 
 .debug-info h4 {

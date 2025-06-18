@@ -33,22 +33,20 @@ export class AuthController {
       );
 
       const user = newUser.rows[0];
-      const token = jwt.sign(
-        { id: user.id, email: user.email },
+
+      // Generar token de verificación de email
+      const verificationToken = jwt.sign(
+        { userId: user.id },
         process.env['JWT_SECRET'] || 'your-secret-key',
-        { expiresIn: '1h' }
+        { expiresIn: '24h' }
       );
 
-      console.log('JWT_SECRET para generar token:', process.env['JWT_SECRET'] || 'your-secret-key');
+      // Enviar email de verificación
+      await sendVerificationEmail(user.email, verificationToken);
 
+      // NO devolver token de sesión, el usuario debe verificar su email primero
       return res.status(201).json({
-        message: 'User registered successfully',
-        user: {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-        },
-        token,
+        message: 'User registered successfully. Please check your email to verify your account.',
       });
     } catch (error) {
       console.error('Error in register:', error);
@@ -69,6 +67,12 @@ export class AuthController {
       }
 
       const user = result.rows[0];
+
+      // Comprobar si el usuario ha verificado su email
+      if (!user.is_verified) {
+        return res.status(403).json({ message: 'Please verify your email before logging in.' });
+      }
+
       const isMatch = await bcrypt.compare(password, user.password);
 
       if (!isMatch) {
