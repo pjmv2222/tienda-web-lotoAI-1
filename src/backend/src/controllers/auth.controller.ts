@@ -99,40 +99,38 @@ export class AuthController {
   async getProfile(req: Request, res: Response) {
     try {
       const userId = (req as any).user.id;
-      const result = await pgPool.query('SELECT id, name, email FROM users WHERE id = $1', [userId]);
+      const user = await UserModel.findById(userId);
 
-      if (result.rows.length === 0) {
-        return res.status(404).json({ message: 'User not found' });
+      if (!user) {
+        return res.status(404).json({ message: 'Usuario no encontrado' });
       }
 
-      return res.status(200).json(result.rows[0]);
+      // Retornar solo los campos necesarios
+      const { id, email, nombre, apellido, telefono, verified, role } = user;
+      return res.status(200).json({ id, email, nombre, apellido, telefono, verified, role });
     } catch (error) {
-      console.error('Error in getProfile:', error);
-      return res.status(500).json({ message: 'Internal server error' });
+      console.error('Error en getProfile:', error);
+      return res.status(500).json({ message: 'Error interno del servidor' });
     }
   }
 
   async updateProfile(req: Request, res: Response) {
     try {
       const userId = (req as any).user.id;
-      const { name, email } = req.body;
+      const { nombre, apellido, telefono } = req.body;
 
-      const result = await pgPool.query(
-        'UPDATE users SET name = $1, email = $2, updated_at = CURRENT_TIMESTAMP WHERE id = $3 RETURNING id, name, email',
-        [name, email, userId]
-      );
+      const updatedUser = await UserModel.update(userId, { nombre, apellido, telefono });
 
-      if (result.rows.length === 0) {
-        return res.status(404).json({ message: 'User not found' });
+      if (!updatedUser) {
+        return res.status(404).json({ message: 'Usuario no encontrado' });
       }
 
-      return res.status(200).json(result.rows[0]);
+      // Retornar solo los campos actualizados
+      const { id, email, nombre: n, apellido: a, telefono: t, verified, role } = updatedUser;
+      return res.status(200).json({ id, email, nombre: n, apellido: a, telefono: t, verified, role });
     } catch (error) {
-      console.error('Error in updateProfile:', error);
-      if ((error as any).code === '23505') {
-        return res.status(409).json({ message: 'Email already exists' });
-      }
-      return res.status(500).json({ message: 'Internal server error' });
+      console.error('Error en updateProfile:', error);
+      return res.status(500).json({ message: 'Error interno del servidor' });
     }
   }
 
@@ -165,16 +163,16 @@ export class AuthController {
   async deleteAccount(req: Request, res: Response) {
     try {
       const userId = (req as any).user.id;
-      const result = await pgPool.query('DELETE FROM users WHERE id = $1', [userId]);
+      const deletedUser = await UserModel.delete(userId);
 
-      if (result.rowCount === 0) {
-        return res.status(404).json({ message: 'User not found' });
+      if (!deletedUser) {
+        return res.status(404).json({ message: 'Usuario no encontrado' });
       }
 
-      return res.status(200).json({ message: 'Account deleted successfully' });
+      return res.status(200).json({ message: 'Cuenta eliminada exitosamente' });
     } catch (error) {
-      console.error('Error in deleteAccount:', error);
-      return res.status(500).json({ message: 'Internal server error' });
+      console.error('Error en deleteAccount:', error);
+      return res.status(500).json({ message: 'Error interno del servidor' });
     }
   }
 
