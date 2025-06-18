@@ -233,6 +233,19 @@ button:disabled {
   text-align: center;
 }
 
+.ai-card-header .ai-name {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin: 0;
+  color: white;
+}
+
+.ai-card-header .ai-specialty {
+  font-size: 0.9rem;
+  margin: 0;
+  color: white;
+}
+
 /* Colores específicos para cada IA basados en los colores de los juegos */
 .ai-euromillones .ai-card-header {
   background: linear-gradient(135deg, #0a4b9f, #003380);
