@@ -2,7 +2,7 @@ module.exports = {
   apps: [
     {
       name: 'loto-ia-frontend',
-      script: 'dist/tienda-web-loto-ai/server/main.js',
+      script: 'dist/tienda-web-loto-ai/server/main.server.mjs',
       instances: 'max',
       exec_mode: 'cluster',
       autorestart: true,
