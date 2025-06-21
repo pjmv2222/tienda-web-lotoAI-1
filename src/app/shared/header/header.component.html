@@ -42,6 +42,17 @@
                         <div *ngIf="loginError.includes('¿Deseas registrarte?')" class="register-link">
                             <a [routerLink]="['/auth/register']" class="btn-register">Registrarse</a>
                         </div>
+                        <div *ngIf="showResendVerification" class="resend-verification">
+                            <button type="button" 
+                                    class="btn-resend-verification" 
+                                    (click)="resendVerificationEmail()" 
+                                    [disabled]="isResendingEmail">
+                                <span *ngIf="!isResendingEmail">Reenviar email de verificación</span>
+                                <span *ngIf="isResendingEmail">
+                                    <i class="fas fa-spinner fa-spin"></i> Enviando...
+                                </span>
+                            </button>
+                        </div>
                     </div>
                 </div>
                 <div class="buttons-group">
