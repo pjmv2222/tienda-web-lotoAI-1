@@ -25,11 +25,16 @@ export class AuthController {
 
   async register(req: Request, res: Response) {
     try {
-      const { name, email, password } = req.body;
+      console.log('[Auth Route] Recibida petición de registro:', req.body);
+      const { nombre, apellido, email, password, telefono } = req.body;
+      
+      // Combinar nombre y apellido en el campo name
+      const fullName = `${nombre} ${apellido}`.trim();
       const hashedPassword = await bcrypt.hash(password, 10);
+      
       const newUser = await pgPool.query(
-        'INSERT INTO users (name, email, password) VALUES ($1, $2, $3) RETURNING *',
-        [name, email, hashedPassword]
+        'INSERT INTO users (name, email, password_hash) VALUES ($1, $2, $3) RETURNING *',
+        [fullName, email, hashedPassword]
       );
 
       const user = newUser.rows[0];
@@ -73,7 +78,7 @@ export class AuthController {
         return res.status(403).json({ message: 'Please verify your email before logging in.' });
       }
 
-      const isMatch = await bcrypt.compare(password, user.password);
+      const isMatch = await bcrypt.compare(password, user.password_hash);
 
       if (!isMatch) {
         return res.status(401).json({ message: 'Invalid credentials' });
@@ -143,19 +148,19 @@ export class AuthController {
       const userId = (req as any).user.id;
       const { oldPassword, newPassword } = req.body;
 
-      const userResult = await pgPool.query('SELECT password FROM users WHERE id = $1', [userId]);
+      const userResult = await pgPool.query('SELECT password_hash FROM users WHERE id = $1', [userId]);
       if (userResult.rows.length === 0) {
         return res.status(404).json({ message: 'User not found' });
       }
 
       const user = userResult.rows[0];
-      const isMatch = await bcrypt.compare(oldPassword, user.password);
+      const isMatch = await bcrypt.compare(oldPassword, user.password_hash);
       if (!isMatch) {
         return res.status(401).json({ message: 'Invalid old password' });
       }
 
       const hashedPassword = await bcrypt.hash(newPassword, 10);
-      await pgPool.query('UPDATE users SET password = $1 WHERE id = $2', [hashedPassword, userId]);
+      await pgPool.query('UPDATE users SET password_hash = $1 WHERE id = $2', [hashedPassword, userId]);
 
       return res.status(200).json({ message: 'Password changed successfully' });
     } catch (error) {
@@ -239,7 +244,7 @@ export class AuthController {
         const userId = decoded.userId;
     
         const hashedPassword = await bcrypt.hash(password, 10);
-        await pgPool.query('UPDATE users SET password = $1 WHERE id = $2', [hashedPassword, userId]);
+        await pgPool.query('UPDATE users SET password_hash = $1 WHERE id = $2', [hashedPassword, userId]);
     
         return res.status(200).json({ message: 'Password has been reset successfully.' });
     } catch (error) {
