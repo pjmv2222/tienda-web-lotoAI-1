@@ -11,8 +11,8 @@ const mj = mailjet.apiConnect(
 export async function sendVerificationEmail(email: string, token: string): Promise<boolean> {
   try {
     const subject = 'Verifica tu dirección de correo electrónico';
-    const frontendUrl = process.env['FRONTEND_URL'] || 'http://localhost:4000';
-    const verificationLink = `${frontendUrl}/verify-email?token=${token}`;
+    const frontendUrl = process.env['FRONTEND_URL'] || 'https://www.loto-ia.com';
+    const verificationLink = `${frontendUrl}/verify-email/${token}`;
     console.log('Link de verificación:', verificationLink);
 
     const result = await mj.post('send', { version: 'v3.1' }).request({
@@ -53,7 +53,7 @@ export async function sendVerificationEmail(email: string, token: string): Promi
 
 export async function sendPasswordResetEmail(email: string, token: string): Promise<boolean> {
   try {
-    const frontendUrl = process.env['FRONTEND_URL'] || 'http://localhost:4000';
+    const frontendUrl = process.env['FRONTEND_URL'] || 'https://www.loto-ia.com';
     const resetLink = `${frontendUrl}/reset-password/${token}`;
     
     const result = await mj.post('send', { version: 'v3.1' }).request({
