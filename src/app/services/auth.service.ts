@@ -116,7 +116,7 @@ export class AuthService {
     }).pipe(
       tap(response => {
         console.log('Respuesta del servidor:', response);
-        if (response.success) {
+        if (response.token && response.user) {
           const user = {
             ...response.user,
             token: response.token
@@ -166,7 +166,7 @@ export class AuthService {
     return this.http.get<any>(`${this.apiUrl}/auth/profile`, { headers: this.getAuthHeaders() })
       .pipe(
         tap(response => {
-          if (response.success) {
+          if (response.user) {
             const updatedUser = {
               ...this.currentUserValue,
               ...response.user
@@ -240,7 +240,7 @@ export class AuthService {
       { headers: this.getAuthHeaders() }
     ).pipe(
       tap(response => {
-        if (response.success) {
+        if (response.user) {
           const updatedUser = {
             ...this.currentUserValue,
             ...response.user
