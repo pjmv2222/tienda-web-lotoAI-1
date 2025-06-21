@@ -124,12 +124,17 @@ export const routes: Routes = [
       .then(m => m.ResetPasswordComponent)
   },
   {
-    path: 'profile',
+    path: 'perfil',
     loadComponent: () => import('./pages/profile/profile.component').then(m => m.ProfileComponent),
     canActivate: [authGuard]
   },
   {
     path: 'verificar/:token',
+    loadComponent: () => import('./auth/verify-email/verify-email.component')
+      .then(m => m.VerifyEmailComponent)
+  },
+  {
+    path: 'verify-email/:token',
     loadComponent: () => import('./auth/verify-email/verify-email.component')
       .then(m => m.VerifyEmailComponent)
   },
