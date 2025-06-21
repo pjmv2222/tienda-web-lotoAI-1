@@ -937,3 +937,34 @@ body, html {
   background-color: #218838;
   text-decoration: none;
 }
+
+/* Estilos para el botón de reenvío de email de verificación */
+.resend-verification {
+  margin-top: 10px;
+  text-align: center;
+}
+
+.btn-resend-verification {
+  display: inline-block;
+  padding: 8px 16px;
+  background-color: #17a2b8;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.btn-resend-verification:hover {
+  background-color: #138496;
+}
+
+.btn-resend-verification:disabled {
+  background-color: #6c757d;
+  cursor: not-allowed;
+}
+
+.btn-resend-verification:disabled:hover {
+  background-color: #6c757d;
+}

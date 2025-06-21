@@ -30,6 +30,9 @@ export class HeaderComponent implements OnInit {
   isLoggingIn: boolean = false;
   showPassword: boolean = false;
   currentUser: User | null = null;
+  showResendVerification: boolean = false;
+  userEmailForVerification: string = '';
+  isResendingEmail: boolean = false;
 
   ngOnInit() {
     this.cargarBotes();
@@ -124,6 +127,10 @@ export class HeaderComponent implements OnInit {
           this.loginError = 'No existe una cuenta con este email. ¿Deseas registrarte?';
         } else if (error.status === 401) {
           this.loginError = 'Contraseña incorrecta';
+        } else if (error.status === 403 && error.error?.needsVerification) {
+          this.loginError = 'Por favor verifica tu email antes de iniciar sesión.';
+          this.showResendVerification = true;
+          this.userEmailForVerification = error.error.email;
         } else {
           this.loginError = 'Error al iniciar sesión. Por favor, inténtelo de nuevo.';
         }
@@ -150,6 +157,29 @@ export class HeaderComponent implements OnInit {
   // Método para alternar la visibilidad de la contraseña
   togglePasswordVisibility() {
     this.showPassword = !this.showPassword;
+  }
+
+  // Método para reenviar email de verificación
+  resendVerificationEmail() {
+    if (!this.userEmailForVerification) {
+      return;
+    }
+
+    this.isResendingEmail = true;
+    
+    this.authService.resendVerificationEmail(this.userEmailForVerification).subscribe({
+      next: (response) => {
+        console.log('Email de verificación reenviado:', response);
+        this.isResendingEmail = false;
+        this.loginError = 'Email de verificación reenviado. Por favor revisa tu bandeja de entrada.';
+        this.showResendVerification = false;
+      },
+      error: (error) => {
+        console.error('Error reenviando email:', error);
+        this.isResendingEmail = false;
+        this.loginError = 'Error al reenviar el email. Por favor, inténtalo de nuevo.';
+      }
+    });
   }
 
   // Método para obtener la ruta de cada juego
