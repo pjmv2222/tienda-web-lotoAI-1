@@ -45,8 +45,20 @@ export async function sendVerificationEmail(email: string, token: string): Promi
     });
 
     return true;
-  } catch (error) {
-    console.error('Error enviando email:', error);
+  } catch (error: any) {
+    console.error('Error enviando email:', {
+      error: error.message,
+      statusCode: error.statusCode,
+      errorInfo: error.ErrorInfo,
+      errorMessage: error.ErrorMessage,
+      response: error.response?.data
+    });
+    
+    // Si es un error de Mailjet, mostrar más detalles
+    if (error.response?.data) {
+      console.error('Mailjet error details:', error.response.data);
+    }
+    
     return false;
   }
 }

@@ -47,8 +47,19 @@ export class AuthController {
       );
 
       // Enviar email de verificación
-      await sendVerificationEmail(user.email, verificationToken);
+      console.log('Intentando enviar email de verificación a:', user.email);
+      const emailSent = await sendVerificationEmail(user.email, verificationToken);
+      
+      if (!emailSent) {
+        console.error('Error: No se pudo enviar el email de verificación');
+        // Aún así, devolvemos éxito porque el usuario se registró correctamente
+        return res.status(201).json({
+          message: 'User registered successfully. However, there was an issue sending the verification email. Please contact support.',
+        });
+      }
 
+      console.log('Email de verificación enviado exitosamente a:', user.email);
+      
       // NO devolver token de sesión, el usuario debe verificar su email primero
       return res.status(201).json({
         message: 'User registered successfully. Please check your email to verify your account.',

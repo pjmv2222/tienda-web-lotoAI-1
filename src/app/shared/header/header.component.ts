@@ -109,7 +109,7 @@ export class HeaderComponent implements OnInit {
         this.isLoggingIn = false;
         this.username = '';
         this.password = '';
-        this.router.navigate(['/perfil']);
+        this.router.navigate(['/home']);
       },
       error: (error) => {
         console.log('Error en login:', {
