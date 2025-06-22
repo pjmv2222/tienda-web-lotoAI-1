@@ -4,8 +4,8 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const mj = mailjet.apiConnect(
-  process.env['MAILJET_API_KEY'] || '6d0949fe3bebd9e83bdca5d4e1669402',
-  process.env['MAILJET_API_SECRET'] || 'fcd11e866b78ed68526543b355823103'
+  process.env['MAILJET_API_KEY'] || '4bf635e9052dd9ad0b18200a0ae43fb0',
+  process.env['MAILJET_API_SECRET'] || '750dabff4daca14b5a4128e1669b75f6'
 );
 
 console.log('[Email Service] Configuración de Mailjet:', {

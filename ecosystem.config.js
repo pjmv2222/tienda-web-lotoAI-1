@@ -21,8 +21,8 @@ module.exports = {
         POSTGRES_DB: 'lotoia',
         JWT_SECRET: '8011471e-90c3-4af3-bc53-452557b92001',
         FRONTEND_URL: 'https://www.loto-ia.com',
-        MAILJET_API_KEY: '6d0949fe3bebd9e83bdca5d4e1669402',
-        MAILJET_API_SECRET: 'fcd11e866b78ed68526543b355823103',
+        MAILJET_API_KEY: '4bf635e9052dd9ad0b18200a0ae43fb0',
+        MAILJET_API_SECRET: '750dabff4daca14b5a4128e1669b75f6',
         STRIPE_SECRET_KEY: 'sk_test_51OqXXXXXXXXXXXXXXXXXXXXX',
         STRIPE_WEBHOOK_SECRET: 'whsec_XXXXXXXXXXXXXXXXXXXXXXXX'
       },
