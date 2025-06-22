@@ -76,14 +76,15 @@ button:disabled {
 
 /* Estilos para las nuevas secciones */
 .hero-section {
-  background: linear-gradient(135deg, #1a2a6c, #2a4858);
+  background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 25%, #16213e 50%, #0f3460 75%, #533483 100%);
   color: white;
   padding: 4rem 2rem;
   text-align: center;
-  border-radius: 0 0 10px 10px;
+  border-radius: 0 0 20px 20px;
   margin-bottom: 3rem;
   position: relative;
   overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
 }
 
 .hero-section::before {
@@ -93,10 +94,17 @@ button:disabled {
   left: 0;
   width: 100%;
   height: 100%;
-  background-image: url('/assets/img/hero-pattern.png');
-  background-size: cover;
-  opacity: 0.1;
+  background: 
+    radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
+    radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.2) 0%, transparent 50%);
   z-index: 0;
+  animation: float 6s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
 }
 
 .hero-content {
@@ -107,9 +115,21 @@ button:disabled {
 }
 
 .hero-section h1 {
-  font-size: 2.5rem;
+  font-size: 2.8rem;
   margin-bottom: 1.5rem;
   color: white;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+  background: linear-gradient(45deg, #00c6ff, #0072ff, #ff0080);
+  background-size: 200% 200%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gradientShift 3s ease infinite;
+}
+
+@keyframes gradientShift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
 }
 
 .hero-section p {
@@ -117,56 +137,80 @@ button:disabled {
   line-height: 1.8;
   margin-bottom: 2rem;
   color: rgba(255, 255, 255, 0.9);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
 .cta-button {
-  background-color: #00c6ff;
+  background: linear-gradient(45deg, #00c6ff, #0072ff);
   color: white;
   border: none;
-  padding: 1rem 2rem;
+  padding: 1.2rem 2.5rem;
   border-radius: 50px;
   font-size: 1.1rem;
   font-weight: bold;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(0, 198, 255, 0.3);
+  box-shadow: 0 8px 25px rgba(0, 198, 255, 0.4);
   text-transform: uppercase;
   letter-spacing: 1px;
+  position: relative;
+  overflow: hidden;
+}
+
+.cta-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.cta-button:hover::before {
+  left: 100%;
 }
 
 .cta-button:hover {
-  background-color: #00a8e0;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(0, 198, 255, 0.4);
+  background: linear-gradient(45deg, #00a8e0, #005bcc);
+  transform: translateY(-3px);
+  box-shadow: 0 12px 35px rgba(0, 198, 255, 0.6);
 }
 
 .section {
   padding: 4rem 2rem;
   margin-bottom: 3rem;
+  position: relative;
 }
 
 .section-title {
-  font-size: 2rem;
-  color: #333;
+  font-size: 2.2rem;
+  color: #1a1a2e;
   margin-bottom: 2rem;
   text-align: center;
   position: relative;
+  font-weight: 700;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .section-title::after {
   content: '';
   display: block;
-  width: 80px;
+  width: 100px;
   height: 4px;
-  background: linear-gradient(90deg, #00c6ff, #0072ff);
+  background: linear-gradient(90deg, #00c6ff, #0072ff, #ff0080);
   margin: 1rem auto 0;
   border-radius: 2px;
+  box-shadow: 0 2px 10px rgba(0, 198, 255, 0.3);
 }
 
 .section-content {
   max-width: 800px;
   margin: 0 auto;
   line-height: 1.8;
+  font-size: 1.1rem;
+  color: #444;
 }
 
 .process-container {
@@ -933,4 +977,251 @@ button:disabled {
     width: 100%;
     max-width: 100%;
   }
+}
+
+/* Estilos mejorados para los contenedores de texto con temática tecnológica */
+.info-card {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 15px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 
+    0 8px 32px rgba(31, 38, 135, 0.15),
+    0 4px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.info-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    45deg,
+    rgba(0, 198, 255, 0.1),
+    rgba(0, 114, 255, 0.1)
+  );
+  z-index: 0;
+}
+
+.info-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 
+    0 12px 40px rgba(31, 38, 135, 0.2),
+    0 8px 16px rgba(0, 0, 0, 0.15);
+}
+
+.info-card h2 {
+  color: #1a1a2e;
+  font-size: 1.8rem;
+  margin-bottom: 1.5rem;
+  position: relative;
+  z-index: 1;
+  font-weight: 700;
+  background: linear-gradient(45deg, #00c6ff, #0072ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.info-card p {
+  color: #2d3748;
+  line-height: 1.8;
+  font-size: 1.1rem;
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.8);
+}
+
+/* Estilos específicos para las secciones de texto principales */
+.section.tech-enhanced {
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  border-radius: 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+.section.tech-enhanced::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: 
+    radial-gradient(circle at 10% 20%, rgba(0, 198, 255, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 90% 80%, rgba(0, 114, 255, 0.1) 0%, transparent 50%);
+  z-index: 0;
+}
+
+.section.tech-enhanced .section-content {
+  position: relative;
+  z-index: 1;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 15px;
+  padding: 2rem;
+  backdrop-filter: blur(5px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Efectos de texto mejorados para párrafos principales */
+.tech-text {
+  background: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 500;
+  line-height: 1.8;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Contenedor especial para algoritmos */
+.algorithms-section {
+  background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+  color: white;
+  border-radius: 20px;
+  padding: 3rem 2rem;
+  position: relative;
+  overflow: hidden;
+  margin: 3rem 0;
+}
+
+.algorithms-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: 
+    linear-gradient(45deg, transparent 30%, rgba(0, 198, 255, 0.1) 50%, transparent 70%),
+    radial-gradient(circle at 70% 30%, rgba(255, 0, 128, 0.1) 0%, transparent 50%);
+  z-index: 0;
+  animation: algorithmGlow 4s ease-in-out infinite alternate;
+}
+
+@keyframes algorithmGlow {
+  0% { opacity: 0.5; }
+  100% { opacity: 1; }
+}
+
+.algorithms-section .section-title {
+  color: white;
+  text-shadow: 0 2px 10px rgba(0, 198, 255, 0.3);
+  position: relative;
+  z-index: 1;
+}
+
+.algorithms-section .section-content {
+  position: relative;
+  z-index: 1;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* Estilos para contenedores de proceso inteligente */
+.intelligent-process {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 20px;
+  padding: 3rem 2rem;
+  position: relative;
+  overflow: hidden;
+  margin: 3rem 0;
+}
+
+.intelligent-process::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: 
+    repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 2px,
+      rgba(255, 255, 255, 0.03) 2px,
+      rgba(255, 255, 255, 0.03) 4px
+    );
+  z-index: 0;
+}
+
+.intelligent-process .section-title {
+  color: white;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  position: relative;
+  z-index: 1;
+}
+
+.intelligent-process .section-content {
+  position: relative;
+  z-index: 1;
+  color: rgba(255, 255, 255, 0.95);
+}
+
+/* Efectos de hover para texto interactivo */
+.interactive-text {
+  transition: all 0.3s ease;
+  cursor: default;
+}
+
+.interactive-text:hover {
+  transform: scale(1.02);
+  text-shadow: 0 4px 8px rgba(0, 198, 255, 0.3);
+}
+
+/* Estilos para destacar números y estadísticas */
+.highlight-number {
+  color: #00c6ff;
+  font-weight: bold;
+  font-size: 1.2em;
+  text-shadow: 0 2px 4px rgba(0, 198, 255, 0.3);
+}
+
+/* Contenedor para texto de revolución del juego */
+.game-revolution {
+  background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%);
+  border-radius: 20px;
+  padding: 3rem 2rem;
+  position: relative;
+  overflow: hidden;
+  margin: 3rem 0;
+}
+
+.game-revolution::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: 
+    radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.2) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.2) 0%, transparent 50%);
+  z-index: 0;
+}
+
+.game-revolution .section-title {
+  color: #2d3748;
+  text-shadow: 0 2px 4px rgba(255, 255, 255, 0.5);
+  position: relative;
+  z-index: 1;
+}
+
+.game-revolution .section-content {
+  position: relative;
+  z-index: 1;
+  color: #4a5568;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 15px;
+  padding: 2rem;
+  backdrop-filter: blur(5px);
 }
