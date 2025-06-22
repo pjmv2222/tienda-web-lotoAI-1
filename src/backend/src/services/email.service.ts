@@ -8,12 +8,23 @@ const mj = mailjet.apiConnect(
   process.env['MAILJET_API_SECRET'] || 'fcd11e866b78ed68526543b355823103'
 );
 
+console.log('[Email Service] Configuración de Mailjet:', {
+  apiKey: process.env['MAILJET_API_KEY'] ? 'Definida por variable de entorno' : 'Usando valor por defecto',
+  apiSecret: process.env['MAILJET_API_SECRET'] ? 'Definida por variable de entorno' : 'Usando valor por defecto'
+});
+
 export async function sendVerificationEmail(email: string, token: string): Promise<boolean> {
   try {
+    console.log('[Email Service] Iniciando envío de email de verificación');
     const subject = 'Verifica tu dirección de correo electrónico';
     const frontendUrl = process.env['FRONTEND_URL'] || 'https://www.loto-ia.com';
     const verificationLink = `${frontendUrl}/verify-email/${token}`;
-    console.log('Link de verificación:', verificationLink);
+    console.log('[Email Service] Link de verificación:', verificationLink);
+    console.log('[Email Service] Configuración:', {
+      frontendUrl,
+      to: email,
+      from: "adm@loto-ia.com"
+    });
 
     const result = await mj.post('send', { version: 'v3.1' }).request({
       Messages: [
@@ -44,19 +55,21 @@ export async function sendVerificationEmail(email: string, token: string): Promi
       ]
     });
 
+    console.log('[Email Service] Email enviado exitosamente');
     return true;
   } catch (error: any) {
-    console.error('Error enviando email:', {
-      error: error.message,
+    console.error('[Email Service] Error enviando email:', {
+      message: error.message,
       statusCode: error.statusCode,
       errorInfo: error.ErrorInfo,
       errorMessage: error.ErrorMessage,
-      response: error.response?.data
+      response: error.response?.data,
+      stack: error.stack
     });
     
     // Si es un error de Mailjet, mostrar más detalles
     if (error.response?.data) {
-      console.error('Mailjet error details:', error.response.data);
+      console.error('[Email Service] Mailjet error details:', JSON.stringify(error.response.data, null, 2));
     }
     
     return false;

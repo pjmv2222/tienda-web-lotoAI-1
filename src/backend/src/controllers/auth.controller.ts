@@ -270,21 +270,38 @@ export class AuthController {
 
   async resendVerificationEmail(req: Request, res: Response) {
     try {
+      console.log('[resendVerificationEmail] Iniciando proceso de reenvío');
+      console.log('[resendVerificationEmail] Request body:', req.body);
+      
       const { email } = req.body;
+      
+      if (!email) {
+        console.error('[resendVerificationEmail] Email no proporcionado');
+        return res.status(400).json({ message: 'Email is required' });
+      }
+      
+      console.log('[resendVerificationEmail] Buscando usuario con email:', email);
       
       // Buscar el usuario
       const result = await pgPool.query('SELECT * FROM users WHERE email = $1', [email]);
+      console.log('[resendVerificationEmail] Resultado de búsqueda:', result.rows.length, 'usuarios encontrados');
+      
       if (result.rows.length === 0) {
+        console.error('[resendVerificationEmail] Usuario no encontrado');
         return res.status(404).json({ message: 'User not found' });
       }
 
       const user = result.rows[0];
+      console.log('[resendVerificationEmail] Usuario encontrado:', { id: user.id, email: user.email, is_verified: user.is_verified });
 
       // Verificar si el usuario ya está verificado
       if (user.is_verified) {
+        console.log('[resendVerificationEmail] Usuario ya verificado');
         return res.status(400).json({ message: 'Email is already verified' });
       }
 
+      console.log('[resendVerificationEmail] Generando token de verificación');
+      
       // Generar nuevo token de verificación
       const verificationToken = jwt.sign(
         { userId: user.id },
@@ -292,23 +309,30 @@ export class AuthController {
         { expiresIn: '24h' }
       );
 
+      console.log('[resendVerificationEmail] Token generado, enviando email a:', user.email);
+      
       // Enviar nuevo email de verificación
-      console.log('Intentando reenviar email de verificación a:', user.email);
       const emailSent = await sendVerificationEmail(user.email, verificationToken);
       
+      console.log('[resendVerificationEmail] Resultado del envío de email:', emailSent);
+      
       if (!emailSent) {
-        console.error('Error: No se pudo reenviar el email de verificación');
+        console.error('[resendVerificationEmail] Error: No se pudo reenviar el email de verificación');
         return res.status(500).json({
           message: 'Could not send verification email. Please try again later.',
         });
       }
 
-      console.log('Email de verificación reenviado exitosamente a:', user.email);
+      console.log('[resendVerificationEmail] Email de verificación reenviado exitosamente a:', user.email);
       return res.status(200).json({
         message: 'Verification email has been resent. Please check your inbox.',
       });
     } catch (error) {
-      console.error('Error in resendVerificationEmail:', error);
+      console.error('[resendVerificationEmail] Error completo:', {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : 'No stack trace',
+        error: error
+      });
       return res.status(500).json({ message: 'Internal server error' });
     }
   }
