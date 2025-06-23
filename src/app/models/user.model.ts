@@ -13,7 +13,7 @@ export interface User {
     nombre: string;
     apellido: string;
     telefono?: string;
-    verified: boolean;
+    is_verified: boolean;
     role: string;
     token?: string;
     subscriptions?: Subscription[];

@@ -7,7 +7,7 @@ export interface User {
   nombre: string;
   apellido: string;
   telefono?: string;
-  verified: boolean;
+  is_verified: boolean;
   role: string;
   created_at?: Date;
 }
@@ -31,7 +31,7 @@ export const UserModel = {
 
   async create(userData: any) {
     const result = await pgPool.query(
-      `INSERT INTO users (email, password_hash, nombre, apellido, verified, role)
+      `INSERT INTO users (email, password_hash, nombre, apellido, is_verified, role)
        VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING *`,
       [
@@ -83,7 +83,7 @@ export const UserModel = {
 
   async verifyEmail(email: string) {
     const result = await pgPool.query(
-      'UPDATE users SET verified = true WHERE email = $1 RETURNING *',
+      'UPDATE users SET is_verified = true WHERE email = $1 RETURNING *',
       [email]
     );
     return result.rows[0];

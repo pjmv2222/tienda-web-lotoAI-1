@@ -130,8 +130,8 @@ export class AuthController {
       }
 
       // Retornar solo los campos necesarios
-      const { id, email, nombre, apellido, telefono, verified, role } = user;
-      return res.status(200).json({ id, email, nombre, apellido, telefono, verified, role });
+      const { id, email, nombre, apellido, telefono, is_verified, role } = user;
+      return res.status(200).json({ id, email, nombre, apellido, telefono, is_verified, role });
     } catch (error) {
       console.error('Error en getProfile:', error);
       return res.status(500).json({ message: 'Error interno del servidor' });
@@ -150,8 +150,8 @@ export class AuthController {
       }
 
       // Retornar solo los campos actualizados
-      const { id, email, nombre: n, apellido: a, telefono: t, verified, role } = updatedUser;
-      return res.status(200).json({ id, email, nombre: n, apellido: a, telefono: t, verified, role });
+      const { id, email, nombre: n, apellido: a, telefono: t, is_verified, role } = updatedUser;
+      return res.status(200).json({ id, email, nombre: n, apellido: a, telefono: t, is_verified, role });
     } catch (error) {
       console.error('Error en updateProfile:', error);
       return res.status(500).json({ message: 'Error interno del servidor' });
