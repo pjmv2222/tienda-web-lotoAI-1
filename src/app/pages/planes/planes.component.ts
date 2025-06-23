@@ -58,9 +58,9 @@ export class PlanesComponent implements OnInit {
       period: 'IVA incluido',
       description: 'Para jugadores habituales que buscan mejorar sus probabilidades.',
       features: [
-        'Hasta 4 combinaciones ganadoras para cada uno de los 7 sorteos',
+        'Combinaciones ganadoras ilimitadas para cada uno de los 7 sorteos',
         'Predicciones para primeros premios y premios secundarios',
-        'Válido para todos los sorteos del mes en curso desde la fecha de inscripción',
+        'Válido para todos los sorteos del mes en curso desde la fecha de inscripción durante 30 días',
         'Acceso a todas nuestras IAs especializadas',
         'Notificaciones de sorteos'
       ],
