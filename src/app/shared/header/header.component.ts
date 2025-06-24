@@ -44,7 +44,13 @@ export class HeaderComponent implements OnInit {
   async cargarBotes() {
     try {
       const timestamp = new Date().getTime();
-      const response = await this.http.get<{ [key: string]: string }>(`assets/botes.json?t=${timestamp}`).toPromise();
+      const headers = {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      };
+      
+      const response = await this.http.get<{ [key: string]: string }>(`assets/botes.json?t=${timestamp}`, { headers }).toPromise();
 
       if (response) {
         Object.keys(response).forEach(key => {
@@ -62,6 +68,16 @@ export class HeaderComponent implements OnInit {
       }
     } catch (error) {
       console.error('Error cargando botes:', error);
+      // En caso de error, intentar cargar valores por defecto
+      this.botes = {
+        'euromillones': 'No disponible',
+        'primitiva': 'No disponible',
+        'bonoloto': 'No disponible',
+        'gordo': 'No disponible',
+        'lototurf': 'No disponible',
+        'eurodreams': 'No disponible',
+        'loterianacional': 'No disponible'
+      };
     } finally {
       this.loading = false;
     }

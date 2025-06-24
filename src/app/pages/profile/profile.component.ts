@@ -11,7 +11,10 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, ValidationErro
   imports: [CommonModule, ReactiveFormsModule],
   template: `
     <div class="profile-container">
-      <h2>Mi Perfil</h2>
+      <div class="profile-header">
+        <h2>Mi Perfil</h2>
+        <button class="btn-logout" (click)="logout()">Cerrar Sesión</button>
+      </div>
       
       <div *ngIf="userProfile" class="user-info">
         <div *ngIf="!isEditing">
@@ -83,9 +86,30 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, ValidationErro
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
 
-    h2 {
-      color: #333;
+    .profile-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       margin-bottom: 2rem;
+    }
+
+    .profile-header h2 {
+      color: #333;
+      margin: 0;
+    }
+
+    .btn-logout {
+      background-color: #dc3545;
+      color: white;
+      padding: 0.5rem 1rem;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+
+    .btn-logout:hover {
+      background-color: #c82333;
     }
 
     .user-info {
@@ -285,9 +309,14 @@ export class ProfileComponent implements OnInit {
     }
   }
 
+  logout() {
+    this.authService.logout();
+    this.router.navigate(['/home']);
+  }
+
   private passwordMatchValidator(group: FormGroup): ValidationErrors | null {
     const newPassword = group.get('newPassword')?.value;
     const confirmPassword = group.get('confirmPassword')?.value;
     return newPassword === confirmPassword ? null : { passwordMismatch: true };
   }
-} 
+}
