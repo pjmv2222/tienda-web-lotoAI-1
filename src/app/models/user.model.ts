@@ -12,6 +12,7 @@ export interface User {
     email: string;
     nombre: string;
     apellido: string;
+    name: string; // Campo adicional para compatibilidad con backend
     telefono?: string;
     is_verified: boolean;
     role: string;
