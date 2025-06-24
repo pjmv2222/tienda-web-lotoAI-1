@@ -142,6 +142,10 @@ export const routes: Routes = [
     path: 'bienvenido',
     loadComponent: () => import('./pages/welcome/welcome.component').then(m => m.WelcomeComponent)
   },
+  {
+    path: 'email-verificado',
+    loadComponent: () => import('./pages/welcome/welcome.component').then(m => m.WelcomeComponent)
+  },
   // Rutas de ejemplos de bolas de lotería eliminadas
   {
     path: '**',

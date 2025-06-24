@@ -232,8 +232,8 @@ export class AuthController {
   
       await pgPool.query('UPDATE users SET is_verified = true WHERE id = $1', [userId]);
   
-      // Redirigir a una página de éxito
-      return res.redirect('/email-verificado');
+      // Redirigir a la página de bienvenida
+      return res.redirect('/bienvenido');
     } catch (error) {
       console.error('Error verifying email:', error);
       return res.status(500).send('Error verifying email. The link may have expired.');
