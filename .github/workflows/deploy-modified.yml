@@ -71,6 +71,9 @@ jobs:
             # 9. Actualizar y recargar NGINX
             echo "--- Fase 7: Actualizando configuración de NGINX ---"
             cp nginx.conf /etc/nginx/sites-available/loto-ia.com
+            ln -sf /etc/nginx/sites-available/loto-ia.com /etc/nginx/sites-enabled/
+            chown root:root /etc/nginx/sites-available/loto-ia.com
+            chmod 644 /etc/nginx/sites-available/loto-ia.com
             nginx -t # Probar la sintaxis de la configuración
             if [ $? -eq 0 ]; then
               echo "✅ Sintaxis de NGINX correcta. Recargando NGINX..."
