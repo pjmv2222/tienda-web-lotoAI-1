@@ -4,6 +4,7 @@ import * as PayPalService from '../services/paypal.service';
 import { pgPool } from '../config/database';
 
 // Inicializar Stripe
+console.log('STRIPE_SECRET_KEY:', process.env['STRIPE_SECRET_KEY']?.substring(0, 10) + '...');
 const stripe = new Stripe(process.env['STRIPE_SECRET_KEY'] || '');
 
 // Obtener el precio según el plan
