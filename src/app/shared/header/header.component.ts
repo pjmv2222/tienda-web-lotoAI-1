@@ -198,6 +198,17 @@ export class HeaderComponent implements OnInit {
     });
   }
 
+  // Método para obtener solo el primer nombre del usuario
+  getFirstName(): string {
+    if (!this.currentUser?.name) {
+      return '';
+    }
+    
+    // Dividir el nombre completo por espacios y tomar solo el primer elemento
+    const names = this.currentUser.name.trim().split(' ');
+    return names[0] || '';
+  }
+
   // Método para obtener la ruta de cada juego
   getRouterLink(juego: string): string {
     const routeMap: { [key: string]: string } = {
