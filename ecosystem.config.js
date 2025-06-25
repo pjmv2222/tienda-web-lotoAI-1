@@ -22,9 +22,7 @@ module.exports = {
         JWT_SECRET: '8011471e-90c3-4af3-bc53-452557b92001',
         FRONTEND_URL: 'https://www.loto-ia.com',
         MAILJET_API_KEY: '4bf635e9052dd9ad0b18200a0ae43fb0',
-        MAILJET_API_SECRET: '750dabff4daca14b5a4128e1669b75f6',
-        STRIPE_SECRET_KEY: 'sk_test_51OqXXXXXXXXXXXXXXXXXXXXX',
-        STRIPE_WEBHOOK_SECRET: 'whsec_XXXXXXXXXXXXXXXXXXXXXXXX'
+        MAILJET_API_SECRET: '750dabff4daca14b5a4128e1669b75f6'
       },
     },
     {
