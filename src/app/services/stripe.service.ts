@@ -27,7 +27,8 @@ export class StripeService {
     // Usar environment.apiUrl para consistencia en todos los entornos
     return this.http.post<PaymentIntent>(`${environment.apiUrl}/payments/create-payment-intent`, {
       amount,
-      planId,
+      currency: 'eur',
+      plan: planId,
       userId
     }).pipe(
       catchError(error => {
