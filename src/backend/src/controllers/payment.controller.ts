@@ -25,19 +25,41 @@ const getPlanPrice = (planId: string): number => {
  */
 export const createPaymentIntent = async (req: Request, res: Response) => {
   try {
+    console.log('Datos recibidos en createPaymentIntent:', req.body);
+    
     const { amount, currency, plan, userId } = req.body;
-    if (!amount || !currency || !plan || !userId) {
-      return res.status(400).json({ error: 'Faltan parámetros requeridos' });
+    
+    // Validación más detallada
+    const missingParams = [];
+    if (!amount) missingParams.push('amount');
+    if (!currency) missingParams.push('currency');
+    if (!plan) missingParams.push('plan');
+    if (!userId) missingParams.push('userId');
+    
+    if (missingParams.length > 0) {
+      console.error('Parámetros faltantes:', missingParams);
+      return res.status(400).json({ 
+        error: `Faltan parámetros requeridos: ${missingParams.join(', ')}`,
+        received: req.body
+      });
     }
+
+    console.log('Creando PaymentIntent con Stripe...');
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: amount * 100,
+      amount: amount,
       currency: currency,
       metadata: { plan, userId },
     });
+    
+    console.log('PaymentIntent creado exitosamente:', paymentIntent.id);
     return res.status(200).json({ clientSecret: paymentIntent.client_secret });
   } catch (error: any) {
     console.error('Error al crear el PaymentIntent:', error);
-    return res.status(500).json({ error: error.message });
+    return res.status(500).json({ 
+      error: error.message,
+      type: error.type || 'unknown_error',
+      code: error.code || 'unknown_code'
+    });
   }
 };
 
