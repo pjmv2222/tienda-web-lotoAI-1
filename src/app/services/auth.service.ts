@@ -198,9 +198,12 @@ export class AuthService {
 
   verifyEmail(token: string): Observable<any> {
     console.log('Verificando email con token:', token);
-    return this.http.get(`${this.apiUrl}/auth/verify/${token}`).pipe(
-      tap(response => {
+    return this.http.get(`${this.apiUrl}/auth/verify-email/${token}`).pipe(
+      tap((response: any) => {
         console.log('Respuesta de verificación:', response);
+        if (response && response.user) {
+          this.storeAuthenticatedUser(response.user, response.token);
+        }
       }),
       catchError(error => {
         console.error('Error en verificación:', error);

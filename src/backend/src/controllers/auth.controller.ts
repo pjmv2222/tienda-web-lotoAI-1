@@ -217,7 +217,7 @@ export class AuthController {
       console.log('Received token:', token);
   
       if (!token) {
-        return res.status(400).send('Verification token is missing.');
+        return res.status(400).json({ message: 'Verification token is missing.' });
       }
   
       console.log('JWT_SECRET:', process.env['JWT_SECRET'] || 'your_jwt_secret');
@@ -227,16 +227,45 @@ export class AuthController {
   
       const userResult = await pgPool.query('SELECT * FROM users WHERE id = $1', [userId]);
       if (userResult.rows.length === 0) {
-        return res.status(404).send('User not found.');
+        return res.status(404).json({ message: 'User not found.' });
+      }
+
+      const user = userResult.rows[0];
+
+      // Verificar si ya está verificado
+      if (user.is_verified) {
+        return res.status(200).json({ 
+          message: 'Email already verified',
+          user: {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+          }
+        });
       }
   
       await pgPool.query('UPDATE users SET is_verified = true WHERE id = $1', [userId]);
-  
-      // Redirigir a la página de bienvenida
-      return res.redirect('/bienvenido');
+
+      // Generar nuevo token de sesión
+      const sessionToken = jwt.sign(
+        { id: user.id, email: user.email },
+        process.env['JWT_SECRET'] || 'your-secret-key',
+        { expiresIn: '1h' }
+      );
+
+      // Devolver respuesta JSON con usuario y token
+      return res.status(200).json({
+        message: 'Email verified successfully',
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+        },
+        token: sessionToken
+      });
     } catch (error) {
       console.error('Error verifying email:', error);
-      return res.status(500).send('Error verifying email. The link may have expired.');
+      return res.status(500).json({ message: 'Error verifying email. The link may have expired.' });
     }
   }
 

@@ -34,7 +34,7 @@ router.post('/resend-verification', (req, res) => {
 });
 
 // Ruta de verificación de email
-router.get('/verify/:token', (req, res) => {
+router.get('/verify-email/:token', (req, res) => {
   console.log('[Auth Route] Recibida petición de verificación de email:', req.params);
   authController.verifyEmailWithToken(req, res);
 });
