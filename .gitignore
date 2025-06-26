@@ -41,6 +41,11 @@ testem.log
 .DS_Store
 Thumbs.db
 
+# Environment variables
+.env
+.env.local
+.env.production
+
 # Scraper specific
 /scraper/node_modules
 /scraper/dist
