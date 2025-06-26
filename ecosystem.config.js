@@ -2,13 +2,13 @@ module.exports = {
   apps: [
     {
       name: 'loto-ia-backend',
-      script: './load-env.js',
+      script: './dist/backend/index.js',
       instances: 1,
       exec_mode: 'fork',
       autorestart: true,
       watch: false,
       max_memory_restart: '1G',
-      env_file: ['.env', '.env.stripe'],
+      env_file: '.env.stripe',
       env: {
         NODE_ENV: 'development',
       },
@@ -23,9 +23,7 @@ module.exports = {
         JWT_SECRET: '8011471e-90c3-4af3-bc53-452557b92001',
         FRONTEND_URL: 'https://www.loto-ia.com',
         MAILJET_API_KEY: '4bf635e9052dd9ad0b18200a0ae43fb0',
-        MAILJET_API_SECRET: '750dabff4daca14b5a4128e1669b75f6',
-        STRIPE_SECRET_KEY: 'sk_test_fallback',
-        STRIPE_WEBHOOK_SECRET: 'whsec_test_fallback'
+        MAILJET_API_SECRET: '750dabff4daca14b5a4128e1669b75f6'
       },
     },
     {
