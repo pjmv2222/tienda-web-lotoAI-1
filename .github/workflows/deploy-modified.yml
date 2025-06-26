@@ -84,9 +84,12 @@ jobs:
             
             # 8.5. Verificar que PM2 está funcionando correctamente
             echo "--- Fase 6.5: Verificando estado de PM2 ---"
-            sleep 3
+            sleep 5
             pm2 status
-            pm2 logs loto-ia-backend --lines 10
+            echo "--- Logs recientes del backend ---"
+            timeout 10 pm2 logs loto-ia-backend --lines 15 || echo "Timeout en logs, continuando..."
+            echo "--- Verificando si el backend está corriendo ---"
+            pm2 info loto-ia-backend
             
             # 9. Actualizar y recargar NGINX
             echo "--- Fase 7: Actualizando configuración de NGINX ---"
