@@ -9,8 +9,11 @@ import predictionRoutes from './routes/prediction.routes';
 import subscriptionRoutes from './routes/subscription.routes';
 import { pgPool, initializeTables } from './config/database';
 
-// Cargar variables de entorno
-dotenv.config();
+// Cargar variables de entorno desde múltiples archivos
+dotenv.config({ path: '.env' });
+dotenv.config({ path: '.env.stripe' });
+dotenv.config({ path: '.env.local' });
+dotenv.config({ path: '.env.production' });
 
 // Verificar que las variables de entorno se han cargado correctamente
 console.log('Variables de entorno cargadas:');

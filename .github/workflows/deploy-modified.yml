@@ -61,12 +61,32 @@ jobs:
               exit 1
             fi
             
+            # 7.5. Verificar que existen los archivos .env
+            echo "--- Fase 5.5: Verificando archivos de configuración ---"
+            if [ -f ".env.stripe" ]; then
+              echo "✅ Archivo .env.stripe encontrado"
+              # Verificar que contiene las variables de Stripe (sin mostrar valores)
+              if grep -q "STRIPE_SECRET_KEY" .env.stripe && grep -q "STRIPE_WEBHOOK_SECRET" .env.stripe; then
+                echo "✅ Variables de Stripe encontradas en .env.stripe"
+              else
+                echo "⚠️  Variables de Stripe no encontradas en .env.stripe"
+              fi
+            else
+              echo "❌ Archivo .env.stripe NO encontrado. Las claves de Stripe pueden no cargarse."
+            fi
+
             # 8. Reiniciar los servicios con PM2
             echo "--- Fase 6: Reiniciando servicios con PM2 ---"
             pm2 restart ecosystem.config.js --env production || {
               echo "ℹ️  No se pudo reiniciar, intentando iniciar de nuevo..."
               pm2 start ecosystem.config.js --env production
             }
+            
+            # 8.5. Verificar que PM2 está funcionando correctamente
+            echo "--- Fase 6.5: Verificando estado de PM2 ---"
+            sleep 3
+            pm2 status
+            pm2 logs loto-ia-backend --lines 10
             
             # 9. Actualizar y recargar NGINX
             echo "--- Fase 7: Actualizando configuración de NGINX ---"

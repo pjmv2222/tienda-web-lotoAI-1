@@ -28,7 +28,7 @@ export class StripeService {
     return this.http.post<PaymentIntent>(`${environment.apiUrl}/payments/create-payment-intent`, {
       amount,
       currency: 'eur',
-      plan: planId,
+      planId: planId,
       userId
     }).pipe(
       catchError(error => {
