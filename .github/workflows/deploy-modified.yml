@@ -31,11 +31,8 @@ jobs:
             git reset --hard origin/main
             git pull origin main
             
-            # 3. Mover .env si es necesario
-            if [ -f "server/.env" ] && [ ! -f ".env" ]; then
-              echo "ℹ️  Moviendo .env de server/ a la raíz..."
-              mv server/.env .env
-            fi
+            # 3. Variables de entorno ya están configuradas en el servidor
+            echo "ℹ️  Usando variables de entorno del servidor (.env local)"
 
             # 4. Instalar dependencias
             echo "--- Fase 2: Instalando dependencias ---"
@@ -61,18 +58,12 @@ jobs:
               exit 1
             fi
             
-            # 7.5. Verificar que existen los archivos .env
-            echo "--- Fase 5.5: Verificando archivos de configuración ---"
-            if [ -f ".env.stripe" ]; then
-              echo "✅ Archivo .env.stripe encontrado"
-              # Verificar que contiene las variables de Stripe (sin mostrar valores)
-              if grep -q "STRIPE_SECRET_KEY" .env.stripe && grep -q "STRIPE_WEBHOOK_SECRET" .env.stripe; then
-                echo "✅ Variables de Stripe encontradas en .env.stripe"
-              else
-                echo "⚠️  Variables de Stripe no encontradas en .env.stripe"
-              fi
+            # 7.5. Verificar configuración del servidor
+            echo "--- Fase 5.5: Verificando configuración del servidor ---"
+            if [ -f ".env" ]; then
+              echo "✅ Archivo .env del servidor encontrado"
             else
-              echo "❌ Archivo .env.stripe NO encontrado. Las claves de Stripe pueden no cargarse."
+              echo "❌ Archivo .env del servidor NO encontrado"
             fi
 
             # 8. Reiniciar los servicios con PM2
