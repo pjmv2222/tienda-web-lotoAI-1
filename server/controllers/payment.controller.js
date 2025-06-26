@@ -40,12 +40,21 @@ exports.createPaymentIntent = async (req, res) => {
   try {
     const { planId, userId } = req.body;
 
+    console.log('Creando PaymentIntent para:', { planId, userId });
+
     if (!planId) {
       return res.status(400).json({ error: 'Se requiere el ID del plan' });
     }
 
+    // Verificar que Stripe esté configurado
+    if (!process.env.STRIPE_SECRET_KEY) {
+      console.error('STRIPE_SECRET_KEY no está configurada');
+      return res.status(500).json({ error: 'Error de configuración del servidor' });
+    }
+
     // Obtener el precio del plan
     const amount = getPlanPrice(planId);
+    console.log('Precio del plan:', amount, 'céntimos');
 
     // Crear el PaymentIntent
     const paymentIntent = await stripe.paymentIntents.create({
@@ -56,6 +65,8 @@ exports.createPaymentIntent = async (req, res) => {
         userId: userId || 'guest'
       }
     });
+
+    console.log('PaymentIntent creado:', paymentIntent.id);
 
     // Guardar el registro de pago en la base de datos
     const payment = new Payment({
