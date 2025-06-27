@@ -38,20 +38,24 @@ const getPlanPrice = (planId) => {
 // Crear un PaymentIntent de Stripe
 exports.createPaymentIntent = async (req, res) => {
   try {
-    // Compatibilidad con ambos formatos: frontend TypeScript envía {plan, amount, currency, userId}
+    // Compatibilidad con ambos formatos: frontend Angular envía {planId, amount, currency, userId}
     // y formato original {planId, userId}
     const { planId, userId, plan, amount, currency } = req.body;
     
     console.log('Datos recibidos en createPaymentIntent:', req.body);
     
-    // Usar plan o planId (compatibilidad con ambos formatos)
-    const actualPlanId = plan || planId;
+    // Usar planId o plan (compatibilidad con ambos formatos)
+    const actualPlanId = planId || plan;
     const actualUserId = userId;
 
     console.log('Creando PaymentIntent para:', { actualPlanId, actualUserId });
 
     if (!actualPlanId) {
-      return res.status(400).json({ error: 'Se requiere el ID del plan (plan o planId)' });
+      return res.status(400).json({ 
+        error: 'Se requiere el ID del plan (planId o plan)',
+        received: req.body,
+        missingParams: ['planId']
+      });
     }
 
     // Verificar que Stripe esté configurado
