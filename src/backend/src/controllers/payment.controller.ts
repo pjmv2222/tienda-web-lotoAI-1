@@ -72,14 +72,48 @@ export const createPaymentIntent = async (req: Request, res: Response) => {
  */
 export const confirmPayment = async (req: Request, res: Response) => {
   try {
-    const { paymentIntentId, userId, planType, endDate, amount, currency } = req.body;
+    console.log('Datos recibidos en confirmPayment:', req.body);
+    
+    const { paymentIntentId, userId, planId } = req.body;
+    
+    // Validar parámetros requeridos
+    if (!paymentIntentId || !userId || !planId) {
+      return res.status(400).json({ 
+        error: 'Faltan parámetros requeridos: paymentIntentId, userId, planId',
+        received: req.body 
+      });
+    }
+
+    // Calcular datos basados en planId
+    const amount = getPlanPrice(planId) / 100; // Convertir de céntimos a euros
+    const currency = 'eur';
+    
+    // Calcular fecha de finalización
+    const calculateEndDate = (planId: string): Date => {
+      const now = new Date();
+      switch (planId) {
+        case 'basic':
+          return new Date(now.setDate(now.getDate() + 7));
+        case 'monthly':
+          return new Date(now.setDate(now.getDate() + 30));
+        case 'pro':
+          return new Date(now.setDate(now.getDate() + 365));
+        default:
+          return new Date(now.setDate(now.getDate() + 7));
+      }
+    };
+
+    const endDate = calculateEndDate(planId);
+    
+    console.log('Procesando confirmación:', { paymentIntentId, userId, planId, amount, endDate });
+
     const client = await pgPool.connect();
     try {
       await client.query('BEGIN');
       const subResult = await client.query(
         `INSERT INTO subscriptions (user_id, plan_type, amount, currency, status, payment_intent_id, start_date, end_date)
          VALUES ($1, $2, $3, $4, 'active', $5, CURRENT_TIMESTAMP, $6) RETURNING id`,
-        [userId, planType, amount, currency, paymentIntentId, endDate]
+        [userId, planId, amount, currency, paymentIntentId, endDate]
       );
       const subscriptionId = subResult.rows[0].id;
       await client.query(
@@ -88,6 +122,8 @@ export const confirmPayment = async (req: Request, res: Response) => {
         [userId, subscriptionId, paymentIntentId, amount, currency]
       );
       await client.query('COMMIT');
+      
+      console.log('Pago confirmado exitosamente:', subscriptionId);
       return res.status(200).json({ success: true, message: 'Pago confirmado y suscripción creada.' });
     } catch (e) {
       await client.query('ROLLBACK');
