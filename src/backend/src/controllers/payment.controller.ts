@@ -28,13 +28,16 @@ export const createPaymentIntent = async (req: Request, res: Response) => {
   try {
     console.log('Datos recibidos en createPaymentIntent:', req.body);
     
-    const { amount, currency, plan, userId } = req.body;
+    const { amount, currency, plan, planId, userId } = req.body;
+    
+    // Usar planId o plan (compatibilidad con ambos formatos)
+    const actualPlanId = planId || plan;
     
     // Validación más detallada
     const missingParams = [];
     if (!amount) missingParams.push('amount');
     if (!currency) missingParams.push('currency');
-    if (!plan) missingParams.push('plan');
+    if (!actualPlanId) missingParams.push('planId');
     if (!userId) missingParams.push('userId');
     
     if (missingParams.length > 0) {
@@ -49,7 +52,7 @@ export const createPaymentIntent = async (req: Request, res: Response) => {
     const paymentIntent = await stripe.paymentIntents.create({
       amount: amount,
       currency: currency,
-      metadata: { plan, userId },
+      metadata: { planId: actualPlanId, userId },
     });
     
     console.log('PaymentIntent creado exitosamente:', paymentIntent.id);
