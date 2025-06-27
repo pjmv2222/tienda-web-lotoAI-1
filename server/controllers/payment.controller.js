@@ -38,12 +38,20 @@ const getPlanPrice = (planId) => {
 // Crear un PaymentIntent de Stripe
 exports.createPaymentIntent = async (req, res) => {
   try {
-    const { planId, userId } = req.body;
+    // Compatibilidad con ambos formatos: frontend TypeScript envía {plan, amount, currency, userId}
+    // y formato original {planId, userId}
+    const { planId, userId, plan, amount, currency } = req.body;
+    
+    console.log('Datos recibidos en createPaymentIntent:', req.body);
+    
+    // Usar plan o planId (compatibilidad con ambos formatos)
+    const actualPlanId = plan || planId;
+    const actualUserId = userId;
 
-    console.log('Creando PaymentIntent para:', { planId, userId });
+    console.log('Creando PaymentIntent para:', { actualPlanId, actualUserId });
 
-    if (!planId) {
-      return res.status(400).json({ error: 'Se requiere el ID del plan' });
+    if (!actualPlanId) {
+      return res.status(400).json({ error: 'Se requiere el ID del plan (plan o planId)' });
     }
 
     // Verificar que Stripe esté configurado
@@ -52,17 +60,19 @@ exports.createPaymentIntent = async (req, res) => {
       return res.status(500).json({ error: 'Error de configuración del servidor' });
     }
 
-    // Obtener el precio del plan
-    const amount = getPlanPrice(planId);
-    console.log('Precio del plan:', amount, 'céntimos');
+    // Obtener el precio del plan (usar amount del frontend si está disponible, sino calcular)
+    const finalAmount = amount || getPlanPrice(actualPlanId);
+    const finalCurrency = currency || 'eur';
+    
+    console.log('Precio del plan:', finalAmount, 'céntimos');
 
     // Crear el PaymentIntent
     const paymentIntent = await stripe.paymentIntents.create({
-      amount,
-      currency: 'eur',
+      amount: finalAmount,
+      currency: finalCurrency,
       metadata: {
-        planId,
-        userId: userId || 'guest'
+        planId: actualPlanId,
+        userId: actualUserId || 'guest'
       }
     });
 
@@ -70,14 +80,14 @@ exports.createPaymentIntent = async (req, res) => {
 
     // Guardar el registro de pago en la base de datos
     const payment = new Payment({
-      userId: userId || '000000000000000000000000', // ID temporal para usuarios no autenticados
-      amount: amount / 100, // Convertir de céntimos a euros
-      currency: 'eur',
+      userId: actualUserId || '000000000000000000000000', // ID temporal para usuarios no autenticados
+      amount: finalAmount / 100, // Convertir de céntimos a euros
+      currency: finalCurrency,
       status: 'pending',
       paymentMethod: 'card',
       stripePaymentIntentId: paymentIntent.id,
       metadata: {
-        planId
+        planId: actualPlanId
       }
     });
 
