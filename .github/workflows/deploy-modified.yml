@@ -25,25 +25,64 @@ jobs:
             # 1. Navegar al directorio del proyecto
             cd /var/www/tienda-web-lotoAI-1 || exit 1
             
+            # 1.5. Respaldar archivos de configuración del servidor
+            echo "--- Fase 1.5: Respaldando archivos de configuración del servidor ---"
+            if [ -f ".env" ]; then
+              cp .env .env.backup
+              echo "✅ Archivo .env respaldado"
+            else
+              echo "⚠️  Archivo .env no encontrado para respaldar"
+            fi
+            if [ -f ".env.production" ]; then
+              cp .env.production .env.production.backup
+              echo "✅ Archivo .env.production respaldado"
+            fi
+            
             # 2. Actualizar desde GitHub
-            echo "--- Fase 1: Actualizando código fuente ---"
+            echo "--- Fase 2: Actualizando código fuente ---"
             git fetch origin main
             git reset --hard origin/main
             git pull origin main
             
-            # 3. Variables de entorno ya están configuradas en el servidor
-            echo "ℹ️  Usando variables de entorno del servidor (.env local)"
+            # 2.5. Restaurar archivos de configuración del servidor
+            echo "--- Fase 2.5: Restaurando archivos de configuración del servidor ---"
+            if [ -f ".env.backup" ]; then
+              cp .env.backup .env
+              rm .env.backup
+              echo "✅ Archivo .env restaurado"
+            else
+              echo "❌ No se pudo restaurar .env - archivo de respaldo no encontrado"
+            fi
+            if [ -f ".env.production.backup" ]; then
+              cp .env.production.backup .env.production
+              rm .env.production.backup
+              echo "✅ Archivo .env.production restaurado"
+            fi
+
+            # 3. Verificar variables de entorno
+            echo "--- Fase 3: Verificando variables de entorno ---"
+            if [ -f ".env" ]; then
+              echo "✅ Archivo .env del servidor encontrado"
+              # Verificar que contenga las claves importantes
+              if grep -q "STRIPE_SECRET_KEY" .env; then
+                echo "✅ STRIPE_SECRET_KEY encontrada en .env"
+              else
+                echo "❌ STRIPE_SECRET_KEY NO encontrada en .env"
+              fi
+            else
+              echo "❌ Archivo .env del servidor NO encontrado"
+            fi
 
             # 4. Instalar dependencias
-            echo "--- Fase 2: Instalando dependencias ---"
+            echo "--- Fase 4: Instalando dependencias ---"
             npm install --production=false
             
             # 5. Limpiar builds anteriores
-            echo "--- Fase 3: Limpiando artefactos ---"
+            echo "--- Fase 5: Limpiando artefactos ---"
             rm -rf dist/
             
             # 6. Compilar el Backend (TSC)
-            echo "--- Fase 4: Compilando Backend ---"
+            echo "--- Fase 6: Compilando Backend ---"
             npx tsc --project src/backend/tsconfig.backend.json
             if [ $? -ne 0 ]; then
               echo "❌ Error de compilación en el Backend. Abortando despliegue."
@@ -51,30 +90,22 @@ jobs:
             fi
             
             # 7. Compilar el Frontend (Angular SSR)
-            echo "--- Fase 5: Compilando Frontend ---"
+            echo "--- Fase 7: Compilando Frontend ---"
             npx ng build
             if [ $? -ne 0 ]; then
               echo "❌ Error de compilación en el Frontend. Abortando despliegue."
               exit 1
             fi
             
-            # 7.5. Verificar configuración del servidor
-            echo "--- Fase 5.5: Verificando configuración del servidor ---"
-            if [ -f ".env" ]; then
-              echo "✅ Archivo .env del servidor encontrado"
-            else
-              echo "❌ Archivo .env del servidor NO encontrado"
-            fi
-
             # 8. Reiniciar los servicios con PM2
-            echo "--- Fase 6: Reiniciando servicios con PM2 ---"
+            echo "--- Fase 8: Reiniciando servicios con PM2 ---"
             pm2 restart ecosystem.config.js --env production || {
               echo "ℹ️  No se pudo reiniciar, intentando iniciar de nuevo..."
               pm2 start ecosystem.config.js --env production
             }
             
             # 8.5. Verificar que PM2 está funcionando correctamente
-            echo "--- Fase 6.5: Verificando estado de PM2 ---"
+            echo "--- Fase 8.5: Verificando estado de PM2 ---"
             sleep 5
             pm2 status
             echo "--- Logs recientes del backend ---"
@@ -83,7 +114,7 @@ jobs:
             pm2 info loto-ia-backend
             
             # 9. Actualizar y recargar NGINX
-            echo "--- Fase 7: Actualizando configuración de NGINX ---"
+            echo "--- Fase 9: Actualizando configuración de NGINX ---"
             cp nginx.conf /etc/nginx/sites-available/loto-ia.com
             ln -sf /etc/nginx/sites-available/loto-ia.com /etc/nginx/sites-enabled/
             chown root:root /etc/nginx/sites-available/loto-ia.com
