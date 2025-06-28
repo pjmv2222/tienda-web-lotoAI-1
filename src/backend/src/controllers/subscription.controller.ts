@@ -179,9 +179,9 @@ export class SubscriptionController {
   async getPlanPrices(req: Request, res: Response): Promise<void> {
     try {
       const planPrices = {
-        [PlanType.BASIC]: { amount: 1.22, duration: 30, description: 'Plan Básico - 30 días' },
-        [PlanType.MONTHLY]: { amount: 10.22, duration: 30, description: 'Plan Mensual - 30 días' },
-        [PlanType.PRO]: { amount: 122.00, duration: 365, description: 'Plan Pro - 365 días' }
+        [PlanType.BASIC]: { amount: 1.22, duration: 'combinaciones', description: 'Plan Básico - 3 combinaciones por cada uno de los 7 juegos (21 total)' },
+        [PlanType.MONTHLY]: { amount: 10.22, duration: 30, description: 'Plan Mensual - 30 días ilimitado' },
+        [PlanType.PRO]: { amount: 122.00, duration: 365, description: 'Plan Pro - 365 días ilimitado' }
       };
 
       res.status(200).json({
