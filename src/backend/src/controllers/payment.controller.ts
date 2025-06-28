@@ -120,8 +120,8 @@ export const confirmPayment = async (req: Request, res: Response) => {
       );
       const subscriptionId = subResult.rows[0].id;
       await client.query(
-        `INSERT INTO payments (user_id, subscription_id, stripe_payment_intent_id, amount, currency, status)
-         VALUES ($1, $2, $3, $4, $5, 'succeeded')`,
+        `INSERT INTO payments (user_id, subscription_id, stripe_payment_intent_id, amount, currency, status, payment_method)
+         VALUES ($1, $2, $3, $4, $5, 'succeeded', 'card')`,
         [userId, subscriptionId, paymentIntentId, amount, currency]
       );
       await client.query('COMMIT');
