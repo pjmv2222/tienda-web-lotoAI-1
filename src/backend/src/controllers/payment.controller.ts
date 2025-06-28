@@ -93,13 +93,16 @@ export const confirmPayment = async (req: Request, res: Response) => {
       const now = new Date();
       switch (planId) {
         case 'basic':
-          return new Date(now.setDate(now.getDate() + 7));
+          // Plan básico: sin límite de tiempo, controlado por combinaciones usadas (3 por cada uno de los 7 juegos)
+          // Establecemos una fecha muy lejana ya que el control es por combinaciones, no por tiempo
+          return new Date(now.getFullYear() + 10, now.getMonth(), now.getDate());
         case 'monthly':
           return new Date(now.setDate(now.getDate() + 30));
         case 'pro':
           return new Date(now.setDate(now.getDate() + 365));
         default:
-          return new Date(now.setDate(now.getDate() + 7));
+          // Default para plan básico
+          return new Date(now.getFullYear() + 10, now.getMonth(), now.getDate());
       }
     };
 
@@ -111,13 +114,13 @@ export const confirmPayment = async (req: Request, res: Response) => {
     try {
       await client.query('BEGIN');
       const subResult = await client.query(
-        `INSERT INTO subscriptions (user_id, plan_type, amount, currency, status, payment_intent_id, start_date, end_date)
+        `INSERT INTO subscriptions (user_id, plan_id, amount, currency, status, stripe_payment_intent_id, start_date, end_date)
          VALUES ($1, $2, $3, $4, 'active', $5, CURRENT_TIMESTAMP, $6) RETURNING id`,
         [userId, planId, amount, currency, paymentIntentId, endDate]
       );
       const subscriptionId = subResult.rows[0].id;
       await client.query(
-        `INSERT INTO payments (user_id, subscription_id, payment_intent_id, amount, currency, status)
+        `INSERT INTO payments (user_id, subscription_id, stripe_payment_intent_id, amount, currency, status)
          VALUES ($1, $2, $3, $4, $5, 'succeeded')`,
         [userId, subscriptionId, paymentIntentId, amount, currency]
       );
