@@ -28,7 +28,18 @@ jobs:
 
           echo "Actualizando IAs desde GitHub..."
           git fetch origin
+          
+          # Hacer backup de archivos críticos antes del reset
+          cp server-ia-unificado.py server-ia-unificado.py.backup
+          cp ia-server-control.sh ia-server-control.sh.backup 2>/dev/null || true
+          cp server/controllers/webhook.controller.js server/controllers/webhook.controller.js.backup 2>/dev/null || true
+          
           git reset --hard origin/main
+          
+          # Restaurar archivos críticos si existen backups
+          [ -f server-ia-unificado.py.backup ] && cp server-ia-unificado.py.backup server-ia-unificado.py
+          [ -f ia-server-control.sh.backup ] && cp ia-server-control.sh.backup ia-server-control.sh
+          [ -f server/controllers/webhook.controller.js.backup ] && cp server/controllers/webhook.controller.js.backup server/controllers/webhook.controller.js
 
           echo "IAs actualizadas correctamente"
 
