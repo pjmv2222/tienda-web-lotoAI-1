@@ -1,23 +1,77 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
+import { SubscriptionService } from '../../services/subscription.service';
 import { UserProfile } from '../../models/user.model';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, ValidationErrors } from '@angular/forms';
+
+// Interfaz para mostrar información de suscripciones
+interface UserSubscriptionInfo {
+  id: number;
+  plan_id: string;
+  plan_name: string;
+  status: string;
+  status_display: string;
+  created_at: string;
+  expires_at: string;
+  price: string;
+}
 
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink],
   template: `
     <div class="profile-container">
       <div class="profile-header">
         <h2>Mi Perfil</h2>
         <button class="btn-logout" (click)="logout()">Cerrar Sesión</button>
       </div>
+
+      <!-- Sección de Suscripciones -->
+      <div class="subscriptions-section" *ngIf="!isEditing && !isChangingPassword">
+        <h3>Mis Suscripciones</h3>
+        <div *ngIf="loadingSubscriptions" class="loading-message">
+          Cargando suscripciones...
+        </div>
+        <div *ngIf="!loadingSubscriptions && activeSubscriptions.length > 0" class="subscriptions-container">
+          <div *ngFor="let subscription of activeSubscriptions" class="subscription-card">
+            <div class="subscription-header">
+              <h4>{{subscription.plan_name}}</h4>
+              <span class="subscription-status" [class]="getStatusClass(subscription.status)">
+                {{subscription.status_display}}
+              </span>
+            </div>
+            <div class="subscription-details">
+              <div class="detail-row">
+                <span class="detail-label">Plan:</span>
+                <span class="detail-value">{{subscription.plan_id | titlecase}}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">Precio:</span>
+                <span class="detail-value">{{subscription.price}}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">Fecha de contratación:</span>
+                <span class="detail-value">{{subscription.created_at | date:'dd/MM/yyyy'}}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">Fecha de caducidad:</span>
+                <span class="detail-value">{{subscription.expires_at | date:'dd/MM/yyyy'}}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div *ngIf="!loadingSubscriptions && activeSubscriptions.length === 0" class="no-subscriptions">
+          <p>No tienes suscripciones activas actualmente.</p>
+          <button class="btn-primary" routerLink="/planes">Ver planes disponibles</button>
+        </div>
+      </div>
       
       <div *ngIf="userProfile" class="user-info">
         <div *ngIf="!isEditing">
+          <h3>Información personal</h3>
           <p><strong>Nombre:</strong> {{userProfile.nombre}} {{userProfile.apellido}}</p>
           <p><strong>Email:</strong> {{userProfile.email}}</p>
           <p><strong>Teléfono:</strong> {{userProfile.telefono || 'No especificado'}}</p>
@@ -181,6 +235,151 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, ValidationErro
       background-color: #ccc;
       cursor: not-allowed;
     }
+
+    /* Estilos para la sección de suscripciones */
+    .subscriptions-section {
+      margin-bottom: 2rem;
+      padding: 1.5rem;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      background-color: #f9f9f9;
+    }
+
+    .subscriptions-section h3 {
+      color: #333;
+      margin-bottom: 1rem;
+      font-size: 1.3rem;
+    }
+
+    .loading-message {
+      text-align: center;
+      color: #666;
+      font-style: italic;
+      padding: 1rem;
+    }
+
+    .subscriptions-container {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .subscription-card {
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 1.5rem;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .subscription-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid #eee;
+    }
+
+    .subscription-header h4 {
+      margin: 0;
+      color: #333;
+      font-size: 1.2rem;
+    }
+
+    .subscription-status {
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+
+    .status-active {
+      background-color: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+
+    .status-inactive {
+      background-color: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+
+    .status-expired {
+      background-color: #fff3cd;
+      color: #856404;
+      border: 1px solid #ffeaa7;
+    }
+
+    .status-cancelled {
+      background-color: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+
+    .subscription-details {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.25rem 0;
+    }
+
+    .detail-label {
+      font-weight: 600;
+      color: #666;
+      min-width: 150px;
+    }
+
+    .detail-value {
+      color: #333;
+      font-weight: 500;
+    }
+
+    .no-subscriptions {
+      text-align: center;
+      padding: 2rem;
+      color: #666;
+    }
+
+    .no-subscriptions p {
+      margin-bottom: 1rem;
+      font-size: 1.1rem;
+    }
+
+    .user-info h3 {
+      color: #333;
+      margin-bottom: 1rem;
+      font-size: 1.3rem;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 0.5rem;
+    }
+
+    @media (max-width: 768px) {
+      .subscription-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+      }
+
+      .detail-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.25rem;
+      }
+
+      .detail-label {
+        min-width: auto;
+        font-size: 0.9rem;
+      }
+    }
   `]
 })
 export class ProfileComponent implements OnInit {
@@ -190,11 +389,14 @@ export class ProfileComponent implements OnInit {
   loading = false;
   editForm: FormGroup;
   passwordForm: FormGroup;
+  loadingSubscriptions = false;
+  activeSubscriptions: UserSubscriptionInfo[] = [];
 
   constructor(
     private authService: AuthService,
     private router: Router,
-    private fb: FormBuilder
+    private fb: FormBuilder,
+    private subscriptionService: SubscriptionService
   ) {
     this.editForm = this.fb.group({
       nombre: ['', Validators.required],
@@ -213,6 +415,7 @@ export class ProfileComponent implements OnInit {
 
   ngOnInit() {
     this.loadUserProfile();
+    this.loadUserSubscriptions();
   }
 
   private loadUserProfile() {
@@ -230,6 +433,72 @@ export class ProfileComponent implements OnInit {
         this.router.navigate(['/auth/login']);
       }
     });
+  }
+
+  private loadUserSubscriptions() {
+    this.loadingSubscriptions = true;
+    this.subscriptionService.getUserSubscriptions().subscribe({
+      next: (response: any) => {
+        this.loadingSubscriptions = false;
+        if (response.success && response.subscriptions) {
+          this.activeSubscriptions = response.subscriptions.map((sub: any) => ({
+            id: sub.id,
+            plan_id: sub.plan_id,
+            plan_name: this.getPlanDisplayName(sub.plan_id),
+            status: sub.status,
+            status_display: this.getStatusDisplayName(sub.status),
+            created_at: sub.created_at,
+            expires_at: sub.expires_at,
+            price: this.getPlanPrice(sub.plan_id)
+          }));
+        } else {
+          this.activeSubscriptions = [];
+        }
+      },
+      error: (error: any) => {
+        console.error('Error al cargar suscripciones:', error);
+        this.loadingSubscriptions = false;
+        this.activeSubscriptions = [];
+      }
+    });
+  }
+
+  private getPlanDisplayName(planId: string): string {
+    switch (planId) {
+      case 'basic': return 'Plan Básico';
+      case 'monthly': return 'Plan Mensual';
+      case 'pro': return 'Plan Pro';
+      default: return planId;
+    }
+  }
+
+  private getStatusDisplayName(status: string): string {
+    switch (status) {
+      case 'active': return 'Activo';
+      case 'inactive': return 'Inactivo';
+      case 'expired': return 'Expirado';
+      case 'cancelled': return 'Cancelado';
+      default: return status;
+    }
+  }
+
+  private getPlanPrice(planId: string): string {
+    switch (planId) {
+      case 'basic': return '1,22€';
+      case 'monthly': return '10,22€';
+      case 'pro': return '122€';
+      default: return 'N/A';
+    }
+  }
+
+  getStatusClass(status: string): string {
+    switch (status) {
+      case 'active': return 'status-active';
+      case 'inactive': return 'status-inactive';
+      case 'expired': return 'status-expired';
+      case 'cancelled': return 'status-cancelled';
+      default: return 'status-unknown';
+    }
   }
 
   startEdit() {
