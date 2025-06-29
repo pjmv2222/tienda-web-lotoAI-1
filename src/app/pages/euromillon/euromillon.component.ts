@@ -20,9 +20,10 @@ export class EuromillonComponent extends LotteryBaseComponent implements OnInit,
   protected override gameId: string = 'euromillones';
 
   isLoggedIn = false;
-  hasBasicPlan = false;
-  hasMonthlyPlan = false;
-  hasProPlan = false;
+  hasBasicPlan: boolean | null = null;    // Cambiar a null para evitar false inicial
+  hasMonthlyPlan: boolean | null = null;  // Cambiar a null para evitar false inicial
+  hasProPlan: boolean | null = null;      // Cambiar a null para evitar false inicial
+  isLoadingSubscriptionStatus = false;    // Nueva propiedad para controlar el loading
   private mutationObserver: MutationObserver | null = null;
   private subscriptions: Subscription[] = [];
 
@@ -49,10 +50,23 @@ export class EuromillonComponent extends LotteryBaseComponent implements OnInit,
 
     // Verificar si el usuario tiene suscripciones activas
     if (this.isLoggedIn) {
+      this.isLoadingSubscriptionStatus = true; // Marcar como cargando
+      let completedChecks = 0;
+      const totalChecks = 3;
+
+      const checkCompleted = () => {
+        completedChecks++;
+        if (completedChecks === totalChecks) {
+          this.isLoadingSubscriptionStatus = false; // Marcar como completado
+          console.log('Todas las verificaciones de suscripción completadas');
+        }
+      };
+
       // Verificar plan básico
       const basicSub = this.subscriptionService.hasActivePlan('basic').subscribe(hasBasic => {
         this.hasBasicPlan = hasBasic;
         console.log('Usuario tiene plan básico:', this.hasBasicPlan);
+        checkCompleted();
       });
       this.subscriptions.push(basicSub);
 
@@ -60,6 +74,7 @@ export class EuromillonComponent extends LotteryBaseComponent implements OnInit,
       const monthlySub = this.subscriptionService.hasActivePlan('monthly').subscribe(hasMonthly => {
         this.hasMonthlyPlan = hasMonthly;
         console.log('Usuario tiene plan mensual:', this.hasMonthlyPlan);
+        checkCompleted();
       });
       this.subscriptions.push(monthlySub);
 
@@ -67,6 +82,7 @@ export class EuromillonComponent extends LotteryBaseComponent implements OnInit,
       const proSub = this.subscriptionService.hasActivePlan('pro').subscribe(hasPro => {
         this.hasProPlan = hasPro;
         console.log('Usuario tiene plan pro:', this.hasProPlan);
+        checkCompleted();
       });
       this.subscriptions.push(proSub);
 
@@ -77,6 +93,7 @@ export class EuromillonComponent extends LotteryBaseComponent implements OnInit,
       this.hasBasicPlan = false;
       this.hasMonthlyPlan = false;
       this.hasProPlan = false;
+      this.isLoadingSubscriptionStatus = false;
       console.log('Usuario no autenticado, no tiene planes activos');
     }
 
@@ -478,8 +495,4 @@ export class EuromillonComponent extends LotteryBaseComponent implements OnInit,
       this.checkBallsRendering();
     }, 5000);
   }
-
-
-
-
 }

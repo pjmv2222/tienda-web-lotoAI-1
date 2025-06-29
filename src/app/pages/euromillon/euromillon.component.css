@@ -232,6 +232,15 @@
   text-decoration: none;
 }
 
+.loading-status {
+  color: #0a7abf;
+  font-size: 12px;
+  text-align: center;
+  margin-top: 10px;
+  font-style: italic;
+  animation: pulse 2s infinite;
+}
+
 /* Estilos para las predicciones */
 .prediction-error {
   color: #e63946;
