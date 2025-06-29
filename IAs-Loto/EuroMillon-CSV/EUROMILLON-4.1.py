@@ -12,9 +12,7 @@ if sys.version_info.major >= 3:
     sys.stdout.reconfigure(encoding='utf-8')
 
 # Carga de datos con especificación de codificación UTF-8
-import os
-# Usar ruta relativa para que funcione tanto en local como en la VPS
-datos = pd.read_csv(os.path.join(os.path.dirname(__file__), 'DataFrame_Euromillones.csv'), encoding='utf-8')
+datos = pd.read_csv('C:\\Users\\Pedro\\Desktop\\LotoIA\\EuroMillon-CSV\\DataFrame_Euromillones.csv', encoding='utf-8')
 # Verificar los primeros registros para entender la estructura de los datos
 print(datos.head())
 
@@ -60,17 +58,17 @@ model.compile(optimizer='adam', loss='mean_squared_error')
 model.fit(X_train_reshaped, y_train, epochs=20, batch_size=32)
 
 # Guardar el modelo
-model_path = os.path.join(os.path.dirname(__file__), 'modelo_euromillon.h5')
-model.save(model_path)
+model.save('C:/Users/Pedro/Desktop/LotoIA/EuroMillon-CSV/modelo_euromillon.h5')
 
 # Cargar el modelo
-modelo = load_model(model_path)
+modelo = load_model('C:/Users/Pedro/Desktop/LotoIA/EuroMillon-CSV/modelo_euromillon.h5')
 
 # Hacer predicciones
 predictions = model.predict(X_test.values.reshape(X_test.shape[0], X_test.shape[1], 1))
 # Desnormalizamos las predicciones para obtener los números reales
 predictions = scaler_y.inverse_transform(predictions)
-# Ya hemos cargado el modelo anteriormente, no es necesario volver a cargarlo
+# Suponiendo que has guardado tu modelo entrenado como 'modelo_euromillon.h5'
+modelo = load_model('C:/Users/Pedro/Desktop/LotoIA/EuroMillon-CSV/modelo_euromillon.h5')
 
 # Función para ajustar las predicciones y asegurar que no haya duplicados
 def ajustar_prediccion(prediccion):
@@ -78,24 +76,24 @@ def ajustar_prediccion(prediccion):
     numeros_principales = np.unique(prediccion[:5], return_index=True)
     # Asegurar que las estrellas (últimos 2 números) no tengan duplicados
     estrellas = np.unique(prediccion[5:], return_index=True)
-
+    
     # Si hay duplicados, rellenar hasta tener la cantidad necesaria
     while len(numeros_principales[0]) < 5:
         nuevo_numero = np.random.randint(1, 51)
         if nuevo_numero not in numeros_principales[0]:
             numeros_principales[0] = np.append(numeros_principales[0], nuevo_numero)
             numeros_principales[1] = np.append(numeros_principales[1], -1)  # -1 como marcador de posición
-
+    
     while len(estrellas[0]) < 2:
         nueva_estrella = np.random.randint(1, 13)
         if nueva_estrella not in estrellas[0]:
             estrellas[0] = np.append(estrellas[0], nueva_estrella)
             estrellas[1] = np.append(estrellas[1], -1)  # -1 como marcador de posición
-
+    
     # Ordenar los números principales y las estrellas por su índice original para mantener el orden
     numeros_principales_ordenados = numeros_principales[0][np.argsort(numeros_principales[1])]
     estrellas_ordenadas = estrellas[0][np.argsort(estrellas[1])]
-
+    
     # Combinar y retornar la predicción ajustada
     return np.concatenate((numeros_principales_ordenados, estrellas_ordenadas))
 
@@ -144,21 +142,21 @@ def calcular_precision(predicciones, reales):
     total_aciertos_numeros = 0
     total_aciertos_estrellas = 0
     total_predicciones = len(predicciones)
-
+    
     # Iterar sobre el conjunto de predicciones y reales
     for pred, real in zip(predicciones, reales):
         # Comparar números (primeros 5 valores)
         aciertos_numeros = len(set(pred[:5]) & set(real[:5]))
         total_aciertos_numeros += aciertos_numeros
-
+        
         # Comparar estrellas (últimos 2 valores)
         aciertos_estrellas = len(set(pred[5:]) & set(real[5:]))
         total_aciertos_estrellas += aciertos_estrellas
-
+    
     # Calcular métricas
     precision_media_numeros = total_aciertos_numeros / total_predicciones
     precision_media_estrellas = total_aciertos_estrellas / total_predicciones
-
+    
     return precision_media_numeros, precision_media_estrellas
 
 # Paso 2: Aplicar las Métricas al Conjunto de Test
@@ -174,7 +172,7 @@ precision_numeros, precision_estrellas = calcular_precision(predicciones_ajustad
 print(f'Precisión media de números acertados por predicción: {precision_numeros}')
 print(f'Precisión media de estrellas acertadas por predicción: {precision_estrellas}')
 # Guardar el DataFrame en un archivo CSV
-df.to_csv(os.path.join(os.path.dirname(__file__), 'predicciones.csv'), index=False)
+df.to_csv('predicciones.csv', index=False)
 
 # Al final de tu script, para guardar el DataFrame 'datos' (o el DataFrame que desees guardar) en un archivo CSV, especificando la codificación UTF-8
-datos.to_csv(os.path.join(os.path.dirname(__file__), 'Euromillones_Predicciones.csv'), index=False, encoding='utf-8')
+datos.to_csv('C:\\Users\\Pedro\\Desktop\\LotoIA\\EuroMillon-CSV\\Euromillones_Predicciones.csv', index=False, encoding='utf-8')

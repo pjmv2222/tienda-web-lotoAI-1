@@ -1,10 +1,21 @@
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-const Payment = require('../models/payment.model');
-const Subscription = require('../models/subscription.model');
+
+// Pool de PostgreSQL - será inyectado por el middleware
+let pgPool;
+
+// Función auxiliar para establecer el pool
+const setPgPool = (pool) => {
+  pgPool = pool;
+};
 
 // Manejar eventos de webhook de Stripe
 exports.handleStripeWebhook = async (req, res) => {
   const sig = req.headers['stripe-signature'];
+  
+  // Establecer el pool de PostgreSQL
+  if (req.pgPool) {
+    setPgPool(req.pgPool);
+  }
   
   let event;
   
@@ -61,30 +72,48 @@ exports.handleStripeWebhook = async (req, res) => {
 // Manejar evento de pago exitoso
 async function handlePaymentIntentSucceeded(paymentIntent) {
   try {
-    // Buscar el pago en la base de datos
-    const payment = await Payment.findOne({ stripePaymentIntentId: paymentIntent.id });
-    
-    if (!payment) {
-      console.log(`Pago no encontrado para PaymentIntent: ${paymentIntent.id}`);
-      return;
-    }
-    
-    // Actualizar el estado del pago
-    payment.status = 'succeeded';
-    payment.stripeChargeId = paymentIntent.latest_charge;
-    await payment.save();
-    
-    // Si hay una suscripción asociada, actualizarla
-    if (payment.subscriptionId) {
-      const subscription = await Subscription.findById(payment.subscriptionId);
+    const client = await pgPool.connect();
+    try {
+      // Buscar el pago en la base de datos
+      const paymentQuery = 'SELECT * FROM payments WHERE stripe_payment_intent_id = $1';
+      const paymentResult = await client.query(paymentQuery, [paymentIntent.id]);
       
-      if (subscription) {
-        subscription.status = 'active';
-        await subscription.save();
+      if (paymentResult.rows.length === 0) {
+        console.log(`Pago no encontrado para PaymentIntent: ${paymentIntent.id}`);
+        return;
       }
+      
+      const payment = paymentResult.rows[0];
+      
+      // Actualizar el estado del pago
+      const updatePaymentQuery = `
+        UPDATE payments 
+        SET status = $1, stripe_charge_id = $2, updated_at = NOW()
+        WHERE id = $3
+        RETURNING *
+      `;
+      
+      const updatedPaymentResult = await client.query(updatePaymentQuery, [
+        'succeeded',
+        paymentIntent.latest_charge,
+        payment.id
+      ]);
+      
+      // Si hay una suscripción asociada, actualizarla
+      if (payment.subscription_id) {
+        const updateSubscriptionQuery = `
+          UPDATE subscriptions 
+          SET status = $1, updated_at = NOW()
+          WHERE id = $2
+        `;
+        
+        await client.query(updateSubscriptionQuery, ['active', payment.subscription_id]);
+      }
+      
+      console.log(`Pago actualizado correctamente: ${payment.id}`);
+    } finally {
+      client.release();
     }
-    
-    console.log(`Pago actualizado correctamente: ${payment._id}`);
   } catch (error) {
     console.error('Error al manejar payment_intent.succeeded:', error);
     throw error;
@@ -94,29 +123,43 @@ async function handlePaymentIntentSucceeded(paymentIntent) {
 // Manejar evento de pago fallido
 async function handlePaymentIntentFailed(paymentIntent) {
   try {
-    // Buscar el pago en la base de datos
-    const payment = await Payment.findOne({ stripePaymentIntentId: paymentIntent.id });
-    
-    if (!payment) {
-      console.log(`Pago no encontrado para PaymentIntent: ${paymentIntent.id}`);
-      return;
-    }
-    
-    // Actualizar el estado del pago
-    payment.status = 'failed';
-    await payment.save();
-    
-    // Si hay una suscripción asociada, actualizarla
-    if (payment.subscriptionId) {
-      const subscription = await Subscription.findById(payment.subscriptionId);
+    const client = await pgPool.connect();
+    try {
+      // Buscar el pago en la base de datos
+      const paymentQuery = 'SELECT * FROM payments WHERE stripe_payment_intent_id = $1';
+      const paymentResult = await client.query(paymentQuery, [paymentIntent.id]);
       
-      if (subscription) {
-        subscription.status = 'canceled';
-        await subscription.save();
+      if (paymentResult.rows.length === 0) {
+        console.log(`Pago no encontrado para PaymentIntent: ${paymentIntent.id}`);
+        return;
       }
+      
+      const payment = paymentResult.rows[0];
+      
+      // Actualizar el estado del pago
+      const updatePaymentQuery = `
+        UPDATE payments 
+        SET status = $1, updated_at = NOW()
+        WHERE id = $2
+      `;
+      
+      await client.query(updatePaymentQuery, ['failed', payment.id]);
+      
+      // Si hay una suscripción asociada, actualizarla
+      if (payment.subscription_id) {
+        const updateSubscriptionQuery = `
+          UPDATE subscriptions 
+          SET status = $1, updated_at = NOW()
+          WHERE id = $2
+        `;
+        
+        await client.query(updateSubscriptionQuery, ['canceled', payment.subscription_id]);
+      }
+      
+      console.log(`Pago marcado como fallido: ${payment.id}`);
+    } finally {
+      client.release();
     }
-    
-    console.log(`Pago marcado como fallido: ${payment._id}`);
   } catch (error) {
     console.error('Error al manejar payment_intent.payment_failed:', error);
     throw error;
@@ -126,29 +169,43 @@ async function handlePaymentIntentFailed(paymentIntent) {
 // Manejar evento de reembolso
 async function handleChargeRefunded(charge) {
   try {
-    // Buscar el pago en la base de datos
-    const payment = await Payment.findOne({ stripeChargeId: charge.id });
-    
-    if (!payment) {
-      console.log(`Pago no encontrado para Charge: ${charge.id}`);
-      return;
-    }
-    
-    // Actualizar el estado del pago
-    payment.status = 'refunded';
-    await payment.save();
-    
-    // Si hay una suscripción asociada, actualizarla
-    if (payment.subscriptionId) {
-      const subscription = await Subscription.findById(payment.subscriptionId);
+    const client = await pgPool.connect();
+    try {
+      // Buscar el pago en la base de datos
+      const paymentQuery = 'SELECT * FROM payments WHERE stripe_charge_id = $1';
+      const paymentResult = await client.query(paymentQuery, [charge.id]);
       
-      if (subscription) {
-        subscription.status = 'canceled';
-        await subscription.save();
+      if (paymentResult.rows.length === 0) {
+        console.log(`Pago no encontrado para Charge: ${charge.id}`);
+        return;
       }
+      
+      const payment = paymentResult.rows[0];
+      
+      // Actualizar el estado del pago
+      const updatePaymentQuery = `
+        UPDATE payments 
+        SET status = $1, updated_at = NOW()
+        WHERE id = $2
+      `;
+      
+      await client.query(updatePaymentQuery, ['refunded', payment.id]);
+      
+      // Si hay una suscripción asociada, actualizarla
+      if (payment.subscription_id) {
+        const updateSubscriptionQuery = `
+          UPDATE subscriptions 
+          SET status = $1, updated_at = NOW()
+          WHERE id = $2
+        `;
+        
+        await client.query(updateSubscriptionQuery, ['canceled', payment.subscription_id]);
+      }
+      
+      console.log(`Pago marcado como reembolsado: ${payment.id}`);
+    } finally {
+      client.release();
     }
-    
-    console.log(`Pago marcado como reembolsado: ${payment._id}`);
   } catch (error) {
     console.error('Error al manejar charge.refunded:', error);
     throw error;

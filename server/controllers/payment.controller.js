@@ -1,6 +1,4 @@
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-const Payment = require('../models/payment.model');
-const Subscription = require('../models/subscription.model');
 
 // Calcular la fecha de finalización según el plan
 const calculateEndDate = (planId) => {
@@ -82,20 +80,30 @@ exports.createPaymentIntent = async (req, res) => {
 
     console.log('PaymentIntent creado:', paymentIntent.id);
 
-    // Guardar el registro de pago en la base de datos
-    const payment = new Payment({
-      userId: actualUserId || '000000000000000000000000', // ID temporal para usuarios no autenticados
-      amount: finalAmount / 100, // Convertir de céntimos a euros
-      currency: finalCurrency,
-      status: 'pending',
-      paymentMethod: 'card',
-      stripePaymentIntentId: paymentIntent.id,
-      metadata: {
-        planId: actualPlanId
-      }
-    });
+    // Guardar el registro de pago en PostgreSQL
+    const client = await req.pgPool.connect();
+    try {
+      const queryText = `
+        INSERT INTO payments (user_id, amount, currency, status, payment_method, stripe_payment_intent_id, plan_id, created_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+        RETURNING *
+      `;
+      
+      const values = [
+        actualUserId || null,
+        finalAmount / 100, // Convertir de céntimos a euros
+        finalCurrency,
+        'pending',
+        'card',
+        paymentIntent.id,
+        actualPlanId
+      ];
 
-    await payment.save();
+      const result = await client.query(queryText, values);
+      console.log('Pago guardado en PostgreSQL:', result.rows[0]);
+    } finally {
+      client.release();
+    }
 
     res.status(200).json({
       clientSecret: paymentIntent.client_secret,
@@ -123,45 +131,61 @@ exports.confirmPayment = async (req, res) => {
       return res.status(400).json({ error: 'El pago no ha sido completado' });
     }
 
-    // Actualizar el registro de pago
-    const payment = await Payment.findOne({ stripePaymentIntentId: paymentIntentId });
+    const client = await req.pgPool.connect();
+    try {
+      // Actualizar el registro de pago
+      const updatePaymentQuery = `
+        UPDATE payments 
+        SET status = $1, user_id = COALESCE($2, user_id), updated_at = NOW()
+        WHERE stripe_payment_intent_id = $3
+        RETURNING *
+      `;
+      
+      const paymentResult = await client.query(updatePaymentQuery, ['succeeded', userId, paymentIntentId]);
 
-    if (!payment) {
-      return res.status(404).json({ error: 'Pago no encontrado' });
-    }
-
-    payment.status = 'succeeded';
-    payment.userId = userId || payment.userId;
-    await payment.save();
-
-    // Crear la suscripción
-    const endDate = calculateEndDate(planId || payment.metadata.planId);
-
-    const subscription = new Subscription({
-      userId: userId || payment.userId,
-      planId: planId || payment.metadata.planId,
-      status: 'active',
-      endDate,
-      stripePaymentIntentId: paymentIntentId,
-      paymentMethod: 'card',
-      amount: payment.amount
-    });
-
-    await subscription.save();
-
-    // Actualizar el pago con la referencia a la suscripción
-    payment.subscriptionId = subscription._id;
-    await payment.save();
-
-    res.status(200).json({
-      success: true,
-      subscription: {
-        id: subscription._id,
-        planId: subscription.planId,
-        status: subscription.status,
-        endDate: subscription.endDate
+      if (paymentResult.rows.length === 0) {
+        return res.status(404).json({ error: 'Pago no encontrado' });
       }
-    });
+
+      const payment = paymentResult.rows[0];
+
+      // Crear la suscripción
+      const endDate = calculateEndDate(planId || payment.plan_id);
+
+      const subscriptionQuery = `
+        INSERT INTO subscriptions (user_id, plan_id, status, start_date, end_date, created_at)
+        VALUES ($1, $2, $3, NOW(), $4, NOW())
+        RETURNING *
+      `;
+
+      const subscriptionValues = [
+        userId || payment.user_id,
+        planId || payment.plan_id,
+        'active',
+        endDate
+      ];
+
+      const subscriptionResult = await client.query(subscriptionQuery, subscriptionValues);
+      const subscription = subscriptionResult.rows[0];
+
+      // Actualizar el pago con la referencia a la suscripción
+      await client.query(
+        'UPDATE payments SET subscription_id = $1, updated_at = NOW() WHERE id = $2',
+        [subscription.id, payment.id]
+      );
+
+      res.status(200).json({
+        success: true,
+        subscription: {
+          id: subscription.id,
+          planId: subscription.plan_id,
+          status: subscription.status,
+          endDate: subscription.end_date
+        }
+      });
+    } finally {
+      client.release();
+    }
   } catch (error) {
     console.error('Error al confirmar el pago:', error);
     res.status(500).json({ error: 'Error al confirmar el pago' });
@@ -180,125 +204,78 @@ exports.processTransferPayment = async (req, res) => {
     // Obtener el precio del plan
     const amount = getPlanPrice(planId) / 100; // Convertir de céntimos a euros
 
-    // Crear el registro de pago
-    const payment = new Payment({
-      userId: userId || '000000000000000000000000', // ID temporal para usuarios no autenticados
-      amount,
-      currency: 'eur',
-      status: 'pending',
-      paymentMethod: 'transfer',
-      referenceNumber,
-      metadata: {
+    const client = await req.pgPool.connect();
+    try {
+      // Crear el registro de pago
+      const paymentQuery = `
+        INSERT INTO payments (user_id, amount, currency, status, payment_method, reference_number, plan_id, created_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+        RETURNING *
+      `;
+
+      const paymentValues = [
+        userId || null,
+        amount,
+        'eur',
+        'pending',
+        'transfer',
+        referenceNumber,
         planId
-      }
-    });
+      ];
 
-    await payment.save();
+      const paymentResult = await client.query(paymentQuery, paymentValues);
+      const payment = paymentResult.rows[0];
 
-    // Crear la suscripción (en estado pendiente)
-    const endDate = calculateEndDate(planId);
+      // Crear la suscripción (en estado pendiente)
+      const endDate = calculateEndDate(planId);
 
-    const subscription = new Subscription({
-      userId: userId || '000000000000000000000000',
-      planId,
-      status: 'pending',
-      endDate,
-      paymentMethod: 'transfer',
-      amount
-    });
+      const subscriptionQuery = `
+        INSERT INTO subscriptions (user_id, plan_id, status, start_date, end_date, created_at)
+        VALUES ($1, $2, $3, NOW(), $4, NOW())
+        RETURNING *
+      `;
 
-    await subscription.save();
+      const subscriptionValues = [
+        userId || payment.user_id,
+        planId,
+        'pending',
+        endDate
+      ];
 
-    // Actualizar el pago con la referencia a la suscripción
-    payment.subscriptionId = subscription._id;
-    await payment.save();
+      const subscriptionResult = await client.query(subscriptionQuery, subscriptionValues);
+      const subscription = subscriptionResult.rows[0];
 
-    res.status(200).json({
-      success: true,
-      payment: {
-        id: payment._id,
-        referenceNumber: payment.referenceNumber,
-        status: payment.status
-      },
-      subscription: {
-        id: subscription._id,
-        planId: subscription.planId,
-        status: subscription.status,
-        endDate: subscription.endDate
-      }
-    });
+      // Actualizar el pago con la referencia a la suscripción
+      await client.query(
+        'UPDATE payments SET subscription_id = $1, updated_at = NOW() WHERE id = $2',
+        [subscription.id, payment.id]
+      );
+
+      res.status(200).json({
+        success: true,
+        payment: {
+          id: payment.id,
+          status: payment.status,
+          referenceNumber: payment.reference_number
+        },
+        subscription: {
+          id: subscription.id,
+          planId: subscription.plan_id,
+          status: subscription.status,
+          endDate: subscription.end_date
+        }
+      });
+    } finally {
+      client.release();
+    }
   } catch (error) {
     console.error('Error al procesar el pago por transferencia:', error);
     res.status(500).json({ error: 'Error al procesar el pago por transferencia' });
   }
 };
 
-// Procesar un pago con PayPal
-exports.processPayPalPayment = async (req, res) => {
-  try {
-    const { userId, planId, paypalOrderId } = req.body;
-
-    if (!planId || !paypalOrderId) {
-      return res.status(400).json({ error: 'Se requieren el ID del plan y el ID de la orden de PayPal' });
-    }
-
-    // Obtener el precio del plan
-    const amount = getPlanPrice(planId) / 100; // Convertir de céntimos a euros
-
-    // Crear el registro de pago
-    const payment = new Payment({
-      userId: userId || '000000000000000000000000', // ID temporal para usuarios no autenticados
-      amount,
-      currency: 'eur',
-      status: 'succeeded', // Asumimos que el pago ya fue verificado por PayPal
-      paymentMethod: 'paypal',
-      metadata: {
-        planId,
-        paypalOrderId
-      }
-    });
-
-    await payment.save();
-
-    // Crear la suscripción
-    const endDate = calculateEndDate(planId);
-
-    const subscription = new Subscription({
-      userId: userId || '000000000000000000000000',
-      planId,
-      status: 'active',
-      endDate,
-      paymentMethod: 'paypal',
-      amount
-    });
-
-    await subscription.save();
-
-    // Actualizar el pago con la referencia a la suscripción
-    payment.subscriptionId = subscription._id;
-    await payment.save();
-
-    res.status(200).json({
-      success: true,
-      payment: {
-        id: payment._id,
-        status: payment.status
-      },
-      subscription: {
-        id: subscription._id,
-        planId: subscription.planId,
-        status: subscription.status,
-        endDate: subscription.endDate
-      }
-    });
-  } catch (error) {
-    console.error('Error al procesar el pago con PayPal:', error);
-    res.status(500).json({ error: 'Error al procesar el pago con PayPal' });
-  }
-};
-
-// Verificar si un usuario tiene pagos recientes (menos de 24 horas)
-exports.checkRecentPayments = async (req, res) => {
+// Obtener el historial de pagos de un usuario
+exports.getPaymentHistory = async (req, res) => {
   try {
     const { userId } = req.params;
 
@@ -306,70 +283,25 @@ exports.checkRecentPayments = async (req, res) => {
       return res.status(400).json({ error: 'Se requiere el ID del usuario' });
     }
 
-    // Calcular la fecha de hace 24 horas
-    const oneDayAgo = new Date();
-    oneDayAgo.setHours(oneDayAgo.getHours() - 24);
+    const client = await req.pgPool.connect();
+    try {
+      const queryText = `
+        SELECT * FROM payments
+        WHERE user_id = $1
+        ORDER BY created_at DESC
+      `;
 
-    // Buscar pagos exitosos en las últimas 24 horas
-    const recentPayments = await Payment.find({
-      userId,
-      status: 'succeeded',
-      createdAt: { $gte: oneDayAgo }
-    }).sort({ createdAt: -1 });
+      const result = await client.query(queryText, [userId]);
 
-    // Verificar si hay pagos recientes
-    const hasRecentPayment = recentPayments.length > 0;
-
-    // Si hay pagos recientes pero no hay suscripciones activas, crear una suscripción
-    if (hasRecentPayment) {
-      // Verificar si ya existe una suscripción activa
-      const now = new Date();
-      const activeSubscription = await Subscription.findOne({
-        userId,
-        status: 'active',
-        endDate: { $gt: now }
+      res.status(200).json({
+        success: true,
+        payments: result.rows
       });
-
-      // Si no hay suscripción activa, crear una basada en el pago más reciente
-      if (!activeSubscription) {
-        const latestPayment = recentPayments[0];
-        const planId = latestPayment.metadata?.planId || 'basic';
-
-        // Crear la suscripción
-        const endDate = calculateEndDate(planId);
-
-        const subscription = new Subscription({
-          userId,
-          planId,
-          status: 'active',
-          endDate,
-          paymentMethod: latestPayment.paymentMethod,
-          amount: latestPayment.amount
-        });
-
-        await subscription.save();
-
-        // Actualizar el pago con la referencia a la suscripción
-        latestPayment.subscriptionId = subscription._id;
-        await latestPayment.save();
-
-        console.log(`Suscripción creada automáticamente para el usuario ${userId} basada en un pago reciente`);
-      }
+    } finally {
+      client.release();
     }
-
-    res.status(200).json({
-      success: true,
-      hasRecentPayment,
-      payments: hasRecentPayment ? recentPayments.map(p => ({
-        id: p._id,
-        amount: p.amount,
-        status: p.status,
-        paymentMethod: p.paymentMethod,
-        createdAt: p.createdAt
-      })) : []
-    });
   } catch (error) {
-    console.error('Error al verificar pagos recientes:', error);
-    res.status(500).json({ error: 'Error al verificar pagos recientes' });
+    console.error('Error al obtener el historial de pagos:', error);
+    res.status(500).json({ error: 'Error al obtener el historial de pagos' });
   }
 };

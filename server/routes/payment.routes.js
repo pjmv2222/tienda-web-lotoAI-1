@@ -11,10 +11,7 @@ router.post('/confirm-payment', paymentController.confirmPayment);
 // Procesar un pago por transferencia
 router.post('/process-transfer', paymentController.processTransferPayment);
 
-// Procesar un pago con PayPal
-router.post('/process-paypal', paymentController.processPayPalPayment);
-
-// Verificar si un usuario tiene pagos recientes
-router.get('/recent/:userId', paymentController.checkRecentPayments);
+// Obtener historial de pagos de un usuario
+router.get('/history/:userId', paymentController.getPaymentHistory);
 
 module.exports = router;
