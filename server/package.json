@@ -16,7 +16,7 @@
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^5.1.0",
-    "mongoose": "^8.13.2",
+    "pg": "^8.11.3",
     "stripe": "^18.0.0"
   },
   "devDependencies": {

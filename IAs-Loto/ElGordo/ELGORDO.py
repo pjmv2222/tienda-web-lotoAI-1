@@ -13,9 +13,7 @@ if sys.version_info.major >= 3:
     sys.stdout.reconfigure(encoding='utf-8')
 
 # Lectura del archivo CSV ajustada a la nueva estructura
-import os
-# Usar ruta relativa para que funcione tanto en local como en la VPS
-datos = pd.read_csv(os.path.join(os.path.dirname(__file__), 'DataFrame_ElGordo.csv'), encoding='utf-8')
+datos = pd.read_csv('C:\\Users\\Pedro\\Desktop\\LotoIA\\ElGordo\\DataFrame_ElGordo.csv', encoding='utf-8')
 # Verificar los primeros registros para entender la estructura de los datos
 print(datos.head())
 
@@ -60,17 +58,17 @@ model.compile(optimizer='adam', loss='mean_squared_error')
 model.fit(X_train_reshaped, y_train, epochs=20, batch_size=32)
 
 # Guardar el modelo
-model_path = os.path.join(os.path.dirname(__file__), 'modelo_ElGordo.h5')
-model.save(model_path)
+model.save('C:/Users/Pedro/Desktop/LotoIA/ElGordo/modelo_ElGordo.h5')
 
 # Cargar el modelo
-modelo = load_model(model_path)
+modelo = load_model('C:/Users/Pedro/Desktop/LotoIA/ElGordo/modelo_ElGordo.h5')
 
 # Hacer predicciones
 predictions = model.predict(X_test.values.reshape(X_test.shape[0], X_test.shape[1], 1))
 # Desnormalizamos las predicciones para obtener los números reales
 predictions = scaler_y.inverse_transform(predictions)
-# Ya hemos cargado el modelo anteriormente, no es necesario volver a cargarlo
+# Suponiendo que has guardado tu modelo entrenado como 'modelo_euromillon.h5'
+modelo = load_model('C:/Users/Pedro/Desktop/LotoIA/ElGordo/modelo_ElGordo.h5')
 
 # Función para ajustar las predicciones y asegurar que no haya duplicados
 def ajustar_prediccion(prediccion):
@@ -94,10 +92,10 @@ def ajustar_prediccion(prediccion):
     # Ordenar los números principales y el reintegro por su índice original para mantener el orden
     numeros_principales_ordenados = numeros_principales[np.argsort(indices_principales)]
     Clue_ordenados = Clue[np.argsort(indice_Clue)]
-
+    
     # Combinar y retornar la predicción ajustada
     return np.concatenate((numeros_principales_ordenados, Clue_ordenados))
-
+    
 # Generar predicciones con el modelo
 predicciones = modelo.predict(X_test)
 
@@ -173,7 +171,7 @@ precision_numeros, precision_Clue = calcular_precision(predicciones_ajustadas_in
 print(f'Precisión media de números acertados por predicción: {precision_numeros}')
 print(f'Precisión media de Clue acertados por predicción: {precision_Clue}')
 # Guardar el DataFrame en un archivo CSV
-df.to_csv(os.path.join(os.path.dirname(__file__), 'predicciones-ElGordo.csv'), index=False)
+df.to_csv('predicciones-ElGordo.csv', index=False)
 
 # Al final de tu script, para guardar el DataFrame 'datos' (o el DataFrame que desees guardar) en un archivo CSV, especificando la codificación UTF-8
-datos.to_csv(os.path.join(os.path.dirname(__file__), 'ElGordo_Predicciones.csv'), index=False, encoding='utf-8')
+datos.to_csv('C:\\Users\\Pedro\\Desktop\\LotoIA\\ElGordo\\ElGordo_Predicciones.csv', index=False, encoding='utf-8')

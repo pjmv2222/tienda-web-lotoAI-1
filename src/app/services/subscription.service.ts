@@ -126,22 +126,31 @@ export class SubscriptionService {
   hasActivePlan(planId: string): Observable<boolean> {
     const currentUser = this.authService.currentUserValue;
     if (!currentUser) {
+      console.log('hasActivePlan: No hay usuario autenticado');
       return of(false);
     }
+
+    console.log(`hasActivePlan: Verificando plan '${planId}' para usuario ${currentUser.id}`);
 
     // Consultar directamente la API para verificar el plan específico
     return this.http.get<any>(`${this.apiUrl}/subscriptions/check/${currentUser.id}`, {
       headers: this.getAuthHeaders()
     }).pipe(
       map(response => {
+        console.log('hasActivePlan: Respuesta de la API:', response);
+        
         // Verificar si tiene suscripción activa del plan específico
         if (response.hasActiveSubscription && response.subscription) {
-          return response.subscription.plan_id === planId;
+          console.log(`hasActivePlan: plan_id en respuesta: '${response.subscription.plan_id}', buscando: '${planId}'`);
+          const hasMatchingPlan = response.subscription.plan_id === planId;
+          console.log(`hasActivePlan: ¿Plan coincide? ${hasMatchingPlan}`);
+          return hasMatchingPlan;
         }
+        console.log('hasActivePlan: No hay suscripción activa o no se encontró la suscripción en la respuesta');
         return false;
       }),
       catchError(error => {
-        console.error('Error al verificar plan específico:', error);
+        console.error('hasActivePlan: Error al verificar plan específico:', error);
         return of(false);
       })
     );

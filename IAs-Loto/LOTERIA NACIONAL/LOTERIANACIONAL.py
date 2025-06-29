@@ -14,9 +14,7 @@ if sys.version_info.major >= 3:
     sys.stdout.reconfigure(encoding='utf-8')
 
 # Lectura del archivo CSV
-import os
-# Usar ruta relativa para que funcione tanto en local como en la VPS
-datos = pd.read_csv(os.path.join(os.path.dirname(__file__), 'DataFrame_LOTERIA NACIONAL.csv'), encoding='utf-8')
+datos = pd.read_csv('C:\\Users\\Pedro\\Desktop\\LotoIA\\LOTERIA NACIONAL\\DataFrame_LOTERIA NACIONAL.csv', encoding='utf-8')
 print(datos.head())
 print(datos.describe())
 print(datos.isnull().sum())
@@ -65,8 +63,7 @@ y_train_cat = to_categorical(y_train).reshape(y_train.shape[0], -1)
 history = model.fit(X_train_reshaped, y_train_cat, epochs=50, batch_size=32, validation_split=0.2, verbose=1)
 
 # Guardar el modelo
-model_path = os.path.join(os.path.dirname(__file__), 'modelo_LoteriaNacional.h5')
-model.save(model_path)
+model.save('C:/Users/Pedro/Desktop/LotoIA/LOTERIA NACIONAL/modelo_LoteriaNacional.h5')
 
 # Función para generar predicciones con ruido
 def predict_with_noise(model, X, noise_level=0.1):
@@ -103,5 +100,5 @@ for i, prediction in enumerate(new_predictions):
 df = pd.DataFrame(["".join(map(str, pred)) for pred in new_predictions], columns=['Numero'])
 
 # Guardar las predicciones
-df.to_csv(os.path.join(os.path.dirname(__file__), 'predicciones-LoteriaNacional.csv'), index=False)
-datos.to_csv(os.path.join(os.path.dirname(__file__), 'LoteriaNacional_Predicciones.csv'), index=False, encoding='utf-8')
+df.to_csv('predicciones-LoteriaNacional.csv', index=False)
+datos.to_csv('C:\\Users\\Pedro\\Desktop\\LotoIA\\LOTERIA NACIONAL\\LoteriaNacional_Predicciones.csv', index=False, encoding='utf-8')

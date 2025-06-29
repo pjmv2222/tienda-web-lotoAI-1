@@ -12,9 +12,7 @@ import sys
 if sys.version_info.major >= 3:
     sys.stdout.reconfigure(encoding='utf-8')
 
-import os
-# Usar ruta relativa para que funcione tanto en local como en la VPS
-df = pd.read_csv(os.path.join(os.path.dirname(__file__), 'DataFrame_EuroDreams.csv'), encoding='utf-8')
+df = pd.read_csv('C:\\Users\\Pedro\\Desktop\\LotoIA\\EuroDreams\\DataFrame_EuroDreams.csv', encoding='utf-8')
 
 df['Date'] = pd.to_datetime(df['Date'])
 reference_date = pd.Timestamp('2000-01-01')
@@ -49,12 +47,9 @@ model.add(Dense(units=7))
 model.compile(optimizer='adam', loss='mean_squared_error')
 model.fit(X_train_reshaped, y_train, epochs=20, batch_size=32)
 
-# Guardar el modelo
-model_path = os.path.join(os.path.dirname(__file__), 'modelo_EuroDreams.h5')
-model.save(model_path)
+model.save('C:/Users/Pedro/Desktop/LotoIA/EuroDreams/modelo_EuroDreams.h5')
 
-# Cargar el modelo
-modelo = load_model(model_path)
+modelo = load_model('C:/Users/Pedro/Desktop/LotoIA/EuroDreams/modelo_EuroDreams.h5')
 
 predictions = modelo.predict(X_test.values.reshape(X_test.shape[0], X_test.shape[1], 1))
 predictions = scaler_y.inverse_transform(predictions)
@@ -89,7 +84,7 @@ for i, prediction in enumerate(new_predictions):
 
 # Guardar las nuevas predicciones en un DataFrame y exportar a CSV
 df = pd.DataFrame(new_predictions, columns=['Num1', 'Num2', 'Num3', 'Num4', 'Num5', 'Num6', 'Dream'])
-df.to_csv(os.path.join(os.path.dirname(__file__), 'predicciones-EuroDreams.csv'), index=False)
+df.to_csv('predicciones-EuroDreams.csv', index=False)
 
 # Función para calcular el porcentaje de aciertos
 def calcular_porcentaje_combinaciones_acertadas(predicciones, reales):
@@ -109,4 +104,4 @@ datos = pd.DataFrame(predicciones_ajustadas, columns=['Num1', 'Num2', 'Num3', 'N
 
 
 # Exportar los datos originales con predicciones ajustadas
-datos.to_csv(os.path.join(os.path.dirname(__file__), 'EuroDreams_Predicciones.csv'), index=False, encoding='utf-8')
+datos.to_csv('C:\\Users\\Pedro\\Desktop\\LotoIA\\EuroDreams\\EuroDreams_Predicciones.csv', index=False, encoding='utf-8')
