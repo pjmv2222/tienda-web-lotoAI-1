@@ -5,7 +5,12 @@ import * as fs from 'fs';
 import axios from 'axios';
 
 // Mapa para almacenar los procesos de los servidores Python
-const pythonServers: { [key: string]: { process: ChildProcess, lastUsed: Date, port: number } } = {};
+const pythonServers: { [key: string]: { 
+  process: ChildProcess, 
+  lastUsed: Date, 
+  port: number,
+  shutdownTimeout?: NodeJS.Timeout 
+} } = {};
 
 // Configuración de puertos para cada juego
 const gamePorts: { [key: string]: number } = {
@@ -116,6 +121,27 @@ function stopPythonServer(game: string): void {
 }
 
 /**
+ * Programa el cierre automático de un servidor Python después del periodo de inactividad
+ * @param game Identificador del juego
+ */
+function scheduleServerShutdown(game: string): void {
+  if (!pythonServers[game]) return;
+
+  // Cancelar timeout anterior si existe
+  if (pythonServers[game].shutdownTimeout) {
+    clearTimeout(pythonServers[game].shutdownTimeout);
+  }
+
+  // Programar nuevo timeout
+  pythonServers[game].shutdownTimeout = setTimeout(() => {
+    console.log(`Cerrando servidor Python para ${game} por inactividad...`);
+    stopPythonServer(game);
+  }, INACTIVITY_TIMEOUT);
+
+  console.log(`Servidor Python para ${game} se cerrará en ${INACTIVITY_TIMEOUT / 1000} segundos si no hay actividad`);
+}
+
+/**
  * Detiene todos los servidores Python inactivos
  */
 function cleanupInactiveServers(): void {
@@ -138,24 +164,46 @@ setInterval(cleanupInactiveServers, 60 * 1000);
 export const getPrediction = async (req: Request, res: Response) => {
     try {
         const { game } = req.params;
-        const { count } = req.query;
+        console.log(`Solicitud de predicción para juego: ${game}`);
 
-        // Aquí iría la lógica para obtener la predicción de tu IA
-        // Por ahora, devolvemos datos de ejemplo
-        
-        const predictions = [
-            { numbers: [1, 2, 3, 4, 5], stars: [1, 2] },
-            { numbers: [6, 7, 8, 9, 10], stars: [3, 4] }
-        ];
+        // Iniciar el servidor Python para el juego específico
+        const port = await startPythonServer(game);
+        console.log(`Servidor Python iniciado en puerto: ${port}`);
 
-        if (predictions) {
-            return res.status(200).json(predictions);
-        } else {
-            return res.status(404).json({ message: "Could not generate prediction." });
-        }
+        // Realizar la solicitud HTTP al servidor Python
+        const response = await axios.post(`http://localhost:${port}/predict`, {
+            input: [1, 2, 3, 4, 5, 6, 7] // Datos de entrada básicos
+        }, {
+            timeout: 30000 // 30 segundos de timeout
+        });
+
+        console.log(`Respuesta del servidor Python:`, response.data);
+
+        // Programar el cierre del servidor después del periodo de inactividad
+        scheduleServerShutdown(game);
+
+        // Devolver la respuesta al frontend
+        return res.status(200).json({
+            success: true,
+            prediction: response.data.prediction,
+            game: game,
+            timestamp: new Date().toISOString()
+        });
+
     } catch (error) {
-        console.error('Error in getPrediction:', error);
-        return res.status(500).json({ message: 'Internal server error' });
+        console.error(`Error al generar predicción para ${req.params.game}:`, error);
+        
+        // Si hay error, intentar limpiar el servidor
+        const game = req.params.game;
+        if (pythonServers[game]) {
+            stopPythonServer(game);
+        }
+
+        return res.status(500).json({ 
+            success: false,
+            error: 'Error al generar la predicción',
+            message: error instanceof Error ? error.message : 'Error desconocido'
+        });
     }
 };
 
