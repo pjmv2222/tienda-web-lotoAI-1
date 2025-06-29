@@ -40,11 +40,11 @@
       <p>Selecciona una de nuestras opciones para obtener combinaciones generadas por IA:</p>
 
       <div class="options-container">
-        <div class="option-card" [class.active]="hasBasicPlan">
+        <div class="option-card" [class.active]="hasBasicPlan === true">
           <div class="option-header">
             <h3>Predicción Básica</h3>
-            <span class="option-price" *ngIf="!hasBasicPlan">1,22€</span>
-            <span class="option-price active" *ngIf="hasBasicPlan">ACTIVADO</span>
+            <span class="option-price" *ngIf="hasBasicPlan === false">1,22€</span>
+            <span class="option-price active" *ngIf="hasBasicPlan === true">ACTIVADO</span>
           </div>
           <div class="option-features">
             <ul>
@@ -53,12 +53,15 @@
               <li>Estrellas optimizadas</li>
             </ul>
           </div>
-          <button class="generate-btn" *ngIf="hasBasicPlan" routerLink="/euromillon/prediccion">
+          <button class="generate-btn" *ngIf="hasBasicPlan === true" routerLink="/euromillon/prediccion">
             Generar predicción
           </button>
-          <button class="generate-btn" *ngIf="!hasBasicPlan" (click)="showSubscriptionOptions()">Suscribir</button>
+          <button class="generate-btn" *ngIf="hasBasicPlan === false" (click)="showSubscriptionOptions()">Suscribir</button>
+          <div *ngIf="isLoadingSubscriptionStatus && isLoggedIn" class="loading-status">
+            Verificando suscripción...
+          </div>
           <p *ngIf="!isLoggedIn" class="login-required">Necesitas <a routerLink="/auth/login">iniciar sesión</a> para generar predicciones</p>
-          <p *ngIf="isLoggedIn && !hasBasicPlan" class="login-required">Necesitas <a routerLink="/planes">suscribir este plan</a> para generar predicciones</p>
+          <p *ngIf="isLoggedIn && !isLoadingSubscriptionStatus && hasBasicPlan === false" class="login-required">Necesitas <a routerLink="/planes">suscribir este plan</a> para generar predicciones</p>
 
           <!-- Mostrar error si hay alguno -->
           <p *ngIf="predictionError" class="prediction-error">{{ predictionError }}</p>
@@ -81,11 +84,11 @@
         </div>
 
         <!-- Plan Mensual -->
-        <div class="option-card premium" [class.active]="hasMonthlyPlan">
+        <div class="option-card premium" [class.active]="hasMonthlyPlan === true">
           <div class="option-header">
             <h3>Plan Mensual</h3>
-            <span class="option-price" *ngIf="!hasMonthlyPlan">10,22€</span>
-            <span class="option-price active" *ngIf="hasMonthlyPlan">ACTIVADO</span>
+            <span class="option-price" *ngIf="hasMonthlyPlan === false">10,22€</span>
+            <span class="option-price active" *ngIf="hasMonthlyPlan === true">ACTIVADO</span>
           </div>
           <div class="option-features">
             <ul>
@@ -96,17 +99,17 @@
               <li>Histórico de resultados</li>
             </ul>
           </div>
-          <button class="generate-btn premium-btn" *ngIf="!hasMonthlyPlan" (click)="showSubscriptionOptions()">Suscribir</button>
-          <button class="generate-btn premium-btn" *ngIf="hasMonthlyPlan" [disabled]="true">Generar</button>
+          <button class="generate-btn premium-btn" *ngIf="hasMonthlyPlan === false" (click)="showSubscriptionOptions()">Suscribir</button>
+          <button class="generate-btn premium-btn" *ngIf="hasMonthlyPlan === true" [disabled]="true">Generar</button>
           <p *ngIf="!isLoggedIn" class="login-required">Necesitas <a routerLink="/auth/login">iniciar sesión</a> para generar predicciones premium</p>
         </div>
 
         <!-- Plan Pro -->
-        <div class="option-card premium pro" [class.active]="hasProPlan">
+        <div class="option-card premium pro" [class.active]="hasProPlan === true">
           <div class="option-header">
             <h3>Plan Pro</h3>
-            <span class="option-price" *ngIf="!hasProPlan">122€</span>
-            <span class="option-price active" *ngIf="hasProPlan">ACTIVADO</span>
+            <span class="option-price" *ngIf="hasProPlan === false">122€</span>
+            <span class="option-price active" *ngIf="hasProPlan === true">ACTIVADO</span>
           </div>
           <div class="option-features">
             <ul>
@@ -118,8 +121,8 @@
               <li>Acceso a todas las loterías</li>
             </ul>
           </div>
-          <button class="generate-btn premium-btn" *ngIf="!hasProPlan" (click)="showSubscriptionOptions()">Suscribir</button>
-          <button class="generate-btn premium-btn" *ngIf="hasProPlan" [disabled]="true">Generar</button>
+          <button class="generate-btn premium-btn" *ngIf="hasProPlan === false" (click)="showSubscriptionOptions()">Suscribir</button>
+          <button class="generate-btn premium-btn" *ngIf="hasProPlan === true" [disabled]="true">Generar</button>
           <p *ngIf="!isLoggedIn" class="login-required">Necesitas <a routerLink="/auth/login">iniciar sesión</a> para generar predicciones premium</p>
         </div>
       </div>
