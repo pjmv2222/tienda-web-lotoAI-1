@@ -27,6 +27,11 @@ if [ ! -f "package.json" ]; then
     exit 1
 fi
 
+# Stop Python IA server to free memory during compilation
+print_status "Deteniendo servidor de IA Python para liberar memoria..."
+pkill -f "python3.*server-ia-unificado.py" || true
+sleep 2
+
 # Stop any existing Node.js processes
 print_status "Deteniendo procesos de Node.js existentes..."
 pkill -f "node.*dist/tienda-web-loto-ai/server" || true
