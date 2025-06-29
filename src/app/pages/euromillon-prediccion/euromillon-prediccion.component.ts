@@ -18,10 +18,12 @@ import { EuromillonesBallComponent } from '../../components/euromillones-ball/eu
 export class EuromillonPrediccionComponent implements OnInit, OnDestroy {
   // Variables para el usuario y suscripciones
   isLoggedIn = false;
-  hasBasicPlan = false;
-  hasMonthlyPlan = false;
-  hasProPlan = false;
+  hasBasicPlan: boolean | null = null;  // null = no verificado, true/false = verificado
+  hasMonthlyPlan: boolean | null = null;
+  hasProPlan: boolean | null = null;
+  isLoadingSubscriptionStatus = true;
   private subscriptions: Subscription[] = [];
+  private verificationsCompleted = 0;
 
   // Variables para las predicciones
   isGeneratingPrediction = false;
@@ -67,6 +69,7 @@ export class EuromillonPrediccionComponent implements OnInit, OnDestroy {
       const basicSub = this.subscriptionService.hasActivePlan('basic').subscribe(hasBasic => {
         this.hasBasicPlan = hasBasic;
         console.log('Usuario tiene plan básico:', this.hasBasicPlan);
+        this.checkAllVerificationsCompleted();
       });
       this.subscriptions.push(basicSub);
 
@@ -79,6 +82,7 @@ export class EuromillonPrediccionComponent implements OnInit, OnDestroy {
         if (hasMonthly) {
           this.maxPredictions = 10;
         }
+        this.checkAllVerificationsCompleted();
       });
       this.subscriptions.push(monthlySub);
 
@@ -91,16 +95,15 @@ export class EuromillonPrediccionComponent implements OnInit, OnDestroy {
         if (hasPro) {
           this.maxPredictions = 20;
         }
+        this.checkAllVerificationsCompleted();
       });
       this.subscriptions.push(proSub);
 
       // Verificar si hay predicciones guardadas
       this.loadSavedPredictions();
 
-      // Si no hay predicciones guardadas, generar automáticamente
-      if (this.predictionResults.length === 0) {
-        this.generatePredictions();
-      }
+      // La generación automática se manejará en checkAllVerificationsCompleted()
+      // cuando se completen todas las verificaciones de suscripción
     } else {
       // El usuario no está autenticado, redirigir a la página de login
       this.router.navigate(['/auth/login'], {
@@ -112,6 +115,22 @@ export class EuromillonPrediccionComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     // Cancelar todas las suscripciones para evitar memory leaks
     this.subscriptions.forEach(sub => sub.unsubscribe());
+  }
+
+  /**
+   * Verifica si todas las verificaciones de suscripción se han completado
+   */
+  private checkAllVerificationsCompleted(): void {
+    this.verificationsCompleted++;
+    
+    if (this.verificationsCompleted >= 3) { // 3 verificaciones: basic, monthly, pro
+      this.isLoadingSubscriptionStatus = false;
+      
+      // Si no hay predicciones guardadas y el usuario tiene al menos un plan, generar automáticamente
+      if (this.predictionResults.length === 0 && (this.hasBasicPlan || this.hasMonthlyPlan || this.hasProPlan)) {
+        setTimeout(() => this.generatePredictions(), 100); // Pequeño delay para evitar problemas de timing
+      }
+    }
   }
 
   /**
@@ -174,8 +193,14 @@ export class EuromillonPrediccionComponent implements OnInit, OnDestroy {
    * Genera predicciones para Euromillón
    */
   generatePredictions(): void {
-    // Verificar si el usuario tiene un plan activo
-    if (!this.hasBasicPlan && !this.hasMonthlyPlan && !this.hasProPlan) {
+    // Si aún estamos cargando el estado de suscripción, no hacer nada
+    if (this.isLoadingSubscriptionStatus) {
+      console.log('Aún cargando estado de suscripción...');
+      return;
+    }
+
+    // Verificar si el usuario tiene un plan activo (comparaciones estrictas)
+    if (this.hasBasicPlan === false && this.hasMonthlyPlan === false && this.hasProPlan === false) {
       console.log('El usuario no tiene un plan activo según las propiedades del componente');
 
       // Verificar si hay un pago reciente en localStorage
