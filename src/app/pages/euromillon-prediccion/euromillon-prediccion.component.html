@@ -34,14 +34,20 @@
         </p>
       </div>
 
+      <!-- Indicador de verificación de suscripción -->
+      <div *ngIf="isLoadingSubscriptionStatus" class="loading-container">
+        <div class="loading-spinner"></div>
+        <p>Verificando suscripción...</p>
+      </div>
+
       <!-- Mostrar error si hay alguno -->
-      <div *ngIf="predictionError" class="prediction-error">
+      <div *ngIf="predictionError && !isLoadingSubscriptionStatus" class="prediction-error">
         <p>{{ predictionError }}</p>
         <button class="btn-primary" routerLink="/planes">Ver planes disponibles</button>
       </div>
 
-      <!-- Indicador de carga -->
-      <div *ngIf="isGeneratingPrediction" class="loading-container">
+      <!-- Indicador de carga de predicciones -->
+      <div *ngIf="isGeneratingPrediction && !isLoadingSubscriptionStatus" class="loading-container">
         <div class="loading-spinner"></div>
         <p>Generando predicciones optimizadas...</p>
       </div>
