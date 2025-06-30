@@ -68,11 +68,11 @@
             <div class="prediction-numbers">
               <div class="lottery-balls-container">
                 <div *ngFor="let number of emptyNumbers" class="ball-wrapper">
-                  <div class="empty-ball main-number">?</div>
+                  <app-euromillones-ball number="?" [size]="60" [staticRendering]="true"></app-euromillones-ball>
                 </div>
                 <span class="lottery-balls-separator">+</span>
                 <div *ngFor="let star of emptyStars" class="ball-wrapper">
-                  <div class="empty-ball star-number">?</div>
+                  <app-euromillones-ball number="?" type="star" [size]="60" [staticRendering]="true"></app-euromillones-ball>
                 </div>
               </div>
             </div>
