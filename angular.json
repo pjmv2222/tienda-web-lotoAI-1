@@ -58,10 +58,6 @@
             },
             "outputHashing": "all",
             "sourceMap": false,
-            "namedChunks": false,
-            "aot": true,
-            "extractLicenses": true,
-            "buildOptimizer": true,
             "budgets": [
               {
                 "type": "initial",
