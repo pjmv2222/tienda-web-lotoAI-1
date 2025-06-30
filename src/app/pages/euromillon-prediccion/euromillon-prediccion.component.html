@@ -52,6 +52,40 @@
         <p>Generando predicciones optimizadas...</p>
       </div>
 
+      <!-- Contenedor de bolas vacías inicial -->
+      <div *ngIf="showEmptyBalls && !isGeneratingPrediction && !isLoadingSubscriptionStatus && !predictionError" class="empty-balls-section">
+        <div class="empty-balls-header">
+          <h3>Tu predicción aparecerá aquí</h3>
+          <p>Presiona "Generar nuevas predicciones" para obtener combinaciones optimizadas por nuestra IA especializada en Euromillones.</p>
+        </div>
+        
+        <div class="empty-prediction-container">
+          <div class="empty-prediction-card">
+            <div class="prediction-card-header">
+              <h3>Combinación Optimizada</h3>
+              <span class="prediction-type">Por IA "Da Vinci"</span>
+            </div>
+            <div class="prediction-numbers">
+              <div class="lottery-balls-container">
+                <div *ngFor="let number of emptyNumbers" class="ball-wrapper">
+                  <div class="empty-ball main-number">?</div>
+                </div>
+                <span class="lottery-balls-separator">+</span>
+                <div *ngFor="let star of emptyStars" class="ball-wrapper">
+                  <div class="empty-ball star-number">?</div>
+                </div>
+              </div>
+            </div>
+            <div class="prediction-stats">
+              <div class="stat-item">
+                <span class="stat-label">Probabilidad:</span>
+                <span class="stat-value">1 en 139.838.160</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Resultados de las predicciones -->
       <div *ngIf="predictionResults.length > 0" class="predictions-section">
         <div class="predictions-header">

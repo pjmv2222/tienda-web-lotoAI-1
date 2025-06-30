@@ -424,3 +424,89 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Estilos para la sección de bolas vacías */
+.empty-balls-section {
+  margin: 30px 0;
+  padding: 20px;
+  background-color: #f8f9fa;
+  border-radius: 12px;
+  border: 2px dashed #dee2e6;
+}
+
+.empty-balls-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.empty-balls-header h3 {
+  font-size: 22px;
+  color: #495057;
+  margin-bottom: 10px;
+}
+
+.empty-balls-header p {
+  color: #6c757d;
+  max-width: 600px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+.empty-prediction-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.empty-prediction-card {
+  background-color: #ffffff;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e9ecef;
+  max-width: 400px;
+  width: 100%;
+}
+
+.empty-ball {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 18px;
+  color: #6c757d;
+  border: 2px dashed #adb5bd;
+  background-color: #f8f9fa;
+  transition: all 0.3s ease;
+}
+
+.empty-ball.main-number {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-color: #0072ff;
+  color: #0072ff;
+}
+
+.empty-ball.star-number {
+  background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+  border-color: #ffc107;
+  color: #856404;
+}
+
+.empty-ball:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Animación sutil para las bolas vacías */
+@keyframes pulse-empty {
+  0% { opacity: 0.6; }
+  50% { opacity: 1; }
+  100% { opacity: 0.6; }
+}
+
+.empty-ball {
+  animation: pulse-empty 2s ease-in-out infinite;
+}
