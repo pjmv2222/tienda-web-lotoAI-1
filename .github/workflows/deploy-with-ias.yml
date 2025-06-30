@@ -34,12 +34,20 @@ jobs:
           cp ia-server-control.sh ia-server-control.sh.backup 2>/dev/null || true
           cp server/controllers/webhook.controller.js server/controllers/webhook.controller.js.backup 2>/dev/null || true
           
+          # Respaldar archivos del scraper
+          cp src/assets/botes.json src/assets/botes.json.backup 2>/dev/null || echo "⚠️ botes.json (src) no encontrado para backup"
+          cp dist/tienda-web-loto-ai/browser/assets/botes.json dist/tienda-web-loto-ai/browser/assets/botes.json.backup 2>/dev/null || echo "⚠️ botes.json (dist) no encontrado para backup"
+          
           git reset --hard origin/main
           
           # Restaurar archivos críticos si existen backups
           [ -f server-ia-unificado.py.backup ] && cp server-ia-unificado.py.backup server-ia-unificado.py
           [ -f ia-server-control.sh.backup ] && cp ia-server-control.sh.backup ia-server-control.sh
           [ -f server/controllers/webhook.controller.js.backup ] && cp server/controllers/webhook.controller.js.backup server/controllers/webhook.controller.js
+          
+          # Restaurar archivos del scraper
+          [ -f src/assets/botes.json.backup ] && cp src/assets/botes.json.backup src/assets/botes.json && echo "✅ botes.json (src) restaurado"
+          [ -f dist/tienda-web-loto-ai/browser/assets/botes.json.backup ] && mkdir -p dist/tienda-web-loto-ai/browser/assets/ && cp dist/tienda-web-loto-ai/browser/assets/botes.json.backup dist/tienda-web-loto-ai/browser/assets/botes.json && echo "✅ botes.json (dist) restaurado"
 
           echo "IAs actualizadas correctamente"
 

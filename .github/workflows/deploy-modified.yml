@@ -38,6 +38,20 @@ jobs:
               echo "✅ Archivo .env.production respaldado"
             fi
             
+            # Respaldar archivos críticos del scraper
+            if [ -f "src/assets/botes.json" ]; then
+              cp src/assets/botes.json src/assets/botes.json.backup
+              echo "✅ Archivo botes.json (src) respaldado"
+            else
+              echo "⚠️  Archivo src/assets/botes.json no encontrado para respaldar"
+            fi
+            if [ -f "dist/tienda-web-loto-ai/browser/assets/botes.json" ]; then
+              cp dist/tienda-web-loto-ai/browser/assets/botes.json dist/tienda-web-loto-ai/browser/assets/botes.json.backup
+              echo "✅ Archivo botes.json (dist) respaldado"
+            else
+              echo "⚠️  Archivo dist botes.json no encontrado para respaldar"
+            fi
+            
             # 2. Actualizar desde GitHub
             echo "--- Fase 2: Actualizando código fuente ---"
             git fetch origin main
@@ -58,7 +72,25 @@ jobs:
               rm .env.production.backup
               echo "✅ Archivo .env.production restaurado"
             fi
-
+            
+            # Restaurar archivos críticos del scraper
+            if [ -f "src/assets/botes.json.backup" ]; then
+              cp src/assets/botes.json.backup src/assets/botes.json
+              rm src/assets/botes.json.backup
+              echo "✅ Archivo botes.json (src) restaurado con datos actualizados del scraper"
+            else
+              echo "❌ No se pudo restaurar botes.json (src) - archivo de respaldo no encontrado"
+            fi
+            if [ -f "dist/tienda-web-loto-ai/browser/assets/botes.json.backup" ]; then
+              # Crear directorio si no existe
+              mkdir -p dist/tienda-web-loto-ai/browser/assets/
+              cp dist/tienda-web-loto-ai/browser/assets/botes.json.backup dist/tienda-web-loto-ai/browser/assets/botes.json
+              rm dist/tienda-web-loto-ai/browser/assets/botes.json.backup
+              echo "✅ Archivo botes.json (dist) restaurado con datos actualizados del scraper"
+            else
+              echo "❌ No se pudo restaurar botes.json (dist) - archivo de respaldo no encontrado"
+            fi
+            
             # 3. Verificar variables de entorno
             echo "--- Fase 3: Verificando variables de entorno ---"
             if [ -f ".env" ]; then
@@ -95,6 +127,16 @@ jobs:
             if [ $? -ne 0 ]; then
               echo "❌ Error de compilación en el Frontend. Abortando despliegue."
               exit 1
+            fi
+            
+            # 7.5. Asegurar que botes.json actualizado esté en dist después del build
+            echo "--- Fase 7.5: Copiando botes.json actualizado a dist ---"
+            if [ -f "src/assets/botes.json" ]; then
+              mkdir -p dist/tienda-web-loto-ai/browser/assets/
+              cp src/assets/botes.json dist/tienda-web-loto-ai/browser/assets/botes.json
+              echo "✅ Archivo botes.json actualizado copiado a dist"
+            else
+              echo "⚠️  Archivo src/assets/botes.json no encontrado para copiar a dist"
             fi
             
             # 8. Reiniciar los servicios con PM2
