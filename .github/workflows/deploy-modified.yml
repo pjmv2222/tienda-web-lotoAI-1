@@ -123,11 +123,25 @@ jobs:
             
             # 7. Compilar el Frontend (Angular SSR)
             echo "--- Fase 7: Compilando Frontend ---"
-            npx ng build
+            # Aumentar memoria swap temporalmente para la compilación
+            sudo fallocate -l 2G /swapfile || true
+            sudo chmod 600 /swapfile || true
+            sudo mkswap /swapfile || true
+            sudo swapon /swapfile || true
+            
+            # Compilar con opciones de memoria optimizadas
+            NODE_OPTIONS="--max-old-space-size=4096" npx ng build --configuration=production
             if [ $? -ne 0 ]; then
               echo "❌ Error de compilación en el Frontend. Abortando despliegue."
+              # Limpiar swap
+              sudo swapoff /swapfile || true
+              sudo rm /swapfile || true
               exit 1
             fi
+            
+            # Limpiar swap después de la compilación
+            sudo swapoff /swapfile || true
+            sudo rm /swapfile || true
             
             # 7.5. Asegurar que botes.json actualizado esté en dist después del build
             echo "--- Fase 7.5: Copiando botes.json actualizado a dist ---"

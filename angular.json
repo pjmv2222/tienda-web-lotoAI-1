@@ -47,7 +47,34 @@
               "./src/assets/css/mobile-styles.css",
               "./src/assets/css/container-fixes.css"
             ],
-            "scripts": []
+            "scripts": [],
+            "optimization": {
+              "scripts": true,
+              "styles": {
+                "minify": true,
+                "inlineCritical": false
+              },
+              "fonts": true
+            },
+            "outputHashing": "all",
+            "sourceMap": false,
+            "namedChunks": false,
+            "aot": true,
+            "extractLicenses": true,
+            "vendorChunk": true,
+            "buildOptimizer": true,
+            "budgets": [
+              {
+                "type": "initial",
+                "maximumWarning": "4mb",
+                "maximumError": "8mb"
+              },
+              {
+                "type": "anyComponentStyle", 
+                "maximumWarning": "6kb",
+                "maximumError": "10kb"
+              }
+            ]
           },
           "configurations": {
             "production": {
