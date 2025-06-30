@@ -86,10 +86,30 @@ export class AuthService {
   }
 
   private getAuthHeaders(): HttpHeaders {
-    const token = this.currentUserValue?.token || this.cookieService.getCookie(this.tokenCookieKey);
+    // Múltiples formas de obtener el token para debugging
+    const tokenFromUser = this.currentUserValue?.token;
+    const tokenFromCookie = this.cookieService.getCookie(this.tokenCookieKey);
+    
+    // Fallback directo desde document.cookie
+    let tokenFromDocument = null;
+    if (isPlatformBrowser(this.platformId)) {
+      const cookieMatch = document.cookie.match(/auth_token=([^;]*)/);
+      tokenFromDocument = cookieMatch ? decodeURIComponent(cookieMatch[1]) : null;
+    }
+    
+    const finalToken = tokenFromUser || tokenFromCookie || tokenFromDocument;
+    
+    console.log('AuthHeaders Debug:', {
+      tokenFromUser: tokenFromUser ? 'EXISTS' : 'NULL',
+      tokenFromCookie: tokenFromCookie ? 'EXISTS' : 'NULL', 
+      tokenFromDocument: tokenFromDocument ? 'EXISTS' : 'NULL',
+      finalToken: finalToken ? 'EXISTS' : 'NULL',
+      cookieServiceResult: this.cookieService.getCookie(this.tokenCookieKey)
+    });
+    
     return new HttpHeaders({
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
+      'Authorization': `Bearer ${finalToken}`
     });
   }
 

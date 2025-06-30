@@ -82,6 +82,18 @@ export class CookieService {
   getCookie(name: string): string | null {
     if (!isPlatformBrowser(this.platformId)) return null;
 
+    // Método mejorado para nombres de cookies sin caracteres especiales
+    const nameEQ = `${name}=`;
+    const cookies = document.cookie.split(';');
+    
+    for (let cookie of cookies) {
+      cookie = cookie.trim();
+      if (cookie.indexOf(nameEQ) === 0) {
+        return decodeURIComponent(cookie.substring(nameEQ.length));
+      }
+    }
+    
+    // Fallback con regex original para casos especiales
     const matches = document.cookie.match(
       new RegExp(`(?:^|; )${encodeURIComponent(name)}=([^;]*)`)
     );
