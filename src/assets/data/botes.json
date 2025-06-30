@@ -1,0 +1,44 @@
+{
+  "euromillon": {
+    "bote": "17.000.000",
+    "moneda": "€",
+    "proximoSorteo": "Martes, 1 de julio",
+    "ultimaActualizacion": "2024-06-28T20:00:00Z"
+  },
+  "primitiva": {
+    "bote": "8.500.000",
+    "moneda": "€", 
+    "proximoSorteo": "Jueves, 2 de julio",
+    "ultimaActualizacion": "2024-06-28T20:00:00Z"
+  },
+  "bonoloto": {
+    "bote": "2.100.000",
+    "moneda": "€",
+    "proximoSorteo": "Domingo, 30 de junio", 
+    "ultimaActualizacion": "2024-06-28T20:00:00Z"
+  },
+  "gordo": {
+    "bote": "5.000.000",
+    "moneda": "€",
+    "proximoSorteo": "Domingo, 30 de junio",
+    "ultimaActualizacion": "2024-06-28T20:00:00Z"
+  },
+  "eurodreams": {
+    "bote": "20.000",
+    "moneda": "€/mes",
+    "proximoSorteo": "Jueves, 2 de julio", 
+    "ultimaActualizacion": "2024-06-28T20:00:00Z"
+  },
+  "loterianacional": {
+    "bote": "300.000",
+    "moneda": "€",
+    "proximoSorteo": "Sábado, 29 de junio",
+    "ultimaActualizacion": "2024-06-28T20:00:00Z"
+  },
+  "lototurf": {
+    "bote": "1.000.000", 
+    "moneda": "€",
+    "proximoSorteo": "Domingo, 30 de junio",
+    "ultimaActualizacion": "2024-06-28T20:00:00Z"
+  }
+} 

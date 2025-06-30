@@ -58,18 +58,12 @@ export class PredictionService {
     // Normalizar el ID del juego
     const normalizedGameId = gameMapping[gameId] || gameId;
 
-    // En producción, usamos la API directa o el backend como proxy
-    // En desarrollo, usamos el proxy del backend o una simulación
+    // Usar siempre el backend de Node.js como proxy (funciona en desarrollo y producción)
     let url = '';
-    if (environment.production) {
-      // En producción, intentamos usar directamente la API de IA
-      url = `${environment.iaApiUrl}/${normalizedGameId}/predict`;
-      console.log(`Usando API directa: ${url}`);
+    if (environment.useMockData) {
+      return this.generateMockPrediction(gameId);
     } else {
-      // Para desarrollo, podemos usar una simulación o el backend
-      if (environment.useMockData) {
-        return this.generateMockPrediction(gameId);
-      }
+      // Usar el endpoint del backend que actúa como proxy hacia los servidores Python
       url = `${this.apiUrl}/predictions/${normalizedGameId}`;
     }
 
