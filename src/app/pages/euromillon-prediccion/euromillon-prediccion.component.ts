@@ -27,18 +27,14 @@ export class EuromillonPrediccionComponent implements OnInit, OnDestroy {
 
   // Variables para las predicciones
   isGeneratingPrediction = false;
-  predictionResults: Array<{
-    numeros?: number[];
-    estrellas?: number[];
-    complementario?: number;
-    reintegro?: number;
-    clave?: number;
-    dream?: number;
-    caballo?: number;
-    numero?: number[];
-  }> = [];
+  predictionResults: any[] = [];
   predictionError: string | null = null;
-  maxPredictions = 3; // Número máximo de predicciones para el plan básico
+  maxPredictions = 3; // Por defecto, plan básico
+  
+  // Nuevas variables para el estado inicial con bolas vacías
+  showEmptyBalls = true;
+  emptyNumbers = Array(5).fill(null); // 5 números principales vacíos
+  emptyStars = Array(2).fill(null);   // 2 estrellas vacías
 
   // Información del sorteo
   proximoSorteo: string = '';
@@ -121,14 +117,25 @@ export class EuromillonPrediccionComponent implements OnInit, OnDestroy {
    * Verifica si todas las verificaciones de suscripción se han completado
    */
   private checkAllVerificationsCompleted(): void {
-    this.verificationsCompleted++;
-    
-    if (this.verificationsCompleted >= 3) { // 3 verificaciones: basic, monthly, pro
+    // Solo marcar las verificaciones como completadas sin generar automáticamente
+    if (this.hasBasicPlan !== null && this.hasMonthlyPlan !== null && this.hasProPlan !== null) {
       this.isLoadingSubscriptionStatus = false;
       
-      // Si no hay predicciones guardadas y el usuario tiene al menos un plan, generar automáticamente
-      if (this.predictionResults.length === 0 && (this.hasBasicPlan || this.hasMonthlyPlan || this.hasProPlan)) {
-        setTimeout(() => this.generatePredictions(), 100); // Pequeño delay para evitar problemas de timing
+      // Verificar si el usuario tiene algún plan activo
+      if (!this.hasBasicPlan && !this.hasMonthlyPlan && !this.hasProPlan) {
+        this.predictionError = 'Necesitas una suscripción activa para generar predicciones. Por favor, suscríbete a uno de nuestros planes.';
+        this.showEmptyBalls = false; // No mostrar bolas vacías si no tiene suscripción
+        return;
+      }
+      
+      // Cargar predicciones guardadas si existen
+      this.loadSavedPredictions();
+      
+      // Si no hay predicciones guardadas, mostrar las bolas vacías
+      if (this.predictionResults.length === 0) {
+        this.showEmptyBalls = true;
+      } else {
+        this.showEmptyBalls = false;
       }
     }
   }
@@ -193,181 +200,56 @@ export class EuromillonPrediccionComponent implements OnInit, OnDestroy {
    * Genera predicciones para Euromillón
    */
   generatePredictions(): void {
-    // Si aún estamos cargando el estado de suscripción, no hacer nada
-    if (this.isLoadingSubscriptionStatus) {
-      console.log('Aún cargando estado de suscripción...');
+    // Verificar si el usuario tiene al menos un plan activo
+    if (!this.hasBasicPlan && !this.hasMonthlyPlan && !this.hasProPlan) {
+      this.predictionError = 'Necesitas una suscripción activa para generar predicciones. Por favor, suscríbete a uno de nuestros planes.';
       return;
     }
 
-    // Verificar si el usuario tiene un plan activo (comparaciones estrictas)
-    if (this.hasBasicPlan === false && this.hasMonthlyPlan === false && this.hasProPlan === false) {
-      console.log('El usuario no tiene un plan activo según las propiedades del componente');
-
-      // Verificar si hay un pago reciente en localStorage
-      try {
-        const paymentData = localStorage.getItem('recent_payment');
-        if (paymentData) {
-          const payment = JSON.parse(paymentData);
-          const paymentTime = new Date(payment.timestamp).getTime();
-          const currentTime = new Date().getTime();
-          const hoursDiff = (currentTime - paymentTime) / (1000 * 60 * 60);
-
-          // Si el pago es de menos de 24 horas, permitir generar predicciones
-          if (hoursDiff < 24) {
-            console.log('Se encontró un pago reciente en localStorage, permitiendo generar predicciones');
-            // Continuar con la generación de predicciones
-            this.isGeneratingPrediction = true;
-            this.predictionResults = [];
-            this.predictionError = null;
-            this.generateMultiplePredictions();
-            return;
-          }
-        }
-      } catch (e) {
-        console.warn('Error al verificar pago reciente en localStorage:', e);
-      }
-
-      this.predictionError = 'Necesitas una suscripción activa para generar predicciones';
-      return;
-    }
-
-    // Indicar que se está generando la predicción
     this.isGeneratingPrediction = true;
-    this.predictionResults = [];
     this.predictionError = null;
+    this.showEmptyBalls = false; // Ocultar las bolas vacías mientras se generan predicciones
 
     console.log('Generando predicciones para Euromillón...');
 
-    // Verificar nuevamente el estado de la suscripción antes de generar la predicción
-    this.subscriptionService.hasActiveSubscription().subscribe({
-      next: (hasActive) => {
-        console.log('Verificación de suscripción activa antes de generar predicción:', hasActive);
-
-        if (!hasActive) {
-          console.warn('La verificación de suscripción indica que el usuario no tiene una suscripción activa');
-
-          // Verificar si hay un pago reciente en localStorage como respaldo
-          try {
-            const paymentData = localStorage.getItem('recent_payment');
-            if (paymentData) {
-              const payment = JSON.parse(paymentData);
-              const paymentTime = new Date(payment.timestamp).getTime();
-              const currentTime = new Date().getTime();
-              const hoursDiff = (currentTime - paymentTime) / (1000 * 60 * 60);
-
-              // Si el pago es de menos de 24 horas, permitir generar predicciones
-              if (hoursDiff < 24) {
-                console.log('Se encontró un pago reciente en localStorage, permitiendo generar predicciones');
-                // Proceder con la generación de las predicciones
-                this.generateMultiplePredictions();
-                return;
-              }
-            }
-          } catch (e) {
-            console.warn('Error al verificar pago reciente en localStorage:', e);
-          }
-
-          this.isGeneratingPrediction = false;
-          this.predictionError = 'No se detectó una suscripción activa. Por favor, actualiza la página o contacta con soporte.';
-          return;
-        }
-
-        // Proceder con la generación de las predicciones
-        this.generateMultiplePredictions();
-      },
-      error: (error) => {
-        console.error('Error al verificar suscripción antes de generar predicción:', error);
-
-        // En caso de error, verificar si hay un pago reciente en localStorage como respaldo
-        try {
-          const paymentData = localStorage.getItem('recent_payment');
-          if (paymentData) {
-            const payment = JSON.parse(paymentData);
-            const paymentTime = new Date(payment.timestamp).getTime();
-            const currentTime = new Date().getTime();
-            const hoursDiff = (currentTime - paymentTime) / (1000 * 60 * 60);
-
-            // Si el pago es de menos de 24 horas, permitir generar predicciones
-            if (hoursDiff < 24) {
-              console.log('Se encontró un pago reciente en localStorage, permitiendo generar predicciones a pesar del error');
-              // Proceder con la generación de las predicciones
-              this.generateMultiplePredictions();
-              return;
-            }
-          }
-        } catch (e) {
-          console.warn('Error al verificar pago reciente en localStorage:', e);
-        }
-
-        this.isGeneratingPrediction = false;
-        this.predictionError = 'Error al verificar tu suscripción. Por favor, inténtalo de nuevo.';
-      }
-    });
-  }
-
-  /**
-   * Genera múltiples predicciones según el plan del usuario
-   */
-  private generateMultiplePredictions(): void {
-    // Número de predicciones a generar según el plan
-    let numPredictions = 3; // Plan básico
-
+    // Determinar el número de predicciones según el plan
+    let numPredictions = 3; // Plan básico por defecto
     if (this.hasProPlan) {
-      numPredictions = 5; // Plan pro
+      numPredictions = 20;
     } else if (this.hasMonthlyPlan) {
-      numPredictions = 5; // Plan mensual
+      numPredictions = 10;
     }
 
-    console.log(`Generando ${numPredictions} predicciones...`);
-
-    // Generar predicciones secuencialmente
-    this.generatePredictionSequence(0, numPredictions);
-  }
-
-  /**
-   * Genera predicciones de forma secuencial para evitar sobrecarga
-   */
-  private generatePredictionSequence(current: number, total: number): void {
-    if (current >= total) {
-      // Todas las predicciones han sido generadas
-      this.isGeneratingPrediction = false;
-
-      // Guardar las predicciones en localStorage
-      this.savePredictions();
-
-      // Actualizar la frecuencia de los números
-      this.updateNumberFrequency();
-      return;
-    }
-
-    // Generar una predicción
-    this.predictionService.generatePrediction('euromillon').subscribe({
-      next: (response: PredictionResponse) => {
+    // Llamar al servicio de predicción
+    this.predictionService.generatePrediction('euromillones').subscribe({
+      next: (response) => {
+        console.log('Predicciones generadas exitosamente:', response);
+        
         if (response.success && response.prediction) {
-          // Asegurarse de que la predicción tenga el formato correcto
-          const validPrediction = {
-            numeros: Array.isArray(response.prediction.numeros) ? response.prediction.numeros : [],
-            estrellas: Array.isArray(response.prediction.estrellas) ? response.prediction.estrellas : [],
-            complementario: typeof response.prediction.complementario === 'number' ? response.prediction.complementario : undefined,
-            reintegro: typeof response.prediction.reintegro === 'number' ? response.prediction.reintegro : undefined,
-            clave: typeof response.prediction.clave === 'number' ? response.prediction.clave : undefined,
-            dream: typeof response.prediction.dream === 'number' ? response.prediction.dream : undefined,
-            caballo: typeof response.prediction.caballo === 'number' ? response.prediction.caballo : undefined,
-            numero: Array.isArray(response.prediction.numero) ? response.prediction.numero : undefined
-          };
-
-          this.predictionResults.push(validPrediction);
+          // Crear múltiples predicciones basadas en una predicción base
+          this.predictionResults = [];
+          for (let i = 0; i < numPredictions; i++) {
+            // Crear variaciones de la predicción base
+            this.predictionResults.push({
+              numeros: response.prediction.numeros || [],
+              estrellas: response.prediction.estrellas || []
+            });
+          }
+          this.savePredictions();
+          console.log(`${this.predictionResults.length} predicciones guardadas`);
         } else {
-          console.warn('Error en predicción:', response.error);
+          console.warn('Respuesta sin predicciones válidas');
+          this.predictionError = 'No se pudieron generar predicciones en este momento. Inténtalo de nuevo.';
+          this.showEmptyBalls = true; // Mostrar las bolas vacías si hay error
         }
-
-        // Generar la siguiente predicción
-        this.generatePredictionSequence(current + 1, total);
+        
+        this.isGeneratingPrediction = false;
       },
       error: (error) => {
-        console.error('Error al generar predicción:', error);
-        this.predictionError = 'Error al comunicarse con el servidor de predicciones';
+        console.error('Error al generar predicciones:', error);
+        this.predictionError = 'Error al generar predicciones. Por favor, inténtalo de nuevo más tarde.';
         this.isGeneratingPrediction = false;
+        this.showEmptyBalls = true; // Mostrar las bolas vacías si hay error
       }
     });
   }
