@@ -226,6 +226,9 @@ export class EuromillonPrediccionComponent implements OnInit, OnDestroy {
         console.log('Predicciones generadas exitosamente:', response);
         
         if (response.success && response.prediction) {
+          // Ocultar bolas vacías y mostrar predicciones reales
+          this.showEmptyBalls = false;
+          
           // Crear múltiples predicciones basadas en una predicción base
           this.predictionResults = [];
           for (let i = 0; i < numPredictions; i++) {
@@ -236,20 +239,17 @@ export class EuromillonPrediccionComponent implements OnInit, OnDestroy {
             });
           }
           this.savePredictions();
-          console.log(`${this.predictionResults.length} predicciones guardadas`);
         } else {
-          console.warn('Respuesta sin predicciones válidas');
-          this.predictionError = 'No se pudieron generar predicciones en este momento. Inténtalo de nuevo.';
-          this.showEmptyBalls = true; // Mostrar las bolas vacías si hay error
+          this.predictionError = response.error || 'Error desconocido al generar predicciones';
         }
         
         this.isGeneratingPrediction = false;
       },
       error: (error) => {
         console.error('Error al generar predicciones:', error);
-        this.predictionError = 'Error al generar predicciones. Por favor, inténtalo de nuevo más tarde.';
+        this.predictionError = 'No se pudieron generar las predicciones. Inténtalo de nuevo.';
         this.isGeneratingPrediction = false;
-        this.showEmptyBalls = true; // Mostrar las bolas vacías si hay error
+        this.showEmptyBalls = true; // Volver a mostrar bolas vacías si hay error
       }
     });
   }
