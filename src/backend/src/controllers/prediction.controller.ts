@@ -4,230 +4,243 @@ import * as path from 'path';
 import * as fs from 'fs';
 import axios from 'axios';
 
-// Mapa para almacenar los procesos de los servidores Python
-const pythonServers: { [key: string]: { 
-  process: ChildProcess, 
-  lastUsed: Date, 
-  port: number,
-  shutdownTimeout?: NodeJS.Timeout 
-} } = {};
+// Puerto fijo para el servidor IA unificado
+const IA_SERVER_PORT = 5000;
+const IA_SERVER_URL = `http://localhost:${IA_SERVER_PORT}`;
+const IA_SERVER_SCRIPT = path.resolve(__dirname, '../../../server-ia-unificado.py');
 
-// Configuración de puertos para cada juego
-const gamePorts: { [key: string]: number } = {
-  'euromillon': 5001,
-  'bonoloto': 5002,
-  'eurodreams': 5003,
-  'gordo-primitiva': 5004,
-  'loteria-nacional': 5005,
-  'lototurf': 5006,
-  'primitiva': 5007
+// Proceso del servidor IA unificado
+let iaServerProcess: ChildProcess | null = null;
+
+// Tiempo de espera para verificar que el servidor esté listo (3 segundos)
+const STARTUP_WAIT_TIME = 3000;
+
+// Mapeo de nombres de juegos entre frontend y servidor IA
+const gameMapping: { [key: string]: string } = {
+  'euromillon': 'euromillon',
+  'euromillones': 'euromillon',
+  'primitiva': 'primitiva',
+  'bonoloto': 'bonoloto',
+  'gordo': 'elgordo',
+  'gordo-primitiva': 'elgordo',
+  'eurodreams': 'eurodreams',
+  'loterianacional': 'loterianacional',
+  'loteria-nacional': 'loterianacional',
+  'lototurf': 'lototurf'
 };
-
-// Rutas a los scripts Python
-const pythonScriptPaths: { [key: string]: string } = {
-  'euromillon': path.resolve(__dirname, '../../../IAs-Loto/EuroMillon-CSV/server.py'),
-  'bonoloto': path.resolve(__dirname, '../../../IAs-Loto/Bonoloto/server.py'),
-  'eurodreams': path.resolve(__dirname, '../../../IAs-Loto/EuroDreams/server.py'),
-  'gordo-primitiva': path.resolve(__dirname, '../../../IAs-Loto/GordoPrimitiva/server.py'),
-  'loteria-nacional': path.resolve(__dirname, '../../../IAs-Loto/LOTERIA NACIONAL/server.py'),
-  'lototurf': path.resolve(__dirname, '../../../IAs-Loto/Lototurf/server.py'),
-  'primitiva': path.resolve(__dirname, '../../../IAs-Loto/LaPrimitiva/server.py')
-};
-
-// Tiempo de inactividad en milisegundos (5 minutos)
-const INACTIVITY_TIMEOUT = 5 * 60 * 1000;
 
 /**
- * Inicia un servidor Python para un juego específico
- * @param game Identificador del juego
- * @returns Promise que se resuelve cuando el servidor está listo
+ * Inicia el servidor IA unificado si no está corriendo
  */
-async function startPythonServer(game: string): Promise<number> {
+async function startIAServer(): Promise<void> {
   return new Promise((resolve, reject) => {
-    // Verificar si el servidor ya está en ejecución
-    if (pythonServers[game] && pythonServers[game].process) {
-      console.log(`Servidor Python para ${game} ya está en ejecución en el puerto ${pythonServers[game].port}`);
-      pythonServers[game].lastUsed = new Date();
-      resolve(pythonServers[game].port);
-      return;
-    }
-
-    // Verificar que el juego es válido
-    if (!gamePorts[game]) {
-      reject(new Error(`Juego no válido: ${game}`));
+    // Si ya está corriendo, no hacer nada
+    if (iaServerProcess && !iaServerProcess.killed) {
+      console.log('Servidor IA ya está en ejecución');
+      resolve();
       return;
     }
 
     // Verificar que el script Python existe
-    const scriptPath = pythonScriptPaths[game];
-    if (!fs.existsSync(scriptPath)) {
-      reject(new Error(`Script Python no encontrado: ${scriptPath}`));
+    if (!fs.existsSync(IA_SERVER_SCRIPT)) {
+      reject(new Error(`Script server-ia-unificado.py no encontrado en: ${IA_SERVER_SCRIPT}`));
       return;
     }
 
-    const port = gamePorts[game];
-    console.log(`Iniciando servidor Python para ${game} en el puerto ${port}...`);
+    console.log('Iniciando servidor IA unificado...');
 
     // Iniciar el proceso Python
-    const pythonProcess = spawn('python3', [scriptPath], {
+    iaServerProcess = spawn('python3', [IA_SERVER_SCRIPT], {
       env: {
         ...process.env,
-        PORT: port.toString(),
-        SKIP_AUTH: 'true' // Para desarrollo, omitir la autenticación
-      }
+        PORT: IA_SERVER_PORT.toString(),
+        FLASK_ENV: 'production'
+      },
+      cwd: path.dirname(IA_SERVER_SCRIPT)
     });
 
     // Manejar la salida estándar
-    pythonProcess.stdout.on('data', (data) => {
-      console.log(`[${game}] ${data.toString().trim()}`);
+    iaServerProcess.stdout?.on('data', (data) => {
+      console.log(`[IA-Server] ${data.toString().trim()}`);
     });
 
     // Manejar la salida de error
-    pythonProcess.stderr.on('data', (data) => {
-      console.error(`[${game}] Error: ${data.toString().trim()}`);
+    iaServerProcess.stderr?.on('data', (data) => {
+      console.error(`[IA-Server] Error: ${data.toString().trim()}`);
     });
 
     // Manejar el cierre del proceso
-    pythonProcess.on('close', (code) => {
-      console.log(`[${game}] Proceso terminado con código ${code}`);
-      delete pythonServers[game];
+    iaServerProcess.on('close', (code) => {
+      console.log(`[IA-Server] Proceso terminado con código ${code}`);
+      iaServerProcess = null;
     });
 
-    // Almacenar el proceso en el mapa
-    pythonServers[game] = {
-      process: pythonProcess,
-      lastUsed: new Date(),
-      port
-    };
+    // Manejar errores del proceso
+    iaServerProcess.on('error', (error) => {
+      console.error(`[IA-Server] Error del proceso: ${error.message}`);
+      iaServerProcess = null;
+      reject(error);
+    });
 
-    // Esperar a que el servidor esté listo (podría mejorar esto con una verificación real)
-    setTimeout(() => {
-      console.log(`Servidor Python para ${game} iniciado en el puerto ${port}`);
-      resolve(port);
-    }, 2000);
-  });
-}
+    // Servidor iniciado
 
-/**
- * Detiene un servidor Python para un juego específico
- * @param game Identificador del juego
- */
-function stopPythonServer(game: string): void {
-  if (pythonServers[game] && pythonServers[game].process) {
-    console.log(`Deteniendo servidor Python para ${game}...`);
-    pythonServers[game].process.kill();
-    delete pythonServers[game];
+    // Esperar a que el servidor esté listo
+    setTimeout(async () => {
+      try {
+        // Verificar que el servidor responde
+        await axios.get(`${IA_SERVER_URL}/health`);
+        console.log(`✅ Servidor IA iniciado correctamente en puerto ${IA_SERVER_PORT}`);
+        resolve();
+      } catch (error) {
+        console.error('❌ Error verificando estado del servidor IA:', error);
+        reject(new Error('Servidor IA no responde'));
+      }
+          }, STARTUP_WAIT_TIME);
+    });
   }
-}
-
-/**
- * Programa el cierre automático de un servidor Python después del periodo de inactividad
- * @param game Identificador del juego
- */
-function scheduleServerShutdown(game: string): void {
-  if (!pythonServers[game]) return;
-
-  // Cancelar timeout anterior si existe
-  if (pythonServers[game].shutdownTimeout) {
-    clearTimeout(pythonServers[game].shutdownTimeout);
-  }
-
-  // Programar nuevo timeout
-  pythonServers[game].shutdownTimeout = setTimeout(() => {
-    console.log(`Cerrando servidor Python para ${game} por inactividad...`);
-    stopPythonServer(game);
-  }, INACTIVITY_TIMEOUT);
-
-  console.log(`Servidor Python para ${game} se cerrará en ${INACTIVITY_TIMEOUT / 1000} segundos si no hay actividad`);
-}
-
-/**
- * Detiene todos los servidores Python inactivos
- */
-function cleanupInactiveServers(): void {
-  const now = new Date();
-  for (const [game, server] of Object.entries(pythonServers)) {
-    const timeSinceLastUse = now.getTime() - server.lastUsed.getTime();
-    if (timeSinceLastUse > INACTIVITY_TIMEOUT) {
-      console.log(`Servidor Python para ${game} inactivo por ${timeSinceLastUse / 1000} segundos. Deteniendo...`);
-      stopPythonServer(game);
+  
+  /**
+   * Detiene el servidor IA unificado inmediatamente
+   */
+  function stopIAServer(): void {
+    if (iaServerProcess && !iaServerProcess.killed) {
+      console.log('🛑 Deteniendo servidor IA después de generar predicción...');
+      iaServerProcess.kill('SIGTERM');
+      iaServerProcess = null;
     }
   }
-}
-
-// Iniciar un temporizador para limpiar servidores inactivos cada minuto
-setInterval(cleanupInactiveServers, 60 * 1000);
 
 /**
- * Controlador para obtener una predicción
+ * Genera un JWT token básico para el servidor IA
+ */
+function generateIAToken(): string {
+  // En una implementación real, esto debería usar las credenciales del usuario autenticado
+  // Por ahora, usamos un token básico para comunicación entre servicios
+  const jwt = require('jsonwebtoken');
+  const SECRET_KEY = process.env.JWT_SECRET || 'lotoia_super_secret_key_2024_verification_token';
+  
+  return jwt.sign(
+    { 
+      sub: 'internal_service',
+      iat: Math.floor(Date.now() / 1000),
+      exp: Math.floor(Date.now() / 1000) + (60 * 30) // 30 minutos
+    },
+    SECRET_KEY,
+    { algorithm: 'HS256' }
+  );
+}
+
+/**
+ * Controlador para obtener una predicción usando el servidor IA unificado
  */
 export const getPrediction = async (req: Request, res: Response) => {
-    try {
-        const { game } = req.params;
-        console.log(`Solicitud de predicción para juego: ${game}`);
+  try {
+    const { game } = req.params;
+    console.log(`🎯 Solicitud de predicción para juego: ${game}`);
 
-        // Iniciar el servidor Python para el juego específico
-        const port = await startPythonServer(game);
-        console.log(`Servidor Python iniciado en puerto: ${port}`);
+    // Mapear el nombre del juego
+    const mappedGame = gameMapping[game] || game;
+    console.log(`🔄 Juego mapeado: ${game} -> ${mappedGame}`);
 
-        // Realizar la solicitud HTTP al servidor Python
-        const response = await axios.post(`http://localhost:${port}/predict`, {
-            input: [1, 2, 3, 4, 5, 6, 7] // Datos de entrada básicos
-        }, {
-            timeout: 30000 // 30 segundos de timeout
-        });
+    // Iniciar el servidor IA si no está corriendo
+    await startIAServer();
 
-        console.log(`Respuesta del servidor Python:`, response.data);
+    // Generar token de autenticación para el servidor IA
+    const token = generateIAToken();
 
-        // Programar el cierre del servidor después del periodo de inactividad
-        scheduleServerShutdown(game);
+    // Realizar la solicitud HTTP al servidor IA unificado
+    const endpoint = `${IA_SERVER_URL}/${mappedGame}/predict`;
+    console.log(`📡 Enviando request a: ${endpoint}`);
 
-        // Devolver la respuesta al frontend
-        return res.status(200).json({
-            success: true,
-            prediction: response.data.prediction,
-            game: game,
-            timestamp: new Date().toISOString()
-        });
+    const response = await axios.post(endpoint, {
+      input: [1, 2, 3, 4, 5, 6, 7] // Datos de entrada básicos
+    }, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      timeout: 45000 // 45 segundos de timeout
+    });
 
-    } catch (error) {
-        console.error(`Error al generar predicción para ${req.params.game}:`, error);
-        
-        // Si hay error, intentar limpiar el servidor
-        const game = req.params.game;
-        if (pythonServers[game]) {
-            stopPythonServer(game);
-        }
+    console.log(`✅ Respuesta del servidor IA:`, response.data);
 
-        return res.status(500).json({ 
-            success: false,
-            error: 'Error al generar la predicción',
-            message: error instanceof Error ? error.message : 'Error desconocido'
-        });
+    // Detener el servidor IA inmediatamente después de generar la predicción
+    stopIAServer();
+
+    // Devolver la respuesta al frontend (adaptando el formato del servidor IA)
+    const iaResponse = response.data;
+    return res.status(200).json({
+      success: true,
+      prediction: iaResponse.prediccion || iaResponse.prediction || iaResponse,
+      game: mappedGame,
+      timestamp: new Date().toISOString(),
+      source: 'ia_server',
+      efficiency: 'start_stop_on_demand'
+    });
+
+  } catch (error: any) {
+    console.error(`❌ Error al generar predicción para ${req.params.game}:`, error.message);
+    
+    // SIEMPRE detener el servidor IA en caso de error para liberar recursos
+    stopIAServer();
+    
+    // Si hay error de conexión
+    if (error.code === 'ECONNREFUSED' || error.code === 'ENOTFOUND') {
+      return res.status(503).json({
+        success: false,
+        error: 'Servidor de IA temporalmente no disponible. Reintenta en unos segundos.',
+        code: 'IA_SERVER_UNAVAILABLE'
+      });
     }
+
+    // Para otros errores, devolver respuesta de error
+    return res.status(500).json({
+      success: false,
+      error: 'Error interno del servidor al generar predicción',
+      details: error.message
+    });
+  }
 };
 
 /**
- * Controlador para verificar el estado de los servidores Python
+ * Controlador para verificar el estado del servidor IA
  */
 export const getServerStatus = async (req: Request, res: Response) => {
   try {
-    const status = Object.entries(pythonServers).map(([game, server]) => ({
-      game,
-      port: server.port,
-      lastUsed: server.lastUsed
-    }));
+    const isRunning = iaServerProcess && !iaServerProcess.killed;
+    
+    let healthStatus = 'unknown';
+    if (isRunning) {
+      try {
+        await axios.get(`${IA_SERVER_URL}/health`, { timeout: 5000 });
+        healthStatus = 'healthy';
+      } catch (error) {
+        healthStatus = 'unhealthy';
+      }
+    } else {
+      healthStatus = 'stopped';
+    }
 
     res.json({
       success: true,
-      servers: status
+      server: {
+        running: isRunning,
+        health: healthStatus,
+        port: IA_SERVER_PORT,
+        mode: 'start_stop_on_demand',
+        script: IA_SERVER_SCRIPT
+      }
     });
+    
   } catch (error) {
-    console.error('Error al obtener estado de servidores:', error);
+    console.error('Error al verificar estado del servidor:', error);
     res.status(500).json({
       success: false,
-      message: 'Error al obtener estado de servidores',
-      error: error instanceof Error ? error.message : 'Error desconocido'
+      error: 'Error al verificar estado del servidor'
     });
   }
 };
+
+// Limpieza al cerrar la aplicación
+process.on('SIGTERM', stopIAServer);
+process.on('SIGINT', stopIAServer);

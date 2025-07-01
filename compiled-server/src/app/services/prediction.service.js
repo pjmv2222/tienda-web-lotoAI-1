@@ -64,6 +64,7 @@ let PredictionService = (() => {
          * @returns Observable con la respuesta de la predicción
          */
         generatePrediction(gameId) {
+            // Usar el sistema de IA real para todos los juegos
             const headers = this.getAuthHeaders();
             // Mapeo de IDs de juego a los nombres correctos para la API
             const gameMapping = {
@@ -80,19 +81,13 @@ let PredictionService = (() => {
             };
             // Normalizar el ID del juego
             const normalizedGameId = gameMapping[gameId] || gameId;
-            // En producción, usamos la API directa o el backend como proxy
-            // En desarrollo, usamos el proxy del backend o una simulación
+            // Usar siempre el backend de Node.js como proxy (funciona en desarrollo y producción)
             let url = '';
-            if (environment_1.environment.production) {
-                // En producción, intentamos usar directamente la API de IA
-                url = `${environment_1.environment.iaApiUrl}/${normalizedGameId}/predict`;
-                console.log(`Usando API directa: ${url}`);
+            if (environment_1.environment.useMockData) {
+                return this.generateMockPrediction(gameId);
             }
             else {
-                // Para desarrollo, podemos usar una simulación o el backend
-                if (environment_1.environment.useMockData) {
-                    return this.generateMockPrediction(gameId);
-                }
+                // Usar el endpoint del backend que actúa como proxy hacia el servidor IA unificado
                 url = `${this.apiUrl}/predictions/${normalizedGameId}`;
             }
             console.log(`Solicitando predicción a: ${url}`);
