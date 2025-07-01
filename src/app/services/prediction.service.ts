@@ -41,7 +41,7 @@ export class PredictionService {
   generatePrediction(gameId: string): Observable<PredictionResponse> {
     // Usar el sistema de IA real para todos los juegos
 
-    const headers = this.getAuthHeaders();
+    const headers = this.authService.getAuthHeaders();
 
     // Mapeo de IDs de juego a los nombres correctos para la API
     const gameMapping: { [key: string]: string } = {
@@ -221,13 +221,9 @@ export class PredictionService {
   }
 
   /**
-   * Obtiene los headers de autenticación
+   * Obtiene los headers de autenticación usando el método robusto de AuthService
    */
   private getAuthHeaders(): HttpHeaders {
-    const token = this.authService.currentUserValue?.token;
-    return new HttpHeaders({
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
-    });
+    return this.authService.getAuthHeaders();
   }
 }

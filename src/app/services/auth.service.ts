@@ -85,7 +85,7 @@ export class AuthService {
     return this.currentUserSubject.value;
   }
 
-  private getAuthHeaders(): HttpHeaders {
+  public getAuthHeaders(): HttpHeaders {
     // Múltiples formas de obtener el token para debugging
     const tokenFromUser = this.currentUserValue?.token;
     const tokenFromCookie = this.cookieService.getCookie(this.tokenCookieKey);
