@@ -39,6 +39,7 @@ export class EuromillonPrediccionComponent implements OnInit, OnDestroy {
   // Información del sorteo
   proximoSorteo: string = '';
   boteActual: string = '';
+  loading: boolean = true;
 
   // Análisis de frecuencia
   private numberFrequency: Map<number, number> = new Map();
@@ -180,20 +181,61 @@ export class EuromillonPrediccionComponent implements OnInit, OnDestroy {
     this.proximoSorteo = proximoSorteoDate.toLocaleDateString('es-ES', opciones);
     this.proximoSorteo = this.proximoSorteo.charAt(0).toUpperCase() + this.proximoSorteo.slice(1);
 
-    // Establecer el bote actual (simulado)
-    this.boteActual = '17.000.000 €';
+    // Cargar el bote desde el mismo archivo que usa el header
+    this.cargarBoteActual();
+  }
 
-    // En un entorno real, se obtendría de una API o base de datos
-    this.http.get<any>('assets/data/botes.json').subscribe({
-      next: (data) => {
-        if (data && data.euromillon) {
-          this.boteActual = data.euromillon;
-        }
-      },
-      error: (error) => {
-        console.error('Error al cargar información del bote:', error);
+  /**
+   * Carga el bote actual desde el mismo archivo que usa el header
+   */
+  private async cargarBoteActual(): Promise<void> {
+    try {
+      const timestamp = new Date().getTime();
+      const headers = {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      };
+      
+      const response = await this.http.get<{ [key: string]: string }>(`assets/botes.json?t=${timestamp}`, { headers }).toPromise();
+
+      if (response && response['euromillones']) {
+        // Aplicar la misma lógica de limpieza que el header
+        let boteValue = response['euromillones'];
+        
+        // Eliminar texto adicional y dejar solo el número
+        boteValue = boteValue.replace('MILLONES', '').replace('€', '').replace('€', '').trim();
+        
+        // Asignar el valor limpio
+        this.boteActual = boteValue;
+      } else {
+        this.boteActual = 'No disponible';
       }
-    });
+    } catch (error) {
+      console.error('Error cargando bote:', error);
+      this.boteActual = 'No disponible';
+    } finally {
+      this.loading = false;
+    }
+  }
+
+  /**
+   * Limpia todas las predicciones generadas
+   */
+  clearPredictions(): void {
+    this.predictionResults = [];
+    this.showEmptyBalls = true;
+    this.numberFrequency.clear();
+    this.predictionError = null; // Limpiar errores previos
+    
+    // Limpiar el localStorage
+    try {
+      localStorage.removeItem('euromillon_predictions');
+    } catch (e) {
+      console.warn('No se pudo limpiar las predicciones del localStorage:', e);
+    }
+    
+    console.log('Predicciones limpiadas');
   }
 
   /**
@@ -206,41 +248,36 @@ export class EuromillonPrediccionComponent implements OnInit, OnDestroy {
       return;
     }
 
+    // Verificar límite de predicciones
+    if (this.predictionResults.length >= 3) {
+      this.predictionError = 'Ya has generado el máximo de 3 predicciones. Usa "Limpiar predicciones" para empezar de nuevo.';
+      return;
+    }
+
     this.isGeneratingPrediction = true;
     this.predictionError = null;
     this.showEmptyBalls = false; // Ocultar las bolas vacías mientras se generan predicciones
 
     console.log('Generando predicciones para Euromillón...');
 
-    // Determinar el número de predicciones según el plan
-    let numPredictions = 3; // Plan básico por defecto
-    if (this.hasProPlan) {
-      numPredictions = 20;
-    } else if (this.hasMonthlyPlan) {
-      numPredictions = 10;
-    }
-
-    // Llamar al servicio de predicción
+    // Llamar al servicio de predicción (solo 1 predicción por solicitud)
     this.predictionService.generatePrediction('euromillones').subscribe({
       next: (response) => {
-        console.log('Predicciones generadas exitosamente:', response);
+        console.log('Predicción generada exitosamente:', response);
         
         if (response.success && response.prediction) {
-          // Ocultar bolas vacías y mostrar predicciones reales
+          // Ocultar bolas vacías y mostrar predicción real
           this.showEmptyBalls = false;
           
-          // Crear múltiples predicciones basadas en una predicción base
-          this.predictionResults = [];
-          for (let i = 0; i < numPredictions; i++) {
-            // Crear variaciones de la predicción base
-            this.predictionResults.push({
-              numeros: response.prediction.numeros || [],
-              estrellas: response.prediction.estrellas || []
-            });
-          }
+          // Agregar nueva predicción a los resultados existentes
+          this.predictionResults.push({
+            numeros: response.prediction.numeros || [],
+            estrellas: response.prediction.estrellas || []
+          });
+          
           this.savePredictions();
         } else {
-          this.predictionError = response.error || 'Error desconocido al generar predicciones';
+          this.predictionError = response.error || 'Error desconocido al generar predicción';
         }
         
         this.isGeneratingPrediction = false;
