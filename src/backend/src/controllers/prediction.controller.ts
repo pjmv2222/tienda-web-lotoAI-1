@@ -6,7 +6,7 @@ import axios from 'axios';
 
 // Puerto fijo para el servidor IA unificado
 const IA_SERVER_PORT = 5000;
-const IA_SERVER_URL = `http://localhost:${IA_SERVER_PORT}`;
+const IA_SERVER_URL = `http://127.0.0.1:${IA_SERVER_PORT}`;
 const IA_SERVER_SCRIPT = path.resolve(__dirname, '../../../server-ia-unificado.py');
 
 // Proceso del servidor IA unificado
