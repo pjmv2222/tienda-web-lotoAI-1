@@ -16,19 +16,7 @@
         <h1 class="lottery-title">Predicciones para Euromillones</h1>
         <div class="jackpot-info">
           <span class="jackpot-label">Bote actual:</span>
-          <div class="bote-juego euromillones">
-            <div class="valor">
-              <ng-container *ngIf="!loading; else loadingTemplate">
-                {{ boteActual }}
-              </ng-container>
-              <ng-template #loadingTemplate>
-                Cargando...
-              </ng-template>
-            </div>
-            <div class="formato" *ngIf="!loading">
-              MILLONES
-            </div>
-          </div>
+          <span class="jackpot-amount">{{ boteActual }}</span>
         </div>
         <div class="next-draw">
           <span class="next-draw-label">Próximo sorteo:</span>
