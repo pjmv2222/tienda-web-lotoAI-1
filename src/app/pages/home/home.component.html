@@ -297,31 +297,39 @@
 
   <!-- Sección de Usuario (si está logueado) -->
   <div *ngIf="currentUser" class="user-section">
-    <h2>Estimado {{currentUser.nombre}} {{currentUser.apellido}}</h2>
+    <h2>
+      Estimado 
+      <ng-container *ngIf="currentUser.nombre && currentUser.apellido">
+        {{currentUser.nombre}} {{currentUser.apellido}}
+      </ng-container>
+      <ng-container *ngIf="!currentUser.nombre || !currentUser.apellido">
+        {{ currentUser.name || currentUser.email }}
+      </ng-container>
+    </h2>
 
-    <div *ngIf="hasSubscriptions && currentUser.subscriptions?.length">
-      <h3>Tus suscripciones activas:</h3>
-      <ul>
-        <li *ngFor="let sub of currentUser.subscriptions">
-          <span *ngIf="sub.activa">
-            {{sub.tipo}} - Válida hasta: {{sub.fechaFin | date:'dd/MM/yyyy'}}
-          </span>
-        </li>
-      </ul>
+    <!-- Mostrar suscripción activa -->
+    <div *ngIf="hasSubscriptions && activePlanType">
+      <h3>{{ activePlanType }} adquirido</h3>
+      <p>Tu suscripción está activa y puedes acceder a todas las funcionalidades de tu plan.</p>
     </div>
 
-    <div *ngIf="!hasSubscriptions || !currentUser.subscriptions?.length">
+    <!-- Mostrar si no tiene suscripciones -->
+    <div *ngIf="!hasSubscriptions">
       <p>No tienes suscripciones activas.</p>
       <button class="btn-primary" routerLink="/planes">Adquirir una suscripción</button>
+    </div>
 
-      <!-- Información de depuración (solo visible en desarrollo) -->
-      <div *ngIf="!environment.production" class="debug-info">
-        <h4>Información de depuración:</h4>
-        <p>ID de usuario: {{currentUser.id}}</p>
-        <p>Suscripciones: {{currentUser.subscriptions ? currentUser.subscriptions.length : 0}}</p>
-        <p>hasSubscriptions: {{hasSubscriptions}}</p>
-        <button class="btn-secondary" (click)="checkSubscriptionStatus()">Verificar estado de suscripción</button>
-      </div>
+    <!-- Información de depuración (solo visible en desarrollo) -->
+    <div *ngIf="!environment.production" class="debug-info">
+      <h4>Información de depuración:</h4>
+      <p>ID de usuario: {{currentUser.id}}</p>
+      <p>Email: {{currentUser.email}}</p>
+      <p>Nombre: {{currentUser.nombre || 'No definido'}}</p>
+      <p>Apellido: {{currentUser.apellido || 'No definido'}}</p>
+      <p>Name: {{currentUser.name || 'No definido'}}</p>
+      <p>hasSubscriptions: {{hasSubscriptions}}</p>
+      <p>activePlanType: {{activePlanType || 'Ninguno'}}</p>
+      <button class="btn-secondary" (click)="checkSubscriptionStatus()">Verificar estado de suscripción</button>
     </div>
   </div>
 
