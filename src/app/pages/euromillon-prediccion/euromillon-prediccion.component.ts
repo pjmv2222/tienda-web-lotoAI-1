@@ -39,7 +39,6 @@ export class EuromillonPrediccionComponent implements OnInit, OnDestroy {
   // Información del sorteo
   proximoSorteo: string = '';
   boteActual: string = '';
-  loading: boolean = true;
 
   // Análisis de frecuencia
   private numberFrequency: Map<number, number> = new Map();
@@ -200,22 +199,14 @@ export class EuromillonPrediccionComponent implements OnInit, OnDestroy {
       const response = await this.http.get<{ [key: string]: string }>(`assets/botes.json?t=${timestamp}`, { headers }).toPromise();
 
       if (response && response['euromillones']) {
-        // Aplicar la misma lógica de limpieza que el header
-        let boteValue = response['euromillones'];
-        
-        // Eliminar texto adicional y dejar solo el número
-        boteValue = boteValue.replace('MILLONES', '').replace('€', '').replace('€', '').trim();
-        
-        // Asignar el valor limpio
-        this.boteActual = boteValue;
+        // Usar el valor completo como en la página principal
+        this.boteActual = response['euromillones'];
       } else {
         this.boteActual = 'No disponible';
       }
     } catch (error) {
       console.error('Error cargando bote:', error);
       this.boteActual = 'No disponible';
-    } finally {
-      this.loading = false;
     }
   }
 
