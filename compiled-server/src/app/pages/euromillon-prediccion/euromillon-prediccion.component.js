@@ -76,6 +76,7 @@ let EuromillonPrediccionComponent = (() => {
             // Información del sorteo
             this.proximoSorteo = '';
             this.boteActual = '';
+            this.loading = true;
             // Análisis de frecuencia
             this.numberFrequency = new Map();
         }
@@ -168,19 +169,40 @@ let EuromillonPrediccionComponent = (() => {
             };
             this.proximoSorteo = proximoSorteoDate.toLocaleDateString('es-ES', opciones);
             this.proximoSorteo = this.proximoSorteo.charAt(0).toUpperCase() + this.proximoSorteo.slice(1);
-            // Establecer el bote actual (simulado)
-            this.boteActual = '17.000.000 €';
-            // En un entorno real, se obtendría de una API o base de datos
-            this.http.get('assets/data/botes.json').subscribe({
-                next: (data) => {
-                    if (data && data.euromillon) {
-                        this.boteActual = data.euromillon;
-                    }
-                },
-                error: (error) => {
-                    console.error('Error al cargar información del bote:', error);
+            // Cargar el bote desde el mismo archivo que usa el header
+            this.cargarBoteActual();
+        }
+        /**
+         * Carga el bote actual desde el mismo archivo que usa el header
+         */
+        async cargarBoteActual() {
+            try {
+                const timestamp = new Date().getTime();
+                const headers = {
+                    'Cache-Control': 'no-cache, no-store, must-revalidate',
+                    'Pragma': 'no-cache',
+                    'Expires': '0'
+                };
+                const response = await this.http.get(`assets/botes.json?t=${timestamp}`, { headers }).toPromise();
+                if (response && response['euromillones']) {
+                    // Aplicar la misma lógica de limpieza que el header
+                    let boteValue = response['euromillones'];
+                    // Eliminar texto adicional y dejar solo el número
+                    boteValue = boteValue.replace('MILLONES', '').replace('€', '').replace('€', '').trim();
+                    // Asignar el valor limpio
+                    this.boteActual = boteValue;
                 }
-            });
+                else {
+                    this.boteActual = 'No disponible';
+                }
+            }
+            catch (error) {
+                console.error('Error cargando bote:', error);
+                this.boteActual = 'No disponible';
+            }
+            finally {
+                this.loading = false;
+            }
         }
         /**
          * Genera predicciones para Euromillón

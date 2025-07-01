@@ -16,7 +16,19 @@
         <h1 class="lottery-title">Predicciones para Euromillones</h1>
         <div class="jackpot-info">
           <span class="jackpot-label">Bote actual:</span>
-          <span class="jackpot-amount">{{ boteActual }}</span>
+          <div class="bote-juego euromillones">
+            <div class="valor">
+              <ng-container *ngIf="!loading; else loadingTemplate">
+                {{ boteActual }}
+              </ng-container>
+              <ng-template #loadingTemplate>
+                Cargando...
+              </ng-template>
+            </div>
+            <div class="formato" *ngIf="!loading">
+              MILLONES
+            </div>
+          </div>
         </div>
         <div class="next-draw">
           <span class="next-draw-label">Próximo sorteo:</span>
@@ -78,8 +90,7 @@
             </div>
             <div class="prediction-stats">
               <div class="stat-item">
-                <span class="stat-label">Probabilidad:</span>
-                <span class="stat-value">1 en 139.838.160</span>
+                <span class="stat-label">🍀 TU COMBINACIÓN DE LA SUERTE</span>
               </div>
             </div>
           </div>
@@ -112,8 +123,10 @@
             </div>
             <div class="prediction-stats">
               <div class="stat-item">
-                <span class="stat-label">Probabilidad:</span>
-                <span class="stat-value">1 en 139.838.160</span>
+                <span class="stat-label">🍀 TU COMBINACIÓN DE LA SUERTE</span>
+              </div>
+              <div class="stat-item" *ngIf="predictionResults.length < 3">
+                <span class="stat-value">Todavía te es posible generar {{ 3 - predictionResults.length }} pronóstico{{ 3 - predictionResults.length > 1 ? 's' : '' }} más</span>
               </div>
             </div>
           </div>
@@ -135,9 +148,18 @@
 
       <!-- Botones de acción -->
       <div class="action-buttons">
-        <button class="btn-primary" (click)="generatePredictions()" [disabled]="isGeneratingPrediction">
-          <span *ngIf="!isGeneratingPrediction">Generar nuevas predicciones</span>
+        <button class="btn-primary" 
+                (click)="generatePredictions()" 
+                [disabled]="isGeneratingPrediction || predictionResults.length >= 3">
+          <span *ngIf="!isGeneratingPrediction && predictionResults.length < 3">Generar nueva predicción</span>
           <span *ngIf="isGeneratingPrediction">Generando...</span>
+          <span *ngIf="predictionResults.length >= 3">Límite de 3 predicciones alcanzado</span>
+        </button>
+        <button class="btn-secondary" 
+                (click)="clearPredictions()" 
+                *ngIf="predictionResults.length > 0"
+                [disabled]="isGeneratingPrediction">
+          Limpiar predicciones
         </button>
         <button class="btn-secondary" routerLink="/euromillon">Volver a Euromillones</button>
       </div>

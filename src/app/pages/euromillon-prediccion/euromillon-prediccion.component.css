@@ -467,3 +467,58 @@
   max-width: 400px;
   width: 100%;
 }
+
+/* Estilos para el bote igual que en el header */
+.bote-juego {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-left: 10px;
+}
+
+.euromillones .valor,
+.euromillones .formato {
+  color: #00348d;
+}
+
+.valor {
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.1;
+  color: inherit;
+  width: 100%;
+  text-align: center;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font: inherit;
+  vertical-align: baseline;
+}
+
+.formato {
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  color: inherit;
+  text-align: center;
+  margin-top: 2px;
+}
+
+/* Mejorar el layout del jackpot-info para acomodar la nueva estructura */
+.jackpot-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.jackpot-label {
+  font-size: 16px;
+  color: #333;
+}
+
+/* Reset para elementos con ng-content */
+*[_ngcontent-ng-c2492145174], 
+*[_ngcontent-ng-c2492145174]:before, 
+*[_ngcontent-ng-c2492145174]:after {
+  box-sizing: inherit;
+}
