@@ -16,6 +16,18 @@ interface UserSubscriptionInfo {
   created_at: string;
   expires_at: string;
   price: string;
+  // Para Plan Básico - tracking de pronósticos
+  is_basic_plan?: boolean;
+  predictions_used?: GamePredictionUsage[];
+}
+
+// Interfaz para tracking de pronósticos por juego (Plan Básico)
+interface GamePredictionUsage {
+  game_id: string;
+  game_name: string;
+  total_allowed: number;
+  used: number;
+  remaining: number;
 }
 
 @Component({
@@ -52,13 +64,45 @@ interface UserSubscriptionInfo {
                 <span class="detail-label">Precio:</span>
                 <span class="detail-value">{{subscription.price}}</span>
               </div>
-              <div class="detail-row">
-                <span class="detail-label">Fecha de contratación:</span>
-                <span class="detail-value">{{subscription.created_at | date:'dd/MM/yyyy'}}</span>
+              
+              <!-- Información específica para Plan Básico -->
+              <div *ngIf="subscription.is_basic_plan && subscription.predictions_used" class="basic-plan-info">
+                <div class="detail-row">
+                  <span class="detail-label">Fecha de contratación:</span>
+                  <span class="detail-value">{{subscription.created_at | date:'dd/MM/yyyy'}}</span>
+                </div>
+                <h5 class="predictions-header">Pronósticos disponibles por juego:</h5>
+                <div class="predictions-grid">
+                  <div *ngFor="let game of subscription.predictions_used" class="prediction-card">
+                    <div class="game-info">
+                      <span class="game-name">{{game.game_name}}</span>
+                      <div class="usage-stats">
+                        <span class="used">{{game.used}}</span>
+                        <span class="separator">/</span>
+                        <span class="total">{{game.total_allowed}}</span>
+                        <span class="label">utilizados</span>
+                      </div>
+                      <div class="remaining-count" [class.low-remaining]="game.remaining <= 1">
+                        {{game.remaining}} restantes
+                      </div>
+                    </div>
+                    <div class="progress-bar">
+                      <div class="progress-fill" [style.width.%]="(game.used / game.total_allowed) * 100"></div>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div class="detail-row">
-                <span class="detail-label">Fecha de caducidad:</span>
-                <span class="detail-value">{{subscription.expires_at | date:'dd/MM/yyyy'}}</span>
+              
+              <!-- Información para planes temporales (Mensual/Pro) -->
+              <div *ngIf="!subscription.is_basic_plan">
+                <div class="detail-row">
+                  <span class="detail-label">Fecha de contratación:</span>
+                  <span class="detail-value">{{subscription.created_at | date:'dd/MM/yyyy'}}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="detail-label">Fecha de caducidad:</span>
+                  <span class="detail-value">{{subscription.expires_at | date:'dd/MM/yyyy'}}</span>
+                </div>
               </div>
             </div>
           </div>
@@ -362,6 +406,102 @@ interface UserSubscriptionInfo {
       padding-bottom: 0.5rem;
     }
 
+    /* Estilos específicos para Plan Básico */
+    .basic-plan-info {
+      margin-top: 1rem;
+    }
+
+    .predictions-header {
+      color: #333;
+      margin: 1rem 0 0.75rem 0;
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+
+    .predictions-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1rem;
+      margin-top: 0.75rem;
+    }
+
+    .prediction-card {
+      background: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 6px;
+      padding: 1rem;
+      transition: all 0.2s ease;
+    }
+
+    .prediction-card:hover {
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .game-info {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .game-name {
+      font-weight: 600;
+      color: #333;
+      font-size: 0.95rem;
+    }
+
+    .usage-stats {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      font-size: 0.9rem;
+    }
+
+    .usage-stats .used {
+      font-weight: 700;
+      color: #007bff;
+    }
+
+    .usage-stats .total {
+      font-weight: 600;
+      color: #666;
+    }
+
+    .usage-stats .separator {
+      color: #999;
+      font-weight: 600;
+    }
+
+    .usage-stats .label {
+      color: #666;
+      font-size: 0.85rem;
+    }
+
+    .remaining-count {
+      font-size: 0.85rem;
+      color: #28a745;
+      font-weight: 600;
+    }
+
+    .remaining-count.low-remaining {
+      color: #dc3545;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 6px;
+      background-color: #e9ecef;
+      border-radius: 3px;
+      margin-top: 0.5rem;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #007bff 0%, #0056b3 100%);
+      border-radius: 3px;
+      transition: width 0.3s ease;
+    }
+
     @media (max-width: 768px) {
       .subscription-header {
         flex-direction: column;
@@ -378,6 +518,15 @@ interface UserSubscriptionInfo {
       .detail-label {
         min-width: auto;
         font-size: 0.9rem;
+      }
+
+      .predictions-grid {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+      }
+
+      .prediction-card {
+        padding: 0.75rem;
       }
     }
   `]
@@ -457,7 +606,9 @@ export class ProfileComponent implements OnInit {
                   status_display: 'Activo',
                   created_at: new Date().toISOString(),
                   expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 días
-                  price: '1,22€'
+                  price: '1,22€',
+                  is_basic_plan: true,
+                  predictions_used: this.generateBasicPlanUsageData()
                 }];
               }
             });
@@ -530,6 +681,64 @@ export class ProfileComponent implements OnInit {
       case 'pro': return '122€';
       default: return 'N/A';
     }
+  }
+
+  /**
+   * Genera datos simulados de uso de pronósticos para el Plan Básico
+   * En una implementación real, estos datos vendrían del backend
+   */
+  private generateBasicPlanUsageData(): GamePredictionUsage[] {
+    return [
+      {
+        game_id: 'euromillon',
+        game_name: 'Euromillones',
+        total_allowed: 3,
+        used: 0, // En una implementación real, esto vendría del backend
+        remaining: 3
+      },
+      {
+        game_id: 'primitiva',
+        game_name: 'La Primitiva',
+        total_allowed: 3,
+        used: 0,
+        remaining: 3
+      },
+      {
+        game_id: 'bonoloto',
+        game_name: 'Bonoloto',
+        total_allowed: 3,
+        used: 0,
+        remaining: 3
+      },
+      {
+        game_id: 'gordo',
+        game_name: 'El Gordo',
+        total_allowed: 3,
+        used: 0,
+        remaining: 3
+      },
+      {
+        game_id: 'eurodreams',
+        game_name: 'EuroDreams',
+        total_allowed: 3,
+        used: 0,
+        remaining: 3
+      },
+      {
+        game_id: 'lototurf',
+        game_name: 'Lototurf',
+        total_allowed: 3,
+        used: 0,
+        remaining: 3
+      },
+      {
+        game_id: 'loterianacional',
+        game_name: 'Lotería Nacional',
+        total_allowed: 3,
+        used: 0,
+        remaining: 3
+      }
+    ];
   }
 
   getStatusClass(status: string): string {

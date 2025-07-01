@@ -49,10 +49,73 @@ let ProfileComponent = (() => {
             imports: [common_1.CommonModule, forms_1.ReactiveFormsModule],
             template: `
     <div class="profile-container">
-      <h2>Mi Perfil</h2>
+      <div class="profile-header">
+        <h2>Mi Perfil</h2>
+        <button class="btn-logout" (click)="logout()">Cerrar Sesión</button>
+      </div>
+
+      <!-- Sección de Suscripciones -->
+      <div class="subscriptions-section" *ngIf="!isEditing && !isChangingPassword">
+        <h3>Mis Suscripciones</h3>
+        <div *ngIf="loadingSubscriptions" class="loading-message">
+          Cargando suscripciones...
+        </div>
+        <div *ngIf="!loadingSubscriptions && activeSubscriptions.length > 0" class="subscriptions-container">
+          <div *ngFor="let subscription of activeSubscriptions" class="subscription-card">
+            <div class="subscription-header">
+              <h4>{{subscription.plan_name}}</h4>
+              <span class="subscription-status status-active">
+                {{subscription.status_display}}
+              </span>
+            </div>
+            <div class="subscription-details">
+              <div class="detail-row">
+                <span class="detail-label">Plan:</span>
+                <span class="detail-value">{{subscription.plan_id}}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">Precio:</span>
+                <span class="detail-value">{{subscription.price}}</span>
+              </div>
+              
+              <!-- Información específica para Plan Básico -->
+              <div *ngIf="subscription.is_basic_plan && subscription.predictions_used" class="basic-plan-info">
+                <div class="detail-row">
+                  <span class="detail-label">Fecha de contratación:</span>
+                  <span class="detail-value">{{subscription.created_at | date:'dd/MM/yyyy'}}</span>
+                </div>
+                <h5 class="predictions-header">Pronósticos disponibles por juego:</h5>
+                <div class="predictions-grid">
+                  <div *ngFor="let game of subscription.predictions_used" class="prediction-card">
+                    <div class="game-info">
+                      <span class="game-name">{{game.game_name}}</span>
+                      <div class="usage-stats">
+                        <span class="used">{{game.used}}</span>
+                        <span class="separator">/</span>
+                        <span class="total">{{game.total_allowed}}</span>
+                        <span class="label">utilizados</span>
+                      </div>
+                      <div class="remaining-count">
+                        {{game.remaining}} restantes
+                      </div>
+                    </div>
+                    <div class="progress-bar">
+                      <div class="progress-fill" [style.width.%]="(game.used / game.total_allowed) * 100"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div *ngIf="!loadingSubscriptions && activeSubscriptions.length === 0" class="no-subscriptions">
+          <p>No tienes suscripciones activas actualmente.</p>
+        </div>
+      </div>
       
       <div *ngIf="userProfile" class="user-info">
         <div *ngIf="!isEditing">
+          <h3>Información personal</h3>
           <p><strong>Nombre:</strong> {{userProfile.nombre}} {{userProfile.apellido}}</p>
           <p><strong>Email:</strong> {{userProfile.email}}</p>
           <p><strong>Teléfono:</strong> {{userProfile.telefono || 'No especificado'}}</p>
@@ -195,6 +258,168 @@ let ProfileComponent = (() => {
       background-color: #ccc;
       cursor: not-allowed;
     }
+
+    .profile-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+    }
+
+    .btn-logout {
+      background-color: #dc3545;
+      color: white;
+      padding: 0.5rem 1rem;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+
+    .subscriptions-section {
+      margin-bottom: 2rem;
+      padding: 1.5rem;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      background-color: #f9f9f9;
+    }
+
+    .subscription-card {
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 1.5rem;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .subscription-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid #eee;
+    }
+
+    .subscription-status {
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+
+    .status-active {
+      background-color: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.25rem 0;
+    }
+
+    .detail-label {
+      font-weight: 600;
+      color: #666;
+      min-width: 150px;
+    }
+
+    .detail-value {
+      color: #333;
+      font-weight: 500;
+    }
+
+    .basic-plan-info {
+      margin-top: 1rem;
+    }
+
+    .predictions-header {
+      color: #333;
+      margin: 1rem 0 0.75rem 0;
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+
+    .predictions-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1rem;
+      margin-top: 0.75rem;
+    }
+
+    .prediction-card {
+      background: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 6px;
+      padding: 1rem;
+      transition: all 0.2s ease;
+    }
+
+    .game-info {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .game-name {
+      font-weight: 600;
+      color: #333;
+      font-size: 0.95rem;
+    }
+
+    .usage-stats {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      font-size: 0.9rem;
+    }
+
+    .usage-stats .used {
+      font-weight: 700;
+      color: #007bff;
+    }
+
+    .usage-stats .total {
+      font-weight: 600;
+      color: #666;
+    }
+
+    .remaining-count {
+      font-size: 0.85rem;
+      color: #28a745;
+      font-weight: 600;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 6px;
+      background-color: #e9ecef;
+      border-radius: 3px;
+      margin-top: 0.5rem;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #007bff 0%, #0056b3 100%);
+      border-radius: 3px;
+      transition: width 0.3s ease;
+    }
+
+    @media (max-width: 768px) {
+      .predictions-grid {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+      }
+      
+      .prediction-card {
+        padding: 0.75rem;
+      }
+    }
   `]
         })];
     let _classDescriptor;
@@ -206,9 +431,11 @@ let ProfileComponent = (() => {
             this.router = router;
             this.fb = fb;
             this.userProfile = null;
-            this.isEditing = false;
-            this.isChangingPassword = false;
-            this.loading = false;
+                    this.isEditing = false;
+        this.isChangingPassword = false;
+        this.loading = false;
+        this.loadingSubscriptions = false;
+        this.activeSubscriptions = [];
             this.editForm = this.fb.group({
                 nombre: ['', forms_1.Validators.required],
                 apellido: ['', forms_1.Validators.required],
@@ -224,6 +451,56 @@ let ProfileComponent = (() => {
         }
         ngOnInit() {
             this.loadUserProfile();
+            this.loadUserSubscriptions();
+        }
+        
+        loadUserSubscriptions() {
+            this.loadingSubscriptions = true;
+            this.subscriptionService.hasActiveSubscription().subscribe({
+                next: (hasActive) => {
+                    this.loadingSubscriptions = false;
+                    if (hasActive) {
+                        const currentUser = this.authService.currentUserValue;
+                        if (currentUser) {
+                            this.subscriptionService.hasActivePlan('basic').subscribe(hasBasic => {
+                                if (hasBasic) {
+                                    this.activeSubscriptions = [{
+                                        id: 1,
+                                        plan_id: 'basic',
+                                        plan_name: 'Plan Básico',
+                                        status: 'active',
+                                        status_display: 'Activo',
+                                        created_at: new Date().toISOString(),
+                                        expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+                                        price: '1,22€',
+                                        is_basic_plan: true,
+                                        predictions_used: this.generateBasicPlanUsageData()
+                                    }];
+                                }
+                            });
+                        }
+                    } else {
+                        this.activeSubscriptions = [];
+                    }
+                },
+                error: (error) => {
+                    console.error('Error al cargar suscripciones:', error);
+                    this.loadingSubscriptions = false;
+                    this.activeSubscriptions = [];
+                }
+            });
+        }
+
+        generateBasicPlanUsageData() {
+            return [
+                { game_id: 'euromillon', game_name: 'Euromillones', total_allowed: 3, used: 0, remaining: 3 },
+                { game_id: 'primitiva', game_name: 'La Primitiva', total_allowed: 3, used: 0, remaining: 3 },
+                { game_id: 'bonoloto', game_name: 'Bonoloto', total_allowed: 3, used: 0, remaining: 3 },
+                { game_id: 'gordo', game_name: 'El Gordo', total_allowed: 3, used: 0, remaining: 3 },
+                { game_id: 'eurodreams', game_name: 'EuroDreams', total_allowed: 3, used: 0, remaining: 3 },
+                { game_id: 'lototurf', game_name: 'Lototurf', total_allowed: 3, used: 0, remaining: 3 },
+                { game_id: 'loterianacional', game_name: 'Lotería Nacional', total_allowed: 3, used: 0, remaining: 3 }
+            ];
         }
         loadUserProfile() {
             this.authService.getCurrentUser().subscribe({
@@ -310,6 +587,11 @@ let ProfileComponent = (() => {
                     }
                 });
             }
+        }
+
+        logout() {
+            this.authService.logout();
+            this.router.navigate(['/home']);
         }
         passwordMatchValidator(group) {
             const newPassword = group.get('newPassword')?.value;
