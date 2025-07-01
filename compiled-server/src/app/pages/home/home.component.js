@@ -64,6 +64,7 @@ let HomeComponent = (() => {
             this.router = router;
             this.currentUser = null;
             this.hasSubscriptions = false;
+            this.activePlanType = '';
             this.authSubscription = null;
             this.environment = environment_1.environment; // Exponer environment para usar en la plantilla
             // Imágenes para el slider con títulos descriptivos
@@ -86,6 +87,83 @@ let HomeComponent = (() => {
             this.isBrowser = (0, common_1.isPlatformBrowser)(this.platformId);
         }
         /**
+         * Carga el perfil completo del usuario desde el backend
+         */
+        loadUserProfile() {
+            if (!this.currentUser) return;
+            this.authService.getCurrentUser().subscribe({
+                next: (response) => {
+                    if (response.user) {
+                        // Actualizar la información del usuario
+                        this.currentUser = {
+                            ...this.currentUser,
+                            ...response.user
+                        };
+                        console.log('Información del usuario actualizada:', this.currentUser);
+                    }
+                },
+                error: (error) => {
+                    console.error('Error al cargar el perfil del usuario:', error);
+                }
+            });
+        }
+
+        /**
+         * Carga las suscripciones del usuario usando SubscriptionService
+         */
+        loadUserSubscriptions() {
+            if (!this.currentUser) return;
+            // Verificar cada tipo de plan para determinar cuál tiene activo
+            this.subscriptionService.hasActivePlan('basic').subscribe({
+                next: (hasBasic) => {
+                    if (hasBasic) {
+                        this.hasSubscriptions = true;
+                        this.activePlanType = 'Plan Básico';
+                        return;
+                    }
+                    // Si no tiene básico, verificar mensual
+                    this.subscriptionService.hasActivePlan('monthly').subscribe({
+                        next: (hasMonthly) => {
+                            if (hasMonthly) {
+                                this.hasSubscriptions = true;
+                                this.activePlanType = 'Plan Mensual';
+                                return;
+                            }
+                            // Si no tiene mensual, verificar pro
+                            this.subscriptionService.hasActivePlan('pro').subscribe({
+                                next: (hasPro) => {
+                                    if (hasPro) {
+                                        this.hasSubscriptions = true;
+                                        this.activePlanType = 'Plan Pro';
+                                    } else {
+                                        // No tiene ningún plan activo
+                                        this.hasSubscriptions = false;
+                                        this.activePlanType = '';
+                                    }
+                                },
+                                error: (error) => {
+                                    console.error('Error al verificar plan pro:', error);
+                                    this.hasSubscriptions = false;
+                                    this.activePlanType = '';
+                                }
+                            });
+                        },
+                        error: (error) => {
+                            console.error('Error al verificar plan mensual:', error);
+                            this.hasSubscriptions = false;
+                            this.activePlanType = '';
+                        }
+                    });
+                },
+                error: (error) => {
+                    console.error('Error al verificar plan básico:', error);
+                    this.hasSubscriptions = false;
+                    this.activePlanType = '';
+                }
+            });
+        }
+
+        /**
          * Método para verificar el estado de la suscripción del usuario
          * Se usa para depuración
          */
@@ -95,6 +173,10 @@ let HomeComponent = (() => {
                 return;
             }
             console.log('Verificando estado de suscripción para el usuario:', this.currentUser.id);
+            console.log('Estado actual - hasSubscriptions:', this.hasSubscriptions);
+            console.log('Estado actual - activePlanType:', this.activePlanType);
+            // Recargar las suscripciones
+            this.loadUserSubscriptions();
             // Verificar suscripción activa usando el servicio
             this.subscriptionService.hasActiveSubscription().subscribe({
                 next: (hasActive) => {
@@ -114,15 +196,6 @@ let HomeComponent = (() => {
                     console.error('Error al verificar suscripción:', error);
                 }
             });
-            // Obtener todas las suscripciones del usuario
-            this.subscriptionService.getUserSubscriptions().subscribe({
-                next: (subscriptions) => {
-                    console.log('Suscripciones del usuario desde el servicio:', subscriptions);
-                },
-                error: (error) => {
-                    console.error('Error al obtener suscripciones:', error);
-                }
-            });
         }
         ngOnInit() {
             // Agrupar imágenes en grupos de 4 para el carrusel
@@ -133,13 +206,16 @@ let HomeComponent = (() => {
                 this.authSubscription = this.authService.currentUser.subscribe({
                     next: (user) => {
                         this.currentUser = user;
-                        // Verificar si el usuario existe y tiene suscripciones de forma segura
-                        this.hasSubscriptions = !!this.currentUser?.subscriptions?.length;
-                        if (this.currentUser?.subscriptions) {
-                            console.log('Suscripciones del usuario:', this.currentUser.subscriptions);
-                        }
-                        else {
-                            console.log('El usuario no tiene suscripciones activas');
+                        if (this.currentUser) {
+                            this.userId = this.currentUser.id;
+                            // Obtener información completa del usuario desde el backend
+                            this.loadUserProfile();
+                            // Verificar suscripciones usando SubscriptionService
+                            this.loadUserSubscriptions();
+                        } else {
+                            console.log('El usuario no está autenticado');
+                            this.hasSubscriptions = false;
+                            this.activePlanType = '';
                         }
                     },
                     error: (error) => {

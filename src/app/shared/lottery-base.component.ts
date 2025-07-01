@@ -61,6 +61,7 @@ export abstract class LotteryBaseComponent implements OnInit {
 
   /**
    * Calcula la fecha del próximo sorteo basado en los días configurados para cada juego
+   * Considera si es día de sorteo y si ya pasó la hora del sorteo (21:00h)
    */
   private calcularProximoSorteo(): string {
     const hoy = new Date();
@@ -74,16 +75,33 @@ export abstract class LotteryBaseComponent implements OnInit {
 
     // Encontrar el próximo día de sorteo
     let diasHastaProximo = 7;
+    
     for (const diaSorteo of diasSorteo) {
       const diff = (diaSorteo + 7 - diaSemana) % 7;
+      
+      // Si es hoy (diff = 0), verificar si ya pasó la hora del sorteo
+      if (diff === 0) {
+        if (hoy.getHours() < 21) {
+          // Es hoy y aún no han sido las 21:00, usar hoy
+          diasHastaProximo = 0;
+          break;
+        }
+        // Si ya pasaron las 21:00, buscar el siguiente día de sorteo
+        continue;
+      }
+      
+      // Si es un día futuro
       if (diff > 0 && diff < diasHastaProximo) {
         diasHastaProximo = diff;
       }
     }
 
-    // Si no encontramos un día futuro, tomamos el primer día de sorteo de la próxima semana
+    // Si no encontramos un día válido, buscar el primer día de sorteo de la próxima semana
     if (diasHastaProximo === 7) {
-      diasHastaProximo = 7 + diasSorteo[0] - diaSemana;
+      diasHastaProximo = (7 - diaSemana + diasSorteo[0]) % 7;
+      if (diasHastaProximo === 0) {
+        diasHastaProximo = 7;
+      }
     }
 
     // Establecer la fecha del próximo sorteo
