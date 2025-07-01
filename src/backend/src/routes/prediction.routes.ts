@@ -9,17 +9,7 @@ router.get('/test', (req, res) => {
   res.json({ message: 'API de predicciones funcionando correctamente' });
 });
 
-// Ruta de prueba para euromillon SIN autenticación (temporal para debug)
-router.post('/euromillon/debug', (req, res) => {
-  console.log('[DEBUG] Request recibido para euromillon sin autenticación');
-  res.json({
-    success: true,
-    prediction: {
-      numeros: [7, 14, 22, 33, 45],
-      estrellas: [3, 9]
-    }
-  });
-});
+// Ruta eliminada - ahora se usa el sistema IA real
 
 // Ruta para obtener el estado de los servidores Python
 router.get('/servers/status', authenticateToken, getServerStatus);

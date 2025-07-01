@@ -39,10 +39,7 @@ export class PredictionService {
    * @returns Observable con la respuesta de la predicción
    */
   generatePrediction(gameId: string): Observable<PredictionResponse> {
-    // TEMPORAL: Usar método de debug sin autenticación para euromillon
-    if (gameId === 'euromillones' || gameId === 'euromillon') {
-      return this.generatePredictionDebug(gameId);
-    }
+    // Usar el sistema de IA real para todos los juegos
 
     const headers = this.getAuthHeaders();
 
@@ -103,34 +100,7 @@ export class PredictionService {
     );
   }
 
-  /**
-   * MÉTODO TEMPORAL: Genera predicción sin autenticación para debug
-   * @param gameId Identificador del juego
-   * @returns Observable con la respuesta de la predicción
-   */
-  generatePredictionDebug(gameId: string): Observable<PredictionResponse> {
-    const url = `${this.apiUrl}/predictions/euromillon/debug`;
-    
-    console.log(`[DEBUG] Solicitando predicción SIN autenticación a: ${url}`);
-
-    const headers = new HttpHeaders({
-      'Content-Type': 'application/json'
-    });
-
-    return this.http.post<PredictionResponse>(url, {}, { headers }).pipe(
-      map((response: any) => {
-        console.log('[DEBUG] Respuesta del servidor:', response);
-        return response;
-      }),
-      catchError(error => {
-        console.error('[DEBUG] Error al generar la predicción:', error);
-        return of({
-          success: false,
-          error: error.message || 'Error al comunicarse con el servidor'
-        });
-      })
-    );
-  }
+  // Método debug eliminado - ahora se usa el sistema IA real
 
   /**
    * Genera una predicción simulada para pruebas (modo desarrollo)
