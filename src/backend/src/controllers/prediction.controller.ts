@@ -13,8 +13,8 @@ const IA_SERVER_SCRIPT = '/var/www/tienda-web-lotoAI-1/server-ia-unificado.py';
 // Proceso del servidor IA unificado
 let iaServerProcess: ChildProcess | null = null;
 
-// Tiempo de espera para verificar que el servidor esté listo (8 segundos)
-const STARTUP_WAIT_TIME = 8000;
+// Tiempo de espera para verificar que el servidor esté listo (15 segundos)
+const STARTUP_WAIT_TIME = 15000;
 
 // Mapeo de nombres de juegos entre frontend y servidor IA
 const gameMapping: { [key: string]: string } = {
@@ -171,8 +171,10 @@ export const getPrediction = async (req: Request, res: Response) => {
 
     console.log(`✅ Respuesta del servidor IA:`, response.data);
 
-    // NO detener el servidor inmediatamente - mantenerlo corriendo para futuras requests
-    // stopIAServer(); // Comentado para mantener el servidor activo
+    // Detener el servidor IA después de generar la predicción (funcionamiento bajo demanda)
+    setTimeout(() => {
+      stopIAServer();
+    }, 2000); // Esperar 2 segundos antes de detener
 
     // Devolver la respuesta al frontend (adaptando el formato del servidor IA)
     const iaResponse = response.data;
