@@ -3,17 +3,18 @@ import { spawn, ChildProcess } from 'child_process';
 import * as path from 'path';
 import * as fs from 'fs';
 import axios from 'axios';
+import * as jwt from 'jsonwebtoken';
 
 // Puerto fijo para el servidor IA unificado
 const IA_SERVER_PORT = 5000;
 const IA_SERVER_URL = `http://127.0.0.1:${IA_SERVER_PORT}`;
-const IA_SERVER_SCRIPT = path.resolve(__dirname, '../../../server-ia-unificado.py');
+const IA_SERVER_SCRIPT = '/var/www/tienda-web-lotoAI-1/server-ia-unificado.py';
 
 // Proceso del servidor IA unificado
 let iaServerProcess: ChildProcess | null = null;
 
-// Tiempo de espera para verificar que el servidor esté listo (3 segundos)
-const STARTUP_WAIT_TIME = 3000;
+// Tiempo de espera para verificar que el servidor esté listo (8 segundos)
+const STARTUP_WAIT_TIME = 8000;
 
 // Mapeo de nombres de juegos entre frontend y servidor IA
 const gameMapping: { [key: string]: string } = {
@@ -54,9 +55,12 @@ async function startIAServer(): Promise<void> {
       env: {
         ...process.env,
         PORT: IA_SERVER_PORT.toString(),
-        FLASK_ENV: 'production'
+        FLASK_ENV: 'production',
+        PYTHONPATH: '/var/www/tienda-web-lotoAI-1',
+        PYTHONUNBUFFERED: '1'
       },
-      cwd: path.dirname(IA_SERVER_SCRIPT)
+      cwd: '/var/www/tienda-web-lotoAI-1',
+      stdio: ['pipe', 'pipe', 'pipe']
     });
 
     // Manejar la salida estándar
@@ -112,20 +116,23 @@ function stopIAServer(): void {
  * Genera un JWT token básico para el servidor IA
  */
 function generateIAToken(): string {
-  // En una implementación real, esto debería usar las credenciales del usuario autenticado
-  // Por ahora, usamos un token básico para comunicación entre servicios
-  const jwt = require('jsonwebtoken');
-  const SECRET_KEY = process.env.JWT_SECRET || 'lotoia_super_secret_key_2024_verification_token';
+  // Usar la misma clave secreta que el middleware de autenticación
+  const SECRET_KEY = process.env['JWT_SECRET'] || 'your-secret-key';
   
-  return jwt.sign(
-    { 
-      sub: 'internal_service',
-      iat: Math.floor(Date.now() / 1000),
-      exp: Math.floor(Date.now() / 1000) + (60 * 30) // 30 minutos
-    },
-    SECRET_KEY,
-    { algorithm: 'HS256' }
-  );
+  const payload = {
+    id: 999, // ID de servicio interno
+    email: 'internal@loto-ia.com',
+    iat: Math.floor(Date.now() / 1000),
+    exp: Math.floor(Date.now() / 1000) + (60 * 30) // 30 minutos
+  };
+
+  console.log('🔑 Generando token JWT con payload:', payload);
+  console.log('🔑 Usando clave JWT:', SECRET_KEY.substring(0, 10) + '...');
+  
+  const token = jwt.sign(payload, SECRET_KEY, { algorithm: 'HS256' });
+  console.log('🔑 Token generado:', token.substring(0, 50) + '...');
+  
+  return token;
 }
 
 /**
@@ -135,6 +142,8 @@ export const getPrediction = async (req: Request, res: Response) => {
   try {
     const { game } = req.params;
     console.log(`🎯 Solicitud de predicción para juego: ${game}`);
+    console.log(`📁 Script IA ubicado en: ${IA_SERVER_SCRIPT}`);
+    console.log(`📁 Script existe: ${fs.existsSync(IA_SERVER_SCRIPT)}`);
 
     // Mapear el nombre del juego
     const mappedGame = gameMapping[game] || game;
@@ -162,8 +171,8 @@ export const getPrediction = async (req: Request, res: Response) => {
 
     console.log(`✅ Respuesta del servidor IA:`, response.data);
 
-    // Detener el servidor IA inmediatamente después de generar la predicción
-    stopIAServer();
+    // NO detener el servidor inmediatamente - mantenerlo corriendo para futuras requests
+    // stopIAServer(); // Comentado para mantener el servidor activo
 
     // Devolver la respuesta al frontend (adaptando el formato del servidor IA)
     const iaResponse = response.data;
@@ -177,25 +186,57 @@ export const getPrediction = async (req: Request, res: Response) => {
     });
 
   } catch (error: any) {
-    console.error(`❌ Error al generar predicción para ${req.params.game}:`, error.message);
+    console.error(`❌ Error al generar predicción para ${req.params.game}:`, {
+      message: error.message,
+      code: error.code,
+      stack: error.stack,
+      type: error.name,
+      response: error.response?.data
+    });
     
-    // SIEMPRE detener el servidor IA en caso de error para liberar recursos
-    stopIAServer();
+    // Solo detener el servidor IA en errores críticos, no en errores de conexión temporales
+    if (error.code === 'ECONNREFUSED' || error.message?.includes('ENOENT')) {
+      console.log('🛑 Deteniendo servidor IA debido a error crítico');
+      stopIAServer();
+    }
     
     // Si hay error de conexión
     if (error.code === 'ECONNREFUSED' || error.code === 'ENOTFOUND') {
       return res.status(503).json({
         success: false,
         error: 'Servidor de IA temporalmente no disponible. Reintenta en unos segundos.',
-        code: 'IA_SERVER_UNAVAILABLE'
+        code: 'IA_SERVER_UNAVAILABLE',
+        details: error.message
       });
     }
 
-    // Para otros errores, devolver respuesta de error
+    // Si es error de JWT o dependencias faltantes
+    if (error.message && error.message.includes('jwt') || error.message.includes('jsonwebtoken')) {
+      return res.status(500).json({
+        success: false,
+        error: 'Error de configuración del servidor - problema con JWT',
+        code: 'JWT_ERROR',
+        details: error.message
+      });
+    }
+
+    // Si es error de Python/archivo no encontrado
+    if (error.message && (error.message.includes('ENOENT') || error.message.includes('python'))) {
+      return res.status(500).json({
+        success: false,
+        error: 'Error de configuración - script IA no encontrado o Python no disponible',
+        code: 'PYTHON_ERROR',
+        details: error.message
+      });
+    }
+
+    // Para otros errores, devolver respuesta de error con más detalles
     return res.status(500).json({
       success: false,
       error: 'Error interno del servidor al generar predicción',
-      details: error.message
+      code: 'INTERNAL_ERROR',
+      details: error.message,
+      type: error.name
     });
   }
 };
