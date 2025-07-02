@@ -138,6 +138,18 @@ function stopIAServer(): void {
 }
 
 /**
+ * Verifica si hay un servidor IA permanente corriendo
+ */
+async function checkPermanentServer(): Promise<boolean> {
+  try {
+    await axios.get(`${IA_SERVER_URL}/health`, { timeout: 2000 });
+    return true;
+  } catch (error) {
+    return false;
+  }
+}
+
+/**
  * Genera un JWT token básico para el servidor IA
  */
 function generateIAToken(): string {
@@ -174,8 +186,18 @@ export const getPrediction = async (req: Request, res: Response) => {
     const mappedGame = gameMapping[game] || game;
     console.log(`🔄 Juego mapeado: ${game} -> ${mappedGame}`);
 
-    // Iniciar el servidor IA si no está corriendo
-    await startIAServer();
+    // Verificar si hay un servidor IA permanente ya corriendo
+    let serverReady = false;
+    try {
+      await axios.get(`${IA_SERVER_URL}/health`, { timeout: 3000 });
+      console.log(`✅ Servidor IA permanente detectado en puerto ${IA_SERVER_PORT}`);
+      serverReady = true;
+    } catch (error) {
+      console.log(`📊 No hay servidor IA permanente, iniciando bajo demanda...`);
+      // Iniciar el servidor IA si no está corriendo
+      await startIAServer();
+      serverReady = true;
+    }
 
     // Generar token de autenticación para el servidor IA
     const token = generateIAToken();
@@ -196,10 +218,15 @@ export const getPrediction = async (req: Request, res: Response) => {
 
     console.log(`✅ Respuesta del servidor IA:`, response.data);
 
-    // Detener el servidor IA después de generar la predicción (funcionamiento bajo demanda)
-    setTimeout(() => {
-      stopIAServer();
-    }, 2000); // Esperar 2 segundos antes de detener
+    // Solo detener el servidor IA si fue iniciado bajo demanda (no el permanente)
+    const isPermanentServer = await checkPermanentServer();
+    if (!isPermanentServer) {
+      setTimeout(() => {
+        stopIAServer();
+      }, 2000); // Esperar 2 segundos antes de detener
+    } else {
+      console.log(`🏠 Usando servidor IA permanente - NO se detiene`);
+    }
 
     // Devolver la respuesta al frontend (adaptando el formato del servidor IA)
     const iaResponse = response.data;
@@ -209,7 +236,7 @@ export const getPrediction = async (req: Request, res: Response) => {
       game: mappedGame,
       timestamp: new Date().toISOString(),
       source: 'ia_server',
-      efficiency: 'start_stop_on_demand'
+      efficiency: isPermanentServer ? 'permanent_server' : 'start_stop_on_demand'
     });
 
   } catch (error: any) {
