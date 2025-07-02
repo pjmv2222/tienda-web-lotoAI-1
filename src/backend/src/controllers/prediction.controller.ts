@@ -49,6 +49,11 @@ async function startIAServer(): Promise<void> {
     }
 
     console.log('Iniciando servidor IA unificado...');
+    console.log('🔧 Debug spawn:');
+    console.log('  - Comando: python3');
+    console.log('  - Script:', IA_SERVER_SCRIPT);
+    console.log('  - CWD:', '/var/www/tienda-web-lotoAI-1');
+    console.log('  - Puerto:', IA_SERVER_PORT);
 
     // Iniciar el proceso Python
     iaServerProcess = spawn('python3', [IA_SERVER_SCRIPT], {
@@ -63,28 +68,48 @@ async function startIAServer(): Promise<void> {
       stdio: ['pipe', 'pipe', 'pipe']
     });
 
+    console.log('🔧 Proceso spawn iniciado, PID:', iaServerProcess.pid);
+
     // Manejar la salida estándar
     iaServerProcess.stdout?.on('data', (data) => {
-      console.log(`[IA-Server] ${data.toString().trim()}`);
+      const output = data.toString().trim();
+      console.log(`[IA-Server STDOUT] ${output}`);
     });
 
     // Manejar la salida de error
     iaServerProcess.stderr?.on('data', (data) => {
-      console.error(`[IA-Server] Error: ${data.toString().trim()}`);
+      const errorOutput = data.toString().trim();
+      console.error(`[IA-Server STDERR] ${errorOutput}`);
+      // No rechazar inmediatamente por stderr - TensorFlow genera warnings normales
     });
 
     // Manejar el cierre del proceso
-    iaServerProcess.on('close', (code) => {
-      console.log(`[IA-Server] Proceso terminado con código ${code}`);
+    iaServerProcess.on('close', (code, signal) => {
+      console.log(`[IA-Server] Proceso terminado - Código: ${code}, Señal: ${signal}`);
       iaServerProcess = null;
     });
 
-    // Manejar errores del proceso
+    // Manejar errores del proceso (esto es lo crítico)
     iaServerProcess.on('error', (error) => {
-      console.error(`[IA-Server] Error del proceso: ${error.message}`);
+      console.error(`🚨 [IA-Server] ERROR SPAWN:`, {
+        message: error.message,
+        code: (error as any).code,
+        errno: (error as any).errno,
+        syscall: (error as any).syscall,
+        path: (error as any).path,
+        stack: error.stack
+      });
       iaServerProcess = null;
       reject(error);
     });
+
+    // Verificar inmediatamente si el proceso se inició correctamente
+    if (!iaServerProcess.pid) {
+      const spawnError = new Error('Proceso spawn no se inició - PID undefined');
+      console.error('🚨 Spawn falló inmediatamente');
+      reject(spawnError);
+      return;
+    }
 
     // Esperar a que el servidor esté listo
     setTimeout(async () => {
