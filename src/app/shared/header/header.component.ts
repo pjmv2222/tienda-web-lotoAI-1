@@ -36,7 +36,18 @@ export class HeaderComponent implements OnInit {
 
   ngOnInit() {
     this.cargarBotes();
+    
+    // Suscribirse al estado del usuario con debugging
     this.authService.currentUser.subscribe(user => {
+      console.log('Header - Estado del usuario actualizado:', {
+        user: user ? {
+          id: user.id,
+          email: user.email,
+          nombre: user.nombre,
+          name: user.name
+        } : null,
+        hasUser: !!user
+      });
       this.currentUser = user;
     });
   }
@@ -200,12 +211,14 @@ export class HeaderComponent implements OnInit {
 
   // Método para obtener solo el primer nombre del usuario
   getFirstName(): string {
-    if (!this.currentUser?.name) {
+    // Usar 'nombre' o 'name' como fallback para compatibilidad
+    const fullName = this.currentUser?.nombre || this.currentUser?.name;
+    if (!fullName) {
       return '';
     }
     
     // Dividir el nombre completo por espacios y tomar solo el primer elemento
-    const names = this.currentUser.name.trim().split(' ');
+    const names = fullName.trim().split(' ');
     return names[0] || '';
   }
 

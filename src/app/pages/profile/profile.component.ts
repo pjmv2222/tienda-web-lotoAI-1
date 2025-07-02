@@ -569,17 +569,64 @@ export class ProfileComponent implements OnInit {
 
   private loadUserProfile() {
     this.authService.getCurrentUser().subscribe({
-      next: (profile) => {
-        this.userProfile = profile;
-        this.editForm.patchValue({
-          nombre: profile.nombre,
-          apellido: profile.apellido,
-          telefono: profile.telefono
-        });
+      next: (response) => {
+        if (response && response.user) {
+          this.userProfile = response.user;
+          this.editForm.patchValue({
+            nombre: response.user.nombre,
+            apellido: response.user.apellido,
+            telefono: response.user.telefono
+          });
+        } else {
+          // Intentar usar el usuario actual del servicio como fallback
+          const currentUser = this.authService.currentUserValue;
+          if (currentUser) {
+            this.userProfile = {
+              id: currentUser.id,
+              email: currentUser.email,
+              nombre: currentUser.nombre,
+              apellido: currentUser.apellido,
+              telefono: currentUser.telefono,
+              fechaRegistro: new Date() // Valor por defecto
+            };
+            this.editForm.patchValue({
+              nombre: currentUser.nombre,
+              apellido: currentUser.apellido,
+              telefono: currentUser.telefono
+            });
+          }
+        }
       },
       error: (error: any) => {
         console.error('Error al cargar el perfil:', error);
-        this.router.navigate(['/auth/login']);
+        
+        // Solo redirigir al login si es un error de autenticación (401 o 403)
+        if (error.status === 401 || error.status === 403) {
+          console.log('Error de autenticación, redirigiendo al login...');
+          this.router.navigate(['/auth/login']);
+        } else {
+          // Para otros errores, intentar usar el usuario actual como fallback
+          const currentUser = this.authService.currentUserValue;
+          if (currentUser) {
+            console.log('Usando datos del usuario actual como fallback...');
+            this.userProfile = {
+              id: currentUser.id,
+              email: currentUser.email,
+              nombre: currentUser.nombre,
+              apellido: currentUser.apellido,
+              telefono: currentUser.telefono,
+              fechaRegistro: new Date()
+            };
+            this.editForm.patchValue({
+              nombre: currentUser.nombre,
+              apellido: currentUser.apellido,
+              telefono: currentUser.telefono
+            });
+          } else {
+            // Solo si no hay usuario en absoluto, redirigir al login
+            this.router.navigate(['/auth/login']);
+          }
+        }
       }
     });
   }

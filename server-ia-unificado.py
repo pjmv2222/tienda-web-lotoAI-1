@@ -33,9 +33,9 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 30
 # Configuración de juegos y sus archivos DataFrame específicos
 JUEGOS_CONFIG = {
     'euromillon': {
-        'modelo': '/var/www/tienda-web-lotoAI-1/IAs-Loto/EuroMillon-CSV/modelo_euromillon.h5',
-        'dataset': '/var/www/tienda-web-lotoAI-1/IAs-Loto/EuroMillon-CSV/DataFrame_Euromillones.csv',
-        'separador': ';',
+        'modelo': '/var/www/tienda-web-lotoAI-1/archivos-para-servidor/modelos/modelo_euromillon.h5',
+        'dataset': '/var/www/tienda-web-lotoAI-1/archivos-para-servidor/datasets/DataFrame_euromillon.csv',
+        'separador': ',',
         'columnas_entrada': ['Num_1', 'Num_2', 'Num_3', 'Num_4', 'Num_5', 'Start_1', 'Star_2'],
         'columnas_salida': ['Num_1', 'Num_2', 'Num_3', 'Num_4', 'Num_5', 'Start_1', 'Star_2'],
         'escalador': 'MinMaxScaler',
@@ -45,8 +45,8 @@ JUEGOS_CONFIG = {
         'rango_especiales': (1, 12)
     },
     'bonoloto': {
-        'modelo': '/var/www/tienda-web-lotoAI-1/IAs-Loto/Bonoloto/modelo_Bonoloto.h5',
-        'dataset': '/var/www/tienda-web-lotoAI-1/IAs-Loto/Bonoloto/DataFrame_Bonoloto.csv',
+        'modelo': '/var/www/tienda-web-lotoAI-1/archivos-para-servidor/modelos/modelo_bonoloto.h5',
+        'dataset': '/var/www/tienda-web-lotoAI-1/archivos-para-servidor/datasets/DataFrame_bonoloto.csv',
         'separador': ',',
         'columnas_entrada': ['Num1', 'Num2', 'Num3', 'Num4', 'Num5', 'Num6', 'Refund'],
         'columnas_salida': ['Num1', 'Num2', 'Num3', 'Num4', 'Num5', 'Num6', 'Refund'],
@@ -57,8 +57,8 @@ JUEGOS_CONFIG = {
         'rango_especiales': (0, 9)
     },
     'primitiva': {
-        'modelo': '/var/www/tienda-web-lotoAI-1/IAs-Loto/LaPrimitiva/modelo_primitiva.h5',
-        'dataset': '/var/www/tienda-web-lotoAI-1/IAs-Loto/LaPrimitiva/DataFrame_primitiva_guardado.csv',
+        'modelo': '/var/www/tienda-web-lotoAI-1/archivos-para-servidor/modelos/modelo_primitiva.h5',
+        'dataset': '/var/www/tienda-web-lotoAI-1/archivos-para-servidor/datasets/DataFrame_primitiva.csv',
         'separador': ',',
         'columnas_entrada': ['Num1', 'Num2', 'Num3', 'Num4', 'Num5', 'Num6', 'Refund'],
         'columnas_salida': ['Num1', 'Num2', 'Num3', 'Num4', 'Num5', 'Num6', 'Refund'],
@@ -69,8 +69,8 @@ JUEGOS_CONFIG = {
         'rango_especiales': (0, 9)
     },
     'elgordo': {
-        'modelo': '/var/www/tienda-web-lotoAI-1/IAs-Loto/ElGordo/modelo_ElGordo.h5',
-        'dataset': '/var/www/tienda-web-lotoAI-1/IAs-Loto/ElGordo/DataFrame_ElGordo.csv',
+        'modelo': '/var/www/tienda-web-lotoAI-1/archivos-para-servidor/modelos/modelo_elgordo.h5',
+        'dataset': '/var/www/tienda-web-lotoAI-1/archivos-para-servidor/datasets/DataFrame_elgordo.csv',
         'separador': ',',
         'columnas_entrada': ['Num1', 'Num2', 'Num3', 'Num4', 'Num5', 'Clue'],
         'columnas_salida': ['Num1', 'Num2', 'Num3', 'Num4', 'Num5', 'Clue'],
@@ -81,8 +81,8 @@ JUEGOS_CONFIG = {
         'rango_especiales': (0, 9)
     },
     'eurodreams': {
-        'modelo': '/var/www/tienda-web-lotoAI-1/IAs-Loto/EuroDreams/modelo_EuroDreams.h5',
-        'dataset': '/var/www/tienda-web-lotoAI-1/IAs-Loto/EuroDreams/DataFrame_EuroDreams.csv',
+        'modelo': '/var/www/tienda-web-lotoAI-1/archivos-para-servidor/modelos/modelo_eurodreams.h5',
+        'dataset': '/var/www/tienda-web-lotoAI-1/archivos-para-servidor/datasets/DataFrame_eurodreams.csv',
         'separador': ',',
         'columnas_entrada': ['DaysSince', 'Num1', 'Num2', 'Num3', 'Num4', 'Num5', 'Num6'],
         'columnas_salida': ['Num1', 'Num2', 'Num3', 'Num4', 'Num5', 'Num6', 'Dream'],
@@ -93,8 +93,8 @@ JUEGOS_CONFIG = {
         'rango_especiales': (1, 5)
     },
     'loterianacional': {
-        'modelo': '/var/www/tienda-web-lotoAI-1/IAs-Loto/LOTERIA NACIONAL/modelo_LoteriaNacional.h5',
-        'dataset': '/var/www/tienda-web-lotoAI-1/IAs-Loto/LOTERIA NACIONAL/DataFrame_LOTERIA NACIONAL.csv',
+        'modelo': '/var/www/tienda-web-lotoAI-1/archivos-para-servidor/modelos/modelo_loterianacional.h5',
+        'dataset': '/var/www/tienda-web-lotoAI-1/archivos-para-servidor/datasets/DataFrame_loterianacional.csv',
         'separador': ',',
         'columnas_entrada': ['Fecha', 'Sorteo', 'Euros'],
         'columnas_salida': ['Numero'],
@@ -105,8 +105,8 @@ JUEGOS_CONFIG = {
         'rango_especiales': None
     },
     'lototurf': {
-        'modelo': '/var/www/tienda-web-lotoAI-1/IAs-Loto/Lototurf/modelo_Lototurf.h5',
-        'dataset': '/var/www/tienda-web-lotoAI-1/IAs-Loto/Lototurf/DataFrame_Lototurf.csv',
+        'modelo': '/var/www/tienda-web-lotoAI-1/archivos-para-servidor/modelos/modelo_lototurf.h5',
+        'dataset': '/var/www/tienda-web-lotoAI-1/archivos-para-servidor/datasets/DataFrame_lototurf.csv',
         'separador': ',',
         'columnas_entrada': ['Num1', 'Num2', 'Num3', 'Num4', 'Num5', 'Num6', 'Horse'],
         'columnas_salida': ['Num1', 'Num2', 'Num3', 'Num4', 'Num5', 'Num6', 'Horse'],
