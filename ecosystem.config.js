@@ -2,7 +2,7 @@ module.exports = {
   apps: [
     {
       name: 'loto-ia-backend',
-      script: './dist/backend/index.js',
+      script: 'src/backend/dist/index.js',
       instances: 1,
       exec_mode: 'fork',
       autorestart: true,
