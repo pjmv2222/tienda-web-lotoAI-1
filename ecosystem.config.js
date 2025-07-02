@@ -42,5 +42,25 @@ module.exports = {
         PORT: 4000
       },
     },
+    {
+      name: 'loto-ia-server',
+      script: 'archivos-para-servidor/server-ia-unificado.py',
+      interpreter: 'python3',
+      instances: 1,
+      exec_mode: 'fork',
+      autorestart: true,
+      watch: false,
+      max_memory_restart: '2G',
+      env: {
+        NODE_ENV: 'development',
+        JWT_SECRET: '8011471e-90c3-4af3-bc53-452557b92001',
+        PORT: 5000
+      },
+      env_production: {
+        NODE_ENV: 'production',
+        JWT_SECRET: '8011471e-90c3-4af3-bc53-452557b92001',
+        PORT: 5000
+      },
+    },
   ],
 };
