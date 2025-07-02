@@ -82,8 +82,6 @@ async function startIAServer(): Promise<void> {
       reject(error);
     });
 
-    // Servidor iniciado
-
     // Esperar a que el servidor esté listo
     setTimeout(async () => {
       try {
@@ -95,20 +93,20 @@ async function startIAServer(): Promise<void> {
         console.error('❌ Error verificando estado del servidor IA:', error);
         reject(new Error('Servidor IA no responde'));
       }
-          }, STARTUP_WAIT_TIME);
-    });
+    }, STARTUP_WAIT_TIME);
+  });
+}
+
+/**
+ * Detiene el servidor IA unificado inmediatamente
+ */
+function stopIAServer(): void {
+  if (iaServerProcess && !iaServerProcess.killed) {
+    console.log('🛑 Deteniendo servidor IA después de generar predicción...');
+    iaServerProcess.kill('SIGTERM');
+    iaServerProcess = null;
   }
-  
-  /**
-   * Detiene el servidor IA unificado inmediatamente
-   */
-  function stopIAServer(): void {
-    if (iaServerProcess && !iaServerProcess.killed) {
-      console.log('🛑 Deteniendo servidor IA después de generar predicción...');
-      iaServerProcess.kill('SIGTERM');
-      iaServerProcess = null;
-    }
-  }
+}
 
 /**
  * Genera un JWT token básico para el servidor IA
