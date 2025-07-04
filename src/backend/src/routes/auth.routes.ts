@@ -27,6 +27,12 @@ router.post('/register', (req, res) => {
   authController.register(req, res);
 });
 
+// Ruta para renovar token
+router.post('/refresh-token', (req, res) => {
+  console.log('[Auth Route] Recibida petición de refresh token:', req.body);
+  authController.refreshToken(req, res);
+});
+
 // Ruta para reenviar email de verificación
 router.post('/resend-verification', (req, res) => {
   console.log('[Auth Route] Recibida petición de reenvío de email de verificación:', req.body);
