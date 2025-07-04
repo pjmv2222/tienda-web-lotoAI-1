@@ -187,7 +187,7 @@ def cargar_modelos():
 def verify_token(token):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        user_id = payload.get("sub")
+        user_id = payload.get("id")  # Cambiado de "sub" a "id"
         if user_id is None:
             return None
         return user_id
