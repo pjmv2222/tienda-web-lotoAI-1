@@ -1,10 +1,11 @@
 import { Injectable, Inject, PLATFORM_ID } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { BehaviorSubject, Observable, tap, catchError, map } from 'rxjs';
+import { BehaviorSubject, Observable, tap, catchError, map, throwError } from 'rxjs';
 import { isPlatformBrowser } from '@angular/common';
 import { User, UserLogin, UserRegistration, UserPasswordReset, UserPasswordForgot } from '../models/user.model';
 import { environment } from '../../environments/environment';
 import { CookieService } from './cookie.service';
+import { SessionService } from './session.service';
 
 interface UserProfile {
   id: string;
@@ -24,10 +25,12 @@ export class AuthService {
   public currentUser: Observable<User | null>;
   private userStorageKey = 'currentUser';
   private tokenCookieKey = 'auth_token';
+  private refreshTokenCookieKey = 'refresh_token';
 
   constructor(
     private http: HttpClient,
     private cookieService: CookieService,
+    private sessionService: SessionService,
     @Inject(PLATFORM_ID) private platformId: Object
   ) {
     this.currentUserSubject = new BehaviorSubject<User | null>(
@@ -142,7 +145,7 @@ export class AuthService {
             token: response.token
           };
 
-          // Guardar el token en una cookie segura
+          // Guardar el token JWT en una cookie segura
           this.cookieService.setConditionalCookie(
             this.tokenCookieKey,
             response.token,
@@ -155,9 +158,27 @@ export class AuthService {
             }
           );
 
+          // Guardar refresh token si viene en la respuesta
+          if (response.refreshToken) {
+            this.cookieService.setConditionalCookie(
+              this.refreshTokenCookieKey,
+              response.refreshToken,
+              'necessary',
+              {
+                expires: 30, // 30 días para refresh token
+                path: '/',
+                secure: true,
+                sameSite: 'Strict'
+              }
+            );
+          }
+
           // Guardar el usuario en localStorage (sin el token)
           this.setUserInStorage(user);
           this.currentUserSubject.next(user);
+
+          // Iniciar tracking de sesión
+          this.sessionService.startSession();
         }
       }),
       catchError(error => {
@@ -175,9 +196,15 @@ export class AuthService {
   }
 
   logout() {
+    console.log('🚪 [AuthService] Cerrando sesión');
+    
+    // Terminar tracking de sesión
+    this.sessionService.endSession();
+    
     if (isPlatformBrowser(this.platformId)) {
       localStorage.removeItem(this.userStorageKey);
       this.cookieService.deleteCookie(this.tokenCookieKey, { path: '/' });
+      this.cookieService.deleteCookie(this.refreshTokenCookieKey, { path: '/' });
     }
     this.currentUserSubject.next(null);
   }
@@ -354,5 +381,85 @@ export class AuthService {
     } catch (error) {
       console.error('Error al almacenar usuario autenticado:', error);
     }
+  }
+
+  /**
+   * Obtiene el refresh token almacenado
+   */
+  getRefreshToken(): string | null {
+    return this.cookieService.getCookie(this.refreshTokenCookieKey);
+  }
+
+  /**
+   * Actualiza el token en el almacenamiento
+   */
+  updateTokenInStorage(newToken: string): void {
+    const currentUser = this.currentUserValue;
+    if (currentUser) {
+      const updatedUser = { ...currentUser, token: newToken };
+      this.setUserInStorage(updatedUser);
+      this.currentUserSubject.next(updatedUser);
+    }
+    
+    // Actualizar también en cookies
+    this.cookieService.setConditionalCookie(
+      this.tokenCookieKey,
+      newToken,
+      'necessary',
+      {
+        expires: 7,
+        path: '/',
+        secure: true,
+        sameSite: 'Strict'
+      }
+    );
+  }
+
+  /**
+   * Renueva el token actual
+   */
+  refreshCurrentToken(): Observable<any> {
+    const refreshToken = this.getRefreshToken();
+    
+    if (!refreshToken) {
+      return throwError(() => new Error('No refresh token available'));
+    }
+    
+    return this.refreshToken(refreshToken);
+  }
+
+  /**
+   * Renueva el token usando el refresh token
+   */
+  refreshToken(refreshToken: string): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/auth/refresh-token`, { 
+      refreshToken 
+    }).pipe(
+      tap(response => {
+        if (response.token) {
+          this.updateTokenInStorage(response.token);
+          
+          // Si también viene un nuevo refresh token, actualizarlo
+          if (response.refreshToken) {
+            this.cookieService.setConditionalCookie(
+              this.refreshTokenCookieKey,
+              response.refreshToken,
+              'necessary',
+              {
+                expires: 30, // 30 días para refresh token
+                path: '/',
+                secure: true,
+                sameSite: 'Strict'
+              }
+            );
+          }
+        }
+      }),
+      catchError(error => {
+        // Si falla la renovación, cerrar sesión
+        this.logout();
+        return throwError(() => error);
+      })
+    );
   }
 }

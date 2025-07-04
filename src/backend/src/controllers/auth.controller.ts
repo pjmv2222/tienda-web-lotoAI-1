@@ -76,6 +76,7 @@ export class AuthController {
   async login(req: Request, res: Response) {
     try {
       const { email, password } = req.body;
+
       const result = await pgPool.query('SELECT * FROM users WHERE email = $1', [email]);
 
       if (result.rows.length === 0) {
@@ -99,10 +100,18 @@ export class AuthController {
         return res.status(401).json({ message: 'Invalid credentials' });
       }
 
+      // Generar token JWT con expiración de 1 hora
       const token = jwt.sign(
         { id: user.id, email: user.email },
         process.env['JWT_SECRET'] || 'your-secret-key',
         { expiresIn: '1h' }
+      );
+
+      // Generar refresh token con expiración de 30 días
+      const refreshToken = jwt.sign(
+        { id: user.id, email: user.email, type: 'refresh' },
+        process.env['JWT_SECRET'] || 'your-secret-key',
+        { expiresIn: '30d' }
       );
 
       return res.status(200).json({
@@ -113,6 +122,7 @@ export class AuthController {
           email: user.email,
         },
         token,
+        refreshToken,
       });
     } catch (error) {
       console.error('Error in login:', error);
@@ -362,6 +372,69 @@ export class AuthController {
         stack: error instanceof Error ? error.stack : 'No stack trace',
         error: error
       });
+      return res.status(500).json({ message: 'Internal server error' });
+    }
+  }
+
+  async refreshToken(req: Request, res: Response) {
+    try {
+      const { refreshToken } = req.body;
+
+      if (!refreshToken) {
+        return res.status(401).json({ message: 'Refresh token is required' });
+      }
+
+      // Verificar el refresh token
+      const decoded = jwt.verify(
+        refreshToken, 
+        process.env['JWT_SECRET'] || 'your-secret-key'
+      ) as { id: number; email: string; type: string };
+
+      // Verificar que sea un refresh token válido
+      if (decoded.type !== 'refresh') {
+        return res.status(401).json({ message: 'Invalid refresh token type' });
+      }
+
+      // Verificar que el usuario existe
+      const userResult = await pgPool.query('SELECT * FROM users WHERE id = $1', [decoded.id]);
+      if (userResult.rows.length === 0) {
+        return res.status(401).json({ message: 'User not found' });
+      }
+
+      const user = userResult.rows[0];
+
+      // Generar nuevo token JWT
+      const newToken = jwt.sign(
+        { id: user.id, email: user.email },
+        process.env['JWT_SECRET'] || 'your-secret-key',
+        { expiresIn: '1h' }
+      );
+
+      // Opcionalmente, generar un nuevo refresh token (rotación de tokens)
+      const newRefreshToken = jwt.sign(
+        { id: user.id, email: user.email, type: 'refresh' },
+        process.env['JWT_SECRET'] || 'your-secret-key',
+        { expiresIn: '30d' }
+      );
+
+      return res.status(200).json({
+        message: 'Token refreshed successfully',
+        token: newToken,
+        refreshToken: newRefreshToken,
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+        }
+      });
+    } catch (error) {
+      console.error('Error in refresh token:', error);
+      
+      // Si el token está expirado o es inválido
+      if (error instanceof jwt.JsonWebTokenError || error instanceof jwt.TokenExpiredError) {
+        return res.status(401).json({ message: 'Invalid or expired refresh token' });
+      }
+      
       return res.status(500).json({ message: 'Internal server error' });
     }
   }
