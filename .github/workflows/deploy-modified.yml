@@ -52,6 +52,20 @@ jobs:
               echo "⚠️  Archivo dist botes.json no encontrado para respaldar"
             fi
             
+            # Respaldar configuraciones específicas del servidor IA
+            if [ -f "archivos-para-servidor/server-ia-unificado.py" ]; then
+              cp archivos-para-servidor/server-ia-unificado.py archivos-para-servidor/server-ia-unificado.py.backup
+              echo "✅ Archivo server-ia-unificado.py (archivos-para-servidor) respaldado"
+            else
+              echo "⚠️  Archivo archivos-para-servidor/server-ia-unificado.py no encontrado para respaldar"
+            fi
+            if [ -f "server-ia-unificado.py" ]; then
+              cp server-ia-unificado.py server-ia-unificado.py.backup
+              echo "✅ Archivo server-ia-unificado.py (raíz) respaldado"
+            else
+              echo "⚠️  Archivo server-ia-unificado.py (raíz) no encontrado para respaldar"
+            fi
+            
             # 2. Actualizar desde GitHub
             echo "--- Fase 2: Actualizando código fuente ---"
             git fetch origin main
@@ -89,6 +103,22 @@ jobs:
               echo "✅ Archivo botes.json (dist) restaurado con datos actualizados del scraper"
             else
               echo "❌ No se pudo restaurar botes.json (dist) - archivo de respaldo no encontrado"
+            fi
+            
+            # Restaurar configuraciones específicas del servidor IA
+            if [ -f "archivos-para-servidor/server-ia-unificado.py.backup" ]; then
+              cp archivos-para-servidor/server-ia-unificado.py.backup archivos-para-servidor/server-ia-unificado.py
+              rm archivos-para-servidor/server-ia-unificado.py.backup
+              echo "✅ Archivo server-ia-unificado.py (archivos-para-servidor) restaurado con configuraciones específicas del servidor"
+            else
+              echo "⚠️  No se pudo restaurar server-ia-unificado.py (archivos-para-servidor) - archivo de respaldo no encontrado"
+            fi
+            if [ -f "server-ia-unificado.py.backup" ]; then
+              cp server-ia-unificado.py.backup server-ia-unificado.py
+              rm server-ia-unificado.py.backup
+              echo "✅ Archivo server-ia-unificado.py (raíz) restaurado con configuraciones específicas del servidor"
+            else
+              echo "⚠️  No se pudo restaurar server-ia-unificado.py (raíz) - archivo de respaldo no encontrado"
             fi
             
             # 3. Verificar variables de entorno
