@@ -31,7 +31,7 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 30
 def verify_token(token):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        user_id = payload.get("sub")
+        user_id = payload.get("id")
         if user_id is None:
             return None
         return user_id
