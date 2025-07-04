@@ -8,7 +8,7 @@ import * as jwt from 'jsonwebtoken';
 // Puerto fijo para el servidor IA unificado
 const IA_SERVER_PORT = 5000;
 const IA_SERVER_URL = `http://127.0.0.1:${IA_SERVER_PORT}`;
-const IA_SERVER_SCRIPT = '/var/www/tienda-web-lotoAI-1/server-ia-unificado.py';
+const IA_SERVER_SCRIPT = '/var/www/tienda-web-lotoAI-1/archivos-para-servidor/server-ia-unificado.py';
 
 // Proceso del servidor IA unificado
 let iaServerProcess: ChildProcess | null = null;
@@ -153,8 +153,8 @@ async function checkPermanentServer(): Promise<boolean> {
  * Genera un JWT token básico para el servidor IA
  */
 function generateIAToken(): string {
-  // Usar la misma clave secreta que el middleware de autenticación
-  const SECRET_KEY = process.env['JWT_SECRET'] || 'your-secret-key';
+  // Usar la misma clave secreta que el middleware de autenticación y PM2
+  const SECRET_KEY = process.env['JWT_SECRET'] || '8011471e-90c3-4af3-bc53-452557b92001';
   
   const payload = {
     id: 999, // ID de servicio interno
