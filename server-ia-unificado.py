@@ -33,9 +33,9 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 30
 # Configuración de juegos y sus archivos DataFrame específicos
 JUEGOS_CONFIG = {
     'euromillon': {
-        'modelo': '/var/www/tienda-web-lotoAI-1/archivos-para-servidor/modelos/modelo_euromillon.h5',
-        'dataset': '/var/www/tienda-web-lotoAI-1/archivos-para-servidor/datasets/DataFrame_euromillon.csv',
-        'separador': ',',
+        'modelo': '/var/www/tienda-web-lotoAI-1/IAs-Loto/EuroMillon-CSV/modelo_euromillon.h5',
+        'dataset': '/var/www/tienda-web-lotoAI-1/IAs-Loto/EuroMillon-CSV/DataFrame_Euromillones_2024.csv',
+        'separador': ';',
         'columnas_entrada': ['Num_1', 'Num_2', 'Num_3', 'Num_4', 'Num_5', 'Start_1', 'Star_2'],
         'columnas_salida': ['Num_1', 'Num_2', 'Num_3', 'Num_4', 'Num_5', 'Start_1', 'Star_2'],
         'escalador': 'MinMaxScaler',

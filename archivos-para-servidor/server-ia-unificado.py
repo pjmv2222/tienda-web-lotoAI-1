@@ -34,7 +34,7 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 30
 JUEGOS_CONFIG = {
     'euromillon': {
         'modelo': '/var/www/tienda-web-lotoAI-1/IAs-Loto/EuroMillon-CSV/modelo_euromillon.h5',
-        'dataset': '/var/www/tienda-web-lotoAI-1/IAs-Loto/EuroMillon-CSV/DataFrame_Euromillones.csv',
+        'dataset': '/var/www/tienda-web-lotoAI-1/IAs-Loto/EuroMillon-CSV/DataFrame_Euromillones_2024.csv',
         'separador': ';',
         'columnas_entrada': ['Num_1', 'Num_2', 'Num_3', 'Num_4', 'Num_5', 'Start_1', 'Star_2'],
         'columnas_salida': ['Num_1', 'Num_2', 'Num_3', 'Num_4', 'Num_5', 'Start_1', 'Star_2'],
@@ -357,8 +357,8 @@ def generar_prediccion_aleatoria(juego):
         numeros = sorted(np.random.choice(range(1, 51), 5, replace=False))
         estrellas = sorted(np.random.choice(range(1, 13), 2, replace=False))
         return {
-            'numeros': numeros.tolist(),
-            'estrellas': estrellas.tolist(),
+            'numeros': numeros,
+            'estrellas': estrellas,
             'mensaje': 'Predicción aleatoria para EuroMillon'
         }
     else:
@@ -370,7 +370,7 @@ def generar_prediccion_aleatoria(juego):
         ))
         
         resultado = {
-            'numeros': numeros.tolist(),
+            'numeros': numeros,
             'mensaje': f'Predicción aleatoria para {juego.title()}'
         }
         
