@@ -9,9 +9,6 @@ router.get('/test', (req, res) => {
   res.json({ message: 'API de predicciones funcionando correctamente' });
 });
 
-// Ruta temporal SIN autenticación para testing del servidor IA
-router.post('/test/:game', getPrediction);
-
 // Ruta eliminada - ahora se usa el sistema IA real
 
 // Ruta para obtener el estado de los servidores Python
