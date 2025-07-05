@@ -56,9 +56,10 @@ jobs:
           [ -f .env.backup ] && cp .env.backup .env && rm .env.backup && echo "✅ .env restaurado"
           [ -f .env.production.backup ] && cp .env.production.backup .env.production && rm .env.production.backup && echo "✅ .env.production restaurado"
           
-          # Restaurar archivos del servidor IA
-          [ -f server-ia-unificado.py.backup ] && cp server-ia-unificado.py.backup server-ia-unificado.py && rm server-ia-unificado.py.backup && echo "✅ server-ia-unificado.py (raíz) restaurado"
-          [ -f archivos-para-servidor/server-ia-unificado.py.backup ] && cp archivos-para-servidor/server-ia-unificado.py.backup archivos-para-servidor/server-ia-unificado.py && rm archivos-para-servidor/server-ia-unificado.py.backup && echo "✅ server-ia-unificado.py (archivos-para-servidor) restaurado"
+          # IMPORTANTE: NO restaurar server-ia-unificado.py porque debe actualizarse desde el repositorio
+          echo "--- NOTA: server-ia-unificado.py NO se restaura - debe usar versión actualizada del repositorio ---"
+          [ -f server-ia-unificado.py.backup ] && rm server-ia-unificado.py.backup && echo "✅ Backup obsoleto de server-ia-unificado.py eliminado"
+          [ -f archivos-para-servidor/server-ia-unificado.py.backup ] && rm archivos-para-servidor/server-ia-unificado.py.backup && echo "✅ Backup obsoleto de server-ia-unificado.py (archivos-para-servidor) eliminado"
           
           # Restaurar otros archivos críticos
           [ -f ia-server-control.sh.backup ] && cp ia-server-control.sh.backup ia-server-control.sh && rm ia-server-control.sh.backup && echo "✅ ia-server-control.sh restaurado"

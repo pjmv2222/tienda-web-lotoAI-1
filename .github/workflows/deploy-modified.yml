@@ -111,19 +111,15 @@ jobs:
             fi
             
             # Restaurar configuraciones específicas del servidor IA
+            # IMPORTANTE: NO restaurar server-ia-unificado.py porque debe actualizarse desde el repositorio
+            echo "--- NOTA: server-ia-unificado.py NO se restaura - debe usar versión actualizada del repositorio ---"
             if [ -f "archivos-para-servidor/server-ia-unificado.py.backup" ]; then
-              cp archivos-para-servidor/server-ia-unificado.py.backup archivos-para-servidor/server-ia-unificado.py
               rm archivos-para-servidor/server-ia-unificado.py.backup
-              echo "✅ Archivo server-ia-unificado.py (archivos-para-servidor) restaurado con configuraciones específicas del servidor"
-            else
-              echo "⚠️  No se pudo restaurar server-ia-unificado.py (archivos-para-servidor) - archivo de respaldo no encontrado"
+              echo "✅ Backup obsoleto de server-ia-unificado.py eliminado - usando versión del repositorio"
             fi
             if [ -f "server-ia-unificado.py.backup" ]; then
-              cp server-ia-unificado.py.backup server-ia-unificado.py
               rm server-ia-unificado.py.backup
-              echo "✅ Archivo server-ia-unificado.py (raíz) restaurado con configuraciones específicas del servidor"
-            else
-              echo "⚠️  No se pudo restaurar server-ia-unificado.py (raíz) - archivo de respaldo no encontrado"
+              echo "✅ Backup obsoleto de server-ia-unificado.py (raíz) eliminado - usando versión del repositorio"
             fi
             
             # 3. Verificar variables de entorno
