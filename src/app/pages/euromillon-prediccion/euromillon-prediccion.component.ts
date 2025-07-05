@@ -148,20 +148,46 @@ export class EuromillonPrediccionComponent implements OnInit, OnDestroy {
    * Cargar estado de predicciones desde el backend
    */
   private loadPredictionStatus() {
+    console.log('🔍 [DEBUG] Cargando estado de predicciones...');
+    
     this.userPredictionService.getPredictionStatus('euromillon').subscribe({
       next: (response) => {
+        console.log('✅ [DEBUG] Respuesta del backend:', response);
+        
         if (response.success) {
+          console.log('✅ [DEBUG] Datos recibidos:', {
+            predictions: response.data.predictions,
+            maxAllowed: response.data.maxAllowed,
+            userPlan: response.data.userPlan
+          });
+          
           this.predictionResults = response.data.predictions.map(p => p.data);
           this.maxPredictions = response.data.maxAllowed;
           this.userPlan = response.data.userPlan;
           
+          console.log('✅ [DEBUG] Estado actualizado:', {
+            predictionResultsLength: this.predictionResults.length,
+            maxPredictions: this.maxPredictions,
+            userPlan: this.userPlan
+          });
+          
           // Actualizar la interfaz
           this.updatePredictionDisplay();
+        } else {
+          console.log('❌ [DEBUG] Respuesta no exitosa:', response);
         }
       },
       error: (error) => {
-        console.error('Error cargando estado de predicciones:', error);
+        console.error('❌ [DEBUG] Error cargando estado de predicciones:', error);
+        console.error('❌ [DEBUG] Error detallado:', {
+          status: error.status,
+          statusText: error.statusText,
+          url: error.url,
+          message: error.message
+        });
+        
         // Fallback al comportamiento anterior si falla
+        console.log('🔄 [DEBUG] Usando fallback localStorage...');
         this.loadPredictionsFromStorage();
       }
     });
