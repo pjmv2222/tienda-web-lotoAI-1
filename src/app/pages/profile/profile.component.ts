@@ -2,10 +2,11 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
-import { SubscriptionService } from '../../services/subscription.service';
+import { SubscriptionService, Subscription } from '../../services/subscription.service';
 import { UserPredictionService } from '../../services/user-prediction.service';
 import { UserProfile } from '../../models/user.model';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, ValidationErrors } from '@angular/forms';
+import { forkJoin } from 'rxjs';
 
 // Interfaz para mostrar información de suscripciones
 interface UserSubscriptionInfo {
@@ -629,34 +630,36 @@ export class ProfileComponent implements OnInit {
   private loadUserSubscriptions() {
     this.loadingSubscriptions = true;
     this.subscriptionService.getUserSubscriptions().subscribe({
-      next: (response: any) => {
+      next: (subscriptions: Subscription[]) => {
         this.loadingSubscriptions = false;
-        if (response && response.success) {
-          if (!response.data || response.data.length === 0) {
-            // Usuario con Plan Básico (sin suscripciones premium)
-            this.loadBasicPlanData();
-          } else {
-            // Suscripciones premium/temporales
-            this.activeSubscriptions = response.data.map((sub: any) => ({
-              id: sub.id,
-              plan_id: sub.plan_id,
-              plan_name: this.getPlanDisplayName(sub.plan_id),
-              status: sub.status,
-              status_display: this.getStatusDisplayName(sub.status),
-              created_at: sub.created_at,
-              expires_at: sub.expires_at,
-              price: this.getPlanPrice(sub.plan_id),
-              is_basic_plan: false
-            }));
-          }
+        
+        if (!subscriptions || subscriptions.length === 0) {
+          // Usuario con Plan Básico (sin suscripciones premium en la BD)
+          console.log('No se encontraron suscripciones premium, cargando Plan Básico...');
+          this.loadBasicPlanData();
         } else {
-          this.activeSubscriptions = [];
+          // Suscripciones premium/temporales encontradas
+          console.log('Suscripciones encontradas:', subscriptions);
+          this.activeSubscriptions = subscriptions.map((sub: any) => ({
+            id: sub.id,
+            plan_id: sub.planId,
+            plan_name: this.getPlanDisplayName(sub.planId),
+            status: sub.status,
+            status_display: this.getStatusDisplayName(sub.status),
+            created_at: sub.startDate,
+            expires_at: sub.endDate,
+            price: this.getPlanPrice(sub.planId),
+            is_basic_plan: false
+          }));
         }
       },
       error: (error: any) => {
         console.error('Error al cargar suscripciones:', error);
         this.loadingSubscriptions = false;
-        this.activeSubscriptions = [];
+        
+        // Si hay error, asumir Plan Básico como fallback
+        console.log('Error al cargar suscripciones, usando Plan Básico como fallback...');
+        this.loadBasicPlanData();
       }
     });
   }
