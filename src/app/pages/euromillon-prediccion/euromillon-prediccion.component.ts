@@ -238,7 +238,7 @@ export class EuromillonPrediccionComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Carga el bote actual desde el mismo archivo que usa el header
+   * Cargar el bote actual desde el mismo archivo que usa el header
    */
   private async cargarBoteActual(): Promise<void> {
     try {
@@ -380,7 +380,7 @@ export class EuromillonPrediccionComponent implements OnInit, OnDestroy {
       const canGenerate = await this.userPredictionService.canGeneratePrediction('euromillon').toPromise();
       
       if (!canGenerate) {
-        this.predictionError = `Ya has generado el máximo de ${this.maxPredictions} predicciones. Usa "Limpiar predicciones" para empezar de nuevo.`;
+        this.predictionError = `Ya has generado el máximo de ${this.maxPredictions} predicciones. Adquiere una nueva suscripción para seguir generando pronósticos afortunados.`;
         return;
       }
 

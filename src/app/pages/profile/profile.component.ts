@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { SubscriptionService } from '../../services/subscription.service';
+import { UserPredictionService } from '../../services/user-prediction.service';
 import { UserProfile } from '../../models/user.model';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, ValidationErrors } from '@angular/forms';
 
@@ -545,7 +546,8 @@ export class ProfileComponent implements OnInit {
     private authService: AuthService,
     private router: Router,
     private fb: FormBuilder,
-    private subscriptionService: SubscriptionService
+    private subscriptionService: SubscriptionService,
+    private userPredictionService: UserPredictionService
   ) {
     this.editForm = this.fb.group({
       nombre: ['', Validators.required],
@@ -587,7 +589,7 @@ export class ProfileComponent implements OnInit {
               nombre: currentUser.nombre,
               apellido: currentUser.apellido,
               telefono: currentUser.telefono,
-              fechaRegistro: new Date() // Valor por defecto
+              fechaRegistro: new Date().toISOString() // Valor por defecto
             };
             this.editForm.patchValue({
               nombre: currentUser.nombre,
@@ -615,7 +617,7 @@ export class ProfileComponent implements OnInit {
               nombre: currentUser.nombre,
               apellido: currentUser.apellido,
               telefono: currentUser.telefono,
-              fechaRegistro: new Date()
+              fechaRegistro: new Date().toISOString()
             };
             this.editForm.patchValue({
               nombre: currentUser.nombre,
@@ -633,62 +635,26 @@ export class ProfileComponent implements OnInit {
 
   private loadUserSubscriptions() {
     this.loadingSubscriptions = true;
-    
-    // Usar el mismo endpoint que funciona en hasActivePlan para consistencia
-    this.subscriptionService.hasActiveSubscription().subscribe({
-      next: (hasActive: boolean) => {
+    this.subscriptionService.getUserSubscriptions().subscribe({
+      next: (response: any) => {
         this.loadingSubscriptions = false;
-        
-        if (hasActive) {
-          // Si tiene suscripción activa, obtener los detalles usando el endpoint check
-          const currentUser = this.authService.currentUserValue;
-          if (currentUser) {
-            this.subscriptionService.hasActivePlan('basic').subscribe(hasBasic => {
-              if (hasBasic) {
-                this.activeSubscriptions = [{
-                  id: 1,
-                  plan_id: 'basic',
-                  plan_name: 'Plan Básico',
-                  status: 'active',
-                  status_display: 'Activo',
-                  created_at: new Date().toISOString(),
-                  expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 días
-                  price: '1,22€',
-                  is_basic_plan: true,
-                  predictions_used: this.generateBasicPlanUsageData()
-                }];
-              }
-            });
-            
-            this.subscriptionService.hasActivePlan('monthly').subscribe(hasMonthly => {
-              if (hasMonthly) {
-                this.activeSubscriptions = [{
-                  id: 2,
-                  plan_id: 'monthly',
-                  plan_name: 'Plan Mensual',
-                  status: 'active',
-                  status_display: 'Activo',
-                  created_at: new Date().toISOString(),
-                  expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 días
-                  price: '10,22€'
-                }];
-              }
-            });
-            
-            this.subscriptionService.hasActivePlan('pro').subscribe(hasPro => {
-              if (hasPro) {
-                this.activeSubscriptions = [{
-                  id: 3,
-                  plan_id: 'pro',
-                  plan_name: 'Plan Pro',
-                  status: 'active',
-                  status_display: 'Activo',
-                  created_at: new Date().toISOString(),
-                  expires_at: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(), // 365 días
-                  price: '122€'
-                }];
-              }
-            });
+        if (response && response.success) {
+          if (!response.data || response.data.length === 0) {
+            // Usuario con Plan Básico (sin suscripciones premium)
+            this.loadBasicPlanData();
+          } else {
+            // Suscripciones premium/temporales
+            this.activeSubscriptions = response.data.map(sub => ({
+              id: sub.id,
+              plan_id: sub.plan_id,
+              plan_name: this.getPlanDisplayName(sub.plan_id),
+              status: sub.status,
+              status_display: this.getStatusDisplayName(sub.status),
+              created_at: sub.created_at,
+              expires_at: sub.expires_at,
+              price: this.getPlanPrice(sub.plan_id),
+              is_basic_plan: false
+            }));
           }
         } else {
           this.activeSubscriptions = [];
@@ -698,6 +664,69 @@ export class ProfileComponent implements OnInit {
         console.error('Error al cargar suscripciones:', error);
         this.loadingSubscriptions = false;
         this.activeSubscriptions = [];
+      }
+    });
+  }
+
+  /**
+   * Carga datos del Plan Básico con información real de predicciones
+   */
+  private loadBasicPlanData() {
+    const games = ['euromillon', 'primitiva', 'bonoloto', 'elgordo', 'eurodreams', 'lototurf', 'loterianacional'];
+    const gameNames: { [key: string]: string } = {
+      'euromillon': 'Euromillones',
+      'primitiva': 'La Primitiva', 
+      'bonoloto': 'Bonoloto',
+      'elgordo': 'El Gordo',
+      'eurodreams': 'EuroDreams',
+      'lototurf': 'Lototurf',
+      'loterianacional': 'Lotería Nacional'
+    };
+
+    // Obtener estado de predicciones para Euromillón como ejemplo
+    this.userPredictionService.getPredictionStatus('euromillon').subscribe({
+      next: (response) => {
+        const euromillonData = response.success ? response.data : null;
+        
+        // Crear datos basándose en la respuesta real
+        const predictions_used: GamePredictionUsage[] = games.map(gameId => ({
+          game_id: gameId,
+          game_name: gameNames[gameId] || gameId,
+          total_allowed: euromillonData?.maxAllowed || 3,
+          used: gameId === 'euromillon' ? (euromillonData?.currentCount || 0) : 0,
+          remaining: gameId === 'euromillon' ? (euromillonData?.remaining || 3) : 3
+        }));
+
+        const subscription: UserSubscriptionInfo = {
+          id: 0,
+          plan_id: 'basic',
+          plan_name: 'Plan Básico',
+          status: 'active',
+          status_display: 'Activo',
+          created_at: new Date().toISOString(),
+          expires_at: '',
+          price: '1,22€',
+          is_basic_plan: true,
+          predictions_used: predictions_used
+        };
+
+        this.activeSubscriptions = [subscription];
+      },
+      error: (error) => {
+        console.error('Error obteniendo estado de predicciones:', error);
+        // Fallback a datos por defecto
+        this.activeSubscriptions = [{
+          id: 0,
+          plan_id: 'basic',
+          plan_name: 'Plan Básico',
+          status: 'active',
+          status_display: 'Activo',
+          created_at: new Date().toISOString(),
+          expires_at: '',
+          price: '1,22€',
+          is_basic_plan: true,
+          predictions_used: this.getDefaultPredictionData()
+        }];
       }
     });
   }
@@ -731,16 +760,15 @@ export class ProfileComponent implements OnInit {
   }
 
   /**
-   * Genera datos simulados de uso de pronósticos para el Plan Básico
-   * En una implementación real, estos datos vendrían del backend
+   * Datos por defecto si falla la carga desde el backend
    */
-  private generateBasicPlanUsageData(): GamePredictionUsage[] {
+  private getDefaultPredictionData(): GamePredictionUsage[] {
     return [
       {
         game_id: 'euromillon',
         game_name: 'Euromillones',
         total_allowed: 3,
-        used: 0, // En una implementación real, esto vendría del backend
+        used: 0,
         remaining: 3
       },
       {
@@ -758,7 +786,7 @@ export class ProfileComponent implements OnInit {
         remaining: 3
       },
       {
-        game_id: 'gordo',
+        game_id: 'elgordo',
         game_name: 'El Gordo',
         total_allowed: 3,
         used: 0,
