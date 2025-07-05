@@ -588,6 +588,13 @@ export const PredictionController = {
 
       const { gameType } = req.params;
       
+      // Obtener información del plan y límites ANTES de limpiar
+      const userPlan = await getUserCurrentPlan(userId);
+      const limits = getPredictionLimitsByPlan(userPlan);
+      const predictionsGenerated = await PredictionModel.countUserPredictions(userId, gameType);
+      const maxAllowed = limits[gameType] || 3;
+      
+      // Limpiar solo las predicciones visibles (NO el contador de límites del plan)
       const deletedPredictions = await PredictionModel.clearUserPredictions(userId, gameType);
       
       res.json({
@@ -595,7 +602,15 @@ export const PredictionController = {
         data: {
           gameType,
           deletedCount: deletedPredictions.length,
-          message: `Se eliminaron ${deletedPredictions.length} predicciones de ${gameType}`
+          message: `Se eliminaron ${deletedPredictions.length} predicciones visibles de ${gameType}`,
+          predictionsGenerated,
+          maxAllowed,
+          remaining: Math.max(0, maxAllowed - predictionsGenerated),
+          canGenerate: predictionsGenerated < maxAllowed,
+          userPlan,
+          note: predictionsGenerated >= maxAllowed ? 
+            `Has alcanzado el límite de ${maxAllowed} predicciones para ${gameType} en tu plan ${userPlan}. Para generar más predicciones, actualiza tu suscripción.` : 
+            `Predicciones limpiadas. Puedes generar ${Math.max(0, maxAllowed - predictionsGenerated)} predicciones más para ${gameType}.`
         }
       });
     } catch (error) {
