@@ -584,40 +584,12 @@ export class ProfileComponent implements OnInit {
           const currentUser = this.authService.currentUserValue;
           if (currentUser) {
             this.userProfile = {
-              id: currentUser.id,
+              id: currentUser.id.toString(),
+              nombre: currentUser.nombre,
+              apellido: currentUser.apellido,
               email: currentUser.email,
-              nombre: currentUser.nombre,
-              apellido: currentUser.apellido,
               telefono: currentUser.telefono,
-              fechaRegistro: new Date().toISOString() // Valor por defecto
-            };
-            this.editForm.patchValue({
-              nombre: currentUser.nombre,
-              apellido: currentUser.apellido,
-              telefono: currentUser.telefono
-            });
-          }
-        }
-      },
-      error: (error: any) => {
-        console.error('Error al cargar el perfil:', error);
-        
-        // Solo redirigir al login si es un error de autenticación (401 o 403)
-        if (error.status === 401 || error.status === 403) {
-          console.log('Error de autenticación, redirigiendo al login...');
-          this.router.navigate(['/auth/login']);
-        } else {
-          // Para otros errores, intentar usar el usuario actual como fallback
-          const currentUser = this.authService.currentUserValue;
-          if (currentUser) {
-            console.log('Usando datos del usuario actual como fallback...');
-            this.userProfile = {
-              id: currentUser.id,
-              email: currentUser.email,
-              nombre: currentUser.nombre,
-              apellido: currentUser.apellido,
-              telefono: currentUser.telefono,
-              fechaRegistro: new Date().toISOString()
+              fechaRegistro: new Date() // Valor por defecto
             };
             this.editForm.patchValue({
               nombre: currentUser.nombre,
@@ -625,9 +597,30 @@ export class ProfileComponent implements OnInit {
               telefono: currentUser.telefono
             });
           } else {
-            // Solo si no hay usuario en absoluto, redirigir al login
-            this.router.navigate(['/auth/login']);
+            console.error('Usuario actual no disponible');
           }
+        }
+      },
+      error: (error: any) => {
+        console.error('Error al cargar perfil de usuario:', error);
+        this.loading = false;
+        
+        // Fallback usando datos del token
+        const currentUser = this.authService.currentUserValue;
+        if (currentUser) {
+          this.userProfile = {
+            id: currentUser.id.toString(),
+            nombre: currentUser.nombre,
+            apellido: currentUser.apellido,
+            email: currentUser.email,
+            telefono: currentUser.telefono,
+            fechaRegistro: new Date()
+          };
+          this.editForm.patchValue({
+            nombre: currentUser.nombre,
+            apellido: currentUser.apellido,
+            telefono: currentUser.telefono
+          });
         }
       }
     });
@@ -644,7 +637,7 @@ export class ProfileComponent implements OnInit {
             this.loadBasicPlanData();
           } else {
             // Suscripciones premium/temporales
-            this.activeSubscriptions = response.data.map(sub => ({
+            this.activeSubscriptions = response.data.map((sub: any) => ({
               id: sub.id,
               plan_id: sub.plan_id,
               plan_name: this.getPlanDisplayName(sub.plan_id),
