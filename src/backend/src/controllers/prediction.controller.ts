@@ -4,6 +4,8 @@ import * as path from 'path';
 import * as fs from 'fs';
 import axios from 'axios';
 import * as jwt from 'jsonwebtoken';
+import { PredictionModel, getPredictionLimitsByPlan } from '../models/prediction.model';
+import { pgPool } from '../config/database';
 
 // Puerto fijo para el servidor IA unificado
 const IA_SERVER_PORT = 5000;
@@ -472,3 +474,198 @@ export const getServerStatus = async (req: Request, res: Response) => {
 // Limpieza al cerrar la aplicación
 process.on('SIGTERM', stopIAServer);
 process.on('SIGINT', stopIAServer);
+
+export const PredictionController = {
+  /**
+   * Obtener el estado actual de predicciones del usuario
+   */
+  async getPredictionStatus(req: Request, res: Response) {
+    try {
+      const userId = (req as any).user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: 'Usuario no autenticado' });
+      }
+
+      const { gameType } = req.params;
+      
+      // Obtener el plan actual del usuario
+      const userPlan = await getUserCurrentPlan(userId);
+      const limits = getPredictionLimitsByPlan(userPlan);
+      
+      // Contar predicciones actuales
+      const currentCount = await PredictionModel.countUserPredictions(userId, gameType);
+      const maxAllowed = limits[gameType] || 3;
+      
+      // Obtener predicciones existentes
+      const predictions = await PredictionModel.getUserPredictions(userId, gameType);
+      
+      res.json({
+        success: true,
+        data: {
+          gameType,
+          currentCount,
+          maxAllowed,
+          remaining: Math.max(0, maxAllowed - currentCount),
+          canGenerate: currentCount < maxAllowed,
+          predictions: predictions.map(p => ({
+            id: p.id,
+            data: p.prediction_data,
+            createdAt: p.created_at
+          })),
+          userPlan
+        }
+      });
+    } catch (error) {
+      console.error('Error obteniendo estado de predicciones:', error);
+      res.status(500).json({ error: 'Error interno del servidor' });
+    }
+  },
+
+  /**
+   * Crear nueva predicción
+   */
+  async createPrediction(req: Request, res: Response) {
+    try {
+      const userId = (req as any).user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: 'Usuario no autenticado' });
+      }
+
+      const { gameType, predictionData } = req.body;
+
+      // Validar datos
+      if (!gameType || !predictionData) {
+        return res.status(400).json({ error: 'gameType y predictionData son requeridos' });
+      }
+
+      // Obtener el plan actual del usuario
+      const userPlan = await getUserCurrentPlan(userId);
+      const limits = getPredictionLimitsByPlan(userPlan);
+      
+      // Verificar límite
+      const currentCount = await PredictionModel.countUserPredictions(userId, gameType);
+      const maxAllowed = limits[gameType] || 3;
+      
+      if (currentCount >= maxAllowed) {
+        return res.status(400).json({ 
+          error: `Límite de ${maxAllowed} predicciones alcanzado para ${gameType}`,
+          currentCount,
+          maxAllowed,
+          userPlan
+        });
+      }
+
+      // Crear la predicción
+      const newPrediction = await PredictionModel.create(userId, gameType, predictionData);
+      
+      res.json({
+        success: true,
+        data: {
+          id: newPrediction.id,
+          gameType,
+          predictionData: newPrediction.prediction_data,
+          createdAt: newPrediction.created_at,
+          currentCount: currentCount + 1,
+          maxAllowed,
+          remaining: Math.max(0, maxAllowed - currentCount - 1)
+        }
+      });
+    } catch (error) {
+      console.error('Error creando predicción:', error);
+      res.status(500).json({ error: 'Error interno del servidor' });
+    }
+  },
+
+  /**
+   * Limpiar predicciones del usuario para un juego
+   */
+  async clearPredictions(req: Request, res: Response) {
+    try {
+      const userId = (req as any).user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: 'Usuario no autenticado' });
+      }
+
+      const { gameType } = req.params;
+      
+      const deletedPredictions = await PredictionModel.clearUserPredictions(userId, gameType);
+      
+      res.json({
+        success: true,
+        data: {
+          gameType,
+          deletedCount: deletedPredictions.length,
+          message: `Se eliminaron ${deletedPredictions.length} predicciones de ${gameType}`
+        }
+      });
+    } catch (error) {
+      console.error('Error limpiando predicciones:', error);
+      res.status(500).json({ error: 'Error interno del servidor' });
+    }
+  },
+
+  /**
+   * Obtener resumen de todas las predicciones del usuario
+   */
+  async getAllPredictionCounts(req: Request, res: Response) {
+    try {
+      const userId = (req as any).user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: 'Usuario no autenticado' });
+      }
+
+      // Obtener el plan actual del usuario
+      const userPlan = await getUserCurrentPlan(userId);
+      const limits = getPredictionLimitsByPlan(userPlan);
+      
+      // Obtener conteos actuales
+      const counts = await PredictionModel.getAllUserPredictionCounts(userId);
+      
+      // Crear resumen completo
+      const games = ['euromillon', 'bonoloto', 'primitiva', 'elgordo', 'eurodreams', 'loterianacional', 'lototurf'];
+      const summary = games.map(game => {
+        const currentCount = counts.find(c => c.game_type === game)?.count || 0;
+        const maxAllowed = limits[game] || 3;
+        
+        return {
+          gameType: game,
+          currentCount: parseInt(currentCount),
+          maxAllowed,
+          remaining: Math.max(0, maxAllowed - parseInt(currentCount)),
+          canGenerate: parseInt(currentCount) < maxAllowed
+        };
+      });
+
+      res.json({
+        success: true,
+        data: {
+          userPlan,
+          games: summary,
+          totalPredictionsToday: counts.reduce((sum, c) => sum + parseInt(c.count), 0)
+        }
+      });
+    } catch (error) {
+      console.error('Error obteniendo resumen de predicciones:', error);
+      res.status(500).json({ error: 'Error interno del servidor' });
+    }
+  }
+};
+
+/**
+ * Función auxiliar para obtener el plan actual del usuario
+ */
+async function getUserCurrentPlan(userId: number): Promise<string> {
+  try {
+    const result = await pgPool.query(
+      `SELECT plan_type FROM subscriptions 
+       WHERE user_id = $1 AND status = 'active' AND end_date > NOW()
+       ORDER BY created_at DESC LIMIT 1`,
+      [userId]
+    );
+    
+    return result.rows[0]?.plan_type || 'basic';
+  } catch (error) {
+    console.error('Error obteniendo plan del usuario:', error);
+    return 'basic'; // Plan por defecto
+  }
+}
