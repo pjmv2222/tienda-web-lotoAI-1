@@ -6,6 +6,7 @@ import productRoutes from './routes/product.routes';
 import webhookRoutes from './routes/webhook.routes';
 import paymentRoutes from './routes/payment.routes';
 import predictionRoutes from './routes/prediction.routes';
+import userPredictionRoutes from './routes/userPrediction.routes';
 import subscriptionRoutes from './routes/subscription.routes';
 import { pgPool, initializeTables } from './config/database';
 
@@ -113,6 +114,10 @@ app.use('/api/subscriptions', subscriptionRoutes);
 // Montar rutas de predicciones
 console.log('Montando rutas de predicciones en /api/predictions');
 app.use('/api/predictions', predictionRoutes);
+
+// Montar rutas de predicciones de usuario
+console.log('Montando rutas de predicciones de usuario en /api/user-predictions');
+app.use('/api/user-predictions', userPredictionRoutes);
 
 // Manejador de rutas no encontradas
 app.use((req, res) => {

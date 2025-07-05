@@ -7,6 +7,7 @@ import { AuthService } from '../../services/auth.service';
 import { SubscriptionService } from '../../services/subscription.service';
 import { PredictionService, PredictionResponse } from '../../services/prediction.service';
 import { EuromillonesBallComponent } from '../../components/euromillones-ball/euromillones-ball.component';
+import { UserPredictionService } from '../../services/user-prediction.service';
 
 @Component({
   selector: 'app-euromillon-prediccion',
@@ -30,6 +31,7 @@ export class EuromillonPrediccionComponent implements OnInit, OnDestroy {
   predictionResults: any[] = [];
   predictionError: string | null = null;
   maxPredictions = 3; // Por defecto, plan básico
+  userPlan: string = 'basic'; // Plan del usuario
   
   // Nuevas variables para el estado inicial con bolas vacías
   showEmptyBalls = true;
@@ -49,11 +51,13 @@ export class EuromillonPrediccionComponent implements OnInit, OnDestroy {
     private authService: AuthService,
     private subscriptionService: SubscriptionService,
     private predictionService: PredictionService,
-    private http: HttpClient
+    private http: HttpClient,
+    private userPredictionService: UserPredictionService
   ) {}
 
   ngOnInit(): void {
-    // Cargar información del próximo sorteo
+    // Cargar estado de predicciones desde el backend
+    this.loadPredictionStatus();
     this.loadLotteryInfo();
 
     // Verificar si el usuario está autenticado
@@ -141,6 +145,29 @@ export class EuromillonPrediccionComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * Cargar estado de predicciones desde el backend
+   */
+  private loadPredictionStatus() {
+    this.userPredictionService.getPredictionStatus('euromillon').subscribe({
+      next: (response) => {
+        if (response.success) {
+          this.predictionResults = response.data.predictions.map(p => p.data);
+          this.maxPredictions = response.data.maxAllowed;
+          this.userPlan = response.data.userPlan;
+          
+          // Actualizar la interfaz
+          this.updatePredictionDisplay();
+        }
+      },
+      error: (error) => {
+        console.error('Error cargando estado de predicciones:', error);
+        // Fallback al comportamiento anterior si falla
+        this.loadPredictionsFromStorage();
+      }
+    });
+  }
+
+  /**
    * Carga información sobre el próximo sorteo y bote actual
    */
   private loadLotteryInfo(): void {
@@ -208,78 +235,6 @@ export class EuromillonPrediccionComponent implements OnInit, OnDestroy {
       console.error('Error cargando bote:', error);
       this.boteActual = 'No disponible';
     }
-  }
-
-  /**
-   * Limpia todas las predicciones generadas
-   */
-  clearPredictions(): void {
-    this.predictionResults = [];
-    this.showEmptyBalls = true;
-    this.numberFrequency.clear();
-    this.predictionError = null; // Limpiar errores previos
-    
-    // Limpiar el localStorage
-    try {
-      localStorage.removeItem('euromillon_predictions');
-    } catch (e) {
-      console.warn('No se pudo limpiar las predicciones del localStorage:', e);
-    }
-    
-    console.log('Predicciones limpiadas');
-  }
-
-  /**
-   * Genera predicciones para Euromillón
-   */
-  generatePredictions(): void {
-    // Verificar si el usuario tiene al menos un plan activo
-    if (!this.hasBasicPlan && !this.hasMonthlyPlan && !this.hasProPlan) {
-      this.predictionError = 'Necesitas una suscripción activa para generar predicciones. Por favor, suscríbete a uno de nuestros planes.';
-      return;
-    }
-
-    // Verificar límite de predicciones
-    if (this.predictionResults.length >= 3) {
-      this.predictionError = 'Ya has generado el máximo de 3 predicciones. Usa "Limpiar predicciones" para empezar de nuevo.';
-      return;
-    }
-
-    this.isGeneratingPrediction = true;
-    this.predictionError = null;
-    this.showEmptyBalls = false; // Ocultar las bolas vacías mientras se generan predicciones
-
-    console.log('Generando predicciones para Euromillón...');
-
-    // Llamar al servicio de predicción (solo 1 predicción por solicitud)
-    this.predictionService.generatePrediction('euromillones').subscribe({
-      next: (response) => {
-        console.log('Predicción generada exitosamente:', response);
-        
-        if (response.success && response.prediction) {
-          // Ocultar bolas vacías y mostrar predicción real
-          this.showEmptyBalls = false;
-          
-          // Agregar nueva predicción a los resultados existentes
-          this.predictionResults.push({
-            numeros: response.prediction.numeros || [],
-            estrellas: response.prediction.estrellas || []
-          });
-          
-          this.savePredictions();
-        } else {
-          this.predictionError = response.error || 'Error desconocido al generar predicción';
-        }
-        
-        this.isGeneratingPrediction = false;
-      },
-      error: (error) => {
-        console.error('Error al generar predicciones:', error);
-        this.predictionError = 'No se pudieron generar las predicciones. Inténtalo de nuevo.';
-        this.isGeneratingPrediction = false;
-        this.showEmptyBalls = true; // Volver a mostrar bolas vacías si hay error
-      }
-    });
   }
 
   /**
@@ -379,5 +334,94 @@ export class EuromillonPrediccionComponent implements OnInit, OnDestroy {
         // Ignorar errores al limpiar
       }
     }
+  }
+
+  private updatePredictionDisplay() {
+    // Actualizar la interfaz después de cargar/actualizar predicciones
+    this.showEmptyBalls = this.predictionResults.length === 0;
+    this.updateNumberFrequency();
+    this.savePredictions();
+  }
+
+  /**
+   * Genera una nueva predicción (método actualizado)
+   */
+  async generatePrediction() {
+    if (this.isGeneratingPrediction) return;
+
+    // Verificar límite usando el servicio
+    try {
+      const canGenerate = await this.userPredictionService.canGeneratePrediction('euromillon').toPromise();
+      
+      if (!canGenerate) {
+        this.predictionError = `Ya has generado el máximo de ${this.maxPredictions} predicciones. Usa "Limpiar predicciones" para empezar de nuevo.`;
+        return;
+      }
+
+      this.isGeneratingPrediction = true;
+      this.predictionError = null;
+      this.showEmptyBalls = false;
+
+      // Generar predicción usando el servicio existente
+      const response = await this.predictionService.generatePrediction('euromillones').toPromise();
+      
+      if (response && response.success && response.prediction) {
+        // Guardar en el backend
+        await this.userPredictionService.createPrediction('euromillon', response.prediction).toPromise();
+        
+        // Actualizar la interfaz
+        this.predictionResults.push({
+          numeros: response.prediction.numeros || [],
+          estrellas: response.prediction.estrellas || []
+        });
+        this.updatePredictionDisplay();
+      } else {
+        this.predictionError = response?.error || 'Error al generar predicción';
+      }
+      
+    } catch (error) {
+      console.error('Error generando predicción:', error);
+      this.predictionError = 'Error al generar predicción. Intenta de nuevo.';
+    } finally {
+      this.isGeneratingPrediction = false;
+    }
+  }
+
+  /**
+   * Método de generación de predicciones (compatibilidad con template)
+   */
+  generatePredictions() {
+    this.generatePrediction();
+  }
+
+  /**
+   * Limpiar predicciones usando el servicio
+   */
+  clearPredictions() {
+    this.userPredictionService.clearPredictions('euromillon').subscribe({
+      next: (response) => {
+        if (response.success) {
+          this.predictionResults = [];
+          this.updatePredictionDisplay();
+        }
+      },
+      error: (error) => {
+        console.error('Error limpiando predicciones:', error);
+        // Fallback al comportamiento local
+        this.predictionResults = [];
+        this.updatePredictionDisplay();
+      }
+    });
+  }
+
+  /**
+   * Fallback para localStorage (compatibilidad)
+   */
+  private loadPredictionsFromStorage() {
+    const saved = localStorage.getItem('euromillonPredictions');
+    if (saved) {
+      this.predictionResults = JSON.parse(saved);
+    }
+    this.updatePredictionDisplay();
   }
 }

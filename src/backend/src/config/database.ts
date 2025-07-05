@@ -76,6 +76,29 @@ export const initializeTables = async (): Promise<void> => {
       );
     `);
 
+    // Crear tabla de predicciones de usuario si no existe
+    await pgPool.query(`
+      CREATE TABLE IF NOT EXISTS user_predictions (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        game_type VARCHAR(50) NOT NULL,
+        prediction_data JSONB NOT NULL,
+        prediction_date DATE NOT NULL DEFAULT CURRENT_DATE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    // Crear índices para optimizar consultas
+    await pgPool.query(`
+      CREATE INDEX IF NOT EXISTS idx_user_predictions_user_game_date 
+      ON user_predictions(user_id, game_type, prediction_date);
+    `);
+
+    await pgPool.query(`
+      CREATE INDEX IF NOT EXISTS idx_user_predictions_date 
+      ON user_predictions(prediction_date);
+    `);
+
     console.log('✅ Tablas de PostgreSQL inicializadas correctamente');
   } catch (error) {
     console.error('❌ Error inicializando tablas:', error);

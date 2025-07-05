@@ -10,6 +10,7 @@ import logging
 import jwt
 from datetime import datetime, timedelta
 from functools import wraps
+import time
 
 # Configuración de logging
 logging.basicConfig(
@@ -226,29 +227,36 @@ def generar_prediccion_ia(juego):
         modelo = modelos[juego]
         scaler = escaladores[juego]
         
-        # Generar entrada base usando datos históricos recientes
-        datos_recientes = datos_historicos[juego].tail(10)
+        # AÑADIR VARIABILIDAD: usar datos históricos aleatorios de los últimos 20 registros
+        datos_recientes = datos_historicos[juego].tail(20)
+        # Seleccionar aleatoriamente uno de los últimos registros
+        indice_aleatorio = np.random.randint(0, min(len(datos_recientes), 10))
+        datos_seleccionados = datos_recientes.iloc[indice_aleatorio:indice_aleatorio+1]
         
         if juego == 'loterianacional':
             # Lotería Nacional: usar estructura específica con Fecha, Sorteo, Euros
-            datos_temp = datos_recientes[config['columnas_entrada']].copy()
+            datos_temp = datos_seleccionados[config['columnas_entrada']].copy()
             if 'Fecha' in datos_temp.columns:
                 datos_temp['Fecha'] = pd.to_datetime(datos_temp['Fecha'], format='%d/%m/%Y').astype('int64') // 10**9
-            entrada_base = datos_temp.iloc[-1:].values.astype(float)
+            entrada_base = datos_temp.values.astype(float)
         elif juego == 'eurodreams':
             # EuroDreams: crear DaysSince si no existe
-            datos_temp = datos_recientes.copy()
+            datos_temp = datos_seleccionados.copy()
             if 'DaysSince' not in datos_temp.columns and 'Date' in datos_temp.columns:
                 datos_temp['Date'] = pd.to_datetime(datos_temp['Date'])
                 reference_date = pd.Timestamp('2000-01-01')
                 datos_temp['DaysSince'] = (datos_temp['Date'] - reference_date).dt.days
-            entrada_base = datos_temp[config['columnas_entrada']].iloc[-1:].values.astype(float)
+            entrada_base = datos_temp[config['columnas_entrada']].values.astype(float)
         else:
             # Otros juegos: usar columnas de entrada directamente
-            entrada_base = datos_recientes[config['columnas_entrada']].iloc[-1:].values.astype(float)
+            entrada_base = datos_seleccionados[config['columnas_entrada']].values.astype(float)
+        
+        # AÑADIR VARIABILIDAD: añadir ruido aleatorio pequeño a la entrada
+        ruido = np.random.normal(0, 0.1, entrada_base.shape)
+        entrada_base_con_ruido = entrada_base + ruido
         
         # Normalizar entrada
-        entrada_normalizada = scaler.transform(entrada_base)
+        entrada_normalizada = scaler.transform(entrada_base_con_ruido)
         
         # Reformatear para LSTM
         entrada_reshaped = entrada_normalizada.reshape(
@@ -263,8 +271,12 @@ def generar_prediccion_ia(juego):
         # Desnormalizar
         prediccion_desnormalizada = scaler.inverse_transform(prediccion_raw)
         
+        # AÑADIR VARIABILIDAD: añadir componente temporal para más variación
+        timestamp_factor = int(time.time()) % 1000
+        prediccion_con_variacion = prediccion_desnormalizada[0] + (timestamp_factor * 0.001)
+        
         # Ajustar predicción a rangos válidos
-        prediccion_ajustada = ajustar_prediccion(prediccion_desnormalizada[0], config)
+        prediccion_ajustada = ajustar_prediccion(prediccion_con_variacion, config)
         
         return prediccion_ajustada
         
