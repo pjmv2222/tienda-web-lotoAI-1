@@ -4,6 +4,11 @@ on:
   push:
     branches:
       - main
+    paths-ignore:
+      - 'IAs-Loto/**'
+      - 'ias/**'
+      - '*.md'
+      - 'README.md'
   workflow_dispatch:
 
 jobs:
