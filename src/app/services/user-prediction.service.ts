@@ -26,6 +26,17 @@ export interface UserPredictionSummary {
   totalPredictionsToday: number;
 }
 
+// Nueva interfaz específica para el componente de perfil
+export interface ProfilePredictionSummary {
+  games: {
+    game_id: string;
+    game_name: string;
+    total_allowed: number;
+    used: number;
+    remaining: number;
+  }[];
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -56,6 +67,16 @@ export class UserPredictionService {
    */
   getPredictionSummary(): Observable<{success: boolean, data: UserPredictionSummary}> {
     return this.http.get<{success: boolean, data: UserPredictionSummary}>(
+      `${this.apiUrl}/summary`,
+      { headers: this.getAuthHeaders() }
+    );
+  }
+
+  /**
+   * Obtener resumen de predicciones específico para el componente de perfil
+   */
+  getProfilePredictionSummary(): Observable<{success: boolean, data: ProfilePredictionSummary}> {
+    return this.http.get<{success: boolean, data: ProfilePredictionSummary}>(
       `${this.apiUrl}/summary`,
       { headers: this.getAuthHeaders() }
     );
@@ -100,4 +121,4 @@ export class UserPredictionService {
       });
     });
   }
-} 
+}
