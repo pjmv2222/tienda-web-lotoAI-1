@@ -213,29 +213,27 @@ app.get('/api/predictions/summary', authenticateToken, async (req, res) => {
   }
 });
 
-// Endpoint temporal para obtener perfil de usuario por email (sin autenticación)
-app.get('/api/auth/profile', async (req, res) => {
+// Endpoint para obtener perfil de usuario (con autenticación)
+app.get('/api/auth/profile', authenticateToken, async (req, res) => {
   try {
-    // Obtener el email del header Authorization (token JWT)
-    const authHeader = req.headers['authorization'];
-    if (!authHeader) {
-      return res.status(401).json({ error: 'Token requerido' });
-    }
-
-    // Para pruebas, usar un usuario específico (pjulianmv@gmail.com)
-    const userEmail = 'pjulianmv@gmail.com';
+    const userId = req.user.id; // Obtener ID del token JWT verificado
     
-    const client = await req.pgPool.connect();
+    console.log(`Obteniendo perfil para usuario autenticado: ${userId}`);
+    
+    const client = await pgPool.connect();
     try {
       const getUserQuery = `
         SELECT id, email, nombre, apellido, created_at
-        FROM users WHERE email = $1
+        FROM users WHERE id = $1
       `;
       
-      const userResult = await client.query(getUserQuery, [userEmail]);
+      const userResult = await client.query(getUserQuery, [userId]);
       
       if (userResult.rows.length === 0) {
-        return res.status(404).json({ error: 'Usuario no encontrado' });
+        return res.status(404).json({ 
+          success: false, 
+          error: 'Usuario no encontrado' 
+        });
       }
       
       const user = userResult.rows[0];
@@ -256,81 +254,9 @@ app.get('/api/auth/profile', async (req, res) => {
     }
   } catch (error) {
     console.error('Error obteniendo perfil:', error);
-    res.status(500).json({ error: 'Error interno del servidor' });
-  }
-});
-
-// Endpoint temporal para obtener resumen de predicciones (sin autenticación)
-app.get('/api/predictions/summary', async (req, res) => {
-  try {
-    // Para pruebas, usar el usuario con ID 43
-    const userId = 43;
-    
-    console.log(`Obteniendo resumen completo para usuario ${userId}`);
-
-    const client = await req.pgPool.connect();
-    try {
-      // Consultar todas las predicciones del usuario
-      const query = `
-        SELECT 
-          game_type,
-          COUNT(*) as used_count
-        FROM user_predictions 
-        WHERE user_id = $1 
-        GROUP BY game_type
-      `;
-      
-      const result = await client.query(query, [userId]);
-      
-      // Juegos disponibles del Plan Básico
-      const availableGames = [
-        'euromillon', 'primitiva', 'bonoloto', 'elgordo', 
-        'eurodreams', 'lototurf', 'loterianacional'
-      ];
-      
-      const gameNames = {
-        'euromillon': 'Euromillones',
-        'primitiva': 'La Primitiva',
-        'bonoloto': 'Bonoloto',
-        'elgordo': 'El Gordo',
-        'eurodreams': 'EuroDreams',
-        'lototurf': 'Lototurf',
-        'loterianacional': 'Lotería Nacional'
-      };
-      
-      // Mapear resultados con límites del plan básico
-      const gamesData = availableGames.map(gameType => {
-        const gameUsage = result.rows.find(row => row.game_type === gameType);
-        const used = gameUsage ? parseInt(gameUsage.used_count) : 0;
-        const maxAllowed = 3;
-        
-        return {
-          game_id: gameType,
-          game_name: gameNames[gameType] || gameType,
-          total_allowed: maxAllowed,
-          used: used,
-          remaining: maxAllowed - used
-        };
-      });
-      
-      console.log('Resumen de predicciones:', gamesData);
-
-      res.json({
-        success: true,
-        data: {
-          games: gamesData
-        }
-      });
-      
-    } finally {
-      client.release();
-    }
-  } catch (error) {
-    console.error('Error al obtener resumen de predicciones:', error);
     res.status(500).json({ 
       success: false, 
-      error: 'Error interno del servidor',
-      message: error.message 
+      error: 'Error interno del servidor' 
     });
   }
 });

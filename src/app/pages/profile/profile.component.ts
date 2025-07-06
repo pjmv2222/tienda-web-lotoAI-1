@@ -668,8 +668,8 @@ export class ProfileComponent implements OnInit {
    * Carga datos del Plan Básico con información real de predicciones
    */
   private loadBasicPlanData() {
-    // Usar el endpoint summary para obtener todos los juegos de una vez
-    this.userPredictionService.getPredictionSummary().subscribe({
+    // Usar el endpoint específico para el perfil
+    this.userPredictionService.getProfilePredictionSummary().subscribe({
       next: (response) => {
         console.log('Respuesta del servidor:', response);
         
@@ -691,7 +691,7 @@ export class ProfileComponent implements OnInit {
 
           this.activeSubscriptions = [subscription];
         } else {
-          console.error('Error en la respuesta del servidor:', response.error);
+          console.error('Error en la respuesta del servidor: operación no exitosa');
           this.activeSubscriptions = [this.createDefaultBasicPlan()];
         }
       },
