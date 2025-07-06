@@ -668,63 +668,53 @@ export class ProfileComponent implements OnInit {
    * Carga datos del Plan Básico con información real de predicciones
    */
   private loadBasicPlanData() {
-    const games = ['euromillon', 'primitiva', 'bonoloto', 'elgordo', 'eurodreams', 'lototurf', 'loterianacional'];
-    const gameNames: { [key: string]: string } = {
-      'euromillon': 'Euromillones',
-      'primitiva': 'La Primitiva', 
-      'bonoloto': 'Bonoloto',
-      'elgordo': 'El Gordo',
-      'eurodreams': 'EuroDreams',
-      'lototurf': 'Lototurf',
-      'loterianacional': 'Lotería Nacional'
-    };
-
-    // Obtener estado de predicciones para Euromillón como ejemplo
-    this.userPredictionService.getPredictionStatus('euromillon').subscribe({
+    // Usar el endpoint summary para obtener todos los juegos de una vez
+    this.userPredictionService.getPredictionSummary().subscribe({
       next: (response) => {
-        const euromillonData = response.success ? response.data : null;
+        console.log('Respuesta del servidor:', response);
         
-        // Crear datos basándose en la respuesta real
-        const predictions_used: GamePredictionUsage[] = games.map(gameId => ({
-          game_id: gameId,
-          game_name: gameNames[gameId] || gameId,
-          total_allowed: euromillonData?.maxAllowed || 3,
-          used: gameId === 'euromillon' ? (euromillonData?.currentCount || 0) : 0,
-          remaining: gameId === 'euromillon' ? (euromillonData?.remaining || 3) : 3
-        }));
+        if (response.success) {
+          const predictions_used: GamePredictionUsage[] = response.data.games;
+          
+          const subscription: UserSubscriptionInfo = {
+            id: 0,
+            plan_id: 'basic',
+            plan_name: 'Plan Básico',
+            status: 'active',
+            status_display: 'Activo',
+            created_at: new Date().toISOString(),
+            expires_at: '',
+            price: '1,22€',
+            is_basic_plan: true,
+            predictions_used: predictions_used
+          };
 
-        const subscription: UserSubscriptionInfo = {
-          id: 0,
-          plan_id: 'basic',
-          plan_name: 'Plan Básico',
-          status: 'active',
-          status_display: 'Activo',
-          created_at: new Date().toISOString(),
-          expires_at: '',
-          price: '1,22€',
-          is_basic_plan: true,
-          predictions_used: predictions_used
-        };
-
-        this.activeSubscriptions = [subscription];
+          this.activeSubscriptions = [subscription];
+        } else {
+          console.error('Error en la respuesta del servidor:', response.error);
+          this.activeSubscriptions = [this.createDefaultBasicPlan()];
+        }
       },
       error: (error) => {
-        console.error('Error obteniendo estado de predicciones:', error);
-        // Fallback a datos por defecto
-        this.activeSubscriptions = [{
-          id: 0,
-          plan_id: 'basic',
-          plan_name: 'Plan Básico',
-          status: 'active',
-          status_display: 'Activo',
-          created_at: new Date().toISOString(),
-          expires_at: '',
-          price: '1,22€',
-          is_basic_plan: true,
-          predictions_used: this.getDefaultPredictionData()
-        }];
+        console.error('Error obteniendo resumen de predicciones:', error);
+        this.activeSubscriptions = [this.createDefaultBasicPlan()];
       }
     });
+  }
+
+  private createDefaultBasicPlan(): UserSubscriptionInfo {
+    return {
+      id: 0,
+      plan_id: 'basic',
+      plan_name: 'Plan Básico',
+      status: 'active',
+      status_display: 'Activo',
+      created_at: new Date().toISOString(),
+      expires_at: '',
+      price: '1,22€',
+      is_basic_plan: true,
+      predictions_used: this.getDefaultPredictionData()
+    };
   }
 
   private getPlanDisplayName(planId: string): string {
