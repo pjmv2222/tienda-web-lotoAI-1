@@ -30,7 +30,7 @@ export interface UserPredictionSummary {
   providedIn: 'root'
 })
 export class UserPredictionService {
-  private apiUrl = `${environment.apiUrl}/user-predictions`;
+  private apiUrl = `${environment.apiUrl}/predictions`;
 
   constructor(
     private http: HttpClient,
