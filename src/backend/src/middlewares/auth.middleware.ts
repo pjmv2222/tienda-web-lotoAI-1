@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
+import * as jwt from 'jsonwebtoken';
 import { UserModel } from '../models/user.model';
 
 // Extender la interfaz Request para incluir el usuario
