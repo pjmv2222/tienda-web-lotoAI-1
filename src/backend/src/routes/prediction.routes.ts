@@ -14,10 +14,9 @@ router.get('/test', (req, res) => {
 // Ruta para obtener el estado de los servidores Python
 router.get('/servers/status', authenticateToken, getServerStatus);
 
-// Ruta para obtener predicciones (protegida con autenticación)
-router.get('/:game', authenticateToken, getPrediction);
-
-// Ruta para obtener predicciones mediante POST (protegida con autenticación)
-router.post('/:game', authenticateToken, getPrediction);
+// RUTAS DESHABILITADAS - Causaban conflicto con /api/predictions/summary
+// Estas rutas están manejadas por server/routes/predictions.js
+// router.get('/:game', authenticateToken, getPrediction);
+// router.post('/:game', authenticateToken, getPrediction);
 
 export default router;
