@@ -51,8 +51,10 @@ jobs:
               echo "⚠️  Archivo src/assets/botes.json no encontrado para respaldar"
             fi
             if [ -f "dist/tienda-web-loto-ai/browser/assets/botes.json" ]; then
-              cp dist/tienda-web-loto-ai/browser/assets/botes.json dist/tienda-web-loto-ai/browser/assets/botes.json.backup
-              echo "✅ Archivo botes.json (dist) respaldado"
+              # Crear directorio temporal para respaldos fuera de dist/
+              mkdir -p .deploy-backups
+              cp dist/tienda-web-loto-ai/browser/assets/botes.json .deploy-backups/botes.json.backup
+              echo "✅ Archivo botes.json (dist) respaldado en .deploy-backups/"
             else
               echo "⚠️  Archivo dist botes.json no encontrado para respaldar"
             fi
@@ -100,11 +102,11 @@ jobs:
             else
               echo "❌ No se pudo restaurar botes.json (src) - archivo de respaldo no encontrado"
             fi
-            if [ -f "dist/tienda-web-loto-ai/browser/assets/botes.json.backup" ]; then
+            if [ -f ".deploy-backups/botes.json.backup" ]; then
               # Crear directorio si no existe
               mkdir -p dist/tienda-web-loto-ai/browser/assets/
-              cp dist/tienda-web-loto-ai/browser/assets/botes.json.backup dist/tienda-web-loto-ai/browser/assets/botes.json
-              rm dist/tienda-web-loto-ai/browser/assets/botes.json.backup
+              cp .deploy-backups/botes.json.backup dist/tienda-web-loto-ai/browser/assets/botes.json
+              rm .deploy-backups/botes.json.backup
               echo "✅ Archivo botes.json (dist) restaurado con datos actualizados del scraper"
             else
               echo "❌ No se pudo restaurar botes.json (dist) - archivo de respaldo no encontrado"
@@ -214,6 +216,11 @@ jobs:
               echo "❌ Error de sintaxis en nginx.conf. No se recargará NGINX."
               exit 1
             fi
+
+            # 10. Limpiar archivos temporales del despliegue
+            echo "--- Fase 10: Limpiando archivos temporales ---"
+            rm -rf .deploy-backups
+            echo "✅ Directorio temporal .deploy-backups eliminado"
 
             echo "✅ FIN: DESPLIEGUE COMPLETADO CON ÉXITO"
 
