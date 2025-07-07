@@ -111,13 +111,13 @@ app.use('/api/webhooks', webhookRoutes);
 console.log('Montando rutas de suscripciones en /api/subscriptions');
 app.use('/api/subscriptions', subscriptionRoutes);
 
-// Montar rutas de predicciones
-console.log('Montando rutas de predicciones en /api/predictions');
-app.use('/api/predictions', predictionRoutes);
+// Montar rutas de predicciones de usuario (contiene /summary)
+console.log('Montando rutas de predicciones de usuario en /api/predictions');
+app.use('/api/predictions', userPredictionRoutes);
 
-// Montar rutas de predicciones de usuario
-console.log('Montando rutas de predicciones de usuario en /api/user-predictions');
-app.use('/api/user-predictions', userPredictionRoutes);
+// Montar rutas de predicciones de IA (para generar predicciones)
+console.log('Montando rutas de predicciones de IA en /api/predictions/ia');
+app.use('/api/predictions/ia', predictionRoutes);
 
 // Manejador de rutas no encontradas
 app.use((req, res) => {
