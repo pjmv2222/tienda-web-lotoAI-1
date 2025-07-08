@@ -22,7 +22,7 @@
             },
             "externalDependencies": [
               "mock-aws-s3",
-              "aws-sdk",
+              "aws-sdk", 
               "nock",
               "express",
               "cors",
