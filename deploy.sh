@@ -52,23 +52,15 @@ fi
 
 print_status "Build completado exitosamente."
 
-# Start the application
-print_status "Iniciando servidor Node.js..."
-nohup npm run start:prod > /var/log/loto-ia.log 2>&1 &
+# Start PM2 services instead of manual Node.js process
+print_status "Iniciando servicios con PM2..."
+pm2 restart ecosystem.config.js --env production || pm2 start ecosystem.config.js --env production
 
-# Get the process ID
-NODE_PID=$!
-echo $NODE_PID > /var/run/loto-ia.pid
-
-# Wait a moment and check if the process is running
+# Wait and check PM2 status
 sleep 3
-if ps -p $NODE_PID > /dev/null; then
-    print_status "Servidor iniciado correctamente (PID: $NODE_PID)"
-    print_status "Logs disponibles en: /var/log/loto-ia.log"
-else
-    print_error "Error al iniciar el servidor"
-    exit 1
-fi
+pm2 status
+
+print_status "✅ Servicios PM2 iniciados correctamente"
 
 # Reload nginx
 print_status "Recargando configuración de nginx..."
@@ -80,6 +72,6 @@ print_warning "Recuerda configurar tu certificado SSL en nginx.conf"
 
 echo ""
 echo "📋 Comandos útiles:"
-echo "  - Ver logs: tail -f /var/log/loto-ia.log"
-echo "  - Parar servidor: kill -TERM \$(cat /var/run/loto-ia.pid)"
-echo "  - Verificar estado: ps -p \$(cat /var/run/loto-ia.pid)" 
+echo "  - Ver logs: pm2 logs"
+echo "  - Parar servidor: pm2 stop all"
+echo "  - Verificar estado: pm2 status" 
