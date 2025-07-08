@@ -668,13 +668,18 @@ export class ProfileComponent implements OnInit {
    * Carga datos del Plan Básico con información real de predicciones
    */
   private loadBasicPlanData() {
+    console.log('🔍 [DEBUG] Iniciando carga de datos del Plan Básico...');
+    
     // Usar el endpoint específico para el perfil
     this.userPredictionService.getProfilePredictionSummary().subscribe({
       next: (response) => {
-        console.log('Respuesta del servidor:', response);
+        console.log('🎯 [DEBUG] Respuesta del servidor:', response);
+        console.log('🎯 [DEBUG] Tipo de response.data:', typeof response.data);
+        console.log('🎯 [DEBUG] response.data.games:', response.data?.games);
         
-        if (response.success) {
+        if (response.success && response.data && response.data.games) {
           const predictions_used: GamePredictionUsage[] = response.data.games;
+          console.log('✅ [DEBUG] Datos de predicciones mapeados:', predictions_used);
           
           const subscription: UserSubscriptionInfo = {
             id: 0,
@@ -689,14 +694,20 @@ export class ProfileComponent implements OnInit {
             predictions_used: predictions_used
           };
 
+          console.log('🚀 [DEBUG] Subscription creada:', subscription);
           this.activeSubscriptions = [subscription];
+          console.log('🎉 [DEBUG] activeSubscriptions actualizado:', this.activeSubscriptions);
         } else {
-          console.error('Error en la respuesta del servidor: operación no exitosa');
+          console.error('❌ [ERROR] Respuesta del servidor inválida:', {
+            success: response.success,
+            hasData: !!response.data,
+            hasGames: !!(response.data?.games)
+          });
           this.activeSubscriptions = [this.createDefaultBasicPlan()];
         }
       },
       error: (error) => {
-        console.error('Error obteniendo resumen de predicciones:', error);
+        console.error('❌ [ERROR] Error obteniendo resumen de predicciones:', error);
         this.activeSubscriptions = [this.createDefaultBasicPlan()];
       }
     });
