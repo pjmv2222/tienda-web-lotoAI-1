@@ -40,6 +40,10 @@ export class AuthService {
   }
 
   private getUserFromStorage(): User | null {
+    if (!isPlatformBrowser(this.platformId)) {
+      return null;
+    }
+    
     try {
       // Intentar obtener el usuario del localStorage
       let userStr = localStorage.getItem(this.userStorageKey);

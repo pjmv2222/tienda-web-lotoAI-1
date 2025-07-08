@@ -1,6 +1,7 @@
-import { Injectable } from '@angular/core';
+import { Injectable, Inject, PLATFORM_ID } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, of, map, catchError, switchMap } from 'rxjs';
+import { isPlatformBrowser } from '@angular/common';
 import { environment } from '../../environments/environment';
 import { AuthService } from './auth.service';
 
@@ -28,7 +29,8 @@ export class SubscriptionService {
 
   constructor(
     private http: HttpClient,
-    private authService: AuthService
+    private authService: AuthService,
+    @Inject(PLATFORM_ID) private platformId: Object
   ) { }
 
   /**
@@ -73,23 +75,25 @@ export class SubscriptionService {
       return of(false);
     }
 
-    // Verificar en localStorage si hay un registro de pago reciente
-    try {
-      const paymentData = localStorage.getItem('recent_payment');
-      if (paymentData) {
-        const payment = JSON.parse(paymentData);
-        const paymentTime = new Date(payment.timestamp).getTime();
-        const currentTime = new Date().getTime();
-        const hoursDiff = (currentTime - paymentTime) / (1000 * 60 * 60);
+    // Verificar en localStorage si hay un registro de pago reciente (solo en browser)
+    if (isPlatformBrowser(this.platformId)) {
+      try {
+        const paymentData = localStorage.getItem('recent_payment');
+        if (paymentData) {
+          const payment = JSON.parse(paymentData);
+          const paymentTime = new Date(payment.timestamp).getTime();
+          const currentTime = new Date().getTime();
+          const hoursDiff = (currentTime - paymentTime) / (1000 * 60 * 60);
 
-        // Si el pago es de menos de 24 horas, consideramos que tiene una suscripción activa
-        if (hoursDiff < 24) {
-          console.log('Se encontró un pago reciente en localStorage');
-          return of(true);
+          // Si el pago es de menos de 24 horas, consideramos que tiene una suscripción activa
+          if (hoursDiff < 24) {
+            console.log('Se encontró un pago reciente en localStorage');
+            return of(true);
+          }
         }
+      } catch (e) {
+        console.warn('Error al verificar pago reciente en localStorage:', e);
       }
-    } catch (e) {
-      console.warn('Error al verificar pago reciente en localStorage:', e);
     }
 
     // Si no hay registro en localStorage, verificamos en el servidor
@@ -99,8 +103,8 @@ export class SubscriptionService {
       map(response => {
         const hasRecentPayment = response.hasRecentPayment || false;
 
-        // Si hay un pago reciente, lo guardamos en localStorage
-        if (hasRecentPayment) {
+        // Si hay un pago reciente, lo guardamos en localStorage (solo en browser)
+        if (hasRecentPayment && isPlatformBrowser(this.platformId)) {
           try {
             localStorage.setItem('recent_payment', JSON.stringify({
               timestamp: new Date().toISOString(),
