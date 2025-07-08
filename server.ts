@@ -255,11 +255,12 @@ function run(): void {
   });
 }
 
-// Evitar que el Webpack de Angular se confunda
-declare const __non_webpack_require__: NodeRequire;
-const mainModule = __non_webpack_require__.main;
-const moduleFilename = mainModule && mainModule.filename || '';
-if (moduleFilename === __filename || moduleFilename.includes('iisnode')) {
+// Verificación para iniciar el servidor cuando se ejecuta directamente
+import { fileURLToPath } from 'node:url';
+const __filename = fileURLToPath(import.meta.url);
+const isMainModule = process.argv[1] === __filename;
+
+if (isMainModule) {
   run();
 }
 
