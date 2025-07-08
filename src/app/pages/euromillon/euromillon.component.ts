@@ -177,6 +177,12 @@ export class EuromillonComponent extends LotteryBaseComponent implements OnInit,
   }
 
   private checkBallsRendering(): void {
+    // Solo ejecutar en el navegador, no en SSR
+    if (!isPlatformBrowser(this.platformId)) {
+      console.log('[DIAGNÓSTICO] EuromillonComponent: checkBallsRendering saltado en SSR');
+      return;
+    }
+
     // Verificar las bolas en el primer contenedor (números más frecuentes)
     const firstContainer = document.querySelector('.stats-container .stats-card:first-child .lottery-balls-container');
     if (firstContainer) {
