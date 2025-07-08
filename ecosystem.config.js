@@ -1,7 +1,7 @@
 module.exports = {
   apps: [
     {
-      name: 'loto-ia-backend',
+      name: 'backend',
       script: 'src/backend/dist/index.js',
       instances: 1,
       exec_mode: 'fork',
@@ -28,7 +28,7 @@ module.exports = {
       },
     },
     {
-      name: 'loto-ia-frontend',
+      name: 'frontend',
       script: 'dist/tienda-web-loto-ai/server/main.server.mjs',
       instances: 1,
       exec_mode: 'fork',
@@ -43,7 +43,7 @@ module.exports = {
       },
     },
     {
-      name: 'loto-ia-server',
+      name: 'ia-server',
       script: 'archivos-para-servidor/server-ia-unificado.py',
       interpreter: 'python3',
       instances: 1,

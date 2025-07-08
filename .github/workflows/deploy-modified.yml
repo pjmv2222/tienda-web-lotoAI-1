@@ -202,9 +202,9 @@ jobs:
             sleep 5
             pm2 status
             echo "--- Logs recientes del backend ---"
-            timeout 10 pm2 logs loto-ia-backend --lines 15 || echo "Timeout en logs, continuando..."
+            timeout 10 pm2 logs backend --lines 15 || echo "Timeout en logs, continuando..."
             echo "--- Verificando si el backend está corriendo ---"
-            pm2 info loto-ia-backend
+            pm2 info backend
             
             # 9. Actualizar y recargar NGINX
             echo "--- Fase 9: Actualizando configuración de NGINX ---"
