@@ -140,6 +140,12 @@ export class EuromillonComponent extends LotteryBaseComponent implements OnInit,
   }
 
   private setupMutationObserver(): void {
+    // Solo ejecutar en el navegador, no en SSR
+    if (!isPlatformBrowser(this.platformId)) {
+      console.log('[DIAGNÓSTICO] EuromillonComponent: setupMutationObserver saltado en SSR');
+      return;
+    }
+
     // Observar el primer contenedor de bolas para detectar cambios en el DOM
     const container = document.getElementById('most-frequent-numbers-container');
     if (!container) {
