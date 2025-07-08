@@ -256,7 +256,6 @@ function run(): void {
 }
 
 // Verificación para iniciar el servidor cuando se ejecuta directamente
-import { fileURLToPath } from 'node:url';
 const __filename = fileURLToPath(import.meta.url);
 const isMainModule = process.argv[1] === __filename;
 
