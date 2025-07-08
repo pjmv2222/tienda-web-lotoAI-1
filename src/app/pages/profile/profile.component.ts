@@ -68,6 +68,7 @@ interface GamePredictionUsage {
               </div>
               
               <!-- Información específica para Plan Básico -->
+              <!-- DEBUG: {{logDebugInfo(subscription)}} -->
               <div *ngIf="subscription.is_basic_plan && subscription.predictions_used" class="basic-plan-info">
                 <div class="detail-row">
                   <span class="detail-label">Fecha de contratación:</span>
@@ -695,8 +696,18 @@ export class ProfileComponent implements OnInit {
           };
 
           console.log('🚀 [DEBUG] Subscription creada:', subscription);
+          console.log('🔍 [DEBUG] subscription.is_basic_plan:', subscription.is_basic_plan);
+          console.log('🔍 [DEBUG] subscription.predictions_used:', subscription.predictions_used);
+          console.log('🔍 [DEBUG] subscription.predictions_used.length:', subscription.predictions_used?.length);
+          
           this.activeSubscriptions = [subscription];
           console.log('🎉 [DEBUG] activeSubscriptions actualizado:', this.activeSubscriptions);
+          
+          // Forzar detección de cambios
+          setTimeout(() => {
+            console.log('⏰ [DEBUG] activeSubscriptions después de timeout:', this.activeSubscriptions);
+            console.log('⏰ [DEBUG] Primera suscripción después de timeout:', this.activeSubscriptions[0]);
+          }, 100);
         } else {
           console.error('❌ [ERROR] Respuesta del servidor inválida:', {
             success: response.success,
@@ -909,5 +920,15 @@ export class ProfileComponent implements OnInit {
     const newPassword = group.get('newPassword')?.value;
     const confirmPassword = group.get('confirmPassword')?.value;
     return newPassword === confirmPassword ? null : { passwordMismatch: true };
+  }
+
+  // Método de debug temporal
+  logDebugInfo(subscription: any): string {
+    console.log('🎯 [TEMPLATE DEBUG] Evaluando subscription:', subscription);
+    console.log('🎯 [TEMPLATE DEBUG] is_basic_plan:', subscription?.is_basic_plan);
+    console.log('🎯 [TEMPLATE DEBUG] predictions_used:', subscription?.predictions_used);
+    console.log('🎯 [TEMPLATE DEBUG] predictions_used length:', subscription?.predictions_used?.length);
+    console.log('🎯 [TEMPLATE DEBUG] Condición cumplida:', !!(subscription?.is_basic_plan && subscription?.predictions_used));
+    return '';
   }
 }
