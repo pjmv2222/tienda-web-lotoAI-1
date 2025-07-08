@@ -148,11 +148,15 @@ jobs:
             
             # 6. Compilar el Backend (TSC)
             echo "--- Fase 6: Compilando Backend ---"
-            npx tsc --project src/backend/tsconfig.backend.json
-            if [ $? -ne 0 ]; then
-              echo "❌ Error de compilación en el Backend. Abortando despliegue."
+            cd src/backend
+            npm install
+            npm run build
+            cd /var/www/tienda-web-lotoAI-1
+            if [ ! -f "src/backend/dist/index.js" ]; then
+              echo "❌ Error de compilación en el Backend. Archivo index.js no encontrado. Abortando despliegue."
               exit 1
             fi
+            echo "✅ Backend compilado correctamente en src/backend/dist/index.js"
             
             # 7. Compilar el Frontend (Angular SSR)
             echo "--- Fase 7: Compilando Frontend ---"
