@@ -636,27 +636,37 @@ export const PredictionController = {
       // Obtener conteos actuales
       const counts = await PredictionModel.getAllUserPredictionCounts(userId);
       
-      // Crear resumen completo
-      const games = ['euromillon', 'bonoloto', 'primitiva', 'elgordo', 'eurodreams', 'loterianacional', 'lototurf'];
-      const summary = games.map(game => {
-        const currentCount = counts.find(c => c.game_type === game)?.count || 0;
-        const maxAllowed = limits[game] || 3;
+      // Mapeo de nombres de juegos para mostrar en el frontend
+      const gameNames: { [key: string]: string } = {
+        'euromillon': 'Euromillones',
+        'primitiva': 'La Primitiva',
+        'bonoloto': 'Bonoloto',
+        'elgordo': 'El Gordo',
+        'eurodreams': 'EuroDreams',
+        'lototurf': 'Lototurf',
+        'loterianacional': 'Lotería Nacional'
+      };
+      
+      // Crear resumen completo con el formato esperado por el frontend (ProfilePredictionSummary)
+      const games = ['euromillon', 'primitiva', 'bonoloto', 'elgordo', 'eurodreams', 'lototurf', 'loterianacional'];
+      const gamesData = games.map(gameType => {
+        const gameUsage = counts.find(c => c.game_type === gameType);
+        const used = gameUsage ? parseInt(gameUsage.count) : 0;
+        const maxAllowed = limits[gameType] || 3;
         
         return {
-          gameType: game,
-          currentCount: parseInt(currentCount),
-          maxAllowed,
-          remaining: Math.max(0, maxAllowed - parseInt(currentCount)),
-          canGenerate: parseInt(currentCount) < maxAllowed
+          game_id: gameType,
+          game_name: gameNames[gameType] || gameType,
+          total_allowed: maxAllowed,
+          used: used,
+          remaining: Math.max(0, maxAllowed - used)
         };
       });
 
       res.json({
         success: true,
         data: {
-          userPlan,
-          games: summary,
-          totalPredictionsToday: counts.reduce((sum, c) => sum + parseInt(c.count), 0)
+          games: gamesData
         }
       });
     } catch (error) {
