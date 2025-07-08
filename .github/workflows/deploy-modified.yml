@@ -190,12 +190,16 @@ jobs:
               echo "⚠️  Archivo src/assets/botes.json no encontrado para copiar a dist"
             fi
             
-            # 8. Reiniciar los servicios con PM2
-            echo "--- Fase 8: Reiniciando servicios con PM2 ---"
-            pm2 restart ecosystem.config.js --env production || {
-              echo "ℹ️  No se pudo reiniciar, intentando iniciar de nuevo..."
-              pm2 start ecosystem.config.js --env production
-            }
+            # 8. Reiniciar los servicios con PM2 - LIMPIEZA COMPLETA
+            echo "--- Fase 8: Limpiando y reiniciando servicios con PM2 ---"
+            pm2 stop all || echo "No había procesos corriendo"
+            pm2 delete all || echo "No había procesos para eliminar"
+            pm2 save --force
+            echo "✅ PM2 limpiado completamente"
+            
+            # Iniciar con configuración limpia
+            pm2 start ecosystem.config.js --env production
+            pm2 save
             
             # 8.5. Verificar que PM2 está funcionando correctamente
             echo "--- Fase 8.5: Verificando estado de PM2 ---"
