@@ -1,5 +1,5 @@
-import { Component, Input, AfterViewInit, ElementRef, ViewChild, OnDestroy, OnInit, ChangeDetectorRef } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, Input, AfterViewInit, ElementRef, ViewChild, OnDestroy, OnInit, ChangeDetectorRef, Inject, PLATFORM_ID } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import * as THREE from 'three';
 
 // Gestor estático para limitar el número de contextos WebGL activos
@@ -10,13 +10,22 @@ class WebGLContextManager {
   private staticImageCache: Map<string, string> = new Map(); // Cache de imágenes estáticas
   private contextPriorities: Map<string, number> = new Map(); // Prioridades de los contextos
   private lastContextId: number = 0; // Para generar IDs únicos de contextos
+  private isBrowser: boolean = false;
 
-  private constructor() {
-    // Verificar si el navegador soporta WebGL
-    this.checkWebGLSupport();
+  private constructor(isBrowser: boolean = false) {
+    this.isBrowser = isBrowser;
+    // Verificar si el navegador soporta WebGL (solo en browser)
+    if (this.isBrowser) {
+      this.checkWebGLSupport();
+    }
   }
 
   private checkWebGLSupport(): void {
+    if (!this.isBrowser) {
+      console.warn('[WebGLContextManager] No está en browser, usando imágenes estáticas.');
+      return;
+    }
+
     try {
       const canvas = document.createElement('canvas');
       const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
@@ -28,11 +37,13 @@ class WebGLContextManager {
     }
   }
 
-  public static getInstance(): WebGLContextManager {
+  public static getInstance(isBrowser: boolean = false): WebGLContextManager {
     if (!WebGLContextManager.instance) {
-      WebGLContextManager.instance = new WebGLContextManager();
-      // Hacer accesible globalmente para debugging y acceso desde otros componentes
-      (window as any).WebGLContextManager = WebGLContextManager.instance;
+      WebGLContextManager.instance = new WebGLContextManager(isBrowser);
+      // Hacer accesible globalmente para debugging y acceso desde otros componentes (solo en browser)
+      if (isBrowser && typeof window !== 'undefined') {
+        (window as any).WebGLContextManager = WebGLContextManager.instance;
+      }
     }
     return WebGLContextManager.instance;
   }
@@ -148,13 +159,27 @@ export class EuromillonesBallComponent implements OnInit, AfterViewInit, OnDestr
   private renderer!: THREE.WebGLRenderer;
   private sphere!: THREE.Mesh;
   private animationFrameId: number = 0;
-  private contextManager = WebGLContextManager.getInstance();
+  private contextManager: WebGLContextManager;
   private cacheKey: string = '';
   private contextId: string | undefined;
 
-  constructor(private cdr: ChangeDetectorRef, private elementRef: ElementRef) {}
+  constructor(
+    private cdr: ChangeDetectorRef, 
+    private elementRef: ElementRef,
+    @Inject(PLATFORM_ID) private platformId: Object
+  ) {
+    // Inicializar el context manager con información de la plataforma
+    this.contextManager = WebGLContextManager.getInstance(isPlatformBrowser(this.platformId));
+  }
 
   ngOnInit(): void {
+    // En SSR, no podemos usar WebGL ni localStorage, usar imagen estática simple
+    if (!isPlatformBrowser(this.platformId)) {
+      this.useStaticImage = true;
+      this.staticImageUrl = undefined; // Se usará el CSS fallback
+      return;
+    }
+
     // Establecer el tamaño como variable CSS para usarlo en los estilos
     this.elementRef.nativeElement.style.setProperty('--ball-size', `${this.size}px`);
 
@@ -162,8 +187,8 @@ export class EuromillonesBallComponent implements OnInit, AfterViewInit, OnDestr
     const colorSuffix = this.customColor ? `-${this.customColor.replace('#', '')}` : '';
     this.cacheKey = `ball-${this.type}-${this.number}${colorSuffix}`;
 
-    // Si se solicita renderizado estático, buscar en localStorage primero
-    if (this.staticRendering) {
+    // Si se solicita renderizado estático, buscar en localStorage primero (solo en browser)
+    if (this.staticRendering && isPlatformBrowser(this.platformId)) {
       const colorSuffix = this.customColor ? `_${this.customColor.replace('#', '')}` : '';
       const cacheKey = `euromillones_ball_${EuromillonesBallComponent.CACHE_VERSION}_${this.type}_${this.number}_${this.size}${colorSuffix}`;
       const cachedImage = localStorage.getItem(cacheKey);
@@ -350,6 +375,11 @@ export class EuromillonesBallComponent implements OnInit, AfterViewInit, OnDestr
   }
 
   ngAfterViewInit(): void {
+    // En SSR, no inicializar Three.js
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+
     // Solo inicializar Three.js si no estamos usando imagen estática
     if (!this.useStaticImage) {
       // Usar setTimeout para evitar ExpressionChangedAfterItHasBeenCheckedError
@@ -654,6 +684,11 @@ export class EuromillonesBallComponent implements OnInit, AfterViewInit, OnDestr
   }
 
   ngOnDestroy(): void {
+    // En SSR, no hay recursos que limpiar
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+
     this.stopAnimation();
 
     // Forzar limpieza de contextos si hay demasiados activos

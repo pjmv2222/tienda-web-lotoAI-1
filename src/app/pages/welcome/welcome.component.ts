@@ -1,7 +1,6 @@
-import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, Inject, PLATFORM_ID } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import confetti from 'canvas-confetti';
 
 @Component({
   selector: 'app-welcome',
@@ -131,11 +130,21 @@ import confetti from 'canvas-confetti';
   `]
 })
 export class WelcomeComponent implements OnInit {
+  constructor(@Inject(PLATFORM_ID) private platformId: Object) {}
+
   ngOnInit() {
     this.shootConfetti();
   }
 
-  shootConfetti() {
+  async shootConfetti() {
+    // Solo ejecutar confetti en el navegador
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+
+    try {
+      // Import dinámico del confetti
+      const { default: confetti } = await import('canvas-confetti');
     const duration = 60000; // Duración de 60 segundos
     const end = Date.now() + duration;
 
@@ -205,5 +214,8 @@ export class WelcomeComponent implements OnInit {
       }
 
     }, 40); // Intervalo más corto para mayor densidad
+    } catch (error) {
+      console.warn('Error al cargar confetti:', error);
+    }
   }
 }

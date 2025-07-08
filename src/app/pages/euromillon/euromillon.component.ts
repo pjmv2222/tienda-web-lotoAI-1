@@ -1,6 +1,6 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, Inject, PLATFORM_ID } from '@angular/core';
 import { RouterLink, Router } from '@angular/router';
-import { CommonModule } from '@angular/common';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { EuromillonesBallComponent } from '../../components/euromillones-ball/euromillones-ball.component';
 import { AuthService } from '../../services/auth.service';
 import { SubscriptionService } from '../../services/subscription.service';
@@ -37,7 +37,8 @@ export class EuromillonComponent extends LotteryBaseComponent implements OnInit,
     private authService: AuthService,
     private subscriptionService: SubscriptionService,
     predictionService: PredictionService,
-    http: HttpClient
+    http: HttpClient,
+    @Inject(PLATFORM_ID) private platformId: Object
   ) {
     super(http, predictionService);
   }
@@ -313,14 +314,16 @@ export class EuromillonComponent extends LotteryBaseComponent implements OnInit,
         if (response.success) {
           this.predictionResult = response.prediction;
 
-          // Guardar la predicción en el almacenamiento local para recuperarla si se recarga la página
-          try {
-            localStorage.setItem('euromillon_last_prediction', JSON.stringify({
-              timestamp: new Date().toISOString(),
-              prediction: this.predictionResult
-            }));
-          } catch (e) {
-            console.warn('No se pudo guardar la predicción en localStorage:', e);
+          // Guardar la predicción en el almacenamiento local para recuperarla si se recarga la página (solo en browser)
+          if (isPlatformBrowser(this.platformId)) {
+            try {
+              localStorage.setItem('euromillon_last_prediction', JSON.stringify({
+                timestamp: new Date().toISOString(),
+                prediction: this.predictionResult
+              }));
+            } catch (e) {
+              console.warn('No se pudo guardar la predicción en localStorage:', e);
+            }
           }
         } else {
           this.predictionError = response.error || 'Error al generar la predicción';
@@ -355,6 +358,10 @@ export class EuromillonComponent extends LotteryBaseComponent implements OnInit,
    * Carga una predicción guardada previamente en localStorage
    */
   private loadSavedPrediction(): void {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+    
     try {
       const savedPredictionJson = localStorage.getItem('euromillon_last_prediction');
       if (savedPredictionJson) {
@@ -388,6 +395,11 @@ export class EuromillonComponent extends LotteryBaseComponent implements OnInit,
    * Intenta forzar el renderizado de las bolas que no se han renderizado correctamente
    */
   private forceRenderMissingBalls(): void {
+    // Solo funciona en el navegador
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+
     console.log('[DIAGNÓSTICO] EuromillonComponent: Intentando forzar renderizado de bolas faltantes');
 
     // Forzar limpieza de contextos WebGL para liberar recursos
