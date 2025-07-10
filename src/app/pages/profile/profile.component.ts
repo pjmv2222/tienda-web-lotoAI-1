@@ -641,24 +641,47 @@ export class ProfileComponent implements OnInit {
         this.loadingSubscriptions = false;
         
         if (!subscriptions || subscriptions.length === 0) {
-          // Usuario con Plan Básico (sin suscripciones premium en la BD)
-          console.log('🔄 [PROFILE] No se encontraron suscripciones premium, cargando Plan Básico...');
+          // Usuario sin suscripciones - Plan Básico por defecto
+          console.log('🔄 [PROFILE] No se encontraron suscripciones, cargando Plan Básico...');
           this.loadBasicPlanData();
         } else {
-          // Suscripciones premium/temporales encontradas
-          console.log('💎 [PROFILE] Suscripciones premium encontradas:', subscriptions);
-          this.activeSubscriptions = subscriptions.map((sub: any) => ({
-            id: sub.id,
-            plan_id: sub.planId,
-            plan_name: this.getPlanDisplayName(sub.planId),
-            status: sub.status,
-            status_display: this.getStatusDisplayName(sub.status),
-            created_at: sub.startDate,
-            expires_at: sub.endDate,
-            price: this.getPlanPrice(sub.planId),
-            is_basic_plan: false
-          }));
-          console.log('💎 [PROFILE] activeSubscriptions mapeadas:', this.activeSubscriptions);
+          // Verificar si todas las suscripciones son del Plan Básico
+          const hasOnlyBasicPlan = subscriptions.every((sub: any) => 
+            !sub.planId || sub.planId === 'basic' || sub.planId === ''
+          );
+          
+          console.log('🔍 [PROFILE] Análisis de suscripciones:');
+          subscriptions.forEach((sub: any, index) => {
+            console.log(`📋 [PROFILE] Suscripción ${index}:`, {
+              id: sub.id,
+              planId: sub.planId,
+              status: sub.status,
+              startDate: sub.startDate,
+              endDate: sub.endDate
+            });
+          });
+          console.log('🔍 [PROFILE] ¿Solo Plan Básico?:', hasOnlyBasicPlan);
+          
+          if (hasOnlyBasicPlan) {
+            // Todas las suscripciones son del Plan Básico - cargar predicciones
+            console.log('🔄 [PROFILE] Solo Plan Básico encontrado, cargando predicciones...');
+            this.loadBasicPlanData();
+          } else {
+            // Suscripciones premium/temporales encontradas
+            console.log('💎 [PROFILE] Suscripciones premium encontradas:', subscriptions);
+            this.activeSubscriptions = subscriptions.map((sub: any) => ({
+              id: sub.id,
+              plan_id: sub.planId,
+              plan_name: this.getPlanDisplayName(sub.planId),
+              status: sub.status,
+              status_display: this.getStatusDisplayName(sub.status),
+              created_at: sub.startDate,
+              expires_at: sub.endDate,
+              price: this.getPlanPrice(sub.planId),
+              is_basic_plan: false
+            }));
+            console.log('💎 [PROFILE] activeSubscriptions mapeadas:', this.activeSubscriptions);
+          }
         }
       },
       error: (error: any) => {
