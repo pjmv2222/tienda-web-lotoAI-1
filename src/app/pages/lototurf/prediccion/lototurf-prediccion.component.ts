@@ -1,8 +1,11 @@
 import { Component } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { JsonPipe } from '@angular/common';
 
 @Component({
   selector: 'app-lototurf-prediccion',
+  standalone: true,
+  imports: [JsonPipe],
   templateUrl: './lototurf-prediccion.component.html',
   styleUrls: ['./lototurf-prediccion.component.css']
 })

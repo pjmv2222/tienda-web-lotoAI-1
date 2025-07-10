@@ -1,8 +1,11 @@
 import { Component } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { JsonPipe } from '@angular/common';
 
 @Component({
   selector: 'app-elgordo-prediccion',
+  standalone: true,
+  imports: [JsonPipe],
   templateUrl: './elgordo-prediccion.component.html',
   styleUrls: ['./elgordo-prediccion.component.css']
 })
