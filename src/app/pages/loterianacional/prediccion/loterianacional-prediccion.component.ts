@@ -1,8 +1,11 @@
 import { Component } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { JsonPipe } from '@angular/common';
 
 @Component({
   selector: 'app-loterianacional-prediccion',
+  standalone: true,
+  imports: [JsonPipe],
   templateUrl: './loterianacional-prediccion.component.html',
   styleUrls: ['./loterianacional-prediccion.component.css']
 })

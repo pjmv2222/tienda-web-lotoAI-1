@@ -1,8 +1,11 @@
 import { Component } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { JsonPipe } from '@angular/common';
 
 @Component({
   selector: 'app-bonoloto-prediccion',
+  standalone: true,
+  imports: [JsonPipe],
   templateUrl: './bonoloto-prediccion.component.html',
   styleUrls: ['./bonoloto-prediccion.component.css']
 })

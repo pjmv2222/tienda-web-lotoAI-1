@@ -1,8 +1,11 @@
 import { Component } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { JsonPipe } from '@angular/common';
 
 @Component({
   selector: 'app-primitiva-prediccion',
+  standalone: true,
+  imports: [JsonPipe],
   templateUrl: './primitiva-prediccion.component.html',
   styleUrls: ['./primitiva-prediccion.component.css']
 })
