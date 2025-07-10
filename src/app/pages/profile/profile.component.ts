@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
@@ -68,7 +68,6 @@ interface GamePredictionUsage {
               </div>
               
               <!-- Información específica para Plan Básico -->
-              <!-- DEBUG: {{logDebugInfo(subscription)}} -->
               <div *ngIf="subscription.is_basic_plan && subscription.predictions_used" class="basic-plan-info">
                 <div class="detail-row">
                   <span class="detail-label">Fecha de contratación:</span>
@@ -549,7 +548,8 @@ export class ProfileComponent implements OnInit {
     private router: Router,
     private fb: FormBuilder,
     private subscriptionService: SubscriptionService,
-    private userPredictionService: UserPredictionService
+    private userPredictionService: UserPredictionService,
+    private cdr: ChangeDetectorRef
   ) {
     this.editForm = this.fb.group({
       nombre: ['', Validators.required],
@@ -669,18 +669,16 @@ export class ProfileComponent implements OnInit {
    * Carga datos del Plan Básico con información real de predicciones
    */
   private loadBasicPlanData() {
-    console.log('🔍 [DEBUG] Iniciando carga de datos del Plan Básico...');
+    console.log('🔍 [PROFILE] Cargando datos del Plan Básico...');
     
-    // Usar el endpoint específico para el perfil
+    this.loadingSubscriptions = true;
+    
     this.userPredictionService.getProfilePredictionSummary().subscribe({
       next: (response) => {
-        console.log('🎯 [DEBUG] Respuesta del servidor:', response);
-        console.log('🎯 [DEBUG] Tipo de response.data:', typeof response.data);
-        console.log('🎯 [DEBUG] response.data.games:', response.data?.games);
+        console.log('📊 [PROFILE] Respuesta del servidor:', response);
         
-        if (response.success && response.data && response.data.games) {
-          const predictions_used: GamePredictionUsage[] = response.data.games;
-          console.log('✅ [DEBUG] Datos de predicciones mapeados:', predictions_used);
+        if (response.success && response.data && response.data.games && Array.isArray(response.data.games)) {
+          console.log('✅ [PROFILE] Datos válidos recibidos, games:', response.data.games);
           
           const subscription: UserSubscriptionInfo = {
             id: 0,
@@ -692,34 +690,28 @@ export class ProfileComponent implements OnInit {
             expires_at: '',
             price: '1,22€',
             is_basic_plan: true,
-            predictions_used: predictions_used
+            predictions_used: response.data.games
           };
 
-          console.log('🚀 [DEBUG] Subscription creada:', subscription);
-          console.log('🔍 [DEBUG] subscription.is_basic_plan:', subscription.is_basic_plan);
-          console.log('🔍 [DEBUG] subscription.predictions_used:', subscription.predictions_used);
-          console.log('🔍 [DEBUG] subscription.predictions_used.length:', subscription.predictions_used?.length);
-          
           this.activeSubscriptions = [subscription];
-          console.log('🎉 [DEBUG] activeSubscriptions actualizado:', this.activeSubscriptions);
+          console.log('🎯 [PROFILE] Suscripción creada con predicciones:', subscription);
           
-          // Forzar detección de cambios
-          setTimeout(() => {
-            console.log('⏰ [DEBUG] activeSubscriptions después de timeout:', this.activeSubscriptions);
-            console.log('⏰ [DEBUG] Primera suscripción después de timeout:', this.activeSubscriptions[0]);
-          }, 100);
         } else {
-          console.error('❌ [ERROR] Respuesta del servidor inválida:', {
-            success: response.success,
-            hasData: !!response.data,
-            hasGames: !!(response.data?.games)
-          });
+          console.warn('⚠️ [PROFILE] Respuesta inválida, usando datos por defecto');
           this.activeSubscriptions = [this.createDefaultBasicPlan()];
         }
+        
+        this.loadingSubscriptions = false;
+        // Forzar detección de cambios de manera segura para SSR
+        this.cdr.markForCheck();
+        this.cdr.detectChanges();
       },
       error: (error) => {
-        console.error('❌ [ERROR] Error obteniendo resumen de predicciones:', error);
+        console.error('❌ [PROFILE] Error cargando predicciones:', error);
         this.activeSubscriptions = [this.createDefaultBasicPlan()];
+        this.loadingSubscriptions = false;
+        this.cdr.markForCheck();
+        this.cdr.detectChanges();
       }
     });
   }
@@ -920,15 +912,5 @@ export class ProfileComponent implements OnInit {
     const newPassword = group.get('newPassword')?.value;
     const confirmPassword = group.get('confirmPassword')?.value;
     return newPassword === confirmPassword ? null : { passwordMismatch: true };
-  }
-
-  // Método de debug temporal
-  logDebugInfo(subscription: any): string {
-    console.log('🎯 [TEMPLATE DEBUG] Evaluando subscription:', subscription);
-    console.log('🎯 [TEMPLATE DEBUG] is_basic_plan:', subscription?.is_basic_plan);
-    console.log('🎯 [TEMPLATE DEBUG] predictions_used:', subscription?.predictions_used);
-    console.log('🎯 [TEMPLATE DEBUG] predictions_used length:', subscription?.predictions_used?.length);
-    console.log('🎯 [TEMPLATE DEBUG] Condición cumplida:', !!(subscription?.is_basic_plan && subscription?.predictions_used));
-    return '';
   }
 }
