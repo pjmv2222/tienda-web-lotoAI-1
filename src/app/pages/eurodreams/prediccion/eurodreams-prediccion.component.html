@@ -1,0 +1,15 @@
+<div class="prediccion-container">
+  <h2>Predicción para EuroDreams</h2>
+  <button (click)="generarPrediccion()" [disabled]="loading">
+    {{ loading ? 'Generando...' : 'Generar predicción' }}
+  </button>
+
+  <div *ngIf="error" class="error">
+    {{ error }}
+  </div>
+
+  <div *ngIf="prediccion" class="resultado">
+    <h3>Combinación sugerida:</h3>
+    <pre>{{ prediccion | json }}</pre>
+  </div>
+</div> 

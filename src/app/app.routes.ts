@@ -146,6 +146,36 @@ export const routes: Routes = [
     path: 'email-verificado',
     loadComponent: () => import('./pages/welcome/welcome.component').then(m => m.WelcomeComponent)
   },
+  {
+    path: 'primitiva/prediccion',
+    loadComponent: () => import('./pages/primitiva/prediccion/primitiva-prediccion.component').then(m => m.PrimitivaPrediccionComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'bonoloto/prediccion',
+    loadComponent: () => import('./pages/bonoloto/prediccion/bonoloto-prediccion.component').then(m => m.BonolotoPrediccionComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'elgordo/prediccion',
+    loadComponent: () => import('./pages/elgordo/prediccion/elgordo-prediccion.component').then(m => m.ElgordoPrediccionComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'eurodreams/prediccion',
+    loadComponent: () => import('./pages/eurodreams/prediccion/eurodreams-prediccion.component').then(m => m.EurodreamsPrediccionComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'lototurf/prediccion',
+    loadComponent: () => import('./pages/lototurf/prediccion/lototurf-prediccion.component').then(m => m.LototurfPrediccionComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'loterianacional/prediccion',
+    loadComponent: () => import('./pages/loterianacional/prediccion/loterianacional-prediccion.component').then(m => m.LoterianacionalPrediccionComponent),
+    canActivate: [authGuard]
+  },
   // Rutas de ejemplos de bolas de lotería eliminadas
   {
     path: '**',
