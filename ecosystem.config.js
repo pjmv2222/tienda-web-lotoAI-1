@@ -34,6 +34,9 @@ module.exports = {
       exec_mode: 'fork',
       autorestart: true,
       max_memory_restart: '1G',
+      kill_timeout: 5000,
+      wait_ready: true,
+      listen_timeout: 10000,
       env: {
         NODE_ENV: 'development',
         PORT: 4000
