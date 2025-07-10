@@ -29,13 +29,14 @@ module.exports = {
     },
     {
       name: 'frontend',
-      script: 'dist/tienda-web-loto-ai/server/main.server.mjs',
+      script: 'dist/tienda-web-loto-ai/server/server.mjs',
       instances: 1,
       exec_mode: 'fork',
       autorestart: true,
       max_memory_restart: '1G',
       env: {
         NODE_ENV: 'development',
+        PORT: 4000
       },
       env_production: {
         NODE_ENV: 'production',
