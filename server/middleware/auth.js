@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 
+// Middleware de autenticación actualizado - busca token en headers y cookies
 const authenticateToken = (req, res, next) => {
   try {
     // Obtener token del header Authorization o de las cookies
