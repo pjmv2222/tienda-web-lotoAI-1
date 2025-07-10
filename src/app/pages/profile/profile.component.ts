@@ -629,18 +629,24 @@ export class ProfileComponent implements OnInit {
   }
 
   private loadUserSubscriptions() {
+    console.log('🚀 [PROFILE] Iniciando loadUserSubscriptions...');
     this.loadingSubscriptions = true;
+    
     this.subscriptionService.getUserSubscriptions().subscribe({
       next: (subscriptions: Subscription[]) => {
+        console.log('📨 [PROFILE] Respuesta de getUserSubscriptions:', subscriptions);
+        console.log('📨 [PROFILE] subscriptions.length:', subscriptions?.length);
+        console.log('📨 [PROFILE] Es array?:', Array.isArray(subscriptions));
+        
         this.loadingSubscriptions = false;
         
         if (!subscriptions || subscriptions.length === 0) {
           // Usuario con Plan Básico (sin suscripciones premium en la BD)
-          console.log('No se encontraron suscripciones premium, cargando Plan Básico...');
+          console.log('🔄 [PROFILE] No se encontraron suscripciones premium, cargando Plan Básico...');
           this.loadBasicPlanData();
         } else {
           // Suscripciones premium/temporales encontradas
-          console.log('Suscripciones encontradas:', subscriptions);
+          console.log('💎 [PROFILE] Suscripciones premium encontradas:', subscriptions);
           this.activeSubscriptions = subscriptions.map((sub: any) => ({
             id: sub.id,
             plan_id: sub.planId,
@@ -652,14 +658,20 @@ export class ProfileComponent implements OnInit {
             price: this.getPlanPrice(sub.planId),
             is_basic_plan: false
           }));
+          console.log('💎 [PROFILE] activeSubscriptions mapeadas:', this.activeSubscriptions);
         }
       },
       error: (error: any) => {
-        console.error('Error al cargar suscripciones:', error);
+        console.error('❌ [PROFILE] Error al cargar suscripciones:', error);
+        console.error('❌ [PROFILE] Error detallado:', {
+          message: error.message,
+          status: error.status,
+          url: error.url
+        });
         this.loadingSubscriptions = false;
         
         // Si hay error, asumir Plan Básico como fallback
-        console.log('Error al cargar suscripciones, usando Plan Básico como fallback...');
+        console.log('🔄 [PROFILE] Error al cargar suscripciones, usando Plan Básico como fallback...');
         this.loadBasicPlanData();
       }
     });
@@ -676,6 +688,10 @@ export class ProfileComponent implements OnInit {
     this.userPredictionService.getProfilePredictionSummary().subscribe({
       next: (response) => {
         console.log('📊 [PROFILE] Respuesta del servidor:', response);
+        console.log('📊 [PROFILE] response.success:', response.success);
+        console.log('📊 [PROFILE] response.data:', response.data);
+        console.log('📊 [PROFILE] response.data.games:', response.data?.games);
+        console.log('📊 [PROFILE] Es Array?:', Array.isArray(response.data?.games));
         
         if (response.success && response.data && response.data.games && Array.isArray(response.data.games)) {
           console.log('✅ [PROFILE] Datos válidos recibidos, games:', response.data.games);
@@ -695,23 +711,38 @@ export class ProfileComponent implements OnInit {
 
           this.activeSubscriptions = [subscription];
           console.log('🎯 [PROFILE] Suscripción creada con predicciones:', subscription);
+          console.log('🎯 [PROFILE] activeSubscriptions[0].is_basic_plan:', this.activeSubscriptions[0]?.is_basic_plan);
+          console.log('🎯 [PROFILE] activeSubscriptions[0].predictions_used:', this.activeSubscriptions[0]?.predictions_used);
+          console.log('🎯 [PROFILE] Longitud predictions_used:', this.activeSubscriptions[0]?.predictions_used?.length);
           
         } else {
           console.warn('⚠️ [PROFILE] Respuesta inválida, usando datos por defecto');
+          console.warn('⚠️ [PROFILE] Detalles - success:', response.success, 'data:', response.data, 'games:', response.data?.games);
           this.activeSubscriptions = [this.createDefaultBasicPlan()];
+          console.log('📋 [PROFILE] Plan básico por defecto creado:', this.activeSubscriptions[0]);
         }
         
         this.loadingSubscriptions = false;
         // Forzar detección de cambios de manera segura para SSR
         this.cdr.markForCheck();
         this.cdr.detectChanges();
+        
+        // Verificar estado final
+        console.log('🔚 [PROFILE] Estado final - activeSubscriptions:', this.activeSubscriptions);
+        console.log('🔚 [PROFILE] Estado final - loadingSubscriptions:', this.loadingSubscriptions);
       },
       error: (error) => {
         console.error('❌ [PROFILE] Error cargando predicciones:', error);
+        console.error('❌ [PROFILE] Error detallado:', {
+          message: error.message,
+          status: error.status,
+          url: error.url
+        });
         this.activeSubscriptions = [this.createDefaultBasicPlan()];
         this.loadingSubscriptions = false;
         this.cdr.markForCheck();
         this.cdr.detectChanges();
+        console.log('📋 [PROFILE] Plan básico por defecto tras error:', this.activeSubscriptions[0]);
       }
     });
   }
