@@ -1,0 +1,24 @@
+.prediccion-container {
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 2rem;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  text-align: center;
+}
+button {
+  margin: 1rem 0;
+  padding: 0.5rem 2rem;
+  font-size: 1.1rem;
+}
+.error {
+  color: #c00;
+  margin-top: 1rem;
+}
+.resultado {
+  margin-top: 2rem;
+  background: #f6f6f6;
+  padding: 1rem;
+  border-radius: 6px;
+} 
