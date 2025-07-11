@@ -34,31 +34,26 @@
         </p>
       </div>
 
-      <!-- Indicador de verificación de suscripción -->
       <div *ngIf="isLoadingSubscriptionStatus" class="loading-container">
         <div class="loading-spinner"></div>
         <p>Verificando suscripción...</p>
       </div>
 
-      <!-- Mostrar error si hay alguno -->
       <div *ngIf="predictionError && !isLoadingSubscriptionStatus" class="prediction-error">
         <p [innerHTML]="predictionError"></p>
         <button class="btn-primary" routerLink="/planes">Ver planes disponibles</button>
       </div>
 
-      <!-- Indicador de carga de predicciones -->
       <div *ngIf="isGeneratingPrediction && !isLoadingSubscriptionStatus" class="loading-container">
         <div class="loading-spinner"></div>
         <p>Generando predicciones optimizadas...</p>
       </div>
 
-      <!-- Contenedor de bolas vacías inicial -->
       <div *ngIf="showEmptyBalls && !isGeneratingPrediction && !isLoadingSubscriptionStatus && !predictionError" class="empty-balls-section">
         <div class="empty-balls-header">
           <h3>Tu predicción aparecerá aquí</h3>
           <p>Presiona "Generar nuevas predicciones" para obtener combinaciones optimizadas por nuestra IA especializada en El Gordo.</p>
         </div>
-        
         <div class="empty-prediction-container">
           <div class="empty-prediction-card">
             <div class="prediction-card-header">
@@ -85,7 +80,6 @@
         </div>
       </div>
 
-      <!-- Resultados de las predicciones -->
       <div *ngIf="predictionResults.length > 0" class="predictions-section">
         <div class="predictions-header">
           <h3>Combinaciones generadas por nuestra IA</h3>
@@ -119,15 +113,50 @@
             </div>
           </div>
         </div>
+      </div>
 
-        <!-- Botón para generar más predicciones -->
-        <div class="generate-more-section" *ngIf="predictionResults.length < maxPredictions">
-          <button class="btn-primary" (click)="generatePrediction()" [disabled]="isGeneratingPrediction">
-            <span *ngIf="!isGeneratingPrediction">Generar nueva predicción</span>
-            <span *ngIf="isGeneratingPrediction">Generando...</span>
-          </button>
+      <div class="action-buttons">
+        <button class="btn-primary" (click)="generatePrediction()" [disabled]="isGeneratingPrediction || predictionResults.length >= maxPredictions">
+          <span *ngIf="!isGeneratingPrediction && predictionResults.length < maxPredictions">Generar nueva predicción</span>
+          <span *ngIf="isGeneratingPrediction">Generando...</span>
+          <span *ngIf="predictionResults.length >= maxPredictions">Límite de {{ maxPredictions }} predicciones alcanzado</span>
+        </button>
+        <button class="btn-secondary" (click)="clearPredictions()" *ngIf="predictionResults.length > 0" [disabled]="isGeneratingPrediction">
+          Limpiar predicciones
+        </button>
+        <button class="btn-secondary" routerLink="/elgordo">Volver a El Gordo</button>
+      </div>
+
+      <div class="prediction-info">
+        <h3>¿Cómo usar estas predicciones?</h3>
+        <p>
+          Estas combinaciones están optimizadas para el próximo sorteo de El Gordo. Puedes jugarlas directamente
+          o usarlas como base para tus propias combinaciones. Recuerda que los sorteos son aleatorios y estas predicciones
+          mejoran tus probabilidades estadísticas pero no garantizan premios.
+        </p>
+        <div class="tips-container">
+          <div class="tip-card">
+            <h4>Consejo #1</h4>
+            <p>Juega estas combinaciones completas sin modificarlas para aprovechar al máximo el análisis de la IA.</p>
+          </div>
+          <div class="tip-card">
+            <h4>Consejo #2</h4>
+            <p>Considera jugar sistemáticamente combinando algunos de los números más frecuentes de estas predicciones.</p>
+          </div>
+          <div class="tip-card">
+            <h4>Consejo #3</h4>
+            <p>El número clave puede marcar la diferencia en los premios mayores. Presta atención a la recomendación.</p>
+          </div>
         </div>
       </div>
+    </div>
+
+    <div class="disclaimer">
+      <p>
+        <strong>Aviso importante:</strong> LOTO IA no está afiliado con los operadores oficiales de El Gordo.
+        Nuestro servicio proporciona predicciones basadas en análisis estadístico e inteligencia artificial,
+        pero no garantiza resultados. Juega con responsabilidad.
+      </p>
     </div>
   </div>
 </div> 

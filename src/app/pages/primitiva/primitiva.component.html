@@ -54,7 +54,7 @@
             </ul>
           </div>
           <button class="generate-btn" *ngIf="hasBasicPlan" routerLink="/primitiva/prediccion">
-            <span>Generar predicción</span>
+            Generar predicción
           </button>
           <button class="generate-btn" *ngIf="!hasBasicPlan" (click)="showSubscriptionOptions()">Suscribir</button>
           <p *ngIf="!isLoggedIn" class="login-required">Necesitas <a routerLink="/auth/login">iniciar sesión</a> para generar predicciones</p>
