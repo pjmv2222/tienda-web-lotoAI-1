@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { Pool } = require('pg');
 const authenticateToken = require('../middleware/auth');
+const axios = require('axios');
 
 // Configurar conexión a PostgreSQL
 const pool = new Pool({
@@ -120,6 +121,122 @@ router.get('/summary', authenticateToken, async (req, res) => {
       success: false, 
       error: 'Error interno del servidor',
       message: error.message 
+    });
+  }
+});
+
+// Endpoint proxy para predicciones - redirige al servidor IA
+router.post('/:juego', authenticateToken, async (req, res) => {
+  try {
+    const { juego } = req.params;
+    const userId = req.user.id;
+
+    console.log(`🔍 [PREDICTIONS] Generando predicción para usuario ${userId}, juego: ${juego}`);
+
+    // Verificar que el usuario no haya excedido el límite de predicciones
+    const checkQuery = `
+      SELECT COUNT(*) as prediction_count
+      FROM user_predictions 
+      WHERE user_id = $1 AND game_type = $2
+    `;
+    
+    const checkResult = await pool.query(checkQuery, [userId, juego]);
+    const currentCount = parseInt(checkResult.rows[0].prediction_count) || 0;
+    const maxAllowed = 3; // Plan básico permite 3 predicciones por juego
+    
+    if (currentCount >= maxAllowed) {
+      return res.status(403).json({
+        success: false,
+        error: 'Has alcanzado el límite de predicciones para este juego',
+        data: {
+          gameType: juego,
+          currentCount,
+          maxAllowed,
+          remaining: 0,
+          canGenerate: false
+        }
+      });
+    }
+
+    // URL del servidor IA Flask
+    const iaServerUrl = process.env.IA_SERVER_URL || 'http://localhost:5000';
+    const predictionUrl = `${iaServerUrl}/${juego}/predict`;
+
+    console.log(`🔍 [PREDICTIONS] Haciendo petición a: ${predictionUrl}`);
+
+    // Obtener token de autenticación para el servidor IA
+    const iaToken = process.env.IA_SERVER_TOKEN || '8011471e-90c3-4af3-bc53-452557b92001';
+
+    // Hacer petición al servidor IA
+    const iaResponse = await axios.post(predictionUrl, {}, {
+      headers: {
+        'Authorization': `Bearer ${iaToken}`,
+        'Content-Type': 'application/json'
+      },
+      timeout: 30000 // 30 segundos de timeout
+    });
+
+    console.log(`✅ [PREDICTIONS] Respuesta del servidor IA:`, iaResponse.data);
+
+    if (!iaResponse.data.success) {
+      throw new Error(iaResponse.data.error || 'Error en el servidor IA');
+    }
+
+    // Guardar la predicción en la base de datos
+    const insertQuery = `
+      INSERT INTO user_predictions (user_id, game_type, prediction_data, created_at)
+      VALUES ($1, $2, $3, NOW())
+    `;
+    
+    await pool.query(insertQuery, [
+      userId, 
+      juego, 
+      JSON.stringify(iaResponse.data.prediccion)
+    ]);
+
+    console.log(`✅ [PREDICTIONS] Predicción guardada en BD para usuario ${userId}`);
+
+    // Devolver respuesta al frontend
+    res.json({
+      success: true,
+      data: {
+        juego: juego,
+        prediccion: iaResponse.data.prediccion,
+        timestamp: iaResponse.data.timestamp,
+        remaining: maxAllowed - (currentCount + 1)
+      }
+    });
+
+  } catch (error) {
+    console.error(`❌ [PREDICTIONS] Error generando predicción para ${req.params.juego}:`, error);
+    
+    // Manejar errores específicos
+    if (error.code === 'ECONNREFUSED') {
+      return res.status(503).json({
+        success: false,
+        error: 'El servidor de IA no está disponible en este momento'
+      });
+    }
+    
+    if (error.code === 'ENOTFOUND') {
+      return res.status(503).json({
+        success: false,
+        error: 'No se puede conectar con el servidor de IA'
+      });
+    }
+    
+    if (error.response) {
+      // Error del servidor IA
+      return res.status(error.response.status).json({
+        success: false,
+        error: error.response.data.error || 'Error en el servidor de IA'
+      });
+    }
+
+    res.status(500).json({
+      success: false,
+      error: 'Error interno del servidor',
+      message: error.message
     });
   }
 });
