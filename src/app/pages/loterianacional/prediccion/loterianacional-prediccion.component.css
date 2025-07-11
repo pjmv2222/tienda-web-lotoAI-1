@@ -1,24 +1,336 @@
-.prediccion-container {
-  max-width: 500px;
-  margin: 0 auto;
-  padding: 2rem;
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-  text-align: center;
+.page-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 20px;
 }
-button {
-  margin: 1rem 0;
-  padding: 0.5rem 2rem;
+
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  color: white;
+  font-size: 14px;
+}
+
+.breadcrumb a {
+  color: #ffd700;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.breadcrumb a:hover {
+  color: #fff;
+}
+
+.breadcrumb .separator {
+  color: #ccc;
+}
+
+.breadcrumb .current {
+  color: #fff;
+  font-weight: bold;
+}
+
+.content-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  background: white;
+  border-radius: 15px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+  overflow: hidden;
+}
+
+.lottery-header {
+  display: flex;
+  align-items: center;
+  padding: 30px;
+  background: linear-gradient(135deg, #0066CC 0%, #004499 100%);
+  color: white;
+  gap: 30px;
+}
+
+.lottery-logo {
+  flex-shrink: 0;
+}
+
+.lottery-image {
+  height: 80px;
+  width: auto;
+  border-radius: 10px;
+}
+
+.lottery-info {
+  flex-grow: 1;
+}
+
+.lottery-title {
+  font-size: 2.5rem;
+  margin: 0 0 15px 0;
+  font-weight: bold;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+}
+
+.jackpot-info, .next-draw {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
   font-size: 1.1rem;
 }
-.error {
-  color: #c00;
-  margin-top: 1rem;
+
+.jackpot-label, .next-draw-label {
+  font-weight: bold;
+  color: #ffd700;
 }
-.resultado {
-  margin-top: 2rem;
-  background: #f6f6f6;
-  padding: 1rem;
-  border-radius: 6px;
+
+.jackpot-amount, .next-draw-date {
+  font-weight: 600;
+}
+
+.prediction-container {
+  padding: 40px;
+}
+
+.prediction-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.prediction-header h2 {
+  font-size: 2.2rem;
+  color: #333;
+  margin-bottom: 15px;
+  font-weight: bold;
+}
+
+.prediction-description {
+  font-size: 1.1rem;
+  color: #666;
+  line-height: 1.6;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.loading-container {
+  text-align: center;
+  padding: 40px;
+  color: #666;
+}
+
+.loading-spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #0066CC;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 20px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.prediction-error {
+  background: #fff3f3;
+  border: 2px solid #ff6b6b;
+  border-radius: 10px;
+  padding: 20px;
+  margin: 20px 0;
+  text-align: center;
+  color: #d63031;
+}
+
+.prediction-error p {
+  margin: 0 0 15px 0;
+  font-size: 1.1rem;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #0066CC 0%, #004499 100%);
+  color: white;
+  border: none;
+  padding: 12px 30px;
+  border-radius: 25px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0,102,204,0.3);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0,102,204,0.4);
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.empty-balls-section {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.empty-balls-header h3 {
+  font-size: 1.8rem;
+  color: #333;
+  margin-bottom: 15px;
+}
+
+.empty-balls-header p {
+  color: #666;
+  font-size: 1.1rem;
+  margin-bottom: 30px;
+}
+
+.empty-prediction-container {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.empty-prediction-card {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border: 2px dashed #dee2e6;
+  border-radius: 15px;
+  padding: 30px;
+  text-align: center;
+}
+
+.prediction-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.prediction-card-header h3 {
+  font-size: 1.5rem;
+  color: #333;
+  margin: 0;
+}
+
+.prediction-type {
+  background: #0066CC;
+  color: white;
+  padding: 5px 15px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: bold;
+}
+
+.lottery-balls-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  margin: 20px 0;
+  flex-wrap: wrap;
+}
+
+.ball-wrapper {
+  display: flex;
+  justify-content: center;
+}
+
+.lottery-balls-separator {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #666;
+  margin: 0 10px;
+}
+
+.prediction-stats {
+  margin-top: 20px;
+}
+
+.stat-item {
+  margin-bottom: 10px;
+}
+
+.stat-label {
+  font-weight: bold;
+  color: #0066CC;
+  font-size: 1rem;
+}
+
+.stat-value {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.predictions-section {
+  margin-top: 40px;
+}
+
+.predictions-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.predictions-header h3 {
+  font-size: 2rem;
+  color: #333;
+  margin-bottom: 15px;
+}
+
+.predictions-header p {
+  color: #666;
+  font-size: 1.1rem;
+}
+
+.predictions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 30px;
+  margin-bottom: 40px;
+}
+
+.prediction-card {
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  border: 2px solid #e9ecef;
+  border-radius: 15px;
+  padding: 25px;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.prediction-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+  border-color: #0066CC;
+}
+
+.generate-more-section {
+  text-align: center;
+  margin-top: 30px;
+}
+
+@media (max-width: 768px) {
+  .lottery-header {
+    flex-direction: column;
+    text-align: center;
+    gap: 20px;
+  }
+  
+  .lottery-title {
+    font-size: 2rem;
+  }
+  
+  .prediction-container {
+    padding: 20px;
+  }
+  
+  .predictions-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .lottery-balls-container {
+    gap: 5px;
+  }
 } 
