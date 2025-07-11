@@ -53,32 +53,12 @@
               <li>Número clave optimizado</li>
             </ul>
           </div>
-          <button class="generate-btn" *ngIf="hasBasicPlan" (click)="generateBasicPrediction()" [disabled]="isGeneratingPrediction">
-            <span *ngIf="!isGeneratingPrediction">Generar</span>
-            <span *ngIf="isGeneratingPrediction">Generando...</span>
+          <button class="generate-btn" *ngIf="hasBasicPlan" routerLink="/elgordo/prediccion">
+            Generar predicción
           </button>
           <button class="generate-btn" *ngIf="!hasBasicPlan" (click)="showSubscriptionOptions()">Suscribir</button>
           <p *ngIf="!isLoggedIn" class="login-required">Necesitas <a routerLink="/auth/login">iniciar sesión</a> para generar predicciones</p>
           <p *ngIf="isLoggedIn && !hasBasicPlan" class="login-required">Necesitas <a routerLink="/planes">suscribir este plan</a> para generar predicciones</p>
-
-          <!-- Mostrar error si lo hay -->
-          <p *ngIf="predictionError" class="prediction-error">{{ predictionError }}</p>
-
-          <!-- Mostrar resultado de la predicción -->
-          <div *ngIf="predictionResult" class="prediction-result">
-            <h4>Tu predicción:</h4>
-            <div class="prediction-numbers">
-              <div class="lottery-balls-container">
-                <div *ngFor="let number of predictionResult.numeros" class="ball-wrapper">
-                  <app-euromillones-ball [number]="number" [size]="60" [staticRendering]="true" [customColor]="'#1D71B8'"></app-euromillones-ball>
-                </div>
-                <span class="lottery-balls-separator">+</span>
-                <div *ngIf="predictionResult.clave" class="ball-wrapper">
-                  <app-euromillones-ball [number]="predictionResult.clave" [type]="'star'" [size]="60" [staticRendering]="true" [customColor]="'#009639'"></app-euromillones-ball>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
 
         <!-- Plan Mensual -->

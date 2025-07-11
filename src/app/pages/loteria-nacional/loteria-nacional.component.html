@@ -59,26 +59,6 @@
           <button class="generate-btn" *ngIf="!hasBasicPlan" (click)="showSubscriptionOptions()">Suscribir</button>
           <p *ngIf="!isLoggedIn" class="login-required">Necesitas <a routerLink="/auth/login">iniciar sesión</a> para generar predicciones</p>
           <p *ngIf="isLoggedIn && !hasBasicPlan" class="login-required">Necesitas <a routerLink="/planes">suscribir este plan</a> para generar predicciones</p>
-
-          <!-- Mostrar error si lo hay -->
-          <p *ngIf="predictionError" class="prediction-error">{{ predictionError }}</p>
-
-          <!-- Mostrar resultado de la predicción -->
-          <div *ngIf="predictionResult" class="prediction-result">
-            <h4>Tu predicción:</h4>
-            <div class="prediction-numbers">
-              <div class="lottery-number-large-container">
-                <div class="lottery-number-row large">
-                  <ng-container *ngIf="predictionResult?.numero">
-                    <div *ngFor="let digit of predictionResult.numero" class="ball-wrapper">
-                      <app-euromillones-ball [number]="digit" [size]="60" [staticRendering]="true" [customColor]="'#D32F2F'"></app-euromillones-ball>
-                    </div>
-                  </ng-container>
-                </div>
-                <div class="prize-info">Número recomendado</div>
-              </div>
-            </div>
-          </div>
         </div>
 
         <!-- Plan Mensual -->
