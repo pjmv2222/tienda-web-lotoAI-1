@@ -53,9 +53,8 @@
               <li>Número de sueño optimizado</li>
             </ul>
           </div>
-          <button class="generate-btn" *ngIf="hasBasicPlan" (click)="generateBasicPrediction()" [disabled]="isGeneratingPrediction">
-            <span *ngIf="!isGeneratingPrediction">Generar</span>
-            <span *ngIf="isGeneratingPrediction">Generando...</span>
+          <button class="generate-btn" *ngIf="hasBasicPlan" routerLink="/eurodreams/prediccion">
+            Generar predicción
           </button>
           <button class="generate-btn" *ngIf="!hasBasicPlan" (click)="showSubscriptionOptions()">Suscribir</button>
           <p *ngIf="!isLoggedIn" class="login-required">Necesitas <a routerLink="/auth/login">iniciar sesión</a> para generar predicciones</p>
