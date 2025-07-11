@@ -121,9 +121,6 @@
           <span *ngIf="isGeneratingPrediction">Generando...</span>
           <span *ngIf="predictionResults.length >= maxPredictions">Límite de {{ maxPredictions }} predicciones alcanzado</span>
         </button>
-        <button class="btn-secondary" (click)="clearPredictions()" *ngIf="predictionResults.length > 0" [disabled]="isGeneratingPrediction">
-          Limpiar predicciones
-        </button>
         <button class="btn-secondary" routerLink="/elgordo">Volver a El Gordo</button>
       </div>
 
