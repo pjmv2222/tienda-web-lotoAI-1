@@ -1,15 +1,133 @@
-<div class="prediccion-container">
-  <h2>Predicción para Lotería Nacional</h2>
-  <button (click)="generarPrediccion()" [disabled]="loading">
-    {{ loading ? 'Generando...' : 'Generar predicción' }}
-  </button>
-
-  <div *ngIf="error" class="error">
-    {{ error }}
+<div class="page-container">
+  <div class="breadcrumb">
+    <a routerLink="/home"><i class="fas fa-home"></i></a>
+    <span class="separator">></span>
+    <a routerLink="/loteria-nacional" class="link">Lotería Nacional</a>
+    <span class="separator">></span>
+    <span class="current">Predicciones</span>
   </div>
 
-  <div *ngIf="prediccion" class="resultado">
-    <h3>Combinación sugerida:</h3>
-    <pre>{{ prediccion | json }}</pre>
+  <div class="content-container">
+    <div class="lottery-header">
+      <div class="lottery-logo">
+        <img src="assets/img/cabecera_LoteriaNacionalAJ_topaz.png" alt="Lotería Nacional Logo" class="lottery-image">
+      </div>
+      <div class="lottery-info">
+        <h1 class="lottery-title">Predicciones para Lotería Nacional</h1>
+        <div class="jackpot-info">
+          <span class="jackpot-label">Bote actual:</span>
+          <span class="jackpot-amount">{{ boteActual }}</span>
+        </div>
+        <div class="next-draw">
+          <span class="next-draw-label">Próximo sorteo:</span>
+          <span class="next-draw-date">{{ proximoSorteo }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="prediction-container">
+      <div class="prediction-header">
+        <h2>Tus predicciones para el próximo sorteo</h2>
+        <p class="prediction-description">
+          Estas combinaciones han sido generadas por nuestra inteligencia artificial especializada en Lotería Nacional,
+          analizando patrones históricos y tendencias estadísticas para maximizar tus probabilidades.
+        </p>
+      </div>
+
+      <!-- Indicador de verificación de suscripción -->
+      <div *ngIf="isLoadingSubscriptionStatus" class="loading-container">
+        <div class="loading-spinner"></div>
+        <p>Verificando suscripción...</p>
+      </div>
+
+      <!-- Mostrar error si hay alguno -->
+      <div *ngIf="predictionError && !isLoadingSubscriptionStatus" class="prediction-error">
+        <p [innerHTML]="predictionError"></p>
+        <button class="btn-primary" routerLink="/planes">Ver planes disponibles</button>
+      </div>
+
+      <!-- Indicador de carga de predicciones -->
+      <div *ngIf="isGeneratingPrediction && !isLoadingSubscriptionStatus" class="loading-container">
+        <div class="loading-spinner"></div>
+        <p>Generando predicciones optimizadas...</p>
+      </div>
+
+      <!-- Contenedor de bolas vacías inicial -->
+      <div *ngIf="showEmptyBalls && !isGeneratingPrediction && !isLoadingSubscriptionStatus && !predictionError" class="empty-balls-section">
+        <div class="empty-balls-header">
+          <h3>Tu predicción aparecerá aquí</h3>
+          <p>Presiona "Generar nuevas predicciones" para obtener combinaciones optimizadas por nuestra IA especializada en Lotería Nacional.</p>
+        </div>
+        
+        <div class="empty-prediction-container">
+          <div class="empty-prediction-card">
+            <div class="prediction-card-header">
+              <h3>Combinación Optimizada</h3>
+              <span class="prediction-type">Por IA "Da Vinci"</span>
+            </div>
+            <div class="prediction-numbers">
+              <div class="lottery-balls-container">
+                <div *ngFor="let number of emptyNumbers" class="ball-wrapper">
+                  <app-euromillones-ball number="?" [size]="60" [staticRendering]="true" [customColor]="'#0066CC'"></app-euromillones-ball>
+                </div>
+                <span class="lottery-balls-separator">+</span>
+                <div class="ball-wrapper">
+                  <app-euromillones-ball number="?" type="star" [size]="60" [staticRendering]="true" [customColor]="'#FF9800'"></app-euromillones-ball>
+                </div>
+              </div>
+            </div>
+            <div class="prediction-stats">
+              <div class="stat-item">
+                <span class="stat-label">🍀 TU COMBINACIÓN DE LA SUERTE</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Resultados de las predicciones -->
+      <div *ngIf="predictionResults.length > 0" class="predictions-section">
+        <div class="predictions-header">
+          <h3>Combinaciones generadas por nuestra IA</h3>
+          <p>Estas combinaciones han sido optimizadas basándose en análisis estadísticos y patrones históricos.</p>
+        </div>
+
+        <div class="predictions-grid">
+          <div *ngFor="let prediction of predictionResults; let i = index" class="prediction-card">
+            <div class="prediction-card-header">
+              <h3>Combinación {{ i + 1 }}</h3>
+              <span class="prediction-type">Optimizada</span>
+            </div>
+            <div class="prediction-numbers">
+              <div class="lottery-balls-container">
+                <div *ngFor="let number of prediction.numeros || []" class="ball-wrapper">
+                  <app-euromillones-ball [number]="number" [size]="60" [staticRendering]="true" [customColor]="'#0066CC'"></app-euromillones-ball>
+                </div>
+                <span class="lottery-balls-separator">+</span>
+                <div *ngIf="prediction.reintegro" class="ball-wrapper">
+                  <app-euromillones-ball [number]="prediction.reintegro" [type]="'star'" [size]="60" [staticRendering]="true" [customColor]="'#FF9800'"></app-euromillones-ball>
+                </div>
+              </div>
+            </div>
+            <div class="prediction-stats">
+              <div class="stat-item">
+                <span class="stat-label">🍀 TU COMBINACIÓN DE LA SUERTE</span>
+              </div>
+              <div class="stat-item" *ngIf="predictionResults.length < 3">
+                <span class="stat-value">Todavía te es posible generar {{ 3 - predictionResults.length }} pronóstico{{ 3 - predictionResults.length > 1 ? 's' : '' }} más</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Botón para generar más predicciones -->
+        <div class="generate-more-section" *ngIf="predictionResults.length < maxPredictions">
+          <button class="btn-primary" (click)="generatePrediction()" [disabled]="isGeneratingPrediction">
+            <span *ngIf="!isGeneratingPrediction">Generar nueva predicción</span>
+            <span *ngIf="isGeneratingPrediction">Generando...</span>
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </div> 
