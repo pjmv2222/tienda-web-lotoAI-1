@@ -49,11 +49,11 @@ export class PredictionService {
       'euromillones': 'euromillon',
       'primitiva': 'primitiva',
       'bonoloto': 'bonoloto',
-      'gordo': 'gordo-primitiva',
-      'gordo-primitiva': 'gordo-primitiva',
+      'gordo': 'elgordo',
+      'gordo-primitiva': 'elgordo',
       'eurodreams': 'eurodreams',
-      'loterianacional': 'loteria-nacional',
-      'loteria-nacional': 'loteria-nacional',
+      'loterianacional': 'loterianacional',
+      'loteria-nacional': 'loterianacional',
       'lototurf': 'lototurf'
     };
 
