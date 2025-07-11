@@ -2,7 +2,7 @@
   <div class="breadcrumb">
     <a routerLink="/home"><i class="fas fa-home"></i></a>
     <span class="separator">></span>
-    <a routerLink="/lototurf" class="link">Lototurf</a>
+    <a routerLink="/loteria-nacional" class="link">Lotería Nacional</a>
     <span class="separator">></span>
     <span class="current">Predicciones</span>
   </div>
@@ -10,10 +10,10 @@
   <div class="content-container">
     <div class="lottery-header">
       <div class="lottery-logo">
-        <img src="assets/img/cabecera_LototurfAJ_topaz.png" alt="Lototurf Logo" class="lottery-image">
+        <img src="assets/img/cabecera_LoteriaNacionalAJ_topaz.png" alt="Lotería Nacional Logo" class="lottery-image">
       </div>
       <div class="lottery-info">
-        <h1 class="lottery-title">Predicciones para Lototurf</h1>
+        <h1 class="lottery-title">Predicciones para Lotería Nacional</h1>
         <div class="jackpot-info">
           <span class="jackpot-label">Bote actual:</span>
           <span class="jackpot-amount">{{ boteActual }}</span>
@@ -29,7 +29,7 @@
       <div class="prediction-header">
         <h2>Tus predicciones para el próximo sorteo</h2>
         <p class="prediction-description">
-          Estas combinaciones han sido generadas por nuestra inteligencia artificial especializada en Lototurf,
+          Estas combinaciones han sido generadas por nuestra inteligencia artificial especializada en Lotería Nacional,
           analizando patrones históricos y tendencias estadísticas para maximizar tus probabilidades.
         </p>
       </div>
@@ -56,7 +56,7 @@
       <div *ngIf="showEmptyBalls && !isGeneratingPrediction && !isLoadingSubscriptionStatus && !predictionError" class="empty-balls-section">
         <div class="empty-balls-header">
           <h3>Tu predicción aparecerá aquí</h3>
-          <p>Presiona "Generar nuevas predicciones" para obtener combinaciones optimizadas por nuestra IA especializada en Lototurf.</p>
+          <p>Presiona "Generar nuevas predicciones" para obtener combinaciones optimizadas por nuestra IA especializada en Lotería Nacional.</p>
         </div>
         
         <div class="empty-prediction-container">
