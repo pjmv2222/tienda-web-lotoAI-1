@@ -10,13 +10,13 @@ import { EuromillonesBallComponent } from '../../../components/euromillones-ball
 import { UserPredictionService } from '../../../services/user-prediction.service';
 
 @Component({
-  selector: 'app-bonoloto-prediccion',
+  selector: 'app-loterianacional-prediccion',
   standalone: true,
   imports: [CommonModule, RouterLink, EuromillonesBallComponent],
-  templateUrl: './bonoloto-prediccion.component.html',
-  styleUrl: './bonoloto-prediccion.component.css'
+  templateUrl: './loterianacional-prediccion.component.html',
+  styleUrl: './loterianacional-prediccion.component.css'
 })
-export class BonolotoPrediccionComponent implements OnInit, OnDestroy {
+export class LoterianacionalPrediccionComponent implements OnInit, OnDestroy {
   isLoggedIn = false;
   hasBasicPlan: boolean | null = null;
   hasMonthlyPlan: boolean | null = null;
@@ -31,8 +31,8 @@ export class BonolotoPrediccionComponent implements OnInit, OnDestroy {
   maxPredictions = 3;
   userPlan: string = 'basic';
   showEmptyBalls = true;
-  emptyNumbers = Array(6).fill(null);
-  emptyComplementario = null;
+  emptyNumbers = Array(5).fill(null);
+  emptyReintegro = null;
   proximoSorteo: string = '';
   boteActual: string = '';
   private numberFrequency: Map<number, number> = new Map();
@@ -86,7 +86,7 @@ export class BonolotoPrediccionComponent implements OnInit, OnDestroy {
   }
 
   private loadPredictionStatus() {
-    this.userPredictionService.getPredictionStatus('bonoloto').subscribe({
+    this.userPredictionService.getPredictionStatus('loterianacional').subscribe({
       next: (response) => {
         if (response.success) {
           this.predictionResults = response.data.predictions.map(p => p.data);
@@ -126,7 +126,7 @@ export class BonolotoPrediccionComponent implements OnInit, OnDestroy {
   private cargarBoteActual(): void {
     this.http.get('assets/botes.json').subscribe({
       next: (data: any) => {
-        if (data && data.bonoloto) this.boteActual = data.bonoloto;
+        if (data && data.loterianacional) this.boteActual = data.loterianacional;
         else this.boteActual = 'Consultar oficial';
       },
       error: () => { this.boteActual = 'Consultar oficial'; }
@@ -154,7 +154,7 @@ export class BonolotoPrediccionComponent implements OnInit, OnDestroy {
   async generatePrediction() {
     if (this.isGeneratingPrediction) return;
     try {
-      const canGenerate = await this.userPredictionService.canGeneratePrediction('bonoloto').toPromise();
+      const canGenerate = await this.userPredictionService.canGeneratePrediction('loterianacional').toPromise();
       if (!canGenerate) {
         this.predictionError = `Ya has generado el máximo de ${this.maxPredictions} predicciones. Adquiere una nueva suscripción para seguir generando pronósticos afortunados.`;
         return;
@@ -162,12 +162,12 @@ export class BonolotoPrediccionComponent implements OnInit, OnDestroy {
       this.isGeneratingPrediction = true;
       this.predictionError = null;
       this.showEmptyBalls = false;
-      const response = await this.predictionService.generatePrediction('bonoloto').toPromise();
+      const response = await this.predictionService.generatePrediction('loterianacional').toPromise();
       if (response && response.success && response.prediction) {
-        await this.userPredictionService.createPrediction('bonoloto', response.prediction).toPromise();
+        await this.userPredictionService.createPrediction('loterianacional', response.prediction).toPromise();
         this.predictionResults.push({
           numeros: response.prediction.numeros || [],
-          complementario: response.prediction.complementario || null
+          reintegro: response.prediction.reintegro || null
         });
         this.updatePredictionDisplay();
       } else {
@@ -182,7 +182,7 @@ export class BonolotoPrediccionComponent implements OnInit, OnDestroy {
 
   private loadSavedPredictions(): void {
     try {
-      const savedJson = localStorage.getItem('bonoloto_predictions');
+      const savedJson = localStorage.getItem('loterianacional_predictions');
       if (savedJson) {
         const savedData = JSON.parse(savedJson);
         const savedTime = new Date(savedData.timestamp).getTime();
@@ -192,14 +192,14 @@ export class BonolotoPrediccionComponent implements OnInit, OnDestroy {
           if (Array.isArray(savedData.predictions)) {
             this.predictionResults = savedData.predictions.map((pred: any) => ({
               numeros: Array.isArray(pred.numeros) ? pred.numeros : [],
-              complementario: typeof pred.complementario === 'number' ? pred.complementario : null
+              reintegro: typeof pred.reintegro === 'number' ? pred.reintegro : null
             }));
             this.updateNumberFrequency();
           } else {
             this.predictionResults = [];
           }
         } else {
-          localStorage.removeItem('bonoloto_predictions');
+          localStorage.removeItem('loterianacional_predictions');
         }
       }
     } catch {
@@ -213,12 +213,12 @@ export class BonolotoPrediccionComponent implements OnInit, OnDestroy {
         timestamp: new Date().toISOString(),
         predictions: this.predictionResults
       };
-      localStorage.setItem('bonoloto_predictions', JSON.stringify(dataToSave));
+      localStorage.setItem('loterianacional_predictions', JSON.stringify(dataToSave));
     } catch {}
   }
 
   private loadPredictionsFromStorage() {
-    const saved = localStorage.getItem('bonolotoPredictions');
+    const saved = localStorage.getItem('loterianacionalPredictions');
     if (saved) {
       this.predictionResults = JSON.parse(saved);
     }
