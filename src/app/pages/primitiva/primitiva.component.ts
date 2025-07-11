@@ -7,7 +7,7 @@ import { Subscription } from 'rxjs';
 import { EuromillonesBallComponent } from '../../components/euromillones-ball/euromillones-ball.component';
 import { HttpClient } from '@angular/common/http';
 import { LotteryBaseComponent } from '../../shared/lottery-base.component';
-import { PredictionService, PredictionResponse } from '../../services/prediction.service';
+import { PredictionService } from '../../services/prediction.service';
 
 @Component({
   selector: 'app-primitiva',
@@ -24,11 +24,6 @@ export class PrimitivaComponent extends LotteryBaseComponent implements OnInit, 
   hasMonthlyPlan = false;
   hasProPlan = false;
   private subscriptions: Subscription[] = [];
-
-  // Variables para las predicciones
-  isGeneratingPrediction = false;
-  predictionResult: PredictionResponse['prediction'] | null = null;
-  predictionError: string | null = null;
 
   constructor(
     private router: Router,
@@ -74,47 +69,6 @@ export class PrimitivaComponent extends LotteryBaseComponent implements OnInit, 
       this.hasMonthlyPlan = false;
       this.hasProPlan = false;
       console.log('Usuario no autenticado, no tiene planes activos');
-    }
-  }
-
-  generateBasicPrediction(): void {
-    // Verificar si el usuario tiene un plan activo
-    if (!this.hasBasicPlan && !this.hasMonthlyPlan && !this.hasProPlan) {
-      console.log('El usuario no tiene un plan activo');
-      this.predictionError = 'Necesitas una suscripción activa para generar predicciones';
-      return;
-    }
-
-    // Indicar que se está generando la predicción
-    this.isGeneratingPrediction = true;
-    this.predictionResult = null;
-    this.predictionError = null;
-
-    console.log('Generando predicción básica para Primitiva...');
-
-    // Llamar al servicio de predicciones
-    if (this.predictionService) {
-      this.predictionService.generatePrediction('primitiva').subscribe({
-        next: (response: PredictionResponse) => {
-          console.log('Predicción generada:', response);
-          this.isGeneratingPrediction = false;
-
-          if (response.success) {
-            this.predictionResult = response.prediction;
-          } else {
-            this.predictionError = response.error || 'Error al generar la predicción';
-          }
-        },
-        error: (error: any) => {
-          console.error('Error al generar la predicción:', error);
-          this.isGeneratingPrediction = false;
-          this.predictionError = 'Error al comunicarse con el servidor de predicciones';
-        }
-      });
-    } else {
-      console.error('El servicio de predicciones no está disponible');
-      this.isGeneratingPrediction = false;
-      this.predictionError = 'El servicio de predicciones no está disponible';
     }
   }
 
