@@ -129,6 +129,11 @@ export const routes: Routes = [
     canActivate: [authGuard]
   },
   {
+    path: 'historial-predicciones',
+    loadComponent: () => import('./pages/historial-predicciones/historial-predicciones.component').then(m => m.HistorialPrediccionesComponent),
+    canActivate: [authGuard]
+  },
+  {
     path: 'verificar/:token',
     loadComponent: () => import('./auth/verify-email/verify-email.component')
       .then(m => m.VerifyEmailComponent)

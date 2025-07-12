@@ -671,6 +671,81 @@ export const PredictionController = {
       console.error('Error obteniendo resumen de predicciones:', error);
       res.status(500).json({ error: 'Error interno del servidor' });
     }
+  },
+
+  /**
+   * Obtener historial completo de predicciones del usuario
+   */
+  async getPredictionHistory(req: Request, res: Response) {
+    try {
+      const userId = (req as any).user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: 'Usuario no autenticado' });
+      }
+
+      // Obtener todas las predicciones del usuario
+      const allPredictions = await PredictionModel.getAllUserPredictions(userId);
+      
+      // Mapeo de nombres de juegos para mostrar en el frontend
+      const gameNames: { [key: string]: string } = {
+        'euromillon': 'Euromillones',
+        'primitiva': 'La Primitiva',
+        'bonoloto': 'Bonoloto',
+        'elgordo': 'El Gordo',
+        'eurodreams': 'EuroDreams',
+        'lototurf': 'Lototurf',
+        'loterianacional': 'Lotería Nacional'
+      };
+
+      // Agrupar predicciones por juego
+      const predictionsByGame: { [key: string]: any[] } = {};
+      
+      allPredictions.forEach(prediction => {
+        const gameType = prediction.game_type;
+        if (!predictionsByGame[gameType]) {
+          predictionsByGame[gameType] = [];
+        }
+        
+        predictionsByGame[gameType].push({
+          id: prediction.id,
+          gameType: gameType,
+          gameName: gameNames[gameType] || gameType,
+          predictionData: prediction.prediction_data,
+          createdAt: prediction.created_at,
+          predictionDate: prediction.prediction_date
+        });
+      });
+
+      // Ordenar cada grupo por fecha (más recientes primero)
+      Object.keys(predictionsByGame).forEach(gameType => {
+        predictionsByGame[gameType].sort((a, b) => 
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+      });
+
+      // Calcular estadísticas generales
+      const totalPredictions = allPredictions.length;
+      const gamesWithPredictions = Object.keys(predictionsByGame).length;
+      const oldestPrediction = allPredictions.length > 0 ? 
+        allPredictions.reduce((oldest, current) => 
+          new Date(current.created_at) < new Date(oldest.created_at) ? current : oldest
+        ) : null;
+
+      res.json({
+        success: true,
+        data: {
+          userId,
+          totalPredictions,
+          gamesWithPredictions,
+          oldestPrediction: oldestPrediction ? oldestPrediction.created_at : null,
+          predictionsByGame,
+          gameNames
+        }
+      });
+    } catch (error) {
+      console.error('Error obteniendo historial de predicciones:', error);
+      res.status(500).json({ error: 'Error interno del servidor' });
+    }
   }
 };
 

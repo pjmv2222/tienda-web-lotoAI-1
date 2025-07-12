@@ -1,0 +1,84 @@
+<div class="historial-container">
+  <div class="header">
+    <h1>Tu Historial de Predicciones</h1>
+    <p class="subtitle">Todas tus predicciones generadas organizadas por juego</p>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-state">
+    <div class="spinner"></div>
+    <p>Cargando tu historial...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error && !loading" class="error-state">
+    <div class="error-icon">⚠️</div>
+    <p>{{ error }}</p>
+    <button (click)="loadHistorial()" class="retry-btn">Intentar de nuevo</button>
+  </div>
+
+  <!-- Content -->
+  <div *ngIf="historialData && !loading && !error" class="content">
+    <!-- Statistics -->
+    <div class="stats-section">
+      <div class="stat-card">
+        <div class="stat-number">{{ historialData.totalPredictions }}</div>
+        <div class="stat-label">Total Predicciones</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">{{ historialData.gamesWithPredictions }}</div>
+        <div class="stat-label">Juegos Jugados</div>
+      </div>
+      <div class="stat-card" *ngIf="historialData.oldestPrediction">
+        <div class="stat-number">{{ formatDate(historialData.oldestPrediction).split(' ')[0] }}</div>
+        <div class="stat-label">Desde</div>
+      </div>
+    </div>
+
+    <!-- No predictions message -->
+    <div *ngIf="historialData.totalPredictions === 0" class="no-predictions">
+      <div class="no-predictions-icon">🎲</div>
+      <h3>Aún no tienes predicciones</h3>
+      <p>Comienza a generar predicciones para ver tu historial aquí</p>
+      <a routerLink="/euromillon/prediccion" class="cta-btn">Generar Primera Predicción</a>
+    </div>
+
+    <!-- Game tabs and predictions -->
+    <div *ngIf="historialData.totalPredictions > 0" class="predictions-section">
+      <!-- Game Selector -->
+      <div class="game-tabs">
+        <button 
+          *ngFor="let gameType of gamesList" 
+          (click)="selectGame(gameType)"
+          [class.active]="selectedGame === gameType"
+          class="game-tab">
+          {{ getGameDisplayName(gameType) }}
+          <span class="count">({{ historialData.predictionsByGame[gameType]?.length || 0 }})</span>
+        </button>
+      </div>
+
+      <!-- Predictions List -->
+      <div class="predictions-list" *ngIf="selectedGame">
+        <h3>{{ getGameDisplayName(selectedGame) }}</h3>
+        <div class="predictions-grid">
+          <div 
+            *ngFor="let prediction of getSelectedGamePredictions(); trackBy: trackByPredictionId" 
+            class="prediction-card">
+            <div class="prediction-header">
+              <span class="prediction-date">{{ formatDate(prediction.createdAt) }}</span>
+              <span class="prediction-id">#{{ prediction.id }}</span>
+            </div>
+            <div class="prediction-numbers">
+              {{ formatPredictionData(prediction.predictionData) }}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Back to Profile -->
+  <div class="actions">
+    <a routerLink="/profile" class="back-btn">← Volver al Perfil</a>
+  </div>
+</div> 

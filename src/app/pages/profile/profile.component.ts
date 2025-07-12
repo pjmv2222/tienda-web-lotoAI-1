@@ -172,6 +172,7 @@ interface GamePredictionUsage {
       <div class="profile-actions" *ngIf="!isEditing && !isChangingPassword">
         <button (click)="startEdit()" class="btn-primary">Editar Perfil</button>
         <button (click)="startPasswordChange()" class="btn-primary">Cambiar Contraseña</button>
+        <button routerLink="/historial-predicciones" class="btn-secondary">Ver tu historial de predicciones</button>
         <button (click)="confirmDeleteAccount()" class="btn-danger">Eliminar Cuenta</button>
       </div>
     </div>
@@ -266,6 +267,15 @@ interface GamePredictionUsage {
 
     .btn-primary:hover {
       background-color: #0056b3;
+    }
+
+    .btn-secondary {
+      background-color: #6c757d;
+      color: white;
+    }
+
+    .btn-secondary:hover {
+      background-color: #5a6268;
     }
 
     .btn-danger {

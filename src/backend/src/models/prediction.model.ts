@@ -56,6 +56,19 @@ export const PredictionModel = {
   },
 
   /**
+   * Obtener todas las predicciones del usuario (para historial completo)
+   */
+  async getAllUserPredictions(userId: number) {
+    const result = await pgPool.query(
+      `SELECT * FROM user_predictions 
+       WHERE user_id = $1
+       ORDER BY created_at DESC`,
+      [userId]
+    );
+    return result.rows;
+  },
+
+  /**
    * Contar predicciones del usuario para un juego específico calculado dinámicamente
    */
   async countUserPredictions(userId: number, gameType: string) {

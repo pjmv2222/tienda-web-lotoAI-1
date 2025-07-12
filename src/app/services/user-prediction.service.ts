@@ -37,6 +37,25 @@ export interface ProfilePredictionSummary {
   }[];
 }
 
+// Interfaces para el historial de predicciones
+export interface PredictionHistoryItem {
+  id: number;
+  gameType: string;
+  gameName: string;
+  predictionData: any;
+  createdAt: string;
+  predictionDate: string;
+}
+
+export interface PredictionHistoryResponse {
+  userId: number;
+  totalPredictions: number;
+  gamesWithPredictions: number;
+  oldestPrediction: string | null;
+  predictionsByGame: { [key: string]: PredictionHistoryItem[] };
+  gameNames: { [key: string]: string };
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -80,7 +99,17 @@ export class UserPredictionService {
       `${this.apiUrl}/summary`,
       { headers: this.getAuthHeaders() }
     );
-  }
+  },
+
+  /**
+   * Obtener historial completo de predicciones del usuario
+   */
+  getPredictionHistory(): Observable<{success: boolean, data: PredictionHistoryResponse}> {
+    return this.http.get<{success: boolean, data: PredictionHistoryResponse}>(
+      `${this.apiUrl}/history`,
+      { headers: this.getAuthHeaders() }
+    );
+  },
 
   /**
    * Crear nueva predicción
