@@ -99,7 +99,7 @@ export class UserPredictionService {
       `${this.apiUrl}/summary`,
       { headers: this.getAuthHeaders() }
     );
-  },
+  }
 
   /**
    * Obtener historial completo de predicciones del usuario
@@ -109,7 +109,7 @@ export class UserPredictionService {
       `${this.apiUrl}/history`,
       { headers: this.getAuthHeaders() }
     );
-  },
+  }
 
   /**
    * Crear nueva predicción
