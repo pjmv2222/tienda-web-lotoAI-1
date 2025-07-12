@@ -124,10 +124,13 @@ export class ElgordoPrediccionComponent implements OnInit, OnDestroy {
   }
 
   private cargarBoteActual(): void {
-    this.http.get('assets/botes.json').subscribe({
+    this.http.get('assets/data/botes.json').subscribe({
       next: (data: any) => {
-        if (data && data.elgordo) this.boteActual = data.elgordo;
-        else this.boteActual = 'Consultar oficial';
+        if (data && data.gordo) {
+          this.boteActual = data.gordo.bote + ' ' + data.gordo.moneda;
+        } else {
+          this.boteActual = 'Consultar oficial';
+        }
       },
       error: () => { this.boteActual = 'Consultar oficial'; }
     });

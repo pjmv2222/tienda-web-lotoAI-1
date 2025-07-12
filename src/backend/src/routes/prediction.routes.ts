@@ -33,6 +33,11 @@ router.post('/gordo', authenticateToken, (req, res) => {
   getPrediction(req, res);
 });
 
+router.post('/elgordo', authenticateToken, (req, res) => {
+  req.params.game = 'gordo';
+  getPrediction(req, res);
+});
+
 router.post('/eurodreams', authenticateToken, (req, res) => {
   req.params.game = 'eurodreams';
   getPrediction(req, res);

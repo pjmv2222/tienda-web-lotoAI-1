@@ -40,7 +40,7 @@ export abstract class LotteryBaseComponent implements OnInit {
    */
   cargarInformacionBote(): void {
     const timestamp = new Date().getTime();
-    this.http.get<any>(`/assets/botes.json?t=${timestamp}`, {
+    this.http.get<any>(`/assets/data/botes.json?t=${timestamp}`, {
       headers: {
         'Cache-Control': 'no-cache',
         'Pragma': 'no-cache',
@@ -48,8 +48,20 @@ export abstract class LotteryBaseComponent implements OnInit {
       }
     }).subscribe({
       next: (data) => {
-        if (data && data[this.gameId]) {
-          this.boteActual = data[this.gameId];
+        // Mapeo entre gameId del componente y claves del JSON
+        const nameMapping: { [key: string]: string } = {
+          'euromillones': 'euromillon',
+          'primitiva': 'primitiva',
+          'bonoloto': 'bonoloto',
+          'gordo': 'gordo',
+          'lototurf': 'lototurf',
+          'eurodreams': 'eurodreams',
+          'loterianacional': 'loterianacional'
+        };
+
+        const jsonKey = nameMapping[this.gameId] || this.gameId;
+        if (data && data[jsonKey]) {
+          this.boteActual = data[jsonKey].bote + ' ' + data[jsonKey].moneda;
           this.proximoSorteo = this.calcularProximoSorteo();
         }
       },
