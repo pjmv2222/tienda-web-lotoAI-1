@@ -41,7 +41,7 @@ export interface ProfilePredictionSummary {
   providedIn: 'root'
 })
 export class UserPredictionService {
-  private apiUrl = `${environment.apiUrl}/predictions`;
+  private apiUrl = `${environment.apiUrl}/predictions/user`;
 
   constructor(
     private http: HttpClient,
