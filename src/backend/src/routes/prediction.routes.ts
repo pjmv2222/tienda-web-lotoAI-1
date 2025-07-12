@@ -1,7 +1,6 @@
 import express from 'express';
 import { authenticateToken } from '../middlewares/auth.middleware';
 import { getPrediction, getServerStatus } from '../controllers/prediction.controller';
-import axios from 'axios';
 
 const router = express.Router();
 
@@ -13,80 +12,29 @@ router.get('/test', (req, res) => {
 // Ruta para obtener el estado de los servidores Python
 router.get('/servers/status', authenticateToken, getServerStatus);
 
-// Ruta POST para predicciones - redirige al servidor IA
+// Ruta POST para predicciones - usar el controlador completo que maneja el servidor IA
 router.post('/:juego', authenticateToken, async (req, res) => {
-  try {
-    const { juego } = req.params;
-    const userId = req.user.id;
-
-    console.log(`🔍 [PREDICTIONS] Generando predicción para usuario ${userId}, juego: ${juego}`);
-
-    // URL del servidor IA Flask
-    const iaServerUrl = process.env.IA_SERVER_URL || 'http://localhost:5000';
-    const predictionUrl = `${iaServerUrl}/${juego}/predict`;
-
-    console.log(`🔍 [PREDICTIONS] Haciendo petición a: ${predictionUrl}`);
-
-    // Obtener token de autenticación para el servidor IA
-    const iaToken = process.env.IA_SERVER_TOKEN || '8011471e-90c3-4af3-bc53-452557b92001';
-
-    // Hacer petición al servidor IA
-    const iaResponse = await axios.post(predictionUrl, {}, {
-      headers: {
-        'Authorization': `Bearer ${iaToken}`,
-        'Content-Type': 'application/json'
-      },
-      timeout: 30000 // 30 segundos de timeout
-    });
-
-    console.log(`✅ [PREDICTIONS] Respuesta del servidor IA:`, iaResponse.data);
-
-    if (!iaResponse.data.success) {
-      throw new Error(iaResponse.data.error || 'Error en el servidor IA');
-    }
-
-    // Devolver respuesta al frontend
-    res.json({
-      success: true,
-      data: {
-        juego: juego,
-        prediccion: iaResponse.data.prediccion,
-        timestamp: iaResponse.data.timestamp
-      }
-    });
-
-  } catch (error) {
-    console.error(`❌ [PREDICTIONS] Error generando predicción para ${req.params.juego}:`, error);
-    
-    // Manejar errores específicos
-    if (error.code === 'ECONNREFUSED') {
-      return res.status(503).json({
-        success: false,
-        error: 'El servidor de IA no está disponible en este momento'
-      });
+  // Mapear el parámetro :juego a :game que espera getPrediction
+  req.params.game = req.params.juego;
+  
+  // Interceptar la respuesta para adaptarla al formato del frontend
+  const originalSend = res.json;
+  res.json = function(data: any) {
+    // Si la respuesta es exitosa, adaptar el formato
+    if (data.success && data.prediction) {
+      const adaptedResponse = {
+        success: true,
+        prediction: data.prediction,
+        error: undefined
+      };
+      return originalSend.call(this, adaptedResponse);
     }
     
-    if (error.code === 'ENOTFOUND') {
-      return res.status(503).json({
-        success: false,
-        error: 'No se puede conectar con el servidor de IA'
-      });
-    }
-    
-    if (error.response) {
-      // Error del servidor IA
-      return res.status(error.response.status).json({
-        success: false,
-        error: error.response.data.error || 'Error en el servidor de IA'
-      });
-    }
-
-    res.status(500).json({
-      success: false,
-      error: 'Error interno del servidor',
-      message: error.message
-    });
-  }
+    // Si hay error, mantener el formato original
+    return originalSend.call(this, data);
+  };
+  
+  return getPrediction(req, res);
 });
 
 export default router;
