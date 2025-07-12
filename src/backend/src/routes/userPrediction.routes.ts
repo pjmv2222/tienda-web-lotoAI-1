@@ -13,6 +13,9 @@ router.get('/status/:gameType', PredictionController.getPredictionStatus);
 // GET /api/predictions/summary - Obtener resumen de todas las predicciones del usuario
 router.get('/summary', PredictionController.getAllPredictionCounts);
 
+// GET /api/predictions/history - Obtener historial completo de predicciones del usuario
+router.get('/history', PredictionController.getPredictionHistory);
+
 // POST /api/predictions - Crear nueva predicción
 router.post('/', PredictionController.createPrediction);
 
