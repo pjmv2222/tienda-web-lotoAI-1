@@ -39,33 +39,7 @@ export const PredictionModel = {
       [userId, gameType, JSON.stringify(predictionData), today]
     );
     
-    // Incrementar el contador de límites del plan
-    await this.incrementPlanLimit(userId, gameType);
-    
     return result.rows[0];
-  },
-
-  /**
-   * Incrementar el contador de límites del plan actual
-   */
-  async incrementPlanLimit(userId: number, gameType: string) {
-    // Obtener la suscripción activa actual
-    const subscriptionResult = await pgPool.query(
-      `SELECT id FROM subscriptions 
-       WHERE user_id = $1 AND status = 'active' AND end_date > NOW()
-       ORDER BY created_at DESC LIMIT 1`,
-      [userId]
-    );
-    
-    const subscriptionId = subscriptionResult.rows[0]?.id || 0; // 0 para plan básico sin suscripción
-    
-    await pgPool.query(
-      `INSERT INTO subscription_prediction_limits (user_id, game_type, subscription_id, predictions_generated)
-       VALUES ($1, $2, $3, 1)
-       ON CONFLICT (user_id, game_type, subscription_id) 
-       DO UPDATE SET predictions_generated = subscription_prediction_limits.predictions_generated + 1`,
-      [userId, gameType, subscriptionId]
-    );
   },
 
   /**
@@ -82,54 +56,38 @@ export const PredictionModel = {
   },
 
   /**
-   * Contar predicciones GENERADAS del usuario para un juego en el plan actual
+   * Contar predicciones del usuario para un juego específico calculado dinámicamente
    */
   async countUserPredictions(userId: number, gameType: string) {
-    // Obtener la suscripción activa actual
-    const subscriptionResult = await pgPool.query(
-      `SELECT id FROM subscriptions 
-       WHERE user_id = $1 AND status = 'active' AND end_date > NOW()
-       ORDER BY created_at DESC LIMIT 1`,
-      [userId]
-    );
-    
-    const subscriptionId = subscriptionResult.rows[0]?.id || 0; // 0 para plan básico sin suscripción
-    
+    // Calcular dinámicamente desde user_predictions
     const result = await pgPool.query(
-      `SELECT predictions_generated 
-       FROM subscription_prediction_limits 
-       WHERE user_id = $1 AND game_type = $2 AND subscription_id = $3`,
-      [userId, gameType, subscriptionId]
+      `SELECT COUNT(*) as count 
+       FROM user_predictions 
+       WHERE user_id = $1 AND game_type = $2`,
+      [userId, gameType]
     );
-    return result.rows[0]?.predictions_generated || 0;
+    return parseInt(result.rows[0]?.count || '0');
   },
 
   /**
-   * Obtener conteos de todas las predicciones GENERADAS del usuario para el plan actual
+   * Obtener conteos de todas las predicciones del usuario calculados dinámicamente
    */
   async getAllUserPredictionCounts(userId: number) {
-    // Obtener la suscripción activa actual
-    const subscriptionResult = await pgPool.query(
-      `SELECT id FROM subscriptions 
-       WHERE user_id = $1 AND status = 'active' AND end_date > NOW()
-       ORDER BY created_at DESC LIMIT 1`,
-      [userId]
-    );
-    
-    const subscriptionId = subscriptionResult.rows[0]?.id || 0; // 0 para plan básico sin suscripción
-    
+    // Calcular dinámicamente desde user_predictions
     const result = await pgPool.query(
-      `SELECT game_type, predictions_generated as count 
-       FROM subscription_prediction_limits 
-       WHERE user_id = $1 AND subscription_id = $2`,
-      [userId, subscriptionId]
+      `SELECT 
+        game_type, 
+        COUNT(*) as count 
+       FROM user_predictions 
+       WHERE user_id = $1
+       GROUP BY game_type`,
+      [userId]
     );
     return result.rows;
   },
 
   /**
-   * Eliminar todas las predicciones VISIBLES de un usuario para un juego
-   * (NO elimina el contador de límites del plan)
+   * Eliminar todas las predicciones de un usuario para un juego
    */
   async clearUserPredictions(userId: number, gameType: string) {
     const result = await pgPool.query(
@@ -173,22 +131,24 @@ export function getPredictionLimitsByPlan(planType: string): { [key: string]: nu
       'lototurf': 3
     },
     'monthly': {
-      'euromillon': 10,
-      'bonoloto': 10,
-      'primitiva': 10,
-      'elgordo': 10,
-      'eurodreams': 10,
-      'loterianacional': 10,
-      'lototurf': 10
+      // Plan mensual: ILIMITADAS predicciones durante 30 días
+      'euromillon': 999999,
+      'bonoloto': 999999,
+      'primitiva': 999999,
+      'elgordo': 999999,
+      'eurodreams': 999999,
+      'loterianacional': 999999,
+      'lototurf': 999999
     },
     'pro': {
-      'euromillon': 20,
-      'bonoloto': 20,
-      'primitiva': 20,
-      'elgordo': 20,
-      'eurodreams': 20,
-      'loterianacional': 20,
-      'lototurf': 20
+      // Plan pro: ILIMITADAS predicciones durante 365 días
+      'euromillon': 999999,
+      'bonoloto': 999999,
+      'primitiva': 999999,
+      'elgordo': 999999,
+      'eurodreams': 999999,
+      'loterianacional': 999999,
+      'lototurf': 999999
     }
   };
 
