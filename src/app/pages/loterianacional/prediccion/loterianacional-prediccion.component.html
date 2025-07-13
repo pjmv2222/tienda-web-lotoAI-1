@@ -128,6 +128,53 @@
           </button>
         </div>
       </div>
+
+      <!-- Botones de acción siempre visibles -->
+      <div class="action-buttons" *ngIf="!isLoadingSubscriptionStatus">
+        <button class="btn-primary" 
+                (click)="generatePrediction()" 
+                [disabled]="isGeneratingPrediction || predictionResults.length >= maxPredictions || predictionError">
+          <span *ngIf="!isGeneratingPrediction && predictionResults.length < maxPredictions && !predictionError">Generar nueva predicción</span>
+          <span *ngIf="isGeneratingPrediction">Generando...</span>
+          <span *ngIf="predictionResults.length >= maxPredictions">Límite de {{ maxPredictions }} predicciones alcanzado</span>
+          <span *ngIf="predictionError && !isGeneratingPrediction && predictionResults.length < maxPredictions">Generar predicción</span>
+        </button>
+        <button class="btn-secondary" routerLink="/loteria-nacional">Volver a Lotería Nacional</button>
+      </div>
+
+      <div class="prediction-info" *ngIf="!isLoadingSubscriptionStatus">
+        <h3>¿Cómo usar estas predicciones?</h3>
+        <p>
+          Estas combinaciones están optimizadas para el próximo sorteo de Lotería Nacional. Puedes jugarlas directamente
+          en la web oficial de Loterías y Apuestas del Estado o en puntos de venta autorizados.
+        </p>
+        <p>
+          <strong>Recuerda:</strong> Nuestras predicciones mejoran las probabilidades estadísticas basándose en
+          análisis de datos históricos, pero no garantizan premios.
+        </p>
+        <div class="tips-container">
+          <div class="tip-card">
+            <h4>Consejo #1</h4>
+            <p>Juega estas combinaciones completas sin modificarlas para aprovechar al máximo el análisis de la IA.</p>
+          </div>
+          <div class="tip-card">
+            <h4>Consejo #2</h4>
+            <p>Considera jugar sistemáticamente combinando algunos de los números más frecuentes de estas predicciones.</p>
+          </div>
+          <div class="tip-card">
+            <h4>Consejo #3</h4>
+            <p>Los números de la Lotería Nacional siguen patrones específicos. Presta atención a las recomendaciones.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="disclaimer">
+      <p>
+        <strong>Aviso importante:</strong> LOTO IA no está afiliado con los operadores oficiales de Lotería Nacional.
+        Nuestro servicio proporciona predicciones basadas en análisis estadístico e inteligencia artificial,
+        pero no garantiza resultados. Juega con responsabilidad.
+      </p>
     </div>
   </div>
 </div> 
