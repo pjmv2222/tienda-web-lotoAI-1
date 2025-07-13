@@ -40,7 +40,7 @@ export abstract class LotteryBaseComponent implements OnInit {
    */
   cargarInformacionBote(): void {
     const timestamp = new Date().getTime();
-    this.http.get<any>(`/assets/data/botes.json?t=${timestamp}`, {
+    this.http.get<any>(`/assets/botes.json?t=${timestamp}`, {
       headers: {
         'Cache-Control': 'no-cache',
         'Pragma': 'no-cache',
@@ -50,7 +50,7 @@ export abstract class LotteryBaseComponent implements OnInit {
       next: (data) => {
         // Mapeo entre gameId del componente y claves del JSON
         const nameMapping: { [key: string]: string } = {
-          'euromillones': 'euromillon',
+          'euromillones': 'euromillones',
           'primitiva': 'primitiva',
           'bonoloto': 'bonoloto',
           'gordo': 'gordo',
@@ -61,7 +61,8 @@ export abstract class LotteryBaseComponent implements OnInit {
 
         const jsonKey = nameMapping[this.gameId] || this.gameId;
         if (data && data[jsonKey]) {
-          this.boteActual = data[jsonKey].bote + ' ' + data[jsonKey].moneda;
+          // El archivo contiene strings directos, no objetos
+          this.boteActual = data[jsonKey];
           this.proximoSorteo = this.calcularProximoSorteo();
         }
       },
