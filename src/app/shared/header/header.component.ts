@@ -61,12 +61,12 @@ export class HeaderComponent implements OnInit {
         'Expires': '0'
       };
       
-      const response = await this.http.get<{ [key: string]: any }>(`assets/data/botes.json?t=${timestamp}`, { headers }).toPromise();
+      const response = await this.http.get<{ [key: string]: string }>(`assets/botes.json?t=${timestamp}`, { headers }).toPromise();
 
       if (response) {
         // Mapeo entre nombres de juegos del frontend y claves del JSON
         const nameMapping: { [key: string]: string } = {
-          'euromillones': 'euromillon',
+          'euromillones': 'euromillones',
           'primitiva': 'primitiva',
           'bonoloto': 'bonoloto',
           'gordo': 'gordo',
@@ -77,15 +77,9 @@ export class HeaderComponent implements OnInit {
 
         Object.keys(nameMapping).forEach(frontendName => {
           const jsonKey = nameMapping[frontendName];
-          if (response[jsonKey] && response[jsonKey].bote && response[jsonKey].bote !== '0') {
-            // Usar la estructura correcta del JSON
-            let boteValue = response[jsonKey].bote;
-
-            // Eliminar texto adicional y dejar solo el número
-            boteValue = boteValue.replace('MILLONES', '').replace('€', '').replace('€', '').trim();
-
-            // Asignar el valor limpio usando el nombre del frontend
-            this.botes[frontendName] = boteValue;
+          if (response[jsonKey] && response[jsonKey] !== '0') {
+            // El archivo contiene strings directos, no objetos
+            this.botes[frontendName] = response[jsonKey];
           }
         });
       }
