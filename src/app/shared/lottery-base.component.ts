@@ -48,6 +48,8 @@ export abstract class LotteryBaseComponent implements OnInit {
       }
     }).subscribe({
       next: (data) => {
+        console.log(`[${this.gameId}] Datos recibidos del archivo botes.json:`, data);
+        
         // Mapeo entre gameId del componente y claves del JSON
         const nameMapping: { [key: string]: string } = {
           'euromillones': 'euromillones',
@@ -60,14 +62,21 @@ export abstract class LotteryBaseComponent implements OnInit {
         };
 
         const jsonKey = nameMapping[this.gameId] || this.gameId;
+        console.log(`[${this.gameId}] Buscando clave '${jsonKey}' en los datos`);
+        
         if (data && data[jsonKey]) {
           // El archivo contiene strings directos, no objetos
           this.boteActual = data[jsonKey];
+          console.log(`[${this.gameId}] Bote actualizado a: ${this.boteActual}`);
           this.proximoSorteo = this.calcularProximoSorteo();
+        } else {
+          console.warn(`[${this.gameId}] No se encontró la clave '${jsonKey}' en los datos o los datos son nulos`);
+          this.boteActual = 'Consultar oficial';
         }
       },
       error: (error) => {
         console.error(`Error al cargar información del bote para ${this.gameId}:`, error);
+        this.boteActual = 'Consultar oficial';
       }
     });
   }
