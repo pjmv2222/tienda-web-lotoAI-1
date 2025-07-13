@@ -71,7 +71,14 @@ export abstract class LotteryBaseComponent implements OnInit {
           this.proximoSorteo = this.calcularProximoSorteo();
         } else {
           console.warn(`[${this.gameId}] No se encontró la clave '${jsonKey}' en los datos o los datos son nulos`);
-          this.boteActual = 'Consultar oficial';
+          // Para juegos como Lototurf que pueden no tener bote acumulado, mostrar vacío
+          // Para otros juegos, mostrar mensaje informativo
+          if (this.gameId === 'lototurf') {
+            this.boteActual = ''; // Mostrar vacío para Lototurf cuando no hay bote
+          } else {
+            this.boteActual = 'Consultar oficial';
+          }
+          this.proximoSorteo = this.calcularProximoSorteo();
         }
       },
       error: (error) => {

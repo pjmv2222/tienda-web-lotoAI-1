@@ -16,7 +16,10 @@
         <h1 class="lottery-title">Lototurf</h1>
         <div class="jackpot-info">
           <span class="jackpot-label">Bote actual:</span>
-          <span class="jackpot-amount">{{ boteActual }}</span>
+          <span class="jackpot-amount" *ngIf="boteActual; else noBote">{{ boteActual }}</span>
+          <ng-template #noBote>
+            <span class="jackpot-amount no-jackpot">-</span>
+          </ng-template>
         </div>
         <div class="next-draw">
           <span class="next-draw-label">Próximo sorteo:</span>
