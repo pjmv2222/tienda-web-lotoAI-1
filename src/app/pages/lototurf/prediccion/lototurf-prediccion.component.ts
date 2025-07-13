@@ -51,37 +51,37 @@ export class LototurfPrediccionComponent implements OnInit, OnDestroy {
     this.loadPredictionStatus();
     this.loadLotteryInfo();
     this.isLoggedIn = !!this.authService.currentUserValue;
-    if (this.isLoggedIn) {
-      const basicSub = this.subscriptionService.hasActivePlan('basic').subscribe(hasBasic => {
-        this.hasBasicPlan = hasBasic;
-        this.checkAllVerificationsCompleted();
-      });
-      this.subscriptions.push(basicSub);
-      const monthlySub = this.subscriptionService.hasActivePlan('monthly').subscribe(hasMonthly => {
-        this.hasMonthlyPlan = hasMonthly;
-        if (hasMonthly) this.maxPredictions = 10;
-        this.checkAllVerificationsCompleted();
-      });
-      this.subscriptions.push(monthlySub);
-      const proSub = this.subscriptionService.hasActivePlan('pro').subscribe(hasPro => {
-        this.hasProPlan = hasPro;
-        if (hasPro) this.maxPredictions = 20;
-        this.checkAllVerificationsCompleted();
-      });
-      this.subscriptions.push(proSub);
-      this.loadSavedPredictions();
-    } else {
-      this.router.navigate(['/auth/login'], { queryParams: { returnUrl: this.router.url } });
-    }
+    
+    // El guard ya verificó que el usuario está logueado y tiene suscripción
+    // Solo necesitamos cargar los detalles de la suscripción
+    const basicSub = this.subscriptionService.hasActivePlan('basic').subscribe(hasBasic => {
+      this.hasBasicPlan = hasBasic;
+      this.checkAllVerificationsCompleted();
+    });
+    this.subscriptions.push(basicSub);
+    
+    const monthlySub = this.subscriptionService.hasActivePlan('monthly').subscribe(hasMonthly => {
+      this.hasMonthlyPlan = hasMonthly;
+      if (hasMonthly) this.maxPredictions = 10;
+      this.checkAllVerificationsCompleted();
+    });
+    this.subscriptions.push(monthlySub);
+    
+    const proSub = this.subscriptionService.hasActivePlan('pro').subscribe(hasPro => {
+      this.hasProPlan = hasPro;
+      if (hasPro) this.maxPredictions = 20;
+      this.checkAllVerificationsCompleted();
+    });
+    this.subscriptions.push(proSub);
+    
+    this.loadSavedPredictions();
   }
 
   private checkAllVerificationsCompleted(): void {
     this.verificationsCompleted++;
     if (this.verificationsCompleted >= 3) {
       this.isLoadingSubscriptionStatus = false;
-      if (!this.hasBasicPlan && !this.hasMonthlyPlan && !this.hasProPlan) {
-        this.predictionError = 'Necesitas una suscripción activa para generar predicciones. <a routerLink="/planes">Ver planes disponibles</a>';
-      }
+      // El guard ya verificó que tiene suscripción, no necesitamos mostrar error
     }
   }
 
@@ -126,10 +126,17 @@ export class LototurfPrediccionComponent implements OnInit, OnDestroy {
   private cargarBoteActual(): void {
     this.http.get('assets/botes.json').subscribe({
       next: (data: any) => {
-        if (data && data.lototurf) this.boteActual = data.lototurf;
-        else this.boteActual = 'Consultar oficial';
+        if (data && data.lototurf) {
+          this.boteActual = data.lototurf;
+        } else {
+          // Lototurf puede no tener bote acumulado, mostrar vacío
+          this.boteActual = '';
+        }
       },
-      error: () => { this.boteActual = 'Consultar oficial'; }
+      error: () => { 
+        // En caso de error, también mostrar vacío para Lototurf
+        this.boteActual = ''; 
+      }
     });
   }
 

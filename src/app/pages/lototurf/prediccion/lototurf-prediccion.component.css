@@ -21,4 +21,91 @@ button {
   background: #f6f6f6;
   padding: 1rem;
   border-radius: 6px;
+}
+.jackpot-amount.no-jackpot {
+  color: #95a5a6;
+  font-style: italic;
+}
+.action-buttons {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+  margin: 30px 0;
+  flex-wrap: wrap;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #0a7abf 0%, #0056b3 100%);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 200px;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #0056b3 0%, #003d82 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(10, 122, 191, 0.3);
+}
+
+.btn-primary:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.btn-secondary {
+  background: transparent;
+  color: #0a7abf;
+  border: 2px solid #0a7abf;
+  padding: 10px 22px;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 150px;
+}
+
+.btn-secondary:hover {
+  background: #0a7abf;
+  color: white;
+  transform: translateY(-2px);
+}
+
+.prediction-info {
+  background: #f8f9fa;
+  padding: 20px;
+  border-radius: 8px;
+  margin-top: 20px;
+}
+
+.prediction-info h3 {
+  color: #0a7abf;
+  margin-bottom: 15px;
+  font-size: 18px;
+}
+
+.prediction-info p {
+  color: #666;
+  line-height: 1.6;
+  margin-bottom: 10px;
+}
+
+@media (max-width: 768px) {
+  .action-buttons {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .btn-primary,
+  .btn-secondary {
+    min-width: 250px;
+  }
 } 
