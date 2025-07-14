@@ -358,13 +358,15 @@ export class EuromillonesBallComponent implements OnInit, AfterViewInit, OnDestr
       // Guardar en cache
       this.contextManager.cacheStaticImage(this.cacheKey, this.staticImageUrl);
 
-      // Guardar en localStorage también para persistencia
-      const colorSuffix = this.customColor ? `_${this.customColor.replace('#', '')}` : '';
-      const localStorageKey = `euromillones_ball_${EuromillonesBallComponent.CACHE_VERSION}_${this.type}_${this.number}_${this.size}${colorSuffix}`;
-      try {
-        localStorage.setItem(localStorageKey, this.staticImageUrl);
-      } catch (e) {
-        console.warn('No se pudo guardar en localStorage:', e);
+      // Guardar en localStorage también para persistencia (solo en browser)
+      if (isPlatformBrowser(this.platformId)) {
+        const colorSuffix = this.customColor ? `_${this.customColor.replace('#', '')}` : '';
+        const localStorageKey = `euromillones_ball_${EuromillonesBallComponent.CACHE_VERSION}_${this.type}_${this.number}_${this.size}${colorSuffix}`;
+        try {
+          localStorage.setItem(localStorageKey, this.staticImageUrl);
+        } catch (e) {
+          console.warn('No se pudo guardar en localStorage:', e);
+        }
       }
 
       // Forzar detección de cambios
@@ -649,12 +651,14 @@ export class EuromillonesBallComponent implements OnInit, AfterViewInit, OnDestr
         const dataUrl = renderer.domElement.toDataURL('image/png');
         this.staticImageUrl = dataUrl;
 
-        // Guardar en localStorage
-        try {
-          localStorage.setItem(cacheKey, dataUrl);
-          console.log(`[EuromillonesBall] Imagen WebGL guardada en localStorage para ${this.cacheKey}`);
-        } catch (e) {
-          console.warn(`[EuromillonesBall] No se pudo guardar en localStorage:`, e);
+        // Guardar en localStorage (solo en browser)
+        if (isPlatformBrowser(this.platformId)) {
+          try {
+            localStorage.setItem(cacheKey, dataUrl);
+            console.log(`[EuromillonesBall] Imagen WebGL guardada en localStorage para ${this.cacheKey}`);
+          } catch (e) {
+            console.warn(`[EuromillonesBall] No se pudo guardar en localStorage:`, e);
+          }
         }
 
         // Guardar también en el cache del manager
@@ -875,13 +879,15 @@ export class EuromillonesBallComponent implements OnInit, AfterViewInit, OnDestr
         this.staticImageUrl = canvas.toDataURL('image/png');
         this.contextManager.cacheStaticImage(this.cacheKey, this.staticImageUrl);
 
-        // Guardar en localStorage también
-        const colorSuffix = this.customColor ? `_${this.customColor.replace('#', '')}` : '';
-        const localStorageKey = `euromillones_ball_${EuromillonesBallComponent.CACHE_VERSION}_${this.type}_${this.number}_${this.size}${colorSuffix}`;
-        try {
-          localStorage.setItem(localStorageKey, this.staticImageUrl);
-        } catch (e) {
-          console.warn('No se pudo guardar imagen de respaldo en localStorage:', e);
+        // Guardar en localStorage también (solo en browser)
+        if (isPlatformBrowser(this.platformId)) {
+          const colorSuffix = this.customColor ? `_${this.customColor.replace('#', '')}` : '';
+          const localStorageKey = `euromillones_ball_${EuromillonesBallComponent.CACHE_VERSION}_${this.type}_${this.number}_${this.size}${colorSuffix}`;
+          try {
+            localStorage.setItem(localStorageKey, this.staticImageUrl);
+          } catch (e) {
+            console.warn('No se pudo guardar imagen de respaldo en localStorage:', e);
+          }
         }
 
         this.cdr.detectChanges();

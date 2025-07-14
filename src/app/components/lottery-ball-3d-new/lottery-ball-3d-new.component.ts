@@ -1,5 +1,5 @@
-import { Component, ElementRef, ViewChild, AfterViewInit, OnDestroy, Input, OnChanges, SimpleChanges } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, ElementRef, ViewChild, AfterViewInit, OnDestroy, Input, OnChanges, SimpleChanges, Inject, PLATFORM_ID } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import * as THREE from 'three';
 
 @Component({
@@ -27,6 +27,8 @@ export class LotteryBall3dNewComponent implements AfterViewInit, OnDestroy, OnCh
   private animationFrameId: number = 0;
   private isDestroyed: boolean = false;
   staticImageUrl: string = ''; // URL de la imagen estática
+
+  constructor(@Inject(PLATFORM_ID) private platformId: Object) {}
 
   // Colores para diferentes juegos - Ajustados para coincidir con las bolas reales
   private gameColors: Record<string, string> = {
@@ -119,11 +121,11 @@ export class LotteryBall3dNewComponent implements AfterViewInit, OnDestroy, OnCh
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if ((changes.number || changes.game || changes.type) && this.sphere) {
+    if ((changes["number"] || changes["game"] || changes["type"]) && this.sphere) {
       this.updateBall();
     }
 
-    if (changes.animate && this.sphere) {
+    if (changes["animate"] && this.sphere) {
       if (this.animate) {
         this.startAnimation();
       } else {
@@ -491,9 +493,9 @@ export class LotteryBall3dNewComponent implements AfterViewInit, OnDestroy, OnCh
   private generateStaticImage(): void {
     console.log(`[DIAGNÓSTICO] Bola ${this.number} (${this.game}): Generando imagen estática`);
 
-    // Verificar si ya tenemos una imagen estática en caché
+    // Verificar si ya tenemos una imagen estática en caché (solo en browser)
     const cacheKey = `ball_${this.game}_${this.type}_${this.number}_${this.size}`;
-    const cachedImage = localStorage.getItem(cacheKey);
+    const cachedImage = isPlatformBrowser(this.platformId) ? localStorage.getItem(cacheKey) : null;
 
     if (cachedImage) {
       console.log(`[DIAGNÓSTICO] Bola ${this.number} (${this.game}): Usando imagen estática de caché`);
@@ -645,12 +647,14 @@ export class LotteryBall3dNewComponent implements AfterViewInit, OnDestroy, OnCh
       const dataUrl = renderer.domElement.toDataURL('image/png');
       this.staticImageUrl = dataUrl;
 
-      // Guardar en caché para uso futuro
-      try {
-        localStorage.setItem(cacheKey, dataUrl);
-        console.log(`[DIAGNÓSTICO] Bola ${this.number} (${this.game}): Imagen estática guardada en caché`);
-      } catch (e) {
-        console.warn(`[DIAGNÓSTICO] Bola ${this.number} (${this.game}): No se pudo guardar en caché:`, e);
+      // Guardar en caché para uso futuro (solo en browser)
+      if (isPlatformBrowser(this.platformId)) {
+        try {
+          localStorage.setItem(cacheKey, dataUrl);
+          console.log(`[DIAGNÓSTICO] Bola ${this.number} (${this.game}): Imagen estática guardada en caché`);
+        } catch (e) {
+          console.warn(`[DIAGNÓSTICO] Bola ${this.number} (${this.game}): No se pudo guardar en caché:`, e);
+        }
       }
     } catch (e) {
       console.error(`[DIAGNÓSTICO] Bola ${this.number} (${this.game}): Error al convertir canvas a imagen:`, e);
