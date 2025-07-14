@@ -23,7 +23,7 @@ import { Router } from '@angular/router';
             <i class="fas fa-exclamation-triangle"></i>
           </div>
           
-          <h2>Tu sesión está a punto de expirar</h2>
+          <h2>Tu sesión está por expirar</h2>
           
           <div class="countdown">
             <div class="countdown-circle">
@@ -33,8 +33,8 @@ import { Router } from '@angular/router';
           </div>
           
           <p class="warning-message">
-            Por tu seguridad, tu sesión se cerrará automáticamente por inactividad.
-            ¿Deseas continuar con tu sesión actual?
+            Por tu seguridad, cerramos automáticamente las sesiones inactivas.<br>
+            <strong>¿Quieres seguir navegando?</strong> Haz clic en "Continuar" para mantener tu sesión activa.
           </p>
           
           <div class="modal-actions">
@@ -49,10 +49,7 @@ import { Router } from '@angular/router';
               (click)="onContinueSession()"
               [disabled]="isExtending"
             >
-              <span *ngIf="!isExtending">Continuar Sesión</span>
-              <span *ngIf="isExtending">
-                <i class="fas fa-spinner fa-spin"></i> Extendiendo...
-              </span>
+              {{ isExtending ? 'Renovando...' : 'Continuar Sesión' }}
             </button>
           </div>
         </div>
@@ -63,11 +60,11 @@ import { Router } from '@angular/router';
             <i class="fas fa-clock"></i>
           </div>
           
-          <h2>Tu sesión ha expirado</h2>
+          <h2>Sesión expirada</h2>
           
           <p class="expired-message">
-            Por tu seguridad, tu sesión se ha cerrado automáticamente por inactividad.
-            Necesitas iniciar sesión nuevamente para continuar.
+            Tu sesión ha finalizado por seguridad.<br>
+            <strong>No te preocupes</strong> - solo necesitas iniciar sesión nuevamente para continuar.
           </p>
           
           <div class="modal-actions">
@@ -75,7 +72,7 @@ import { Router } from '@angular/router';
               class="btn btn-primary" 
               (click)="onLoginRedirect()"
             >
-              Iniciar Sesión
+              Ir a Iniciar Sesión
             </button>
           </div>
         </div>
