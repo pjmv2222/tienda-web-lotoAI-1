@@ -153,6 +153,8 @@ export class CookieService {
    * Acepta todas las cookies
    */
   acceptAll(): void {
+    console.log('✅ [CookieService] Usuario acepta todas las cookies');
+    
     this.saveConsent({
       necessary: true,
       functional: true,
@@ -160,12 +162,16 @@ export class CookieService {
       marketing: true,
       preferences: true
     });
+    
+    console.log('✅ [CookieService] Todas las cookies guardadas correctamente');
   }
 
   /**
-   * Rechaza todas las cookies excepto las necesarias
+   * Rechaza todas las cookies no esenciales
    */
   rejectAll(): void {
+    console.log('❌ [CookieService] Usuario rechaza cookies no esenciales');
+    
     this.saveConsent({
       necessary: true,
       functional: false,
@@ -173,6 +179,8 @@ export class CookieService {
       marketing: false,
       preferences: false
     });
+    
+    console.log('✅ [CookieService] Solo cookies necesarias guardadas');
   }
 
   /**
@@ -180,7 +188,80 @@ export class CookieService {
    */
   shouldShowCookieBanner(): boolean {
     if (!isPlatformBrowser(this.platformId)) return false;
-    return this.getCookie(this.consentShownKey) !== 'true';
+    
+    const hasShown = this.getCookie(this.consentShownKey);
+    const hasConsent = this.getCookie(this.consentKey);
+    
+    console.log('🍪 [CookieService] Verificando banner:', {
+      hasShown: hasShown,
+      hasConsent: hasConsent ? 'SÍ' : 'NO',
+      shouldShow: hasShown !== 'true'
+    });
+    
+    return hasShown !== 'true';
+  }
+
+  /**
+   * Obtiene el estado actual del consentimiento
+   */
+  getConsentStatus(): { hasConsent: boolean, consent: CookieConsent | null } {
+    if (!isPlatformBrowser(this.platformId)) {
+      return { hasConsent: false, consent: null };
+    }
+    
+    const consentCookie = this.getCookie(this.consentKey);
+    
+    if (consentCookie) {
+      try {
+        const consent = JSON.parse(consentCookie);
+        return { hasConsent: true, consent };
+      } catch (e) {
+        console.error('Error al parsear consentimiento:', e);
+        return { hasConsent: false, consent: null };
+      }
+    }
+    
+    return { hasConsent: false, consent: null };
+  }
+
+  /**
+   * Resetea todas las preferencias de cookies (útil para testing o cambio de opinión del usuario)
+   */
+  resetAllCookiePreferences(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    
+    console.log('🧹 [CookieService] Reseteando todas las preferencias de cookies');
+    
+    // Eliminar cookies de consentimiento
+    this.deleteCookie(this.consentKey, { path: '/' });
+    this.deleteCookie(this.consentShownKey, { path: '/' });
+    
+    // Resetear el estado interno
+    this.consentSubject.next(this.defaultConsent);
+    
+    console.log('✅ [CookieService] Preferencias reseteadas');
+  }
+
+  /**
+   * Muestra información detallada sobre el estado de las cookies (para debugging)
+   */
+  debugCookieStatus(): void {
+    if (!isPlatformBrowser(this.platformId)) {
+      console.log('🍪 [CookieService] No está en el browser');
+      return;
+    }
+    
+    const status = this.getConsentStatus();
+    const shouldShow = this.shouldShowCookieBanner();
+    
+    console.log('🍪 [CookieService] Estado completo de cookies:', {
+      hasConsent: status.hasConsent,
+      consent: status.consent,
+      shouldShowBanner: shouldShow,
+      consentCookie: this.getCookie(this.consentKey),
+      shownCookie: this.getCookie(this.consentShownKey),
+      allCookies: document.cookie
+    });
   }
 
   /**

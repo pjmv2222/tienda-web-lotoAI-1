@@ -15,6 +15,11 @@ export interface SessionWarningData {
   isSessionExpired: boolean; // Si la sesión ya expiró
 }
 
+// Interfaz mínima para evitar dependencia circular con AuthService
+interface IAuthService {
+  refreshCurrentToken(): Observable<any>;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -41,12 +46,12 @@ export class SessionService {
   private lastActivityTime: number = 0;
   private isWarningActive = false;
   private autoRenewTimer?: any;  // Timer para renovación automática
+  private authService?: IAuthService;  // Referencia al AuthService configurada después de la inicialización
 
   public sessionWarning$ = this.sessionWarningSubject.asObservable();
 
   constructor(
-    @Inject(PLATFORM_ID) private platformId: Object,
-    private authService?: any  // Inyección opcional para evitar dependencia circular
+    @Inject(PLATFORM_ID) private platformId: Object
   ) {
     if (isPlatformBrowser(this.platformId)) {
       this.initializeActivityTracking();
@@ -57,7 +62,7 @@ export class SessionService {
    * Configura la inyección del AuthService después de la inicialización
    * Esto evita la dependencia circular
    */
-  setAuthService(authService: any): void {
+  setAuthService(authService: IAuthService): void {
     this.authService = authService;
   }
 
