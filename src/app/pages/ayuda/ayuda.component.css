@@ -88,6 +88,17 @@ a:hover {
   text-decoration: underline;
 }
 
+.disabled {
+  color: #999;
+  cursor: not-allowed;
+  font-style: italic;
+}
+
+.disabled:hover {
+  text-decoration: none;
+  color: #999;
+}
+
 .sub-list {
   margin-top: 10px;
   padding-left: 20px;
