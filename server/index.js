@@ -100,48 +100,7 @@ app.get('/api/health', (req, res) => {
   res.status(200).json({ message: 'Servidor funcionando correctamente' });
 });
 
-// Endpoint para obtener perfil de usuario (con autenticación)
-app.get('/api/auth/profile', authenticateToken, async (req, res) => {
-  try {
-    const userId = req.user.id; // Obtener ID del token JWT verificado
-    
-    console.log(`Obteniendo perfil para usuario autenticado: ${userId}`);
-    
-    const client = await pgPool.connect();
-    try {
-      const getUserQuery = `
-        SELECT id, email, nombre, apellido, created_at
-        FROM users WHERE id = $1
-      `;
-      
-      const userResult = await client.query(getUserQuery, [userId]);
-      
-      if (userResult.rows.length === 0) {
-        return res.status(404).json({ error: 'Usuario no encontrado' });
-      }
-      
-      const user = userResult.rows[0];
-      
-      res.json({
-        success: true,
-        user: {
-          id: user.id.toString(),
-          email: user.email,
-          nombre: user.nombre,
-          apellido: user.apellido,
-          telefono: '', // Agregar si existe en la tabla
-          fechaRegistro: user.created_at
-        }
-      });
-      
-    } finally {
-      client.release();
-    }
-  } catch (error) {
-    console.error('Error obteniendo perfil:', error);
-    res.status(500).json({ error: 'Error interno del servidor' });
-  }
-});
+// Nota: El endpoint /api/auth/profile está manejado por authRoutes (línea 91)
 
 // Endpoint para obtener resumen de predicciones (con autenticación) - MOVIDO A ROUTER
 // Este endpoint está implementado en server/routes/predictions.js
