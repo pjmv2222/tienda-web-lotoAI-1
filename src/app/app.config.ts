@@ -1,4 +1,4 @@
-import { ApplicationConfig, provideZoneChangeDetection, APP_INITIALIZER, importProvidersFrom } from '@angular/core';
+import { ApplicationConfig, provideZoneChangeDetection, APP_INITIALIZER, importProvidersFrom, PLATFORM_ID, inject } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { routes } from './app.routes';
 import { provideClientHydration } from '@angular/platform-browser';
@@ -8,14 +8,24 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { CarouselModule } from 'ngx-bootstrap/carousel';
 import { AuthInterceptor } from './interceptors/auth.interceptor';
+import { isPlatformBrowser } from '@angular/common';
 
 /**
  * Inicializador que limpia cache y tokens corruptos antes de inicializar la app
  */
 function initializeApp(): () => Promise<void> {
-  return (): Promise<void> => {
+  return () => {
     return new Promise((resolve) => {
       try {
+        const platformId = inject(PLATFORM_ID);
+        
+        // Solo ejecutar en el navegador, no durante el SSR
+        if (!isPlatformBrowser(platformId)) {
+          console.log('🔧 [APP_INITIALIZER] Saltando en SSR - solo se ejecuta en browser');
+          resolve();
+          return;
+        }
+        
         // Versión de cache para forzar renovación cuando sea necesario
         const CACHE_VERSION = 'v2025.1.14-auth-fix';
         
@@ -35,7 +45,7 @@ function initializeApp(): () => Promise<void> {
           ];
           
           keysToRemove.forEach(key => {
-            const removed = localStorage.removeItem(key);
+            localStorage.removeItem(key);
             console.log(`🗑️ [APP_INITIALIZER] Removed ${key} from localStorage`);
           });
           
