@@ -87,7 +87,22 @@ export class AuthService {
         'Authorization': `Bearer ${token}`
       })
     }).pipe(
-      map(response => response.user)
+      map(response => response.user),
+      catchError(error => {
+        console.error('❌ [AuthService] Error obteniendo usuario desde token:', {
+          status: error.status,
+          message: error.message
+        });
+        
+        // Si el token es inválido, limpiar cookies
+        if (error.status === 401 || error.status === 403) {
+          console.log('🔄 [AuthService] Token de cookie inválido - limpiando');
+          this.cookieService.deleteCookie(this.tokenCookieKey);
+          this.cookieService.deleteCookie(this.refreshTokenCookieKey);
+        }
+        
+        throw error;
+      })
     );
   }
 
@@ -216,6 +231,33 @@ export class AuthService {
     this.currentUserSubject.next(null);
   }
 
+  /**
+   * Limpia una sesión corrupta de manera más agresiva
+   */
+  clearCorruptedSession() {
+    console.log('🔄 [AuthService] Limpiando sesión corrupta');
+    
+    // Terminar tracking de sesión
+    this.sessionService.endSession();
+    
+    if (isPlatformBrowser(this.platformId)) {
+      // Limpiar localStorage más agresivamente
+      const authKeys = ['currentUser', 'auth_token', 'refresh_token'];
+      authKeys.forEach(key => {
+        localStorage.removeItem(key);
+      });
+      
+      // Limpiar cookies con diferentes configuraciones
+      this.cookieService.deleteCookie(this.tokenCookieKey, { path: '/' });
+      this.cookieService.deleteCookie(this.refreshTokenCookieKey, { path: '/' });
+      this.cookieService.deleteCookie('auth_token', { path: '/' });
+      this.cookieService.deleteCookie('refresh_token', { path: '/' });
+    }
+    
+    this.currentUserSubject.next(null);
+    console.log('✅ [AuthService] Sesión corrupta limpiada');
+  }
+
   getCurrentUser(): Observable<any> {
     return this.http.get<any>(`${this.apiUrl}/auth/profile`, { headers: this.getAuthHeaders() })
       .pipe(
@@ -230,8 +272,16 @@ export class AuthService {
           }
         }),
         catchError(error => {
-          if (error.status === 401) {
-            this.logout();
+          console.error('❌ [AuthService] Error en getCurrentUser:', {
+            status: error.status,
+            url: error.url,
+            message: error.message
+          });
+          
+          // Para errores 401 o 403, limpiar sesión completamente
+          if (error.status === 401 || error.status === 403) {
+            console.log('🔄 [AuthService] Token inválido detectado - limpiando sesión');
+            this.clearCorruptedSession();
           }
           throw error;
         })
