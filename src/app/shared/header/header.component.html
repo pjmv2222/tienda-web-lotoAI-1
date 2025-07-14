@@ -109,13 +109,14 @@
                                     Cargando...
                                 </ng-template>
                             </div>
-                            <div class="formato" *ngIf="!loading && juego === 'euromillones' || juego === 'primitiva' || juego === 'gordo' || juego === 'bonoloto'">
+                            <!-- Solo mostrar unidades si no están ya incluidas en el valor del bote -->
+                            <div class="formato" *ngIf="!loading && (juego === 'euromillones' || juego === 'primitiva' || juego === 'gordo' || juego === 'bonoloto') && !botes[juego]?.includes('MILLONES')">
                                 MILLONES
                             </div>
-                            <div class="formato" *ngIf="!loading && juego === 'loterianacional'">
+                            <div class="formato" *ngIf="!loading && juego === 'loterianacional' && !botes[juego]?.includes('Primer Premio') && !botes[juego]?.includes('PREMIO')">
                                 1ER PREMIO A LA SERIE
                             </div>
-                            <div class="formato" *ngIf="!loading && juego === 'eurodreams'">
+                            <div class="formato" *ngIf="!loading && juego === 'eurodreams' && !botes[juego]?.includes('Al mes durante') && !botes[juego]?.includes('MES DURANTE')">
                                 AL MES DURANTE 30 AÑOS
                             </div>
                         </div>
