@@ -585,11 +585,21 @@ export class ProfileComponent implements OnInit {
     this.authService.getCurrentUser().subscribe({
       next: (response) => {
         if (response && response.user) {
-          this.userProfile = response.user;
+          // Extraer nombre y apellido desde response.user
+          const user = response.user;
+          this.userProfile = {
+            id: user.id.toString(),
+            nombre: user.nombre || this.extractFirstName(user.name) || '',
+            apellido: user.apellido || this.extractLastName(user.name) || '',
+            email: user.email,
+            telefono: user.telefono,
+            fechaRegistro: user.fechaRegistro || new Date()
+          };
+          
           this.editForm.patchValue({
-            nombre: response.user.nombre,
-            apellido: response.user.apellido,
-            telefono: response.user.telefono
+            nombre: this.userProfile.nombre,
+            apellido: this.userProfile.apellido,
+            telefono: this.userProfile.telefono
           });
         } else {
           // Intentar usar el usuario actual del servicio como fallback
@@ -597,16 +607,16 @@ export class ProfileComponent implements OnInit {
           if (currentUser) {
             this.userProfile = {
               id: currentUser.id.toString(),
-              nombre: currentUser.nombre,
-              apellido: currentUser.apellido,
+              nombre: currentUser.nombre || this.extractFirstName(currentUser.name) || '',
+              apellido: currentUser.apellido || this.extractLastName(currentUser.name) || '',
               email: currentUser.email,
               telefono: currentUser.telefono,
               fechaRegistro: new Date() // Valor por defecto
             };
             this.editForm.patchValue({
-              nombre: currentUser.nombre,
-              apellido: currentUser.apellido,
-              telefono: currentUser.telefono
+              nombre: this.userProfile.nombre,
+              apellido: this.userProfile.apellido,
+              telefono: this.userProfile.telefono
             });
           } else {
             console.error('Usuario actual no disponible');
@@ -622,20 +632,53 @@ export class ProfileComponent implements OnInit {
         if (currentUser) {
           this.userProfile = {
             id: currentUser.id.toString(),
-            nombre: currentUser.nombre,
-            apellido: currentUser.apellido,
+            nombre: currentUser.nombre || this.extractFirstName(currentUser.name) || '',
+            apellido: currentUser.apellido || this.extractLastName(currentUser.name) || '',
             email: currentUser.email,
             telefono: currentUser.telefono,
             fechaRegistro: new Date()
           };
           this.editForm.patchValue({
-            nombre: currentUser.nombre,
-            apellido: currentUser.apellido,
-            telefono: currentUser.telefono
+            nombre: this.userProfile.nombre,
+            apellido: this.userProfile.apellido,
+            telefono: this.userProfile.telefono
           });
         }
       }
     });
+  }
+
+  /**
+   * Extrae el nombre desde un campo 'name' completo
+   * Ejemplos: "Pedro Julian Martín Velasco" → "Pedro Julian"
+   */
+  private extractFirstName(fullName: string): string {
+    if (!fullName) return '';
+    
+    const nameParts = fullName.trim().split(' ').filter(part => part.length > 0);
+    
+    if (nameParts.length === 0) return '';
+    if (nameParts.length === 1) return nameParts[0];
+    if (nameParts.length === 2) return nameParts[0]; // Nombre + Apellido
+    
+    // Para 3+ palabras, asumir que las primeras 2 son el nombre
+    return `${nameParts[0]} ${nameParts[1]}`;
+  }
+
+  /**
+   * Extrae el/los apellido(s) desde un campo 'name' completo  
+   * Ejemplos: "Pedro Julian Martín Velasco" → "Martín Velasco"
+   */
+  private extractLastName(fullName: string): string {
+    if (!fullName) return '';
+    
+    const nameParts = fullName.trim().split(' ').filter(part => part.length > 0);
+    
+    if (nameParts.length <= 1) return '';
+    if (nameParts.length === 2) return nameParts[1]; // Nombre + Apellido
+    
+    // Para 3+ palabras, asumir que todo después de las primeras 2 palabras son apellidos
+    return nameParts.slice(2).join(' ');
   }
 
   private loadUserSubscriptions() {
