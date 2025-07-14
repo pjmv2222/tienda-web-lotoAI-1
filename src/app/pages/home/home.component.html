@@ -298,13 +298,7 @@
   <!-- Sección de Usuario (si está logueado) -->
   <div *ngIf="currentUser" class="user-section">
     <h2>
-      Estimado 
-      <ng-container *ngIf="currentUser.nombre && currentUser.apellido">
-        {{currentUser.nombre}} {{currentUser.apellido}}
-      </ng-container>
-      <ng-container *ngIf="!currentUser.nombre || !currentUser.apellido">
-        {{ currentUser.name || currentUser.email }}
-      </ng-container>
+      Estimado {{ getDisplayName() }}
     </h2>
 
     <!-- Mostrar suscripción activa -->

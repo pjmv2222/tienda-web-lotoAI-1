@@ -167,6 +167,42 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * Extrae solo el nombre del usuario (incluyendo nombres compuestos) sin apellidos
+   * Ejemplos:
+   * - "Pedro Julian Martín Velasco" → "Pedro Julian"
+   * - "Ana García López" → "Ana"
+   * - "María José" → "María José"
+   */
+  getDisplayName(): string {
+    if (!this.currentUser) return '';
+    
+    // Usar 'nombre' si está disponible, sino 'name' como fallback
+    const fullName = this.currentUser.nombre || this.currentUser.name || '';
+    if (!fullName) return '';
+    
+    // Dividir el nombre completo por espacios
+    const nameParts = fullName.trim().split(' ').filter(part => part.length > 0);
+    
+    if (nameParts.length === 0) return '';
+    if (nameParts.length === 1) return nameParts[0]; // Solo un nombre
+    
+    // Para nombres compuestos, determinar cuántas partes son nombre vs apellido
+    // Estrategia: Los primeros 1-2 elementos son generalmente nombres
+    // Si hay 2 partes, asumir que es nombre simple + apellido
+    // Si hay 3+ partes, asumir que las primeras 2 son nombres compuestos
+    if (nameParts.length === 2) {
+      // "Pedro García" → "Pedro" (nombre simple + apellido)
+      return nameParts[0];
+    } else if (nameParts.length >= 3) {
+      // "Pedro Julian Martín Velasco" → "Pedro Julian" (nombre compuesto + apellidos)
+      // "María José García López" → "María José" (nombre compuesto + apellidos)
+      return `${nameParts[0]} ${nameParts[1]}`;
+    }
+    
+    return nameParts[0]; // Fallback
+  }
+
+  /**
    * Carga el perfil completo del usuario desde el backend
    */
   private loadUserProfile(): void {
