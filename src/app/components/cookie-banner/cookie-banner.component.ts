@@ -25,13 +25,12 @@ export class CookieBannerComponent implements OnInit {
   constructor(private cookieService: CookieService) {}
 
   ngOnInit(): void {
-    // Forzar la visualización del banner para pruebas
-    this.showBanner = true;
-
-    // También verificar con el servicio (comentado para pruebas)
-    // this.showBanner = this.cookieService.shouldShowCookieBanner();
-
-    console.log('CookieBannerComponent inicializado, showBanner:', this.showBanner);
+    console.log('CookieBannerComponent inicializado');
+    
+    // Verificar si se debe mostrar el banner basado en el consentimiento previo
+    this.showBanner = this.cookieService.shouldShowCookieBanner();
+    
+    console.log('¿Debe mostrarse el banner de cookies?:', this.showBanner);
 
     // Obtener el consentimiento actual
     this.cookieService.consent$.subscribe(consent => {
@@ -41,27 +40,38 @@ export class CookieBannerComponent implements OnInit {
   }
 
   acceptAll(): void {
+    console.log('👤 [CookieBanner] Usuario hace clic en "Aceptar todas"');
     this.cookieService.acceptAll();
     this.showBanner = false;
+    this.showDetails = false;
+    console.log('👤 [CookieBanner] Banner ocultado después de aceptar todas');
   }
 
   rejectAll(): void {
+    console.log('👤 [CookieBanner] Usuario hace clic en "Solo necesarias"');
     this.cookieService.rejectAll();
     this.showBanner = false;
+    this.showDetails = false;
+    console.log('👤 [CookieBanner] Banner ocultado después de rechazar opcionales');
   }
 
   savePreferences(): void {
+    console.log('👤 [CookieBanner] Usuario guarda preferencias personalizadas:', this.consent);
     this.cookieService.saveConsent(this.consent);
     this.showBanner = false;
     this.showDetails = false;
+    console.log('👤 [CookieBanner] Banner ocultado después de guardar preferencias');
   }
 
   toggleDetails(): void {
     this.showDetails = !this.showDetails;
+    console.log('👤 [CookieBanner] Panel de detalles:', this.showDetails ? 'ABIERTO' : 'CERRADO');
   }
 
   closeBanner(): void {
     // Solo oculta el banner sin guardar preferencias
     this.showBanner = false;
+    this.showDetails = false;
+    console.log('👤 [CookieBanner] Banner cerrado sin guardar preferencias');
   }
 }
