@@ -99,6 +99,24 @@ a:hover {
   color: #999;
 }
 
+.help-link, .faq-link {
+  color: #0a7abf;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.help-link:hover, .faq-link:hover {
+  text-decoration: underline;
+  color: #085a8a;
+}
+
+.help-option p, .faq-item p {
+  color: #666;
+  font-size: 14px;
+  margin-top: 8px;
+  line-height: 1.4;
+}
+
 .sub-list {
   margin-top: 10px;
   padding-left: 20px;
