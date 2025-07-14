@@ -140,13 +140,34 @@ async function scrapeWithoutProxy() {
                 }
             });
 
-            if (!result['eurodreams']) result['eurodreams'] = '20.000€ AL MES DURANTE 30 AÑOS';
-            if (!result['loterianacional']) result['loterianacional'] = '300.000€ 1ER PREMIO A LA SERIE';
+            if (!result['eurodreams']) result['eurodreams'] = '20.000€ Al mes durante 30 años';
+            if (!result['loterianacional']) result['loterianacional'] = '300.000€ Primer Premio';
 
             return result;
         });
 
         console.log('Botes obtenidos:', botes);
+
+        // Función para limpiar los valores y eliminar duplicaciones
+        const cleanBoteValue = (value: string): string => {
+            if (!value) return value;
+            
+            // Eliminar duplicaciones de € (€€ -> €)
+            let cleaned = value.replace(/€€/g, '€');
+            
+            // Asegurarse de que no haya espacios extra
+            cleaned = cleaned.trim();
+            
+            return cleaned;
+        };
+
+        // Limpiar todos los valores de botes
+        const cleanedBotes: { [key: string]: string } = {};
+        Object.keys(botes).forEach(key => {
+            cleanedBotes[key] = cleanBoteValue(botes[key]);
+        });
+
+        console.log('Botes limpiados:', cleanedBotes);
 
         // Guardar los datos en src/assets
         const assetsDir = path.join(__dirname, '..', 'src', 'assets');
@@ -155,20 +176,20 @@ async function scrapeWithoutProxy() {
         }
 
         const outputPath = path.join(assetsDir, 'botes.json');
-        fs.writeFileSync(outputPath, JSON.stringify(botes, null, 2));
+        fs.writeFileSync(outputPath, JSON.stringify(cleanedBotes, null, 2));
         console.log('Datos guardados en:', outputPath);
 
         // Guardar también en dist/tienda-web-loto-ai/browser/assets
         const distAssetsDir = path.join(__dirname, '..', 'dist', 'tienda-web-loto-ai', 'browser', 'assets');
         if (fs.existsSync(distAssetsDir)) {
             const distOutputPath = path.join(distAssetsDir, 'botes.json');
-            fs.writeFileSync(distOutputPath, JSON.stringify(botes, null, 2));
+            fs.writeFileSync(distOutputPath, JSON.stringify(cleanedBotes, null, 2));
             console.log('Datos guardados también en:', distOutputPath);
         } else {
             console.warn('El directorio de distribución no existe:', distAssetsDir);
         }
 
-        return botes;
+        return cleanedBotes;
     } finally {
         if (browser) {
             await browser.close();
