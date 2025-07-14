@@ -20,9 +20,9 @@ export interface SessionWarningData {
 })
 export class SessionService {
   private config: SessionConfig = {
-    warningTime: 5,          // Advertir 5 minutos antes
-    sessionTimeout: 60,      // Sesión total de 60 minutos (igual que JWT)
-    inactivityTimeout: 30    // Advertir después de 30 minutos de inactividad
+    warningTime: 2,          // Advertir 2 minutos antes (más frecuente)
+    sessionTimeout: 30,      // Sesión de 30 minutos (más realista para JWT)
+    inactivityTimeout: 15    // Advertir después de 15 minutos de inactividad (más proactivo)
   };
 
   private sessionWarningSubject = new BehaviorSubject<SessionWarningData>({
@@ -40,13 +40,25 @@ export class SessionService {
   private sessionStartTime: number = 0;
   private lastActivityTime: number = 0;
   private isWarningActive = false;
+  private autoRenewTimer?: any;  // Timer para renovación automática
 
   public sessionWarning$ = this.sessionWarningSubject.asObservable();
 
-  constructor(@Inject(PLATFORM_ID) private platformId: Object) {
+  constructor(
+    @Inject(PLATFORM_ID) private platformId: Object,
+    private authService?: any  // Inyección opcional para evitar dependencia circular
+  ) {
     if (isPlatformBrowser(this.platformId)) {
       this.initializeActivityTracking();
     }
+  }
+
+  /**
+   * Configura la inyección del AuthService después de la inicialización
+   * Esto evita la dependencia circular
+   */
+  setAuthService(authService: any): void {
+    this.authService = authService;
   }
 
   /**
@@ -207,6 +219,16 @@ export class SessionService {
   }
 
   private setupTimers(): void {
+    console.log('🔧 [SessionService] Configurando timers de sesión');
+    
+    // Timer para renovación automática del token (5 minutos antes de expirar)
+    const autoRenewTime = (this.config.sessionTimeout - 5) * 60 * 1000;
+    if (autoRenewTime > 0) {
+      this.autoRenewTimer = setTimeout(() => {
+        this.attemptAutoTokenRenewal();
+      }, autoRenewTime);
+    }
+
     // Timer para advertencia de inactividad
     this.activityTimer = setTimeout(() => {
       if (this.getTimeSinceLastActivity() >= this.config.inactivityTimeout) {
@@ -230,6 +252,34 @@ export class SessionService {
     }, this.config.sessionTimeout * 60 * 1000);
   }
 
+  /**
+   * Intenta renovar automáticamente el token antes de que expire
+   */
+  private attemptAutoTokenRenewal(): void {
+    console.log('🔄 [SessionService] Intentando renovación automática de token');
+    
+    if (this.authService && typeof this.authService.refreshCurrentToken === 'function') {
+      this.authService.refreshCurrentToken().subscribe({
+        next: (response: any) => {
+          console.log('✅ [SessionService] Token renovado automáticamente');
+          // Extender la sesión con el nuevo token
+          this.extendSession();
+        },
+        error: (error: any) => {
+          console.warn('⚠️ [SessionService] Fallo renovación automática:', error);
+          // Si falla la renovación automática, mostrar advertencia al usuario
+          const timeLeft = this.config.warningTime * 60;
+          this.showSessionWarningModal(timeLeft);
+        }
+      });
+    } else {
+      console.warn('⚠️ [SessionService] AuthService no disponible para renovación automática');
+      // Fallback: mostrar advertencia al usuario
+      const timeLeft = this.config.warningTime * 60;
+      this.showSessionWarningModal(timeLeft);
+    }
+  }
+
   private startCountdown(seconds: number): void {
     let timeLeft = seconds;
     
@@ -250,6 +300,8 @@ export class SessionService {
   }
 
   private clearAllTimers(): void {
+    console.log('🧹 [SessionService] Limpiando todos los timers');
+    
     if (this.activityTimer) {
       clearTimeout(this.activityTimer);
       this.activityTimer = undefined;
@@ -268,6 +320,11 @@ export class SessionService {
     if (this.countdownTimer) {
       clearInterval(this.countdownTimer);
       this.countdownTimer = undefined;
+    }
+    
+    if (this.autoRenewTimer) {
+      clearTimeout(this.autoRenewTimer);
+      this.autoRenewTimer = undefined;
     }
   }
 

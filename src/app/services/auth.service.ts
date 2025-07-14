@@ -37,6 +37,9 @@ export class AuthService {
       isPlatformBrowser(this.platformId) ? this.getUserFromStorage() : null
     );
     this.currentUser = this.currentUserSubject.asObservable();
+    
+    // Configurar la referencia del AuthService en SessionService para evitar dependencia circular
+    this.sessionService.setAuthService(this);
   }
 
   private getUserFromStorage(): User | null {
