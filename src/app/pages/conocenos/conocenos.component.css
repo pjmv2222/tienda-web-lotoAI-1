@@ -1,0 +1,306 @@
+.page-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: 'Arial', sans-serif;
+}
+
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+  font-size: 14px;
+  color: #666;
+}
+
+.breadcrumb a {
+  color: #0a7abf;
+  text-decoration: none;
+}
+
+.breadcrumb a:hover {
+  text-decoration: underline;
+}
+
+.breadcrumb .separator {
+  margin: 0 10px;
+  color: #666;
+}
+
+.breadcrumb .current {
+  color: #333;
+  font-weight: 600;
+}
+
+.content-container {
+  background: #fff;
+  border-radius: 8px;
+  padding: 30px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.title {
+  color: #0a7abf;
+  font-size: 2.5rem;
+  margin-bottom: 30px;
+  text-align: center;
+  font-weight: 700;
+}
+
+.intro-section,
+.mission-section,
+.vision-section,
+.technology-section,
+.values-section,
+.commitment-section,
+.team-section,
+.contact-section,
+.disclaimer-section,
+.certifications-section {
+  margin-bottom: 40px;
+}
+
+h2 {
+  color: #0a7abf;
+  font-size: 1.8rem;
+  margin-bottom: 20px;
+  border-bottom: 2px solid #0a7abf;
+  padding-bottom: 10px;
+}
+
+h3 {
+  color: #333;
+  font-size: 1.3rem;
+  margin-bottom: 15px;
+  font-weight: 600;
+}
+
+p {
+  line-height: 1.6;
+  color: #555;
+  margin-bottom: 15px;
+  text-align: justify;
+}
+
+/* Tecnología Features */
+.tech-features {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 25px;
+  margin-top: 20px;
+}
+
+.feature {
+  background: #f8f9fa;
+  padding: 25px;
+  border-radius: 8px;
+  border-left: 4px solid #0a7abf;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.feature:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 5px 15px rgba(10, 122, 191, 0.2);
+}
+
+.feature h3 {
+  color: #0a7abf;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.feature h3 i {
+  font-size: 1.5rem;
+}
+
+/* Valores Grid */
+.values-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.value {
+  background: linear-gradient(135deg, #0a7abf 0%, #0056b3 100%);
+  color: white;
+  padding: 25px;
+  border-radius: 8px;
+  text-align: center;
+  transition: transform 0.3s ease;
+}
+
+.value:hover {
+  transform: translateY(-3px);
+}
+
+.value h3 {
+  color: white;
+  margin-bottom: 15px;
+  font-size: 1.4rem;
+}
+
+.value p {
+  color: rgba(255, 255, 255, 0.9);
+  margin: 0;
+}
+
+/* Compromisos */
+.commitments {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.commitment {
+  background: #f8f9fa;
+  padding: 20px;
+  border-radius: 8px;
+  border-left: 4px solid #28a745;
+}
+
+.commitment h3 {
+  color: #28a745;
+  margin-bottom: 10px;
+}
+
+/* Equipo */
+.team-expertise {
+  background: #f8f9fa;
+  padding: 20px;
+  border-radius: 8px;
+  margin-top: 15px;
+}
+
+.team-expertise li {
+  margin-bottom: 10px;
+  color: #555;
+}
+
+.team-expertise li strong {
+  color: #0a7abf;
+}
+
+/* Contacto */
+.contact-info {
+  background: #f8f9fa;
+  padding: 20px;
+  border-radius: 8px;
+  margin-top: 15px;
+}
+
+.contact-info p {
+  margin-bottom: 10px;
+}
+
+.contact-info a {
+  color: #0a7abf;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.contact-info a:hover {
+  text-decoration: underline;
+}
+
+/* Disclaimer */
+.disclaimer-section {
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.disclaimer {
+  color: #856404;
+  font-weight: 600;
+  margin: 0;
+  text-align: center;
+}
+
+/* Certificaciones */
+.cert-logos {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 30px;
+  flex-wrap: wrap;
+  margin-top: 20px;
+}
+
+.cert-item {
+  text-align: center;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  transition: transform 0.3s ease;
+}
+
+.cert-item:hover {
+  transform: scale(1.05);
+}
+
+.cert-item img {
+  height: 50px;
+  width: auto;
+  margin-bottom: 10px;
+}
+
+.cert-item p {
+  font-size: 0.9rem;
+  color: #666;
+  margin: 0;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .page-container {
+    padding: 15px;
+  }
+  
+  .content-container {
+    padding: 20px;
+  }
+  
+  .title {
+    font-size: 2rem;
+  }
+  
+  h2 {
+    font-size: 1.5rem;
+  }
+  
+  .tech-features {
+    grid-template-columns: 1fr;
+  }
+  
+  .values-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .cert-logos {
+    flex-direction: column;
+    gap: 20px;
+  }
+  
+  .breadcrumb {
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 480px) {
+  .title {
+    font-size: 1.8rem;
+  }
+  
+  h2 {
+    font-size: 1.3rem;
+  }
+  
+  .feature,
+  .value,
+  .commitment {
+    padding: 20px;
+  }
+}
