@@ -14,11 +14,12 @@ import { isPlatformBrowser } from '@angular/common';
  * Inicializador que limpia cache y tokens corruptos antes de inicializar la app
  */
 function initializeApp(): () => Promise<void> {
+  // Inyectar PLATFORM_ID en la factory function, no en la función retornada
+  const platformId = inject(PLATFORM_ID);
+  
   return () => {
     return new Promise((resolve) => {
       try {
-        const platformId = inject(PLATFORM_ID);
-        
         // Solo ejecutar en el navegador, no durante el SSR
         if (!isPlatformBrowser(platformId)) {
           console.log('🔧 [APP_INITIALIZER] Saltando en SSR - solo se ejecuta en browser');

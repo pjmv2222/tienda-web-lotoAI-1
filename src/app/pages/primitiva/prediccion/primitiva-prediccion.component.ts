@@ -1,5 +1,5 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, OnDestroy, Inject, PLATFORM_ID } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { RouterLink, Router, ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { Subscription } from 'rxjs';
@@ -52,7 +52,8 @@ export class PrimitivaPrediccionComponent implements OnInit, OnDestroy {
     private subscriptionService: SubscriptionService,
     private predictionService: PredictionService,
     private http: HttpClient,
-    private userPredictionService: UserPredictionService
+    private userPredictionService: UserPredictionService,
+    @Inject(PLATFORM_ID) private platformId: Object
   ) {}
 
   ngOnInit(): void {
@@ -320,6 +321,10 @@ export class PrimitivaPrediccionComponent implements OnInit, OnDestroy {
    * Carga predicciones guardadas previamente
    */
   private loadSavedPredictions(): void {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+    
     try {
       const savedJson = localStorage.getItem('primitiva_predictions');
       if (savedJson) {
@@ -348,7 +353,9 @@ export class PrimitivaPrediccionComponent implements OnInit, OnDestroy {
           }
         } else {
           console.log('Las predicciones guardadas son demasiado antiguas (', Math.round(hoursDiff), 'horas)');
-          localStorage.removeItem('primitiva_predictions');
+          if (isPlatformBrowser(this.platformId)) {
+            localStorage.removeItem('primitiva_predictions');
+          }
         }
       }
     } catch (error) {
@@ -361,6 +368,10 @@ export class PrimitivaPrediccionComponent implements OnInit, OnDestroy {
    * Guarda las predicciones en localStorage
    */
   private savePredictionsToStorage(): void {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+    
     try {
       const dataToSave = {
         timestamp: new Date().toISOString(),
@@ -376,6 +387,11 @@ export class PrimitivaPrediccionComponent implements OnInit, OnDestroy {
    * Fallback para localStorage (compatibilidad)
    */
   private loadPredictionsFromStorage() {
+    if (!isPlatformBrowser(this.platformId)) {
+      this.updatePredictionDisplay();
+      return;
+    }
+    
     const saved = localStorage.getItem('primitivaPredictions');
     if (saved) {
       this.predictionResults = JSON.parse(saved);
