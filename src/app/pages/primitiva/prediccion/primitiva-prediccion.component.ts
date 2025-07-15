@@ -340,10 +340,7 @@ export class PrimitivaPrediccionComponent implements OnInit, OnDestroy {
 
           // Verificar que las predicciones tengan el formato correcto
           if (Array.isArray(savedData.predictions)) {
-            this.predictionResults = savedData.predictions.map((pred: any) => ({
-              numeros: Array.isArray(pred.numeros) ? pred.numeros : [],
-              complementario: typeof pred.complementario === 'number' ? pred.complementario : null
-            }));
+            this.predictionResults = savedData.predictions.map((pred: any) => this.preserveAllPredictionFields(pred));
 
             // Actualizar la frecuencia de los números
             this.updateNumberFrequency();
@@ -381,6 +378,43 @@ export class PrimitivaPrediccionComponent implements OnInit, OnDestroy {
     } catch (error) {
       console.error('Error guardando predicciones en localStorage:', error);
     }
+  }
+
+  /**
+   * Preserva todos los campos de una predicción para evitar pérdida de datos
+   */
+  private preserveAllPredictionFields(prediction: any): any {
+    const preserved: any = {};
+    
+    // Campos principales
+    if (Array.isArray(prediction.numeros)) {
+      preserved.numeros = prediction.numeros;
+    }
+    if (Array.isArray(prediction.estrellas)) {
+      preserved.estrellas = prediction.estrellas;
+    }
+    if (Array.isArray(prediction.numero)) {
+      preserved.numero = prediction.numero;
+    }
+    
+    // Campos complementarios
+    if (typeof prediction.complementario === 'number') {
+      preserved.complementario = prediction.complementario;
+    }
+    if (typeof prediction.reintegro === 'number') {
+      preserved.reintegro = prediction.reintegro;
+    }
+    if (typeof prediction.clave === 'number') {
+      preserved.clave = prediction.clave;
+    }
+    if (typeof prediction.dream === 'number') {
+      preserved.dream = prediction.dream;
+    }
+    if (typeof prediction.caballo === 'number') {
+      preserved.caballo = prediction.caballo;
+    }
+    
+    return preserved;
   }
 
   /**
