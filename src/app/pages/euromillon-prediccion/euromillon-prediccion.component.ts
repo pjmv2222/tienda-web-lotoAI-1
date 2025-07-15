@@ -1,5 +1,5 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, OnDestroy, Inject, PLATFORM_ID } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { RouterLink, Router, ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { Subscription } from 'rxjs';
@@ -52,7 +52,8 @@ export class EuromillonPrediccionComponent implements OnInit, OnDestroy {
     private subscriptionService: SubscriptionService,
     private predictionService: PredictionService,
     private http: HttpClient,
-    private userPredictionService: UserPredictionService
+    private userPredictionService: UserPredictionService,
+    @Inject(PLATFORM_ID) private platformId: Object
   ) {}
 
   ngOnInit(): void {
@@ -301,6 +302,10 @@ export class EuromillonPrediccionComponent implements OnInit, OnDestroy {
    * Guarda las predicciones en localStorage
    */
   private savePredictions(): void {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+    
     try {
       localStorage.setItem('euromillon_predictions', JSON.stringify({
         timestamp: new Date().toISOString(),
@@ -315,6 +320,10 @@ export class EuromillonPrediccionComponent implements OnInit, OnDestroy {
    * Carga predicciones guardadas previamente
    */
   private loadSavedPredictions(): void {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+    
     try {
       const savedJson = localStorage.getItem('euromillon_predictions');
       if (savedJson) {
@@ -349,13 +358,17 @@ export class EuromillonPrediccionComponent implements OnInit, OnDestroy {
           }
         } else {
           console.log('Las predicciones guardadas son demasiado antiguas (', Math.round(hoursDiff), 'horas)');
-          localStorage.removeItem('euromillon_predictions');
+          if (isPlatformBrowser(this.platformId)) {
+            localStorage.removeItem('euromillon_predictions');
+          }
         }
       }
     } catch (e) {
       console.warn('Error al cargar predicciones guardadas:', e);
       try {
-        localStorage.removeItem('euromillon_predictions');
+        if (isPlatformBrowser(this.platformId)) {
+          localStorage.removeItem('euromillon_predictions');
+        }
       } catch (e) {
         // Ignorar errores al limpiar
       }
