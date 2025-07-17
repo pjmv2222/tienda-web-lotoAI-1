@@ -64,47 +64,47 @@ const getRandomProxy = (proxies: ProxyConfig[]): ProxyConfig | null => {
 async function scrapeWithoutProxy() {
     let browser;
     try {
-        console.log('🚀 Iniciando scraping SIN proxy...');
-        
-        browser = await puppeteer.launch({
+        const browserOptions: any = {
             headless: true,
             args: [
                 '--no-sandbox',
                 '--disable-setuid-sandbox',
                 '--disable-dev-shm-usage',
                 '--disable-accelerated-2d-canvas',
-                '--no-first-run',
-                '--no-zygote',
-                '--single-process',
-                '--disable-gpu'
+                '--disable-gpu',
+                '--window-size=1920,1080'
             ]
-        });
+        };
 
+        console.log('🚀 Iniciando navegador sin proxy...');
+        browser = await puppeteer.launch(browserOptions);
         const page = await browser.newPage();
-        
-        // Configurar user agent aleatorio
+
+        // Configurar viewport y user agent (EXACTAMENTE como el original)
+        await page.setViewport({ width: 1920, height: 1080 });
         const userAgent = randomUseragent.getRandom();
         await page.setUserAgent(userAgent || 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36');
-        
-        await page.setViewport({ width: 1920, height: 1080 });
-        
-        // PASO 1: Obtener botes usando la URL y selectores que funcionan
-        console.log('💰 Navegando para obtener botes...');
+
+        // Configurar headers (EXACTAMENTE como el original)
+        await page.setExtraHTTPHeaders({
+            'Accept-Language': 'es-ES,es;q=0.9',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+            'Referer': 'https://www.google.com/'
+        });
+
+        // Delay aleatorio antes de navegar (EXACTAMENTE como el original)
+        await delay(getRandomDelay(2000, 5000));
+
+        console.log('💰 Navegando a la página...');
         await page.goto('https://www.loteriasyapuestas.es/es', {
             waitUntil: 'networkidle0',
             timeout: 60000
         });
 
-        // Esperar a que los elementos estén cargados (con manejo de error)
-        try {
-            await page.waitForSelector('.c-parrilla-juegos__elemento_topaz', { timeout: 15000 });
-            console.log('✅ Elementos de juegos encontrados');
-        } catch (error: any) {
-            console.warn('⚠️ No se encontraron elementos específicos, continuando...', error.message);
-            // Continuar de todas formas
-        }
+        // Esperar a que los elementos estén cargados (EXACTAMENTE como el original)
+        await page.waitForSelector('.c-parrilla-juegos__elemento_topaz', { timeout: 10000 });
 
-        console.log('💰 Extrayendo información de botes...');
+        console.log('💰 Extrayendo datos de botes...');
         const botes = await page.evaluate(() => {
             const result: { [key: string]: string } = {};
 
@@ -163,6 +163,24 @@ async function scrapeWithoutProxy() {
             return result;
         });
 
+        console.log('💰 Botes obtenidos:', botes);
+
+        // Limpiar botes (como el original)
+        const cleanBoteValue = (value: string): string => {
+            if (!value) return value;
+            let cleaned = value.replace(/€€/g, '€');
+            cleaned = cleaned.trim();
+            return cleaned;
+        };
+
+        const cleanedBotes: { [key: string]: string } = {};
+        Object.keys(botes).forEach(key => {
+            cleanedBotes[key] = cleanBoteValue(botes[key]);
+        });
+
+        console.log('💰 Botes limpiados:', cleanedBotes);
+
+        // Pequeño delay antes de ir a resultados
         await delay(getRandomDelay(2000, 4000));
 
         // PASO 2: Navegar a página de resultados
@@ -216,11 +234,11 @@ async function scrapeWithoutProxy() {
         });
 
         console.log('✅ Datos extraídos exitosamente');
-        console.log('📊 Botes encontrados:', Object.keys(botes).length);
+        console.log('📊 Botes encontrados:', Object.keys(cleanedBotes).length);
         console.log('🎯 Resultados encontrados:', resultados.length);
 
         const lotteryData: LotteryData = {
-            botes,
+            botes: cleanedBotes,
             resultados,
             timestamp: new Date().toISOString()
         };
