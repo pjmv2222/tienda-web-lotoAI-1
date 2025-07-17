@@ -1,0 +1,172 @@
+<div class="resultados-container">
+  <!-- Header de la página -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">
+        <i class="fas fa-trophy"></i>
+        ÚLTIMOS RESULTADOS
+      </h1>
+      <p class="page-subtitle">Resultados oficiales de los sorteos más recientes</p>
+      
+      <!-- Botón de actualizar -->
+      <button 
+        class="refresh-btn" 
+        (click)="refreshResultados()"
+        [disabled]="isLoading">
+        <i class="fas fa-sync-alt" [class.spinning]="isLoading"></i>
+        Actualizar
+      </button>
+    </div>
+  </div>
+
+  <!-- Indicador de carga -->
+  <div *ngIf="isLoading" class="loading-container">
+    <div class="loading-spinner">
+      <i class="fas fa-spinner fa-spin"></i>
+    </div>
+    <p>Cargando últimos resultados...</p>
+  </div>
+
+  <!-- Mensaje de error -->
+  <div *ngIf="error" class="error-container">
+    <div class="error-message">
+      <i class="fas fa-exclamation-triangle"></i>
+      <p>{{ error }}</p>
+    </div>
+  </div>
+
+  <!-- Información de última actualización -->
+  <div *ngIf="lastUpdated && !isLoading" class="last-updated">
+    <i class="fas fa-clock"></i>
+    Última actualización: {{ formatDate(lastUpdated.toISOString().split('T')[0]) }}
+  </div>
+
+  <!-- Grid de resultados -->
+  <div *ngIf="!isLoading" class="resultados-grid">
+    <div 
+      *ngFor="let resultado of resultados; trackBy: trackByGame" 
+      class="resultado-card"
+      [style.border-left-color]="getGameColor(resultado.juego)">
+      
+      <!-- Header del juego -->
+      <div class="card-header" [style.background-color]="getGameColor(resultado.juego)">
+        <div class="game-info">
+          <i [class]="getGameIcon(resultado.juego)"></i>
+          <div class="game-details">
+            <h3 class="game-name">{{ resultado.nombreJuego }}</h3>
+            <p class="game-date">{{ formatDate(resultado.fecha) }}</p>
+            <p *ngIf="resultado.sorteo" class="game-sorteo">{{ resultado.sorteo }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Números principales -->
+      <div class="card-body">
+        <div class="numeros-section">
+          <h4 class="section-title">
+            <span *ngIf="resultado.juego === 'loterianacional'">Número Premiado</span>
+            <span *ngIf="resultado.juego !== 'loterianacional'">Combinación Ganadora</span>
+          </h4>
+          
+          <!-- Números regulares -->
+          <div class="numeros-container">
+            <div 
+              *ngFor="let numero of resultado.numeros" 
+              class="numero-ball"
+              [class.numero-nacional]="resultado.juego === 'loterianacional'">
+              {{ numero }}
+            </div>
+          </div>
+
+          <!-- Estrellas (EuroMillones) -->
+          <div *ngIf="resultado.estrellas" class="estrellas-section">
+            <h5 class="subsection-title">Estrellas</h5>
+            <div class="estrellas-container">
+              <div 
+                *ngFor="let estrella of resultado.estrellas" 
+                class="estrella-ball">
+                {{ estrella }}
+              </div>
+            </div>
+          </div>
+
+          <!-- Números especiales -->
+          <div class="especiales-section">
+            <!-- Complementario -->
+            <div *ngIf="resultado.complementario" class="numero-especial">
+              <span class="especial-label">Complementario:</span>
+              <div class="numero-ball especial">{{ resultado.complementario }}</div>
+            </div>
+
+            <!-- Reintegro -->
+            <div *ngIf="resultado.reintegro !== undefined" class="numero-especial">
+              <span class="especial-label">Reintegro:</span>
+              <div class="numero-ball especial">{{ resultado.reintegro }}</div>
+            </div>
+
+            <!-- Clave (El Gordo) -->
+            <div *ngIf="resultado.clave !== undefined" class="numero-especial">
+              <span class="especial-label">Clave:</span>
+              <div class="numero-ball especial">{{ resultado.clave }}</div>
+            </div>
+
+            <!-- Dream (EuroDreams) -->
+            <div *ngIf="resultado.dream !== undefined" class="numero-especial">
+              <span class="especial-label">Dream Number:</span>
+              <div class="numero-ball especial">{{ resultado.dream }}</div>
+            </div>
+
+            <!-- Caballo (Lototurf) -->
+            <div *ngIf="resultado.caballo !== undefined" class="numero-especial">
+              <span class="especial-label">Caballo:</span>
+              <div class="numero-ball especial">{{ resultado.caballo }}</div>
+            </div>
+
+            <!-- Joker (La Primitiva) -->
+            <div *ngIf="resultado.joker" class="numero-especial joker">
+              <span class="especial-label">Joker:</span>
+              <div class="joker-number">{{ resultado.joker }}</div>
+            </div>
+
+            <!-- El Millón (EuroMillones) -->
+            <div *ngIf="resultado.millon" class="numero-especial millon">
+              <span class="especial-label">El Millón:</span>
+              <div class="millon-number">{{ resultado.millon }}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Botón de predicción -->
+        <div class="prediction-section">
+          <a 
+            [routerLink]="'/predicciones/' + resultado.juego" 
+            class="prediction-btn"
+            [style.background-color]="getGameColor(resultado.juego)">
+            <i class="fas fa-chart-line"></i>
+            Ver Predicciones IA
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Información adicional -->
+  <div *ngIf="!isLoading" class="info-section">
+    <div class="info-card">
+      <h3><i class="fas fa-info-circle"></i> Información</h3>
+      <ul>
+        <li>Los resultados se actualizan automáticamente después de cada sorteo</li>
+        <li>Todos los datos provienen de fuentes oficiales</li>
+        <li>Utiliza nuestras predicciones con IA para optimizar tus jugadas</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Botón de regreso -->
+  <div class="back-section">
+    <a routerLink="/home" class="back-btn">
+      <i class="fas fa-arrow-left"></i>
+      Volver al Inicio
+    </a>
+  </div>
+</div> 
