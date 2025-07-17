@@ -192,42 +192,90 @@ async function scrapeWithoutProxy() {
 
         await delay(getRandomDelay(2000, 4000));
 
-        // Obtener resultados (por ahora estructura simple para probar)
-        console.log('🎯 Extrayendo últimos resultados...');
+        // Obtener solo los números ganadores específicos
+        console.log('🎯 Extrayendo números ganadores...');
         const resultados = await page.evaluate(() => {
             const results: any[] = [];
             
-            // Buscar cualquier elemento que contenga números
             try {
-                // Buscar elementos que contengan fechas y números
-                const dateElements = document.querySelectorAll('*:not(script):not(style)');
-                for (let element of Array.from(dateElements)) {
-                    const text = element.textContent || '';
-                    
-                    // Buscar patrones de fecha (ej: "16/07/2025" o "Martes 16 Jul")
-                    if (text.match(/\d{1,2}\/\d{1,2}\/\d{4}|\d{1,2}\s+(ene|feb|mar|abr|may|jun|jul|ago|sep|oct|nov|dic)/i)) {
-                        // Buscar números cercanos
-                        const parent = element.closest('div, section, article') || element.parentElement;
-                        if (parent) {
-                            const numbersText = parent.textContent || '';
-                            const numbers = numbersText.match(/\b\d{1,2}\b/g);
-                            
-                            if (numbers && numbers.length >= 5) {
-                                results.push({
-                                    game: 'general', // Por ahora general
-                                    date: text.trim(),
-                                    numbersFound: numbers.slice(0, 10),
-                                    context: numbersText.substring(0, 200)
-                                });
-                            }
-                        }
+                // Buscar selectores específicos para números ganadores
+                const gameSelectors = [
+                    { 
+                        game: 'euromillones', 
+                        numbersSelector: '.c-numero-bola, .numero-ganador',
+                        starsSelector: '.c-numero-estrella, .estrella-ganadora'
+                    },
+                    { 
+                        game: 'primitiva', 
+                        numbersSelector: '.c-numero-bola, .numero-primitiva',
+                        complementarySelector: '.complementario'
+                    },
+                    { 
+                        game: 'bonoloto', 
+                        numbersSelector: '.c-numero-bola, .numero-bonoloto',
+                        complementarySelector: '.complementario, .reintegro'
+                    }
+                ];
+
+                // Buscar resultados más específicos
+                gameSelectors.forEach(({ game, numbersSelector, starsSelector, complementarySelector }) => {
+                    const numberElements = document.querySelectorAll(numbersSelector);
+                    if (numberElements.length > 0) {
+                        const numbers = Array.from(numberElements)
+                            .map(el => parseInt(el.textContent?.trim() || '0'))
+                            .filter(n => n > 0 && n <= 50);
                         
-                        // Solo tomar los primeros 10 resultados
-                        if (results.length >= 10) break;
+                        if (numbers.length >= 5) {
+                            const result: any = {
+                                game,
+                                numbers: numbers.slice(0, 6),
+                                date: new Date().toLocaleDateString('es-ES')
+                            };
+
+                            // Agregar estrellas si existen
+                            if (starsSelector) {
+                                const starElements = document.querySelectorAll(starsSelector);
+                                if (starElements.length > 0) {
+                                    result.stars = Array.from(starElements)
+                                        .map(el => parseInt(el.textContent?.trim() || '0'))
+                                        .filter(n => n > 0);
+                                }
+                            }
+
+                            // Agregar complementario si existe
+                            if (complementarySelector) {
+                                const compElement = document.querySelector(complementarySelector);
+                                if (compElement) {
+                                    const comp = parseInt(compElement.textContent?.trim() || '0');
+                                    if (comp > 0) result.complementary = comp;
+                                }
+                            }
+
+                            results.push(result);
+                        }
+                    }
+                });
+
+                // Si no encuentra selectores específicos, buscar estructura básica
+                if (results.length === 0) {
+                    const basicResults = document.querySelectorAll('.resultado, .sorteo, .numbers');
+                    for (let i = 0; i < Math.min(3, basicResults.length); i++) {
+                        const element = basicResults[i];
+                        const text = element.textContent || '';
+                        const numbers = text.match(/\b([1-9]|[1-4][0-9]|50)\b/g);
+                        
+                        if (numbers && numbers.length >= 5) {
+                            results.push({
+                                game: 'general',
+                                numbers: numbers.slice(0, 6).map(n => parseInt(n)),
+                                source: 'basic'
+                            });
+                        }
                     }
                 }
+
             } catch (error) {
-                console.warn('Error buscando resultados:', error);
+                console.warn('Error extrayendo resultados:', error);
             }
 
             return results;
