@@ -295,10 +295,13 @@ def ajustar_prediccion(prediccion, config):
             break
     
     if juego_nombre == 'loterianacional':
-        # Lotería Nacional: número de 5 dígitos
-        numero = int(abs(prediccion[0])) % 100000
+        # Lotería Nacional: número de 5 dígitos como array + reintegro
+        numero_str = f"{int(abs(prediccion[0])) % 100000:05d}"
+        numero_array = [int(digit) for digit in numero_str]
+        reintegro = int(abs(prediccion[0])) % 10
         return {
-            'numero': f"{numero:05d}",
+            'numero': numero_array,
+            'reintegro': reintegro,
             'mensaje': 'Predicción generada con IA para Lotería Nacional'
         }
     
@@ -347,11 +350,26 @@ def ajustar_prediccion(prediccion, config):
             'mensaje': f'Predicción generada con IA para {juego_nombre.title()}'
         }
         
-        # Agregar número especial si existe
+        # Agregar número especial si existe con nombre específico del juego
         if config['num_especiales'] > 0 and config['rango_especiales']:
             esp_min, esp_max = config['rango_especiales']
             especial = int(abs(prediccion[-1])) % (esp_max - esp_min + 1) + esp_min
-            resultado['especial'] = especial
+            
+            # Mapear campo específico según el juego
+            if juego_nombre == 'primitiva':
+                resultado['complementario'] = especial
+            elif juego_nombre == 'bonoloto':
+                resultado['complementario'] = especial
+                resultado['reintegro'] = especial  # En bonoloto son el mismo
+            elif juego_nombre == 'elgordo':
+                resultado['clave'] = especial
+            elif juego_nombre == 'eurodreams':
+                resultado['dream'] = especial
+            elif juego_nombre == 'lototurf':
+                resultado['reintegro'] = especial
+                resultado['caballo'] = especial  # En lototurf son el mismo
+            else:
+                resultado['especial'] = especial  # Fallback genérico
         
         return resultado
 
@@ -361,8 +379,12 @@ def generar_prediccion_aleatoria(juego):
     config = JUEGOS_CONFIG[juego]
     
     if juego == 'loterianacional':
+        numero_str = f"{np.random.randint(10000, 99999):05d}"
+        numero_array = [int(digit) for digit in numero_str]
+        reintegro = np.random.randint(0, 10)
         return {
-            'numero': f"{np.random.randint(10000, 99999):05d}",
+            'numero': numero_array,
+            'reintegro': reintegro,
             'mensaje': 'Predicción aleatoria para Lotería Nacional'
         }
     elif juego == 'euromillon':
@@ -388,7 +410,23 @@ def generar_prediccion_aleatoria(juego):
         
         if config['num_especiales'] > 0 and config['rango_especiales']:
             esp_min, esp_max = config['rango_especiales']
-            resultado['especial'] = np.random.randint(esp_min, esp_max + 1)
+            especial = np.random.randint(esp_min, esp_max + 1)
+            
+            # Mapear campo específico según el juego
+            if juego == 'primitiva':
+                resultado['complementario'] = especial
+            elif juego == 'bonoloto':
+                resultado['complementario'] = especial
+                resultado['reintegro'] = especial  # En bonoloto son el mismo
+            elif juego == 'elgordo':
+                resultado['clave'] = especial
+            elif juego == 'eurodreams':
+                resultado['dream'] = especial
+            elif juego == 'lototurf':
+                resultado['reintegro'] = especial
+                resultado['caballo'] = especial  # En lototurf son el mismo
+            else:
+                resultado['especial'] = especial  # Fallback genérico
         
         return resultado
 
