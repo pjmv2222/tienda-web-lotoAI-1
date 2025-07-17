@@ -95,8 +95,14 @@ async function scrapeWithoutProxy() {
             timeout: 60000
         });
 
-        // Esperar a que los elementos estén cargados
-        await page.waitForSelector('.c-parrilla-juegos__elemento_topaz', { timeout: 10000 });
+        // Esperar a que los elementos estén cargados (con manejo de error)
+        try {
+            await page.waitForSelector('.c-parrilla-juegos__elemento_topaz', { timeout: 15000 });
+            console.log('✅ Elementos de juegos encontrados');
+        } catch (error: any) {
+            console.warn('⚠️ No se encontraron elementos específicos, continuando...', error.message);
+            // Continuar de todas formas
+        }
 
         console.log('💰 Extrayendo información de botes...');
         const botes = await page.evaluate(() => {
