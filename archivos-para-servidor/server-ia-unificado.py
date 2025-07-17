@@ -295,12 +295,22 @@ def ajustar_prediccion(prediccion, config):
             break
     
     if juego_nombre == 'loterianacional':
-        # Lotería Nacional: número de 5 dígitos como array + reintegro
-        numero_str = f"{int(abs(prediccion[0])) % 100000:05d}"
-        numero_array = [int(digit) for digit in numero_str]
+        # Lotería Nacional: 5 números principales + reintegro
+        numeros = []
+        for i in range(5):
+            if i < len(prediccion):
+                # Generar números en el rango de lotería nacional (0-99999)
+                num = int(abs(prediccion[i])) % 100000
+                numeros.append(num)
+            else:
+                # Fallback si no hay suficientes predicciones
+                numeros.append(np.random.randint(0, 100000))
+        
+        # Generar reintegro (0-9)
         reintegro = int(abs(prediccion[0])) % 10
+        
         return {
-            'numero': numero_array,
+            'numeros': numeros,
             'reintegro': reintegro,
             'mensaje': 'Predicción generada con IA para Lotería Nacional'
         }
@@ -379,11 +389,11 @@ def generar_prediccion_aleatoria(juego):
     config = JUEGOS_CONFIG[juego]
     
     if juego == 'loterianacional':
-        numero_str = f"{np.random.randint(10000, 99999):05d}"
-        numero_array = [int(digit) for digit in numero_str]
+        # Generar 5 números aleatorios para Lotería Nacional
+        numeros = [np.random.randint(0, 100000) for _ in range(5)]
         reintegro = np.random.randint(0, 10)
         return {
-            'numero': numero_array,
+            'numeros': numeros,
             'reintegro': reintegro,
             'mensaje': 'Predicción aleatoria para Lotería Nacional'
         }
