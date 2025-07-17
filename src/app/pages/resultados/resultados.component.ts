@@ -3,21 +3,7 @@ import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-
-interface SorteoResult {
-  juego: string;
-  nombreJuego: string;
-  fecha: string;
-  sorteo: string;
-  numeros: number[];
-  estrellas?: number[];
-  complementario?: number;
-  reintegro?: number;
-  clave?: number;
-  dream?: number;
-  caballo?: number;
-  numero?: string;
-}
+import { LotteryResultsService, LotteryResult } from '../../services/lottery-results.service';
 
 @Component({
   selector: 'app-resultados',
@@ -29,13 +15,14 @@ interface SorteoResult {
 export class ResultadosComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
   
-  resultados: SorteoResult[] = [];
+  resultados: LotteryResult[] = [];
   isLoading = true;
   error: string | null = null;
   lastUpdated: Date | null = null;
 
   constructor(
-    @Inject(PLATFORM_ID) private platformId: Object
+    @Inject(PLATFORM_ID) private platformId: Object,
+    private lotteryService: LotteryResultsService
   ) {}
 
   ngOnInit(): void {
@@ -53,16 +40,25 @@ export class ResultadosComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // TODO: Implementar servicio para cargar datos reales
-    // Por ahora usar datos de ejemplo
-    setTimeout(() => {
-      this.resultados = this.getResultadosEjemplo();
-      this.lastUpdated = new Date();
-      this.isLoading = false;
-    }, 1000);
+    this.lotteryService.getLatestResults()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (resultados) => {
+          this.resultados = resultados;
+          this.lastUpdated = new Date();
+          this.isLoading = false;
+          this.error = null;
+        },
+        error: (error) => {
+          console.error('Error cargando resultados:', error);
+          this.error = 'Error al cargar los resultados. Mostrando datos de ejemplo.';
+          this.resultados = this.getResultadosEjemplo();
+          this.isLoading = false;
+        }
+      });
   }
 
-  private getResultadosEjemplo(): SorteoResult[] {
+  private getResultadosEjemplo(): LotteryResult[] {
     return [
       {
         juego: 'euromillones',
@@ -168,5 +164,9 @@ export class ResultadosComponent implements OnInit, OnDestroy {
       month: 'long',
       day: 'numeric'
     });
+  }
+
+  trackByGame(index: number, resultado: LotteryResult): string {
+    return resultado.juego;
   }
 } 

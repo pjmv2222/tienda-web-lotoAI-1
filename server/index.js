@@ -10,6 +10,7 @@ const subscriptionRoutes = require('./routes/subscription.routes');
 const predictionRoutes = require('./routes/predictions');
 const authRoutes = require('./routes/auth.routes');
 const webhookRoutes = require('./routes/webhook.routes');
+const lotteryResultsRoutes = require('./routes/lottery-results.routes');
 const webhookController = require('./controllers/webhook.controller');
 
 const app = express();
@@ -88,6 +89,7 @@ app.use('/api/payments', paymentRoutes);
 app.use('/api/subscriptions', subscriptionRoutes);
 app.use('/api/predictions', predictionRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/lottery-results', lotteryResultsRoutes);
 
 // Configuración especial para la ruta de webhook de Stripe
 app.post('/api/webhooks/stripe', webhookController.handleStripeWebhook);
