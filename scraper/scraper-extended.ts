@@ -88,7 +88,79 @@ async function scrapeWithoutProxy() {
         
         await page.setViewport({ width: 1920, height: 1080 });
         
-        console.log('📱 Navegando a la página de Loterías...');
+        // PASO 1: Obtener botes usando la URL y selectores que funcionan
+        console.log('💰 Navegando para obtener botes...');
+        await page.goto('https://www.loteriasyapuestas.es/es', {
+            waitUntil: 'networkidle0',
+            timeout: 60000
+        });
+
+        // Esperar a que los elementos estén cargados
+        await page.waitForSelector('.c-parrilla-juegos__elemento_topaz', { timeout: 10000 });
+
+        console.log('💰 Extrayendo información de botes...');
+        const botes = await page.evaluate(() => {
+            const result: { [key: string]: string } = {};
+
+            const getBoteText = (element: Element, gameId: string) => {
+                try {
+                    const cantidadElement = element.querySelector(`p[class*="cantidad"][class*="${gameId}"]`);
+                    const millonesElement = element.querySelector(`p[class*="millones"][class*="${gameId}"]`);
+
+                    if (cantidadElement && millonesElement) {
+                        const cantidad = cantidadElement.textContent?.trim() || '';
+                        return `${cantidad} MILLONES`;
+                    }
+
+                    const cantidadSpecial = element.querySelector(`p[class*="cantidad"][class*="${gameId}"]`);
+                    if (cantidadSpecial) {
+                        const cantidad = cantidadSpecial.textContent?.trim() || '';
+                        const tipoElement = element.querySelector(`p[class*="tipo-premio"][class*="${gameId}"]`);
+                        const tipo = tipoElement?.textContent?.trim() || '';
+                        const euroSymbol = element.querySelector(`span[class*="simbolo-euro"]`)?.textContent || '€';
+
+                        return tipo ? `${cantidad}${euroSymbol} ${tipo}` : `${cantidad}${euroSymbol}`;
+                    }
+
+                    return null;
+                } catch (error) {
+                    console.error(`Error extrayendo bote para ${gameId}:`, error);
+                    return null;
+                }
+            };
+
+            const games = {
+                'euromillones': 'EMIL',
+                'primitiva': 'LAPR',
+                'bonoloto': 'BONO',
+                'gordo': 'ELGR',
+                'lototurf': 'LOTU',
+                'eurodreams': 'EDMS',
+                'loterianacional': 'LNAC'
+            };
+
+            document.querySelectorAll('.c-parrilla-juegos__elemento_topaz').forEach((element) => {
+                for (const [key, id] of Object.entries(games)) {
+                    if (element.querySelector(`.semicirculo--${id}_topaz`)) {
+                        const bote = getBoteText(element, id);
+                        if (bote) {
+                            result[key] = bote;
+                            console.log(`Bote extraído para ${key}:`, bote);
+                        }
+                    }
+                }
+            });
+
+            if (!result['eurodreams']) result['eurodreams'] = '20.000€ Al mes durante 30 años';
+            if (!result['loterianacional']) result['loterianacional'] = '300.000€ Primer Premio';
+
+            return result;
+        });
+
+        await delay(getRandomDelay(2000, 4000));
+
+        // PASO 2: Navegar a página de resultados
+        console.log('🎯 Navegando para obtener últimos resultados...');
         await page.goto('https://www.loteriasyapuestas.es/es/resultados', {
             waitUntil: 'networkidle2',
             timeout: 60000
@@ -96,143 +168,43 @@ async function scrapeWithoutProxy() {
 
         await delay(getRandomDelay(2000, 4000));
 
-        // Obtener botes
-        console.log('💰 Extrayendo información de botes...');
-        const botes = await page.evaluate(() => {
-            const botesData: any = {};
-            
-            // Selectores para diferentes juegos
-            const gameSelectors = [
-                { game: 'euromillones', selector: '[data-game="euromillones"]' },
-                { game: 'primitiva', selector: '[data-game="primitiva"]' },
-                { game: 'bonoloto', selector: '[data-game="bonoloto"]' },
-                { game: 'elgordo', selector: '[data-game="elgordo"]' },
-                { game: 'eurodreams', selector: '[data-game="eurodreams"]' },
-                { game: 'lototurf', selector: '[data-game="lototurf"]' },
-                { game: 'loterianacional', selector: '[data-game="loterianacional"]' }
-            ];
-
-            gameSelectors.forEach(({ game, selector }) => {
-                try {
-                    const gameElement = document.querySelector(selector);
-                    if (gameElement) {
-                        const boteElement = gameElement.querySelector('.bote, .jackpot, .premio');
-                        if (boteElement) {
-                            const boteText = boteElement.textContent?.trim() || '';
-                            const boteMatch = boteText.match(/[\d.,]+/);
-                            if (boteMatch) {
-                                botesData[game] = {
-                                    amount: boteMatch[0].replace(/\./g, '').replace(',', '.'),
-                                    currency: 'EUR'
-                                };
-                            }
-                        }
-                    }
-                } catch (error) {
-                    console.warn(`Error extrayendo bote de ${game}:`, error);
-                }
-            });
-
-            return botesData;
-        });
-
-        // Obtener resultados
+        // Obtener resultados (por ahora estructura simple para probar)
         console.log('🎯 Extrayendo últimos resultados...');
         const resultados = await page.evaluate(() => {
-            const results: LotteryResult[] = [];
+            const results: any[] = [];
             
-            // Selectores para resultados de diferentes juegos
-            const gameResults = [
-                {
-                    game: 'euromillones',
-                    selector: '.resultado-euromillones, [data-game="euromillones"] .resultado',
-                    parseFunction: (element: Element) => {
-                        const numbers = Array.from(element.querySelectorAll('.numero')).map(el => 
-                            parseInt(el.textContent?.trim() || '0')
-                        ).filter(n => n > 0);
-                        
-                        const stars = Array.from(element.querySelectorAll('.estrella')).map(el => 
-                            parseInt(el.textContent?.trim() || '0')
-                        ).filter(n => n > 0);
-                        
-                        const dateElement = element.querySelector('.fecha');
-                        const date = dateElement?.textContent?.trim() || new Date().toLocaleDateString();
-                        
-                        return {
-                            game: 'euromillones',
-                            date,
-                            numbers: numbers.slice(0, 5),
-                            stars: stars.slice(0, 2)
-                        };
-                    }
-                },
-                {
-                    game: 'primitiva',
-                    selector: '.resultado-primitiva, [data-game="primitiva"] .resultado',
-                    parseFunction: (element: Element) => {
-                        const numbers = Array.from(element.querySelectorAll('.numero')).map(el => 
-                            parseInt(el.textContent?.trim() || '0')
-                        ).filter(n => n > 0);
-                        
-                        const complementarioElement = element.querySelector('.complementario, .reintegro');
-                        const complementario = complementarioElement ? 
-                            parseInt(complementarioElement.textContent?.trim() || '0') : undefined;
-                        
-                        const dateElement = element.querySelector('.fecha');
-                        const date = dateElement?.textContent?.trim() || new Date().toLocaleDateString();
-                        
-                        return {
-                            game: 'primitiva',
-                            date,
-                            numbers: numbers.slice(0, 6),
-                            complementary: complementario ? [complementario] : undefined
-                        };
-                    }
-                },
-                {
-                    game: 'bonoloto',
-                    selector: '.resultado-bonoloto, [data-game="bonoloto"] .resultado',
-                    parseFunction: (element: Element) => {
-                        const numbers = Array.from(element.querySelectorAll('.numero')).map(el => 
-                            parseInt(el.textContent?.trim() || '0')
-                        ).filter(n => n > 0);
-                        
-                        const complementarioElement = element.querySelector('.complementario');
-                        const reintegroElement = element.querySelector('.reintegro');
-                        
-                        const complementario = complementarioElement ? 
-                            parseInt(complementarioElement.textContent?.trim() || '0') : undefined;
-                        const reintegro = reintegroElement ? 
-                            parseInt(reintegroElement.textContent?.trim() || '0') : undefined;
-                        
-                        const dateElement = element.querySelector('.fecha');
-                        const date = dateElement?.textContent?.trim() || new Date().toLocaleDateString();
-                        
-                        return {
-                            game: 'bonoloto',
-                            date,
-                            numbers: numbers.slice(0, 6),
-                            complementary: complementario ? [complementario] : undefined,
-                            reintegro
-                        };
-                    }
-                }
-                // Agregar más juegos según sea necesario
-            ];
-
-            gameResults.forEach(({ game, selector, parseFunction }) => {
-                try {
-                    const elements = document.querySelectorAll(selector);
-                    elements.forEach(element => {
-                        const result = parseFunction(element);
-                        if (result.numbers.length > 0) {
-                            results.push(result);
+            // Buscar cualquier elemento que contenga números
+            try {
+                // Buscar elementos que contengan fechas y números
+                const dateElements = document.querySelectorAll('*:not(script):not(style)');
+                for (let element of Array.from(dateElements)) {
+                    const text = element.textContent || '';
+                    
+                    // Buscar patrones de fecha (ej: "16/07/2025" o "Martes 16 Jul")
+                    if (text.match(/\d{1,2}\/\d{1,2}\/\d{4}|\d{1,2}\s+(ene|feb|mar|abr|may|jun|jul|ago|sep|oct|nov|dic)/i)) {
+                        // Buscar números cercanos
+                        const parent = element.closest('div, section, article') || element.parentElement;
+                        if (parent) {
+                            const numbersText = parent.textContent || '';
+                            const numbers = numbersText.match(/\b\d{1,2}\b/g);
+                            
+                            if (numbers && numbers.length >= 5) {
+                                results.push({
+                                    game: 'general', // Por ahora general
+                                    date: text.trim(),
+                                    numbersFound: numbers.slice(0, 10),
+                                    context: numbersText.substring(0, 200)
+                                });
+                            }
                         }
-                    });
-                } catch (error) {
-                    console.warn(`Error extrayendo resultados de ${game}:`, error);
+                        
+                        // Solo tomar los primeros 10 resultados
+                        if (results.length >= 10) break;
+                    }
                 }
-            });
+            } catch (error) {
+                console.warn('Error buscando resultados:', error);
+            }
 
             return results;
         });
