@@ -96,7 +96,7 @@ export class LoterianacionalPrediccionComponent implements OnInit, OnDestroy {
         }
       },
       error: () => {
-        this.loadPredictionsFromStorage();
+        console.log('🔄 [DEBUG] Error al cargar desde backend, manteniendo predicciones de localStorage...');
       }
     });
   }

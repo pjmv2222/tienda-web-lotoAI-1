@@ -173,8 +173,7 @@ export class PrimitivaPrediccionComponent implements OnInit, OnDestroy {
         });
         
         // Fallback al comportamiento anterior si falla
-        console.log('🔄 [DEBUG] Usando fallback localStorage...');
-        this.loadPredictionsFromStorage();
+        console.log('🔄 [DEBUG] Error al cargar desde backend, manteniendo predicciones de localStorage...');
       }
     });
   }
