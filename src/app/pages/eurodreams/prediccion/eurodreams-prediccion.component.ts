@@ -1,5 +1,5 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, OnDestroy, Inject, PLATFORM_ID } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { RouterLink, Router, ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { Subscription } from 'rxjs';
@@ -44,7 +44,8 @@ export class EurodreamsPrediccionComponent implements OnInit, OnDestroy {
     private subscriptionService: SubscriptionService,
     private predictionService: PredictionService,
     private http: HttpClient,
-    private userPredictionService: UserPredictionService
+    private userPredictionService: UserPredictionService,
+    @Inject(PLATFORM_ID) private platformId: Object
   ) {}
 
   ngOnInit(): void {
@@ -181,6 +182,10 @@ export class EurodreamsPrediccionComponent implements OnInit, OnDestroy {
   }
 
   private loadSavedPredictions(): void {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+    
     try {
       const savedJson = localStorage.getItem('eurodreams_predictions');
       if (savedJson) {
@@ -190,19 +195,29 @@ export class EurodreamsPrediccionComponent implements OnInit, OnDestroy {
         const hoursDiff = (currentTime - savedTime) / (1000 * 60 * 60);
         if (hoursDiff < 24) {
           if (Array.isArray(savedData.predictions)) {
+            // Mapeo completo preservando todos los campos
             this.predictionResults = savedData.predictions.map((pred: any) => ({
               numeros: Array.isArray(pred.numeros) ? pred.numeros : [],
-              dream: typeof pred.dream === 'number' ? pred.dream : null
+              estrellas: Array.isArray(pred.estrellas) ? pred.estrellas : [],
+              complementario: typeof pred.complementario === 'number' ? pred.complementario : undefined,
+              reintegro: typeof pred.reintegro === 'number' ? pred.reintegro : undefined,
+              clave: typeof pred.clave === 'number' ? pred.clave : undefined,
+              dream: typeof pred.dream === 'number' ? pred.dream : undefined,
+              caballo: typeof pred.caballo === 'number' ? pred.caballo : undefined,
+              numero: Array.isArray(pred.numero) ? pred.numero : undefined
             }));
             this.updateNumberFrequency();
           } else {
             this.predictionResults = [];
           }
         } else {
-          localStorage.removeItem('eurodreams_predictions');
+          if (isPlatformBrowser(this.platformId)) {
+            localStorage.removeItem('eurodreams_predictions');
+          }
         }
       }
-    } catch {
+    } catch (error) {
+      console.error('Error cargando predicciones guardadas:', error);
       this.predictionResults = [];
     }
   }
@@ -218,6 +233,11 @@ export class EurodreamsPrediccionComponent implements OnInit, OnDestroy {
   }
 
   private loadPredictionsFromStorage() {
+    if (!isPlatformBrowser(this.platformId)) {
+      this.updatePredictionDisplay();
+      return;
+    }
+    
     const saved = localStorage.getItem('eurodreamsPredictions');
     if (saved) {
       this.predictionResults = JSON.parse(saved);
