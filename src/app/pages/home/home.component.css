@@ -178,6 +178,44 @@ button:disabled {
   box-shadow: 0 12px 35px rgba(0, 198, 255, 0.6);
 }
 
+/* Contenedor de botones en hero */
+.hero-buttons {
+  display: flex;
+  gap: 1.5rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 2rem;
+}
+
+/* Variante secondary para botón de resultados */
+.cta-button.secondary {
+  background: linear-gradient(45deg, #ff6b35, #f7931e);
+  box-shadow: 0 8px 25px rgba(255, 107, 53, 0.4);
+}
+
+.cta-button.secondary:hover {
+  background: linear-gradient(45deg, #e55a2b, #e08619);
+  box-shadow: 0 12px 35px rgba(255, 107, 53, 0.6);
+}
+
+.cta-button.secondary i {
+  margin-right: 0.5rem;
+  font-size: 1.2rem;
+}
+
+/* Responsive para botones hero */
+@media (max-width: 768px) {
+  .hero-buttons {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .cta-button {
+    width: 100%;
+    max-width: 300px;
+  }
+}
+
 .section {
   padding: 4rem 2rem;
   margin-bottom: 3rem;
