@@ -101,8 +101,14 @@ async function scrapeWithoutProxy() {
             timeout: 60000
         });
 
-        // Esperar a que los elementos estén cargados (EXACTAMENTE como el original)
-        await page.waitForSelector('.c-parrilla-juegos__elemento_topaz', { timeout: 10000 });
+        // Esperar a que los elementos estén cargados (con tolerancia)
+        try {
+            await page.waitForSelector('.c-parrilla-juegos__elemento_topaz', { timeout: 15000 });
+            console.log('✅ Elementos de juegos encontrados');
+        } catch (error: any) {
+            console.warn('⚠️ No se encontraron elementos específicos, continuando...', error.message);
+            // Continuar de todas formas para obtener lo que pueda
+        }
 
         console.log('💰 Extrayendo datos de botes...');
         const botes = await page.evaluate(() => {
@@ -192,90 +198,224 @@ async function scrapeWithoutProxy() {
 
         await delay(getRandomDelay(2000, 4000));
 
-        // Obtener solo los números ganadores específicos
-        console.log('🎯 Extrayendo números ganadores...');
+        // Capturar HTML de la página para análisis
+        console.log('📄 Capturando HTML de la página...');
+        const pageHTML = await page.content();
+        
+        // Guardar HTML para análisis offline
+        const htmlPath = path.join(__dirname, '..', 'src', 'assets', 'resultados-page.html');
+        fs.writeFileSync(htmlPath, pageHTML);
+        console.log('💾 HTML guardado en:', htmlPath);
+
+        // Extraer números usando la estructura real
+        console.log('🎯 Extrayendo números con selectores reales...');
         const resultados = await page.evaluate(() => {
             const results: any[] = [];
             
             try {
-                // Buscar selectores específicos para números ganadores
-                const gameSelectors = [
-                    { 
-                        game: 'euromillones', 
-                        numbersSelector: '.c-numero-bola, .numero-ganador',
-                        starsSelector: '.c-numero-estrella, .estrella-ganadora'
+                // Configuración de juegos con sus códigos y selectores reales
+                const gameConfigs = [
+                    {
+                        game: 'euromillones',
+                        code: 'EMIL',
+                        mainNumbersSelector: '#qa_ultResult-combination-mainNumbers-EMIL .c-ultimo-resultado__combinacion-li--euromillones',
+                        starsSelector: '#qa_ultResult-combination-mainNumbers-EMIL-stars .c-ultimo-resultado__estrellas-li',
+                        dateSelector: '#qa_ultResult-EMIL-fecha',
+                        millonSelector: '.c-ultimo-resultado__desplegable-titulo'
                     },
-                    { 
+                    {
                         game: 'primitiva', 
-                        numbersSelector: '.c-numero-bola, .numero-primitiva',
-                        complementarySelector: '.complementario'
+                        code: 'LAPR',
+                        mainNumbersSelector: '#qa_ultResult-combination-mainNumbers-LAPR .c-ultimo-resultado__combinacion-li--primitiva',
+                        complementarySelector: '#qa_ultResult-combination-complementaryNumber-LAPR .c-ultimo-resultado__combinacion-li--complementario',
+                        dateSelector: '#qa_ultResult-LAPR-fecha',
+                        jokerSelector: '.c-ultimo-resultado__joker-ganador'
                     },
-                    { 
-                        game: 'bonoloto', 
-                        numbersSelector: '.c-numero-bola, .numero-bonoloto',
-                        complementarySelector: '.complementario, .reintegro'
+                    {
+                        game: 'bonoloto',
+                        code: 'BONO', 
+                        mainNumbersSelector: '#qa_ultResult-combination-mainNumbers-BONO .c-ultimo-resultado__combinacion-li--bonoloto',
+                        complementarySelector: '#qa_ultResult-combination-complementaryNumber-BONO .c-ultimo-resultado__combinacion-li--complementario',
+                        reintegroSelector: '#qa_ultResult-combination-reintegro-BONO .c-ultimo-resultado__combinacion-li--reintegro',
+                        dateSelector: '#qa_ultResult-BONO-fecha'
+                    },
+                    {
+                        game: 'gordo',
+                        code: 'ELGR',
+                        mainNumbersSelector: '#qa_ultResult-combination-mainNumbers-ELGR .c-ultimo-resultado__combinacion-li--gordo',
+                        claveSelector: '#qa_ultResult-combination-clave-ELGR .c-ultimo-resultado__combinacion-li--clave',
+                        dateSelector: '#qa_ultResult-ELGR-fecha'
+                    },
+                    {
+                        game: 'eurodreams',
+                        code: 'EDMS',
+                        mainNumbersSelector: '#qa_ultResult-combination-mainNumbers-EDMS .c-ultimo-resultado__combinacion-li--eurodreams',
+                        dreamSelector: '#qa_ultResult-combination-dream-EDMS .c-ultimo-resultado__combinacion-li--dream',
+                        dateSelector: '#qa_ultResult-EDMS-fecha'
+                    },
+                    {
+                        game: 'lototurf',
+                        code: 'LOTU',
+                        mainNumbersSelector: '#qa_ultResult-combination-mainNumbers-LOTU .c-ultimo-resultado__combinacion-li--lototurf',
+                        reintegroSelector: '#qa_ultResult-combination-reintegro-LOTU .c-ultimo-resultado__combinacion-li--reintegro',
+                        caballoSelector: '#qa_ultResult-combination-caballo-LOTU .c-ultimo-resultado__combinacion-li--caballo',
+                        dateSelector: '#qa_ultResult-LOTU-fecha'
+                    },
+                    {
+                        game: 'loterianacional',
+                        code: 'LNAC',
+                        isSpecial: true, // Manejo especial para lotería nacional
+                        dateSelector: '#qa_ultResult-LNAC-fecha',
+                        premiosSelector: '.c-resultado-sorteo__premio'
                     }
                 ];
 
-                // Buscar resultados más específicos
-                gameSelectors.forEach(({ game, numbersSelector, starsSelector, complementarySelector }) => {
-                    const numberElements = document.querySelectorAll(numbersSelector);
-                    if (numberElements.length > 0) {
-                        const numbers = Array.from(numberElements)
-                            .map(el => parseInt(el.textContent?.trim() || '0'))
-                            .filter(n => n > 0 && n <= 50);
-                        
-                        if (numbers.length >= 5) {
-                            const result: any = {
-                                game,
-                                numbers: numbers.slice(0, 6),
-                                date: new Date().toLocaleDateString('es-ES')
-                            };
-
-                            // Agregar estrellas si existen
-                            if (starsSelector) {
-                                const starElements = document.querySelectorAll(starsSelector);
-                                if (starElements.length > 0) {
-                                    result.stars = Array.from(starElements)
-                                        .map(el => parseInt(el.textContent?.trim() || '0'))
-                                        .filter(n => n > 0);
+                gameConfigs.forEach(config => {
+                    try {
+                        // Manejo especial para Lotería Nacional
+                        if (config.isSpecial && config.game === 'loterianacional') {
+                            const premiosElements = document.querySelectorAll(config.premiosSelector || '');
+                            const premios: string[] = [];
+                            
+                            for (let i = 0; i < Math.min(3, premiosElements.length); i++) {
+                                const premio = premiosElements[i];
+                                const numeroElement = premio.querySelector('.c-resultado-sorteo__numero a');
+                                if (numeroElement) {
+                                    const numero = numeroElement.textContent?.trim() || '';
+                                    if (numero) premios.push(numero);
                                 }
                             }
 
-                            // Agregar complementario si existe
-                            if (complementarySelector) {
-                                const compElement = document.querySelector(complementarySelector);
+                            if (premios.length > 0) {
+                                const result: any = {
+                                    game: config.game,
+                                    premios: premios, // Usar 'premios' en lugar de 'numbers'
+                                    date: 'pending' // Extraer fecha después
+                                };
+
+                                // Obtener fecha real
+                                if (config.dateSelector) {
+                                    const dateElement = document.querySelector(config.dateSelector);
+                                    if (dateElement) {
+                                        const dateText = dateElement.textContent?.trim() || '';
+                                        const dateMatch = dateText.match(/\d{1,2}\/\d{1,2}\/\d{4}/);
+                                        if (dateMatch) result.date = dateMatch[0];
+                                    }
+                                }
+
+                                results.push(result);
+                                console.log(`✅ ${config.game}: ${premios.length} premios extraídos`);
+                            }
+                            return; // Salir del forEach para este caso especial
+                        }
+
+                        // Procesamiento normal para otros juegos
+                        const mainNumbers = Array.from(document.querySelectorAll(config.mainNumbersSelector || ''))
+                            .map(el => parseInt(el.textContent?.trim() || '0'))
+                            .filter(n => n > 0);
+
+                        if (mainNumbers.length > 0) {
+                            const result: any = {
+                                game: config.game,
+                                numbers: mainNumbers,
+                                date: 'pending' // Se actualiza abajo
+                            };
+
+                            // Obtener fecha real
+                            if (config.dateSelector) {
+                                const dateElement = document.querySelector(config.dateSelector);
+                                if (dateElement) {
+                                    const dateText = dateElement.textContent?.trim() || '';
+                                    const dateMatch = dateText.match(/\d{1,2}\/\d{1,2}\/\d{4}/);
+                                    if (dateMatch) {
+                                        result.date = dateMatch[0];
+                                    } else {
+                                        result.date = new Date().toLocaleDateString('es-ES');
+                                    }
+                                }
+                            }
+
+                            // Obtener estrellas (Euromillones)
+                            if (config.starsSelector) {
+                                const stars = Array.from(document.querySelectorAll(config.starsSelector))
+                                    .map(el => parseInt(el.textContent?.trim() || '0'))
+                                    .filter(n => n > 0);
+                                if (stars.length > 0) result.stars = stars;
+                            }
+
+                            // Obtener El Millón (Euromillones)
+                            if (config.millonSelector) {
+                                const millonElement = document.querySelector(config.millonSelector);
+                                if (millonElement) {
+                                    const millon = millonElement.textContent?.trim() || '';
+                                    if (millon) result.millon = millon;
+                                }
+                            }
+
+                            // Obtener Joker (Primitiva)
+                            if (config.jokerSelector) {
+                                const jokerElement = document.querySelector(config.jokerSelector);
+                                if (jokerElement) {
+                                    const joker = jokerElement.textContent?.trim().replace(/\s/g, '') || '';
+                                    if (joker) result.joker = joker;
+                                }
+                            }
+
+                            // Obtener complementario
+                            if (config.complementarySelector) {
+                                const compElement = document.querySelector(config.complementarySelector);
                                 if (compElement) {
                                     const comp = parseInt(compElement.textContent?.trim() || '0');
-                                    if (comp > 0) result.complementary = comp;
+                                    if (comp > 0) result.complementario = comp;
+                                }
+                            }
+
+                            // Obtener reintegro
+                            if (config.reintegroSelector) {
+                                const reintElement = document.querySelector(config.reintegroSelector);
+                                if (reintElement) {
+                                    const reint = parseInt(reintElement.textContent?.trim() || '0');
+                                    if (reint > 0) result.reintegro = reint;
+                                }
+                            }
+
+                            // Obtener clave (El Gordo)
+                            if (config.claveSelector) {
+                                const claveElement = document.querySelector(config.claveSelector);
+                                if (claveElement) {
+                                    const clave = parseInt(claveElement.textContent?.trim() || '0');
+                                    if (clave > 0) result.clave = clave;
+                                }
+                            }
+
+                            // Obtener dream (EuroDreams)
+                            if (config.dreamSelector) {
+                                const dreamElement = document.querySelector(config.dreamSelector);
+                                if (dreamElement) {
+                                    const dream = parseInt(dreamElement.textContent?.trim() || '0');
+                                    if (dream > 0) result.dream = dream;
+                                }
+                            }
+
+                            // Obtener caballo (Lototurf)
+                            if (config.caballoSelector) {
+                                const caballoElement = document.querySelector(config.caballoSelector);
+                                if (caballoElement) {
+                                    const caballo = parseInt(caballoElement.textContent?.trim() || '0');
+                                    if (caballo > 0) result.caballo = caballo;
                                 }
                             }
 
                             results.push(result);
+                            console.log(`✅ ${config.game}: ${mainNumbers.length} números extraídos`);
                         }
+                    } catch (error) {
+                        console.warn(`Error extrayendo ${config.game}:`, error);
                     }
                 });
 
-                // Si no encuentra selectores específicos, buscar estructura básica
-                if (results.length === 0) {
-                    const basicResults = document.querySelectorAll('.resultado, .sorteo, .numbers');
-                    for (let i = 0; i < Math.min(3, basicResults.length); i++) {
-                        const element = basicResults[i];
-                        const text = element.textContent || '';
-                        const numbers = text.match(/\b([1-9]|[1-4][0-9]|50)\b/g);
-                        
-                        if (numbers && numbers.length >= 5) {
-                            results.push({
-                                game: 'general',
-                                numbers: numbers.slice(0, 6).map(n => parseInt(n)),
-                                source: 'basic'
-                            });
-                        }
-                    }
-                }
-
             } catch (error) {
-                console.warn('Error extrayendo resultados:', error);
+                console.warn('Error general extrayendo resultados:', error);
             }
 
             return results;
