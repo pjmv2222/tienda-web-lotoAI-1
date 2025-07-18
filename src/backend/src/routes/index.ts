@@ -4,6 +4,7 @@ import paymentRoutes from './payment.routes';
 import predictionRoutes from './prediction.routes';
 import productRoutes from './product.routes';
 import subscriptionRoutes from './subscription.routes';
+import lotteryResultsRoutes from './lottery-results.routes';
 // El webhook tiene su propio middleware en server.ts y no se registra aquí
 
 const setupRoutes = (app: Express) => {
@@ -13,6 +14,7 @@ const setupRoutes = (app: Express) => {
   app.use('/api/predictions', predictionRoutes);
   app.use('/api/payments', paymentRoutes);
   app.use('/api/products', productRoutes);
+  app.use('/api/lottery-results', lotteryResultsRoutes);
 };
 
 export default setupRoutes; 

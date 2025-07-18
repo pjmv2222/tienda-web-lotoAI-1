@@ -80,6 +80,13 @@ async function scrapeWithoutProxy() {
         browser = await puppeteer.launch(browserOptions);
         const page = await browser.newPage();
 
+        // Hacer visibles los logs del page.evaluate()
+        page.on('console', msg => {
+            if (msg.type() === 'log') {
+                console.log('🌐 [BROWSER]', msg.text());
+            }
+        });
+
         // Configurar viewport y user agent (EXACTAMENTE como el original)
         await page.setViewport({ width: 1920, height: 1080 });
         const userAgent = randomUseragent.getRandom();
@@ -110,6 +117,9 @@ async function scrapeWithoutProxy() {
             // Continuar de todas formas para obtener lo que pueda
         }
 
+        // Asegurar que la página esté completamente cargada antes de extraer botes
+        await delay(3000);
+        
         console.log('💰 Extrayendo datos de botes...');
         const botes = await page.evaluate(() => {
             const result: { [key: string]: string } = {};
@@ -151,13 +161,21 @@ async function scrapeWithoutProxy() {
                 'loterianacional': 'LNAC'
             };
 
-            document.querySelectorAll('.c-parrilla-juegos__elemento_topaz').forEach((element) => {
+            const elementos = document.querySelectorAll('.c-parrilla-juegos__elemento_topaz');
+            console.log(`🔍 Elementos encontrados: ${elementos.length}`);
+            
+            elementos.forEach((element, index) => {
+                console.log(`🔍 Procesando elemento ${index + 1}`);
                 for (const [key, id] of Object.entries(games)) {
-                    if (element.querySelector(`.semicirculo--${id}_topaz`)) {
+                    const selector = `.semicirculo--${id}_topaz`;
+                    const selectorElement = element.querySelector(selector);
+                    console.log(`🔍 ${key} (${selector}): ${selectorElement ? 'ENCONTRADO' : 'NO ENCONTRADO'}`);
+                    
+                    if (selectorElement) {
                         const bote = getBoteText(element, id);
+                        console.log(`💰 Bote para ${key}: ${bote || 'NULL'}`);
                         if (bote) {
                             result[key] = bote;
-                            console.log(`Bote extraído para ${key}:`, bote);
                         }
                     }
                 }
@@ -531,20 +549,39 @@ async function main() {
         }
 
         // Guardar datos
-        const outputPath = path.join(__dirname, '..', 'src', 'assets', 'lottery-data.json');
-        const outputDir = path.dirname(outputPath);
-        
-        if (!fs.existsSync(outputDir)) {
-            fs.mkdirSync(outputDir, { recursive: true });
+        try {
+            console.log('🔧 DEBUG: __dirname =', __dirname);
+            const outputPath = path.join(__dirname, '..', 'src', 'assets', 'lottery-data.json');
+            const outputDir = path.dirname(outputPath);
+            console.log('🔧 DEBUG: outputPath =', outputPath);
+            console.log('🔧 DEBUG: outputDir =', outputDir);
+            
+            console.log('🔧 DEBUG: Verificando si el directorio existe...');
+            if (!fs.existsSync(outputDir)) {
+                console.log('🔧 DEBUG: Creando directorio:', outputDir);
+                fs.mkdirSync(outputDir, { recursive: true });
+            } else {
+                console.log('🔧 DEBUG: El directorio ya existe');
+            }
+
+            console.log('🔧 DEBUG: Guardando lottery-data.json...');
+            console.log('🔧 DEBUG: Datos a guardar:', JSON.stringify(lotteryData, null, 2).length, 'caracteres');
+            fs.writeFileSync(outputPath, JSON.stringify(lotteryData, null, 2));
+            console.log('💾 Datos guardados en:', outputPath);
+            console.log('🔧 DEBUG: Verificando archivo creado:', fs.existsSync(outputPath));
+
+            // También guardar botes separadamente para compatibilidad
+            const botesPath = path.join(__dirname, '..', 'src', 'assets', 'botes.json');
+            console.log('🔧 DEBUG: botesPath =', botesPath);
+            console.log('🔧 DEBUG: Botes a guardar:', JSON.stringify(lotteryData.botes, null, 2));
+            fs.writeFileSync(botesPath, JSON.stringify(lotteryData.botes, null, 2));
+            console.log('💰 Botes guardados en:', botesPath);
+            console.log('🔧 DEBUG: Verificando archivo botes creado:', fs.existsSync(botesPath));
+        } catch (saveError) {
+            console.error('❌ ERROR GUARDANDO ARCHIVOS:', saveError);
+            console.error('❌ Stack:', saveError.stack);
+            throw saveError;
         }
-
-        fs.writeFileSync(outputPath, JSON.stringify(lotteryData, null, 2));
-        console.log('💾 Datos guardados en:', outputPath);
-
-        // También guardar botes separadamente para compatibilidad
-        const botesPath = path.join(__dirname, '..', 'src', 'assets', 'botes.json');
-        fs.writeFileSync(botesPath, JSON.stringify(lotteryData.botes, null, 2));
-        console.log('💰 Botes guardados en:', botesPath);
 
         console.log('🎉 Scraping completado exitosamente!');
         process.exit(0);
