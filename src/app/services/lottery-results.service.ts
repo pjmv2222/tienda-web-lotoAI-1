@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map, catchError, of } from 'rxjs';
-import { environment } from '../../environments/environment';
 
 export interface LotteryResult {
   juego: string;
@@ -20,52 +19,92 @@ export interface LotteryResult {
   numero?: string;
 }
 
-export interface LotteryData {
-  botes: { [key: string]: string };
-  resultados: LotteryResult[];
-  timestamp: string;
+// Formato de datos del scraper extendido
+interface ScrapedResult {
+  game: string;
+  date: string;
+  numbers: number[];
+  stars?: number[];
+  complementary?: number;
+  reintegro?: number;
+  clave?: number;
+  dream?: number;
+  caballo?: number;
+  millon?: string;
+  joker?: string;
+  premios?: string[];
 }
 
-interface BackendResponse {
-  success: boolean;
-  data: LotteryResult[];
-  lastUpdated: string;
-  message?: string;
+export interface LotteryData {
+  botes: { [key: string]: string };
+  resultados: ScrapedResult[];
+  timestamp: string;
 }
 
 @Injectable({
   providedIn: 'root'
 })
 export class LotteryResultsService {
-  private readonly apiUrl = environment.production 
-    ? 'https://loto-ia.com/api' 
-    : 'http://localhost:3000/api';
 
   constructor(private http: HttpClient) { }
 
   /**
-   * Obtiene solo los últimos resultados desde el backend
+   * Obtiene solo los últimos resultados directamente desde lottery-data.json (patrón original)
    */
   getLatestResults(): Observable<LotteryResult[]> {
-    return this.http.get<BackendResponse>(`${this.apiUrl}/lottery-results/latest`)
+    const timestamp = new Date().getTime();
+    const headers = {
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    };
+    
+    return this.http.get<LotteryData>(`assets/lottery-data.json?t=${timestamp}`, { headers })
       .pipe(
-        map(response => response.data || []),
+        map(data => {
+          if (data && data.resultados && Array.isArray(data.resultados)) {
+            // Transformar datos del scraper al formato esperado por el frontend
+            return data.resultados.map(resultado => ({
+              juego: resultado.game,
+              nombreJuego: this.getGameDisplayName(resultado.game),
+              fecha: resultado.date || new Date().toISOString().split('T')[0],
+              sorteo: 'Sorteo actual',
+              numeros: resultado.numbers || [],
+              ...(resultado.stars && { estrellas: resultado.stars }),
+              ...(resultado.millon && { millon: resultado.millon }),
+              ...(resultado.joker && { joker: resultado.joker }),
+              ...(resultado.complementary && { complementario: resultado.complementary }),
+              ...(resultado.reintegro && { reintegro: resultado.reintegro }),
+              ...(resultado.clave && { clave: resultado.clave }),
+              ...(resultado.dream && { dream: resultado.dream }),
+              ...(resultado.caballo && { caballo: resultado.caballo }),
+              ...(resultado.premios && { premios: resultado.premios })
+            }));
+          }
+          return [];
+        }),
         catchError(error => {
-          console.error('Error al obtener resultados del backend:', error);
+          console.error('Error al obtener resultados desde lottery-data.json:', error);
           return of(this.getFallbackData());
         })
       );
   }
 
   /**
-   * Obtiene solo los botes actuales desde el backend
+   * Obtiene solo los botes actuales directamente desde botes.json (patrón original)
    */
   getCurrentJackpots(): Observable<{ [key: string]: string }> {
-    return this.http.get<any>(`${this.apiUrl}/lottery-results/jackpots`)
+    const timestamp = new Date().getTime();
+    const headers = {
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    };
+    
+    return this.http.get<{ [key: string]: string }>(`assets/botes.json?t=${timestamp}`, { headers })
       .pipe(
-        map(response => response.data || {}),
         catchError(error => {
-          console.error('Error al obtener botes del backend:', error);
+          console.error('Error al obtener botes desde botes.json:', error);
           return of({});
         })
       );

@@ -50,6 +50,12 @@ jobs:
             else
               echo "⚠️  Archivo src/assets/botes.json no encontrado para respaldar"
             fi
+            if [ -f "src/assets/lottery-data.json" ]; then
+              cp src/assets/lottery-data.json src/assets/lottery-data.json.backup
+              echo "✅ Archivo lottery-data.json (src) respaldado"
+            else
+              echo "⚠️  Archivo src/assets/lottery-data.json no encontrado para respaldar"
+            fi
             if [ -f "dist/tienda-web-loto-ai/browser/assets/botes.json" ]; then
               # Crear directorio temporal para respaldos fuera de dist/
               mkdir -p .deploy-backups
@@ -57,6 +63,13 @@ jobs:
               echo "✅ Archivo botes.json (dist) respaldado en .deploy-backups/"
             else
               echo "⚠️  Archivo dist botes.json no encontrado para respaldar"
+            fi
+            if [ -f "dist/tienda-web-loto-ai/browser/assets/lottery-data.json" ]; then
+              mkdir -p .deploy-backups
+              cp dist/tienda-web-loto-ai/browser/assets/lottery-data.json .deploy-backups/lottery-data.json.backup
+              echo "✅ Archivo lottery-data.json (dist) respaldado en .deploy-backups/"
+            else
+              echo "⚠️  Archivo dist lottery-data.json no encontrado para respaldar"
             fi
             
             # Respaldar configuraciones específicas del servidor IA
@@ -102,6 +115,13 @@ jobs:
             else
               echo "❌ No se pudo restaurar botes.json (src) - archivo de respaldo no encontrado"
             fi
+            if [ -f "src/assets/lottery-data.json.backup" ]; then
+              cp src/assets/lottery-data.json.backup src/assets/lottery-data.json
+              rm src/assets/lottery-data.json.backup
+              echo "✅ Archivo lottery-data.json (src) restaurado con datos actualizados del scraper"
+            else
+              echo "❌ No se pudo restaurar lottery-data.json (src) - archivo de respaldo no encontrado"
+            fi
             if [ -f ".deploy-backups/botes.json.backup" ]; then
               # Crear directorio si no existe
               mkdir -p dist/tienda-web-loto-ai/browser/assets/
@@ -110,6 +130,14 @@ jobs:
               echo "✅ Archivo botes.json (dist) restaurado con datos actualizados del scraper"
             else
               echo "❌ No se pudo restaurar botes.json (dist) - archivo de respaldo no encontrado"
+            fi
+            if [ -f ".deploy-backups/lottery-data.json.backup" ]; then
+              mkdir -p dist/tienda-web-loto-ai/browser/assets/
+              cp .deploy-backups/lottery-data.json.backup dist/tienda-web-loto-ai/browser/assets/lottery-data.json
+              rm .deploy-backups/lottery-data.json.backup
+              echo "✅ Archivo lottery-data.json (dist) restaurado con datos actualizados del scraper"
+            else
+              echo "❌ No se pudo restaurar lottery-data.json (dist) - archivo de respaldo no encontrado"
             fi
             
             # Restaurar configuraciones específicas del servidor IA
@@ -180,14 +208,21 @@ jobs:
             sudo swapoff /swapfile || true
             sudo rm /swapfile || true
             
-            # 7.5. Asegurar que botes.json actualizado esté en dist después del build
-            echo "--- Fase 7.5: Copiando botes.json actualizado a dist ---"
+            # 7.5. Asegurar que archivos JSON actualizados estén en dist después del build
+            echo "--- Fase 7.5: Copiando archivos JSON actualizados a dist ---"
             if [ -f "src/assets/botes.json" ]; then
               mkdir -p dist/tienda-web-loto-ai/browser/assets/
               cp src/assets/botes.json dist/tienda-web-loto-ai/browser/assets/botes.json
               echo "✅ Archivo botes.json actualizado copiado a dist"
             else
               echo "⚠️  Archivo src/assets/botes.json no encontrado para copiar a dist"
+            fi
+            if [ -f "src/assets/lottery-data.json" ]; then
+              mkdir -p dist/tienda-web-loto-ai/browser/assets/
+              cp src/assets/lottery-data.json dist/tienda-web-loto-ai/browser/assets/lottery-data.json
+              echo "✅ Archivo lottery-data.json actualizado copiado a dist"
+            else
+              echo "⚠️  Archivo src/assets/lottery-data.json no encontrado para copiar a dist"
             fi
             
             # 8. Reiniciar los servicios con PM2 - LIMPIEZA COMPLETA
