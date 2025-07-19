@@ -258,10 +258,10 @@ async function scrapeWithoutProxy() {
                         dateSelector: '#qa_ultResult-BONO-fecha'
                     },
                     {
-                        game: 'gordo',
+                        game: 'elgordo',
                         code: 'ELGR',
-                        mainNumbersSelector: '#qa_ultResult-combination-mainNumbers-ELGR .c-ultimo-resultado__combinacion-li--gordo',
-                        claveSelector: '#qa_ultResult-combination-clave-ELGR .c-ultimo-resultado__combinacion-li--clave',
+                        mainNumbersSelector: '#qa_ultResult-combination-mainNumbers-ELGR .c-ultimo-resultado__combinacion-li--elgordo',
+                        claveSelector: '#qa_ultResult-ELGR-reintegro',
                         dateSelector: '#qa_ultResult-ELGR-fecha'
                     },
                     {
@@ -514,7 +514,7 @@ async function scrapeWithProxy(proxy: ProxyConfig) {
     try {
         console.log('🔗 Configurando proxy...', proxy.url);
         
-        anonymizedProxy = await ProxyChain.anonymizeProxy(proxy.url);
+        anonymizedProxy = await (ProxyChain as any).anonymizeProxy(proxy.url);
         console.log('✅ Proxy configurado:', anonymizedProxy);
 
         browser = await puppeteer.launch({
@@ -564,7 +564,7 @@ async function scrapeWithProxy(proxy: ProxyConfig) {
             await browser.close();
         }
         if (anonymizedProxy) {
-            await ProxyChain.closeAnonymizedProxy(anonymizedProxy, true);
+            await (ProxyChain as any).closeAnonymizedProxy(anonymizedProxy, true);
         }
     }
 }
@@ -625,7 +625,9 @@ async function main() {
             console.log('🔧 DEBUG: Verificando archivo botes creado:', fs.existsSync(botesPath));
         } catch (saveError) {
             console.error('❌ ERROR GUARDANDO ARCHIVOS:', saveError);
-            console.error('❌ Stack:', saveError.stack);
+            if (saveError instanceof Error) {
+                console.error('❌ Stack:', saveError.stack);
+            }
             throw saveError;
         }
 

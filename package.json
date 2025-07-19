@@ -15,7 +15,10 @@
     "build:ssr": "ng build && ng run tienda-web-loto-ai:server",
     "serve:ssr:tienda-web-loto-ai": "node dist/tienda-web-loto-ai/server/main.server.mjs",
     "prerender": "ng run tienda-web-loto-ai:prerender",
-    "build:scraper": "tsc -p tsconfig.scraper.json"
+    "build:scraper": "tsc -p tsconfig.scraper.json",
+    "scraper:results": "cd scraper && npx ts-node scraper-extended.ts",
+    "scraper:botes": "cd scraper && npx ts-node scraper.ts",
+    "scraper:all": "npm run scraper:botes && npm run scraper:results"
   },
   "dependencies": {
     "@angular/animations": "^18.2.12",

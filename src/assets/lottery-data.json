@@ -1,51 +1,51 @@
 {
-  "timestamp": "2025-07-18T10:00:00Z",
+  "timestamp": "2025-07-19T17:05:23.078Z",
+  "botes": {
+    "euromillones": "122 MILLONES",
+    "primitiva": "35 MILLONES",
+    "gordo": "7,5 MILLONES",
+    "eurodreams": "20.000€ Al mes durante 30 años",
+    "loterianacional": "300.000€ Primer Premio",
+    "lototurf": "1,47 MILLONES"
+  },
   "resultados": [
     {
       "game": "euromillones",
-      "numbers": [7, 12, 18, 33, 42],
-      "stars": [3, 8],
-      "millon": "ABC12345",
-      "date": "16/07/2025"
+      "numbers": [13, 19, 25, 42, 45],
+      "stars": [2, 9],
+      "date": "18/07/2025"
     },
     {
       "game": "primitiva",
-      "numbers": [5, 14, 23, 31, 45, 49],
-      "complementary": 12,
-      "reintegro": 7,
-      "joker": "1234567",
+      "numbers": [12, 16, 30, 32, 41, 47],
+      "joker": "4603257",
       "date": "17/07/2025"
     },
     {
       "game": "bonoloto",
-      "numbers": [2, 11, 19, 28, 35, 44],
-      "complementary": 8,
-      "reintegro": 3,
+      "numbers": [4, 20, 30, 32, 45, 47],
       "date": "18/07/2025"
     },
     {
       "game": "elgordo",
-      "numbers": [9, 17, 26, 38, 51],
-      "clave": 4,
-      "date": "14/07/2025"
+      "numbers": [6, 7, 8, 11, 40],
+      "clave": 7,
+      "date": "13/07/2025"
     },
     {
       "game": "eurodreams",
-      "numbers": [6, 13, 22, 29, 37, 40],
-      "dream": 2,
-      "date": "15/07/2025"
+      "numbers": [4, 10, 12, 26, 28, 29],
+      "date": "17/07/2025"
     },
     {
       "game": "lototurf",
-      "numbers": [3, 8, 12, 15, 18, 20],
-      "reintegro": 9,
-      "caballo": 6,
-      "date": "14/07/2025"
+      "numbers": [6, 7, 12, 13, 14, 26],
+      "date": "17/07/2025"
     },
     {
       "game": "loterianacional",
-      "premios": ["85734", "42156", "97813"],
-      "date": "17/07/2025"
+      "premios": ["39601", "03508", "99775"],
+      "date": "19/07/2025"
     }
   ]
 } 
