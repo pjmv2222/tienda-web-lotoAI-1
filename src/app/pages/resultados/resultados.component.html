@@ -68,8 +68,28 @@
             <span *ngIf="resultado.juego !== 'loterianacional'">Combinación Ganadora</span>
           </h4>
           
-          <!-- Números regulares -->
-          <div class="numeros-container">
+          <!-- Múltiples sorteos (Lotería Nacional) -->
+          <div *ngIf="resultado.sorteos && resultado.sorteos.length > 0" class="sorteos-multiples">
+            <div *ngFor="let sorteo of resultado.sorteos; let i = index" class="sorteo-individual">
+              <div class="sorteo-header">
+                <h5 class="sorteo-dia">{{ formatSorteoDia(sorteo.dia) }}</h5>
+                <p class="sorteo-fecha">{{ formatDate(sorteo.fecha) }}</p>
+              </div>
+              <div class="sorteo-premios">
+                <div class="premio-item">
+                  <span class="premio-label">1er Premio:</span>
+                  <div class="numero-ball numero-nacional">{{ sorteo.premios[0] }}</div>
+                </div>
+                <div *ngIf="sorteo.premios[1]" class="premio-item">
+                  <span class="premio-label">2º Premio:</span>
+                  <div class="numero-ball numero-nacional">{{ sorteo.premios[1] }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Números regulares (para otros juegos) -->
+          <div *ngIf="!resultado.sorteos || resultado.sorteos.length === 0" class="numeros-container">
             <div 
               *ngFor="let numero of resultado.numeros" 
               class="numero-ball"
