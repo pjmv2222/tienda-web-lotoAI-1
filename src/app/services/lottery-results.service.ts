@@ -85,12 +85,21 @@ export class LotteryResultsService {
               // Determinar número de sorteo basado en la fecha
               const numeroSorteo = this.calcularNumeroSorteo(fechaValida, resultado.game);
               
+              // Manejar números especiales para Lotería Nacional
+              let numeros: number[] = [];
+              if (resultado.game === 'loterianacional' && resultado.premios) {
+                // Para Lotería Nacional, convertir premios (strings) a números
+                numeros = resultado.premios.map((premio: string) => parseInt(premio, 10)).filter((n: number) => !isNaN(n));
+              } else {
+                numeros = resultado.numbers || [];
+              }
+
               return {
                 juego: resultado.game,
                 nombreJuego: this.getGameDisplayName(resultado.game),
                 fecha: fechaValida,
                 sorteo: `Sorteo ${numeroSorteo}`,
-                numeros: resultado.numbers || [],
+                numeros: numeros,
                 ...(resultado.stars && { estrellas: resultado.stars }),
                 ...(resultado.millon && { millon: resultado.millon }),
                 ...(resultado.joker && { joker: resultado.joker }),
