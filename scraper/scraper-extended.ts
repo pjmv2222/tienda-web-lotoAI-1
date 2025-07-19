@@ -308,21 +308,11 @@ async function scrapeWithoutProxy() {
                                 const result: any = {
                                     game: config.game,
                                     premios: premios, // Usar 'premios' en lugar de 'numbers'
-                                    date: 'pending' // Extraer fecha después
+                                    date: extraerFechaValida(config.dateSelector)
                                 };
 
-                                // Obtener fecha real
-                                if (config.dateSelector) {
-                                    const dateElement = document.querySelector(config.dateSelector);
-                                    if (dateElement) {
-                                        const dateText = dateElement.textContent?.trim() || '';
-                                        const dateMatch = dateText.match(/\d{1,2}\/\d{1,2}\/\d{4}/);
-                                        if (dateMatch) result.date = dateMatch[0];
-                                    }
-                                }
-
                                 results.push(result);
-                                console.log(`✅ ${config.game}: ${premios.length} premios extraídos`);
+                                console.log(`✅ ${config.game}: ${premios.length} premios extraídos, fecha: ${result.date}`);
                             }
                             return; // Salir del forEach para este caso especial
                         }
@@ -336,22 +326,8 @@ async function scrapeWithoutProxy() {
                             const result: any = {
                                 game: config.game,
                                 numbers: mainNumbers,
-                                date: 'pending' // Se actualiza abajo
+                                date: extraerFechaValida(config.dateSelector)
                             };
-
-                            // Obtener fecha real
-                            if (config.dateSelector) {
-                                const dateElement = document.querySelector(config.dateSelector);
-                                if (dateElement) {
-                                    const dateText = dateElement.textContent?.trim() || '';
-                                    const dateMatch = dateText.match(/\d{1,2}\/\d{1,2}\/\d{4}/);
-                                    if (dateMatch) {
-                                        result.date = dateMatch[0];
-                                    } else {
-                                        result.date = new Date().toLocaleDateString('es-ES');
-                                    }
-                                }
-                            }
 
                             // Obtener estrellas (Euromillones)
                             if (config.starsSelector) {
@@ -366,7 +342,10 @@ async function scrapeWithoutProxy() {
                                 const millonElement = document.querySelector(config.millonSelector);
                                 if (millonElement) {
                                     const millon = millonElement.textContent?.trim() || '';
-                                    if (millon) result.millon = millon;
+                                    if (millon && millon.includes('Millón')) {
+                                        const match = millon.match(/([A-Z]{3}\d{5})/);
+                                        if (match) result.millon = match[1];
+                                    }
                                 }
                             }
 
@@ -375,25 +354,25 @@ async function scrapeWithoutProxy() {
                                 const jokerElement = document.querySelector(config.jokerSelector);
                                 if (jokerElement) {
                                     const joker = jokerElement.textContent?.trim().replace(/\s/g, '') || '';
-                                    if (joker) result.joker = joker;
+                                    if (joker && joker.length === 7) result.joker = joker;
                                 }
                             }
 
-                            // Obtener complementario
+                            // Obtener número complementario
                             if (config.complementarySelector) {
                                 const compElement = document.querySelector(config.complementarySelector);
                                 if (compElement) {
                                     const comp = parseInt(compElement.textContent?.trim() || '0');
-                                    if (comp > 0) result.complementario = comp;
+                                    if (comp > 0) result.complementary = comp;
                                 }
                             }
 
                             // Obtener reintegro
                             if (config.reintegroSelector) {
-                                const reintElement = document.querySelector(config.reintegroSelector);
-                                if (reintElement) {
-                                    const reint = parseInt(reintElement.textContent?.trim() || '0');
-                                    if (reint > 0) result.reintegro = reint;
+                                const reintegroElement = document.querySelector(config.reintegroSelector);
+                                if (reintegroElement) {
+                                    const reintegro = parseInt(reintegroElement.textContent?.trim() || '0');
+                                    if (reintegro >= 0) result.reintegro = reintegro;
                                 }
                             }
 
@@ -402,7 +381,7 @@ async function scrapeWithoutProxy() {
                                 const claveElement = document.querySelector(config.claveSelector);
                                 if (claveElement) {
                                     const clave = parseInt(claveElement.textContent?.trim() || '0');
-                                    if (clave > 0) result.clave = clave;
+                                    if (clave >= 0) result.clave = clave;
                                 }
                             }
 
@@ -425,18 +404,85 @@ async function scrapeWithoutProxy() {
                             }
 
                             results.push(result);
-                            console.log(`✅ ${config.game}: ${mainNumbers.length} números extraídos`);
+                            console.log(`✅ ${config.game}: ${mainNumbers.length} números principales extraídos, fecha: ${result.date}`);
+                        } else {
+                            console.log(`❌ ${config.game}: No se encontraron números principales`);
                         }
                     } catch (error) {
-                        console.warn(`Error extrayendo ${config.game}:`, error);
+                        console.error(`❌ Error procesando ${config.game}:`, error);
                     }
                 });
 
-            } catch (error) {
-                console.warn('Error general extrayendo resultados:', error);
-            }
+                // Función auxiliar para extraer fecha válida
+                function extraerFechaValida(dateSelector: string): string {
+                    if (!dateSelector) {
+                        return new Date().toLocaleDateString('es-ES', { 
+                            day: '2-digit', 
+                            month: '2-digit', 
+                            year: 'numeric' 
+                        });
+                    }
 
-            return results;
+                    try {
+                        const dateElement = document.querySelector(dateSelector);
+                        if (dateElement) {
+                            const dateText = dateElement.textContent?.trim() || '';
+                            console.log(`📅 Fecha extraída para ${dateSelector}: "${dateText}"`);
+                            
+                            // Buscar patrones de fecha
+                            const datePatterns = [
+                                /(\d{1,2})\/(\d{1,2})\/(\d{4})/,  // DD/MM/YYYY
+                                /(\d{1,2})-(\d{1,2})-(\d{4})/,   // DD-MM-YYYY
+                                /(\d{1,2})\s+de\s+\w+\s+de\s+(\d{4})/  // DD de MMMM de YYYY
+                            ];
+
+                            for (const pattern of datePatterns) {
+                                const match = dateText.match(pattern);
+                                if (match) {
+                                    if (pattern === datePatterns[2]) {
+                                        // Formato "DD de MMMM de YYYY"
+                                        const meses = {
+                                            'enero': '01', 'febrero': '02', 'marzo': '03', 'abril': '04',
+                                            'mayo': '05', 'junio': '06', 'julio': '07', 'agosto': '08',
+                                            'septiembre': '09', 'octubre': '10', 'noviembre': '11', 'diciembre': '12'
+                                        };
+                                        const dia = match[1].padStart(2, '0');
+                                        const mesTexto = dateText.toLowerCase().match(/\b(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)\b/);
+                                        const año = match[2];
+                                        if (mesTexto && meses[mesTexto[1] as keyof typeof meses]) {
+                                            const mes = meses[mesTexto[1] as keyof typeof meses];
+                                            return `${dia}/${mes}/${año}`;
+                                        }
+                                    } else {
+                                        // Formatos DD/MM/YYYY o DD-MM-YYYY
+                                        const dia = match[1].padStart(2, '0');
+                                        const mes = match[2].padStart(2, '0');
+                                        const año = match[3];
+                                        return `${dia}/${mes}/${año}`;
+                                    }
+                                }
+                            }
+                        }
+                    } catch (error) {
+                        console.error(`Error extrayendo fecha para ${dateSelector}:`, error);
+                    }
+
+                    // Fallback: fecha actual
+                    const hoy = new Date();
+                    return hoy.toLocaleDateString('es-ES', { 
+                        day: '2-digit', 
+                        month: '2-digit', 
+                        year: 'numeric' 
+                    });
+                }
+
+                console.log(`📊 Total de resultados extraídos: ${results.length}`);
+                return results;
+
+            } catch (error) {
+                console.error('❌ Error general en extracción:', error);
+                return [];
+            }
         });
 
         console.log('✅ Datos extraídos exitosamente');

@@ -208,21 +208,17 @@ jobs:
             sudo swapoff /swapfile || true
             sudo rm /swapfile || true
             
-            # 7.5. Asegurar que archivos JSON actualizados estén en dist después del build
-            echo "--- Fase 7.5: Copiando archivos JSON actualizados a dist ---"
-            if [ -f "src/assets/botes.json" ]; then
-              mkdir -p dist/tienda-web-loto-ai/browser/assets/
-              cp src/assets/botes.json dist/tienda-web-loto-ai/browser/assets/botes.json
-              echo "✅ Archivo botes.json actualizado copiado a dist"
+            # 7.5. Verificar que archivos JSON están en dist después del build
+            echo "--- Fase 7.5: Verificando archivos JSON en dist ---"
+            if [ -f "dist/tienda-web-loto-ai/browser/assets/botes.json" ]; then
+              echo "✅ Archivo botes.json encontrado en dist (copiado automáticamente por Angular)"
             else
-              echo "⚠️  Archivo src/assets/botes.json no encontrado para copiar a dist"
+              echo "⚠️  Archivo botes.json NO encontrado en dist"
             fi
-            if [ -f "src/assets/lottery-data.json" ]; then
-              mkdir -p dist/tienda-web-loto-ai/browser/assets/
-              cp src/assets/lottery-data.json dist/tienda-web-loto-ai/browser/assets/lottery-data.json
-              echo "✅ Archivo lottery-data.json actualizado copiado a dist"
+            if [ -f "dist/tienda-web-loto-ai/browser/assets/lottery-data.json" ]; then
+              echo "✅ Archivo lottery-data.json encontrado en dist (copiado automáticamente por Angular)"
             else
-              echo "⚠️  Archivo src/assets/lottery-data.json no encontrado para copiar a dist"
+              echo "⚠️  Archivo lottery-data.json NO encontrado en dist"
             fi
             
             # 8. Reiniciar los servicios con PM2 - LIMPIEZA COMPLETA

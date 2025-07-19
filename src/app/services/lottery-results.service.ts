@@ -49,6 +49,20 @@ export class LotteryResultsService {
   constructor(private http: HttpClient) { }
 
   /**
+   * Obtiene resultados desde el backend
+   */
+  getBackendResults(): Observable<LotteryResult[]> {
+    return this.http.get<any>('/api/lottery-results/latest')
+      .pipe(
+        map(response => response.data || []),
+        catchError(error => {
+          console.error('Error al obtener resultados del backend:', error);
+          return of([]);
+        })
+      );
+  }
+
+  /**
    * Obtiene solo los últimos resultados directamente desde lottery-data.json (patrón original)
    */
   getLatestResults(): Observable<LotteryResult[]> {
@@ -64,22 +78,30 @@ export class LotteryResultsService {
         map(data => {
           if (data && data.resultados && Array.isArray(data.resultados)) {
             // Transformar datos del scraper al formato esperado por el frontend
-            return data.resultados.map(resultado => ({
-              juego: resultado.game,
-              nombreJuego: this.getGameDisplayName(resultado.game),
-              fecha: resultado.date || new Date().toISOString().split('T')[0],
-              sorteo: 'Sorteo actual',
-              numeros: resultado.numbers || [],
-              ...(resultado.stars && { estrellas: resultado.stars }),
-              ...(resultado.millon && { millon: resultado.millon }),
-              ...(resultado.joker && { joker: resultado.joker }),
-              ...(resultado.complementary && { complementario: resultado.complementary }),
-              ...(resultado.reintegro && { reintegro: resultado.reintegro }),
-              ...(resultado.clave && { clave: resultado.clave }),
-              ...(resultado.dream && { dream: resultado.dream }),
-              ...(resultado.caballo && { caballo: resultado.caballo }),
-              ...(resultado.premios && { premios: resultado.premios })
-            }));
+            return data.resultados.map(resultado => {
+              // Procesar fecha correctamente
+              const fechaValida = this.procesarFecha(resultado.date);
+              
+              // Determinar número de sorteo basado en la fecha
+              const numeroSorteo = this.calcularNumeroSorteo(fechaValida, resultado.game);
+              
+              return {
+                juego: resultado.game,
+                nombreJuego: this.getGameDisplayName(resultado.game),
+                fecha: fechaValida,
+                sorteo: `Sorteo ${numeroSorteo}`,
+                numeros: resultado.numbers || [],
+                ...(resultado.stars && { estrellas: resultado.stars }),
+                ...(resultado.millon && { millon: resultado.millon }),
+                ...(resultado.joker && { joker: resultado.joker }),
+                ...(resultado.complementary && { complementario: resultado.complementary }),
+                ...(resultado.reintegro && { reintegro: resultado.reintegro }),
+                ...(resultado.clave && { clave: resultado.clave }),
+                ...(resultado.dream && { dream: resultado.dream }),
+                ...(resultado.caballo && { caballo: resultado.caballo }),
+                ...(resultado.premios && { premios: resultado.premios })
+              };
+            });
           }
           return [];
         }),
@@ -152,6 +174,63 @@ export class LotteryResultsService {
       'loterianacional': '#CC3300'
     };
     return colors[gameName] || '#666666';
+  }
+
+  /**
+   * Procesa y valida fechas del scraper
+   */
+  private procesarFecha(fecha: string): string {
+    if (!fecha || fecha === 'pending') {
+      // Si no hay fecha válida, usar la fecha actual
+      return new Date().toISOString().split('T')[0];
+    }
+
+    // Si viene en formato DD/MM/YYYY (español)
+    if (fecha.includes('/')) {
+      const partes = fecha.split('/');
+      if (partes.length === 3) {
+        const [dia, mes, año] = partes;
+        // Convertir a formato ISO (YYYY-MM-DD)
+        return `${año}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
+      }
+    }
+
+    // Si ya viene en formato ISO, validar que sea una fecha válida
+    const fechaDate = new Date(fecha);
+    if (!isNaN(fechaDate.getTime())) {
+      return fecha;
+    }
+
+    // Fallback: fecha actual
+    return new Date().toISOString().split('T')[0];
+  }
+
+  /**
+   * Calcula el número de sorteo aproximado basado en la fecha y el juego
+   */
+  private calcularNumeroSorteo(fecha: string, juego: string): string {
+    const fechaActual = new Date(fecha);
+    const año = fechaActual.getFullYear();
+    const inicioAño = new Date(año, 0, 1);
+    
+    // Calcular días transcurridos desde inicio del año
+    const diasTranscurridos = Math.floor((fechaActual.getTime() - inicioAño.getTime()) / (1000 * 60 * 60 * 24));
+    
+    // Frecuencia de sorteos por juego (sorteos por semana)
+    const frecuencias: { [key: string]: number } = {
+      'euromillones': 2, // Martes y viernes
+      'primitiva': 2, // Jueves y sábado
+      'bonoloto': 6, // Lunes a sábado
+      'elgordo': 1, // Domingo
+      'eurodreams': 2, // Lunes y jueves
+      'lototurf': 1, // Domingo
+      'loterianacional': 2 // Jueves y sábado
+    };
+    
+    const frecuencia = frecuencias[juego] || 1;
+    const sorteoAproximado = Math.floor((diasTranscurridos / 7) * frecuencia) + 1;
+    
+    return `${sorteoAproximado.toString().padStart(3, '0')}/${año}`;
   }
 
   /**
