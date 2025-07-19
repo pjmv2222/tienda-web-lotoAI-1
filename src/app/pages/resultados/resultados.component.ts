@@ -44,10 +44,25 @@ export class ResultadosComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (resultados) => {
-          this.resultados = resultados;
+          // Validar y filtrar resultados
+          this.resultados = resultados.filter(resultado => {
+            // Verificar que tenga los datos mínimos necesarios
+            return resultado.juego && 
+                   resultado.nombreJuego && 
+                   (resultado.numeros && resultado.numeros.length > 0);
+          }).map(resultado => {
+            // Asegurar que la fecha sea válida
+            if (!resultado.fecha || resultado.fecha === 'pending') {
+              resultado.fecha = new Date().toISOString().split('T')[0];
+            }
+            return resultado;
+          });
+          
           this.lastUpdated = new Date();
           this.isLoading = false;
           this.error = null;
+          
+          console.log('Resultados cargados:', this.resultados);
         },
         error: (error) => {
           console.error('Error cargando resultados:', error);
@@ -157,13 +172,44 @@ export class ResultadosComponent implements OnInit, OnDestroy {
   }
 
   formatDate(fecha: string): string {
-    const date = new Date(fecha);
-    return date.toLocaleDateString('es-ES', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
+    if (!fecha) {
+      return 'Fecha no disponible';
+    }
+
+    try {
+      const date = new Date(fecha);
+      
+      // Verificar si la fecha es válida
+      if (isNaN(date.getTime())) {
+        // Intentar procesar fechas en formato DD/MM/YYYY
+        if (fecha.includes('/')) {
+          const partes = fecha.split('/');
+          if (partes.length === 3) {
+            const [dia, mes, año] = partes;
+            const fechaCorregida = new Date(parseInt(año), parseInt(mes) - 1, parseInt(dia));
+            if (!isNaN(fechaCorregida.getTime())) {
+              return fechaCorregida.toLocaleDateString('es-ES', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+              });
+            }
+          }
+        }
+        return 'Fecha no válida';
+      }
+
+      return date.toLocaleDateString('es-ES', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    } catch (error) {
+      console.error('Error al formatear fecha:', fecha, error);
+      return 'Error en fecha';
+    }
   }
 
   trackByGame(index: number, resultado: LotteryResult): string {

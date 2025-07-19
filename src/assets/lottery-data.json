@@ -1,0 +1,51 @@
+{
+  "timestamp": "2025-07-18T10:00:00Z",
+  "resultados": [
+    {
+      "game": "euromillones",
+      "numbers": [7, 12, 18, 33, 42],
+      "stars": [3, 8],
+      "millon": "ABC12345",
+      "date": "16/07/2025"
+    },
+    {
+      "game": "primitiva",
+      "numbers": [5, 14, 23, 31, 45, 49],
+      "complementary": 12,
+      "reintegro": 7,
+      "joker": "1234567",
+      "date": "17/07/2025"
+    },
+    {
+      "game": "bonoloto",
+      "numbers": [2, 11, 19, 28, 35, 44],
+      "complementary": 8,
+      "reintegro": 3,
+      "date": "18/07/2025"
+    },
+    {
+      "game": "elgordo",
+      "numbers": [9, 17, 26, 38, 51],
+      "clave": 4,
+      "date": "14/07/2025"
+    },
+    {
+      "game": "eurodreams",
+      "numbers": [6, 13, 22, 29, 37, 40],
+      "dream": 2,
+      "date": "15/07/2025"
+    },
+    {
+      "game": "lototurf",
+      "numbers": [3, 8, 12, 15, 18, 20],
+      "reintegro": 9,
+      "caballo": 6,
+      "date": "14/07/2025"
+    },
+    {
+      "game": "loterianacional",
+      "premios": ["85734", "42156", "97813"],
+      "date": "17/07/2025"
+    }
+  ]
+} 
