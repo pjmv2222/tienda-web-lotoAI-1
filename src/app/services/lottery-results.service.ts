@@ -17,6 +17,12 @@ export interface LotteryResult {
   millon?: string;
   joker?: string;
   numero?: string;
+  sorteos?: Array<{
+    dia: string;
+    fecha: string;
+    premios: string[];
+    reintegros: string[];
+  }>;
 }
 
 // Formato de datos del scraper extendido

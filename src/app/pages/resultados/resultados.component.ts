@@ -220,9 +220,4 @@ export class ResultadosComponent implements OnInit, OnDestroy {
   trackByGame(index: number, resultado: LotteryResult): string {
     return resultado.juego;
   }
-
-  formatSorteoDia(dia: string): string {
-    if (!dia) return '';
-    return dia.charAt(0).toUpperCase() + dia.slice(1);
-  }
 } 
