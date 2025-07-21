@@ -44,7 +44,20 @@
     },
     {
       "game": "loterianacional",
-      "premios": ["39601", "03508", "99775"],
+      "sorteos": [
+        {
+          "dia": "jueves",
+          "fecha": "17/07/2025",
+          "premios": ["39601", "03508"],
+          "reintegros": ["0", "1", "9"]
+        },
+        {
+          "dia": "sábado", 
+          "fecha": "19/07/2025",
+          "premios": ["99775", "46590"],
+          "reintegros": ["2", "5", "6"]
+        }
+      ],
       "date": "19/07/2025"
     }
   ]
