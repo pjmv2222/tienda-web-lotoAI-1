@@ -87,9 +87,18 @@ export class LotteryResultsService {
               
               // Manejar números especiales para Lotería Nacional
               let numeros: number[] = [];
-              if (resultado.game === 'loterianacional' && resultado.premios) {
-                // Para Lotería Nacional, convertir premios (strings) a números
-                numeros = resultado.premios.map((premio: string) => parseInt(premio, 10)).filter((n: number) => !isNaN(n));
+              let sorteos: any[] = [];
+              
+              if (resultado.game === 'loterianacional') {
+                if ((resultado as any).sorteos && Array.isArray((resultado as any).sorteos)) {
+                  // Múltiples sorteos (jueves y sábado)
+                  sorteos = (resultado as any).sorteos;
+                  // Para compatibilidad, usar el primer sorteo para numeros
+                  numeros = (resultado as any).sorteos[0]?.premios?.map((premio: string) => parseInt(premio, 10)).filter((n: number) => !isNaN(n)) || [];
+                } else if (resultado.premios) {
+                  // Un solo sorteo (formato actual)
+                  numeros = resultado.premios.map((premio: string) => parseInt(premio, 10)).filter((n: number) => !isNaN(n));
+                }
               } else {
                 numeros = resultado.numbers || [];
               }
@@ -100,6 +109,7 @@ export class LotteryResultsService {
                 fecha: fechaValida,
                 sorteo: `Sorteo ${numeroSorteo}`,
                 numeros: numeros,
+                ...(sorteos.length > 0 && { sorteos: sorteos }), // Conditionally add sorteos
                 ...(resultado.stars && { estrellas: resultado.stars }),
                 ...(resultado.millon && { millon: resultado.millon }),
                 ...(resultado.joker && { joker: resultado.joker }),
