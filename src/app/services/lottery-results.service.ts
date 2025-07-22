@@ -116,15 +116,15 @@ export class LotteryResultsService {
                 sorteo: `Sorteo ${numeroSorteo}`,
                 numeros: numeros,
                 ...(sorteos.length > 0 && { sorteos: sorteos }), // Conditionally add sorteos
-                ...(resultado.stars && { estrellas: resultado.stars }),
-                ...(resultado.millon && { millon: resultado.millon }),
-                ...(resultado.joker && { joker: resultado.joker }),
-                ...(resultado.complementary && { complementario: resultado.complementary }),
-                ...(resultado.reintegro && { reintegro: resultado.reintegro }),
-                ...(resultado.clave && { clave: resultado.clave }),
-                ...(resultado.dream && { dream: resultado.dream }),
-                ...(resultado.caballo && { caballo: resultado.caballo }),
-                ...(resultado.premios && { premios: resultado.premios })
+                ...(resultado.stars ? { estrellas: resultado.stars } : {}),
+                ...(resultado.millon ? { millon: resultado.millon } : {}),
+                ...(resultado.joker ? { joker: resultado.joker } : {}),
+                ...(resultado.complementary !== undefined ? { complementario: resultado.complementary } : {}),
+                ...(resultado.reintegro !== undefined ? { reintegro: resultado.reintegro } : {}),
+                ...(resultado.clave !== undefined ? { clave: resultado.clave } : {}),
+                ...(resultado.dream !== undefined ? { dream: resultado.dream } : {}),
+                ...(resultado.caballo !== undefined ? { caballo: resultado.caballo } : {}),
+                ...(resultado.premios ? { premios: resultado.premios } : {})
               };
             });
           }
