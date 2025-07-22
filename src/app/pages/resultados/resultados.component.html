@@ -60,7 +60,7 @@
         </div>
       </div>
 
-      <!-- Números principales -->
+      <!-- Números principales y especiales -->
       <div class="card-body">
         <div class="numeros-section">
           <h4 class="section-title">
@@ -108,7 +108,6 @@
 
           <!-- Estrellas (EuroMillones) -->
           <div *ngIf="resultado.estrellas" class="estrellas-section">
-            <h5 class="subsection-title">Estrellas</h5>
             <div class="estrellas-container">
               <div 
                 *ngFor="let estrella of resultado.estrellas" 
@@ -118,55 +117,34 @@
             </div>
           </div>
 
-          <!-- Números especiales -->
+          <!-- El Millón (Euromillones) -->
+          <div *ngIf="resultado.juego === 'euromillones' && resultado.millon" class="c-ultimo-resultado__desplegable--millon">
+            <img class="c-ultimo-resultado__desplegable-imagen" src="assets/img/LogoMillon.svg" alt="El Millón">
+            <span class="c-ultimo-resultado__desplegable-titulo">{{ resultado.millon }}</span>
+          </div>
+
+          <!-- Joker (La Primitiva) -->
+          <div *ngIf="resultado.juego === 'primitiva' && resultado.joker" class="c-ultimo-resultado__desplegable--joker">
+            <img class="c-ultimo-resultado__desplegable-imagen" src="assets/img/joker-nuevo-logo.png" alt="Joker">
+            <span class="c-ultimo-resultado__desplegable-titulo">{{ resultado.joker }}</span>
+          </div>
+
+          <!-- Números especiales visuales para todos los juegos -->
           <div class="especiales-section">
-            <!-- Complementario -->
             <div *ngIf="resultado.complementario !== undefined" class="numero-especial">
-              <span class="especial-label">Complementario:</span>
               <div class="numero-ball especial">{{ resultado.complementario }}</div>
             </div>
-
-            <!-- Reintegro -->
             <div *ngIf="resultado.reintegro !== undefined" class="numero-especial">
-              <span class="especial-label">Reintegro:</span>
               <div class="numero-ball especial">{{ resultado.reintegro }}</div>
             </div>
-
-            <!-- Clave (El Gordo) -->
             <div *ngIf="resultado.clave !== undefined" class="numero-especial">
-              <span class="especial-label">Clave:</span>
               <div class="numero-ball especial">{{ resultado.clave }}</div>
             </div>
-
-            <!-- Dream (EuroDreams) -->
             <div *ngIf="resultado.dream !== undefined" class="numero-especial">
-              <span class="especial-label">Dream Number:</span>
               <div class="numero-ball especial">{{ resultado.dream }}</div>
             </div>
-
-            <!-- Caballo (Lototurf) -->
             <div *ngIf="resultado.caballo !== undefined" class="numero-especial">
-              <span class="especial-label">Caballo:</span>
               <div class="numero-ball especial">{{ resultado.caballo }}</div>
-            </div>
-
-            <!-- Joker (La Primitiva) -->
-            <div *ngIf="resultado.joker" class="numero-especial joker">
-              <span class="especial-label">Joker:</span>
-              <img src="assets/img/LogoJoker.svg" alt="Joker" class="icono-especial" style="height: 24px; vertical-align: middle; margin-right: 6px;">
-              <div class="joker-number">{{ resultado.joker }}</div>
-            </div>
-
-            <!-- El Millón (Euromillones) -->
-            <div *ngIf="resultado.juego === 'euromillones' && resultado.millon" class="c-ultimo-resultado__desplegable--millon">
-              <img class="c-ultimo-resultado__desplegable-imagen" src="assets/img/LogoMillon.svg" alt="El Millón">
-              <span class="c-ultimo-resultado__desplegable-titulo">{{ resultado.millon }}</span>
-            </div>
-
-            <!-- Joker (La Primitiva) -->
-            <div *ngIf="resultado.juego === 'primitiva' && resultado.joker" class="c-ultimo-resultado__desplegable--joker">
-              <img class="c-ultimo-resultado__desplegable-imagen" src="assets/img/joker-nuevo-logo.png" alt="Joker">
-              <span class="c-ultimo-resultado__desplegable-titulo">{{ resultado.joker }}</span>
             </div>
           </div>
         </div>
