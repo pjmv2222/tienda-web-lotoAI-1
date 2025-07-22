@@ -118,34 +118,24 @@
           </div>
 
           <!-- El Millón (Euromillones) -->
-          <div *ngIf="resultado.juego === 'euromillones' && resultado.millon" class="c-ultimo-resultado__desplegable--millon">
-            <img class="c-ultimo-resultado__desplegable-imagen" src="assets/img/LogoMillon.svg" alt="El Millón">
-            <span class="c-ultimo-resultado__desplegable-titulo">{{ resultado.millon }}</span>
+          <div *ngIf="resultado.juego === 'euromillones' && resultado.millon" class="bloque-millon-oficial">
+            <img src="assets/img/LogoMillon.svg" alt="El Millón" class="logo-millon-oficial">
+            <span class="codigo-millon-oficial">{{ resultado.millon }}</span>
           </div>
 
           <!-- Joker (La Primitiva) -->
-          <div *ngIf="resultado.juego === 'primitiva' && resultado.joker" class="c-ultimo-resultado__desplegable--joker">
-            <img class="c-ultimo-resultado__desplegable-imagen" src="assets/img/joker-nuevo-logo.png" alt="Joker">
-            <span class="c-ultimo-resultado__desplegable-titulo">{{ resultado.joker }}</span>
+          <div *ngIf="resultado.juego === 'primitiva' && resultado.joker" class="bloque-joker-oficial">
+            <img src="assets/img/joker-nuevo-logo.png" alt="Joker" class="logo-joker-oficial">
+            <span class="codigo-joker-oficial">{{ resultado.joker }}</span>
           </div>
 
           <!-- Números especiales visuales para todos los juegos -->
           <div class="especiales-section">
-            <div *ngIf="resultado.complementario !== undefined" class="numero-especial">
-              <div class="numero-ball especial">{{ resultado.complementario }}</div>
-            </div>
-            <div *ngIf="resultado.reintegro !== undefined" class="numero-especial">
-              <div class="numero-ball especial">{{ resultado.reintegro }}</div>
-            </div>
-            <div *ngIf="resultado.clave !== undefined" class="numero-especial">
-              <div class="numero-ball especial">{{ resultado.clave }}</div>
-            </div>
-            <div *ngIf="resultado.dream !== undefined" class="numero-especial">
-              <div class="numero-ball especial">{{ resultado.dream }}</div>
-            </div>
-            <div *ngIf="resultado.caballo !== undefined" class="numero-especial">
-              <div class="numero-ball especial">{{ resultado.caballo }}</div>
-            </div>
+            <div *ngIf="resultado.complementario !== undefined" class="numero-ball especial">{{ resultado.complementario }}</div>
+            <div *ngIf="resultado.reintegro !== undefined" class="numero-ball especial">{{ resultado.reintegro }}</div>
+            <div *ngIf="resultado.clave !== undefined" class="numero-ball especial">{{ resultado.clave }}</div>
+            <div *ngIf="resultado.dream !== undefined" class="numero-ball especial">{{ resultado.dream }}</div>
+            <div *ngIf="resultado.caballo !== undefined" class="numero-ball especial">{{ resultado.caballo }}</div>
           </div>
         </div>
 
