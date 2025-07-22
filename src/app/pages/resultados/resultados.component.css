@@ -566,3 +566,16 @@
     font-size: 0.8rem;
   }
 } 
+
+.c-ultimo-resultado__desplegable-imagen {
+    width: 44%;
+    max-height: 35px;
+    float: left;
+}
+.c-ultimo-resultado__desplegable-titulo {
+    display: inline-block;
+    vertical-align: middle;
+    font-size: 1.2em;
+    font-weight: bold;
+    margin-left: 10px;
+} 
