@@ -157,11 +157,16 @@
               <div class="joker-number">{{ resultado.joker }}</div>
             </div>
 
-            <!-- El Millón (EuroMillones) -->
-            <div *ngIf="resultado.millon" class="numero-especial millon">
-              <span class="especial-label">El Millón:</span>
-              <img src="assets/img/LogoMillon.svg" alt="El Millón" class="icono-especial" style="height: 24px; vertical-align: middle; margin-right: 6px;">
-              <div class="millon-number">{{ resultado.millon }}</div>
+            <!-- El Millón (Euromillones) -->
+            <div *ngIf="resultado.juego === 'euromillones' && resultado.millon" class="c-ultimo-resultado__desplegable--millon">
+              <img class="c-ultimo-resultado__desplegable-imagen" src="assets/img/LogoMillon.svg" alt="El Millón">
+              <span class="c-ultimo-resultado__desplegable-titulo">{{ resultado.millon }}</span>
+            </div>
+
+            <!-- Joker (La Primitiva) -->
+            <div *ngIf="resultado.juego === 'primitiva' && resultado.joker" class="c-ultimo-resultado__desplegable--joker">
+              <img class="c-ultimo-resultado__desplegable-imagen" src="assets/img/joker-nuevo-logo.png" alt="Joker">
+              <span class="c-ultimo-resultado__desplegable-titulo">{{ resultado.joker }}</span>
             </div>
           </div>
         </div>
