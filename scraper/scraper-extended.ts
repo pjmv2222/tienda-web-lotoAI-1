@@ -292,29 +292,72 @@ async function scrapeWithoutProxy() {
                     try {
                         // Manejo especial para Lotería Nacional
                         if (config.isSpecial && config.game === 'loterianacional') {
-                            const premiosElements = document.querySelectorAll(config.premiosSelector || '');
-                            const premios: string[] = [];
-                            
-                            for (let i = 0; i < Math.min(3, premiosElements.length); i++) {
-                                const premio = premiosElements[i];
-                                const numeroElement = premio.querySelector('.c-resultado-sorteo__numero a');
-                                if (numeroElement) {
-                                    const numero = numeroElement.textContent?.trim() || '';
-                                    if (numero) premios.push(numero);
+                            const sorteos: { dia: string; fecha: string; premios: string[]; reintegros: string[] }[] = [];
+                            // JUEVES
+                            const sorteoJueves = document.querySelector('#qa_resultadoSorteo-sorteo-LNACJ');
+                            if (sorteoJueves) {
+                                const premiosJueves: string[] = [];
+                                const numerosElementsJ = sorteoJueves.querySelectorAll('.c-resultado-sorteo__numero-enlace');
+                                numerosElementsJ.forEach(el => {
+                                    const numero = el.textContent?.trim() || '';
+                                    if (numero) premiosJueves.push(numero);
+                                });
+                                const fechaElementJ = document.querySelector('#qa_resultadoSorteo-fecha-LNACJ');
+                                const fechaJueves = fechaElementJ?.textContent?.trim() || '';
+                                // Extraer reintegros
+                                const reintegrosJueves: string[] = [];
+                                const reintegrosElementsJ = sorteoJueves.querySelectorAll('.c-resultado-sorteo__reintegros-li');
+                                reintegrosElementsJ.forEach(el => {
+                                    const reintegro = el.textContent?.replace('R', '').trim() || '';
+                                    if (reintegro) reintegrosJueves.push(reintegro);
+                                });
+                                if (premiosJueves.length > 0) {
+                                    sorteos.push({
+                                        dia: 'jueves',
+                                        fecha: fechaJueves,
+                                        premios: premiosJueves,
+                                        reintegros: reintegrosJueves
+                                    });
                                 }
                             }
-
-                            if (premios.length > 0) {
-                                const result: any = {
-                                    game: config.game,
-                                    premios: premios, // Usar 'premios' en lugar de 'numbers'
-                                    date: extraerFechaValida(config.dateSelector)
-                                };
-
-                                results.push(result);
-                                console.log(`✅ ${config.game}: ${premios.length} premios extraídos, fecha: ${result.date}`);
+                            // SÁBADO
+                            const sorteoSabado = document.querySelector('#qa_resultadoSorteo-sorteo-LNACS');
+                            if (sorteoSabado) {
+                                const premiosSabado: string[] = [];
+                                const numerosElementsS = sorteoSabado.querySelectorAll('.c-resultado-sorteo__numero-enlace');
+                                numerosElementsS.forEach(el => {
+                                    const numero = el.textContent?.trim() || '';
+                                    if (numero) premiosSabado.push(numero);
+                                });
+                                const fechaElementS = document.querySelector('#qa_resultadoSorteo-fecha-LNACS');
+                                const fechaSabado = fechaElementS?.textContent?.trim() || '';
+                                // Extraer reintegros
+                                const reintegrosSabado: string[] = [];
+                                const reintegrosElementsS = sorteoSabado.querySelectorAll('.c-resultado-sorteo__reintegros-li');
+                                reintegrosElementsS.forEach(el => {
+                                    const reintegro = el.textContent?.replace('R', '').trim() || '';
+                                    if (reintegro) reintegrosSabado.push(reintegro);
+                                });
+                                if (premiosSabado.length > 0) {
+                                    sorteos.push({
+                                        dia: 'sábado',
+                                        fecha: fechaSabado,
+                                        premios: premiosSabado,
+                                        reintegros: reintegrosSabado
+                                    });
+                                }
                             }
-                            return; // Salir del forEach para este caso especial
+                            if (sorteos.length > 0) {
+                                const fechaMasReciente = sorteos[sorteos.length - 1].fecha;
+                                const result = {
+                                    game: config.game,
+                                    sorteos: sorteos,
+                                    date: fechaMasReciente
+                                };
+                                results.push(result);
+                                console.log(`✅ ${config.game}: ${sorteos.length} sorteos extraídos (${sorteos.map(s => s.dia).join(', ')})`);
+                            }
+                            return;
                         }
 
                         // Procesamiento normal para otros juegos

@@ -121,7 +121,7 @@
           <!-- Números especiales -->
           <div class="especiales-section">
             <!-- Complementario -->
-            <div *ngIf="resultado.complementario" class="numero-especial">
+            <div *ngIf="resultado.complementario !== undefined" class="numero-especial">
               <span class="especial-label">Complementario:</span>
               <div class="numero-ball especial">{{ resultado.complementario }}</div>
             </div>
@@ -153,12 +153,14 @@
             <!-- Joker (La Primitiva) -->
             <div *ngIf="resultado.joker" class="numero-especial joker">
               <span class="especial-label">Joker:</span>
+              <img src="assets/img/LogoJoker.svg" alt="Joker" class="icono-especial" style="height: 24px; vertical-align: middle; margin-right: 6px;">
               <div class="joker-number">{{ resultado.joker }}</div>
             </div>
 
             <!-- El Millón (EuroMillones) -->
             <div *ngIf="resultado.millon" class="numero-especial millon">
               <span class="especial-label">El Millón:</span>
+              <img src="assets/img/LogoMillon.svg" alt="El Millón" class="icono-especial" style="height: 24px; vertical-align: middle; margin-right: 6px;">
               <div class="millon-number">{{ resultado.millon }}</div>
             </div>
           </div>
