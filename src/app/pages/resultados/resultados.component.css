@@ -579,3 +579,40 @@
     font-weight: bold;
     margin-left: 10px;
 } 
+
+.bloque-millon-oficial, .bloque-joker-oficial {
+  background: #fff;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  padding: 6px 16px;
+  margin: 10px 0 0 0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  width: fit-content;
+}
+.logo-millon-oficial, .logo-joker-oficial {
+  height: 35px;
+  max-width: 60px;
+  margin-right: 12px;
+  object-fit: contain;
+  display: block;
+}
+.codigo-millon-oficial, .codigo-joker-oficial {
+  font-size: 1.2em;
+  font-weight: bold;
+  color: #333;
+  letter-spacing: 2px;
+}
+.numero-ball.especial {
+  background: #e0e0e0;
+  color: #333;
+  font-size: 0.95em;
+  margin: 0 4px 0 0;
+  width: 32px;
+  height: 32px;
+  line-height: 32px;
+  border-radius: 50%;
+  display: inline-block;
+  text-align: center;
+  font-weight: bold;
+} 
