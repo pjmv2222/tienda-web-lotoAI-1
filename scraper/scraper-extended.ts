@@ -333,7 +333,7 @@ async function scrapeWithoutProxy() {
                             if (config.starsSelector) {
                                 const stars = Array.from(document.querySelectorAll(config.starsSelector))
                                     .map(el => parseInt(el.textContent?.trim() || '0'))
-                                    .filter(n => n > 0);
+                                    .filter(n => !isNaN(n));
                                 if (stars.length > 0) result.stars = stars;
                             }
 
@@ -342,10 +342,10 @@ async function scrapeWithoutProxy() {
                                 const millonElement = document.querySelector(config.millonSelector);
                                 if (millonElement) {
                                     const millon = millonElement.textContent?.trim() || '';
-                                    if (millon && millon.includes('Millón')) {
-                                        const match = millon.match(/([A-Z]{3}\d{5})/);
-                                        if (match) result.millon = match[1];
-                                    }
+                                    // Extraer el código aunque no contenga la palabra 'Millón'
+                                    const match = millon.match(/([A-Z]{3}\d{5,8})/);
+                                    if (match) result.millon = match[1];
+                                    else if (millon.length >= 8 && /^[A-Z]{3}\d{5,8}$/.test(millon)) result.millon = millon;
                                 }
                             }
 
@@ -353,8 +353,8 @@ async function scrapeWithoutProxy() {
                             if (config.jokerSelector) {
                                 const jokerElement = document.querySelector(config.jokerSelector);
                                 if (jokerElement) {
-                                    const joker = jokerElement.textContent?.trim().replace(/\s/g, '') || '';
-                                    if (joker && joker.length === 7) result.joker = joker;
+                                    const joker = jokerElement.textContent?.replace(/\s/g, '') || '';
+                                    if (joker.length === 7) result.joker = joker;
                                 }
                             }
 
@@ -362,8 +362,9 @@ async function scrapeWithoutProxy() {
                             if (config.complementarySelector) {
                                 const compElement = document.querySelector(config.complementarySelector);
                                 if (compElement) {
-                                    const comp = parseInt(compElement.textContent?.trim() || '0');
-                                    if (comp > 0) result.complementary = comp;
+                                    const compText = compElement.textContent?.trim() || '';
+                                    const comp = parseInt(compText);
+                                    if (!isNaN(comp)) result.complementary = comp;
                                 }
                             }
 
@@ -371,8 +372,9 @@ async function scrapeWithoutProxy() {
                             if (config.reintegroSelector) {
                                 const reintegroElement = document.querySelector(config.reintegroSelector);
                                 if (reintegroElement) {
-                                    const reintegro = parseInt(reintegroElement.textContent?.trim() || '0');
-                                    if (reintegro >= 0) result.reintegro = reintegro;
+                                    const reintegroText = reintegroElement.textContent?.trim() || '';
+                                    const reintegro = parseInt(reintegroText);
+                                    if (!isNaN(reintegro)) result.reintegro = reintegro;
                                 }
                             }
 
@@ -380,8 +382,9 @@ async function scrapeWithoutProxy() {
                             if (config.claveSelector) {
                                 const claveElement = document.querySelector(config.claveSelector);
                                 if (claveElement) {
-                                    const clave = parseInt(claveElement.textContent?.trim() || '0');
-                                    if (clave >= 0) result.clave = clave;
+                                    const claveText = claveElement.textContent?.trim() || '';
+                                    const clave = parseInt(claveText);
+                                    if (!isNaN(clave)) result.clave = clave;
                                 }
                             }
 
@@ -389,8 +392,9 @@ async function scrapeWithoutProxy() {
                             if (config.dreamSelector) {
                                 const dreamElement = document.querySelector(config.dreamSelector);
                                 if (dreamElement) {
-                                    const dream = parseInt(dreamElement.textContent?.trim() || '0');
-                                    if (dream > 0) result.dream = dream;
+                                    const dreamText = dreamElement.textContent?.trim() || '';
+                                    const dream = parseInt(dreamText);
+                                    if (!isNaN(dream)) result.dream = dream;
                                 }
                             }
 
@@ -398,8 +402,9 @@ async function scrapeWithoutProxy() {
                             if (config.caballoSelector) {
                                 const caballoElement = document.querySelector(config.caballoSelector);
                                 if (caballoElement) {
-                                    const caballo = parseInt(caballoElement.textContent?.trim() || '0');
-                                    if (caballo > 0) result.caballo = caballo;
+                                    const caballoText = caballoElement.textContent?.trim() || '';
+                                    const caballo = parseInt(caballoText);
+                                    if (!isNaN(caballo)) result.caballo = caballo;
                                 }
                             }
 
