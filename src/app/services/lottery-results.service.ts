@@ -24,7 +24,7 @@ export interface LotteryData {
   timestamp: string;
 }
 
-interface LotteryResult {
+export interface LotteryResult {
   juego: string;
   nombreJuego: string;
   fecha: string;
