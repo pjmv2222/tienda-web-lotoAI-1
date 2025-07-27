@@ -2,29 +2,6 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map, catchError, of } from 'rxjs';
 
-export interface LotteryResult {
-  juego: string;
-  nombreJuego: string;
-  fecha: string;
-  sorteo?: string;
-  numeros: number[];
-  estrellas?: number[];
-  complementario?: number;
-  reintegro?: number;
-  clave?: number;
-  dream?: number;
-  caballo?: number;
-  millon?: string;
-  joker?: string;
-  numero?: string;
-  sorteos?: Array<{
-    dia: string;
-    fecha: string;
-    premios: string[];
-    reintegros: string[];
-  }>;
-}
-
 // Formato de datos del scraper extendido
 interface ScrapedResult {
   game: string;
@@ -45,6 +22,24 @@ export interface LotteryData {
   botes: { [key: string]: string };
   resultados: ScrapedResult[];
   timestamp: string;
+}
+
+interface LotteryResult {
+  juego: string;
+  nombreJuego: string;
+  fecha: string;
+  sorteo: string;
+  numeros: number[];
+  sorteos?: { dia: string; fecha: string; premios: string[]; reintegros: string[] }[];
+  estrellas?: number[];
+  complementario?: number;
+  reintegro?: number;
+  clave?: number;
+  dream?: number;
+  caballo?: number;
+  millon?: string;
+  joker?: string;
+  premios?: string[];
 }
 
 @Injectable({
@@ -99,8 +94,14 @@ export class LotteryResultsService {
                 if ((resultado as any).sorteos && Array.isArray((resultado as any).sorteos)) {
                   // Múltiples sorteos (jueves y sábado)
                   sorteos = (resultado as any).sorteos;
-                  // Para compatibilidad, usar el primer sorteo para numeros
-                  numeros = (resultado as any).sorteos[0]?.premios?.map((premio: string) => parseInt(premio, 10)).filter((n: number) => !isNaN(n)) || [];
+                  // Para números, usar todos los premios de todos los sorteos
+                  numeros = [];
+                  sorteos.forEach(sorteo => {
+                    if (sorteo.premios && Array.isArray(sorteo.premios)) {
+                      const premiosSorteo = sorteo.premios.map((premio: string) => parseInt(premio, 10)).filter((n: number) => !isNaN(n));
+                      numeros.push(...premiosSorteo);
+                    }
+                  });
                 } else if (resultado.premios) {
                   // Un solo sorteo (formato actual)
                   numeros = resultado.premios.map((premio: string) => parseInt(premio, 10)).filter((n: number) => !isNaN(n));
@@ -322,9 +323,8 @@ export class LotteryResultsService {
         fecha: '2024-01-13',
         sorteo: 'Sorteo 004/2024',
         numeros: [85734],
-        numero: '85734',
         reintegro: 4
       }
     ];
   }
-} 
+}

@@ -130,12 +130,30 @@
           </div>
 
           <!-- Números especiales visuales para todos los juegos -->
-          <div class="especiales-section">
-            <div *ngIf="resultado.complementario !== undefined" class="numero-ball especial">{{ resultado.complementario }}</div>
-            <div *ngIf="resultado.reintegro !== undefined" class="numero-ball especial">{{ resultado.reintegro }}</div>
-            <div *ngIf="resultado.clave !== undefined" class="numero-ball especial">{{ resultado.clave }}</div>
-            <div *ngIf="resultado.dream !== undefined" class="numero-ball especial">{{ resultado.dream }}</div>
-            <div *ngIf="resultado.caballo !== undefined" class="numero-ball especial">{{ resultado.caballo }}</div>
+          <div *ngIf="resultado.complementario !== undefined || resultado.reintegro !== undefined || resultado.clave !== undefined || resultado.dream !== undefined || resultado.caballo !== undefined" class="especiales-section">
+            <h5 class="especiales-title">Números Especiales</h5>
+            <div class="especiales-container">
+              <div *ngIf="resultado.complementario !== undefined" class="numero-especial-item">
+                <span class="especial-label">Complementario</span>
+                <div class="numero-ball especial complementario">{{ resultado.complementario }}</div>
+              </div>
+              <div *ngIf="resultado.reintegro !== undefined" class="numero-especial-item">
+                <span class="especial-label">Reintegro</span>
+                <div class="numero-ball especial reintegro">{{ resultado.reintegro }}</div>
+              </div>
+              <div *ngIf="resultado.clave !== undefined" class="numero-especial-item">
+                <span class="especial-label">Clave</span>
+                <div class="numero-ball especial clave">{{ resultado.clave }}</div>
+              </div>
+              <div *ngIf="resultado.dream !== undefined" class="numero-especial-item">
+                <span class="especial-label">Dream</span>
+                <div class="numero-ball especial dream">{{ resultado.dream }}</div>
+              </div>
+              <div *ngIf="resultado.caballo !== undefined" class="numero-especial-item">
+                <span class="especial-label">Caballo</span>
+                <div class="numero-ball especial caballo">{{ resultado.caballo }}</div>
+              </div>
+            </div>
           </div>
         </div>
 
