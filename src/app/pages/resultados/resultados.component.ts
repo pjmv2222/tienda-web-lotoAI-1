@@ -133,7 +133,6 @@ export class ResultadosComponent implements OnInit, OnDestroy {
         fecha: '2024-01-13',
         sorteo: 'Sorteo 004/2024',
         numeros: [85734],
-        numero: '85734',
         reintegro: 4
       }
     ];
