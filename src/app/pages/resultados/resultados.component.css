@@ -242,9 +242,8 @@
 }
 
 .estrella-ball {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
+  width: 45px;
+  height: 45px;
   background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
   color: #333;
   display: flex;
@@ -254,6 +253,23 @@
   font-size: 1rem;
   box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
   border: 2px solid #fff;
+  /* Forma de estrella usando clip-path */
+  clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+  /* Fallback para navegadores que no soporten clip-path */
+  border-radius: 50%;
+  position: relative;
+}
+
+/* Fallback con pseudoelementos para crear estrella */
+@supports not (clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)) {
+  .estrella-ball::before {
+    content: '★';
+    position: absolute;
+    font-size: 35px;
+    color: #ffd700;
+    text-shadow: 0 0 5px rgba(255, 215, 0, 0.8);
+    z-index: -1;
+  }
 }
 
 .numero-ball.especial {
@@ -470,9 +486,16 @@
   }
   
   .estrella-ball {
-    width: 35px;
-    height: 35px;
-    font-size: 0.9rem;
+    width: 38px;
+    height: 38px;
+    font-size: 0.85rem;
+  }
+  
+  /* Ajustar pseudoelemento estrella para móviles */
+  @supports not (clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)) {
+    .estrella-ball::before {
+      font-size: 30px;
+    }
   }
   
   .card-body {
@@ -485,6 +508,22 @@
   
   .page-title i {
     font-size: 1.8rem;
+  }
+  
+  /* Ajustar logos especiales en móviles */
+  .logo-millon-oficial, .logo-joker-oficial {
+    height: 38px;
+    max-width: 70px;
+    margin-right: 12px;
+  }
+  
+  .codigo-millon-oficial, .codigo-joker-oficial {
+    font-size: 1.1em;
+  }
+  
+  .bloque-millon-oficial, .bloque-joker-oficial {
+    padding: 8px 16px;
+    min-height: 42px;
   }
 } 
 
@@ -619,23 +658,24 @@
 
 .bloque-millon-oficial, .bloque-joker-oficial {
   background: #fff;
-  border-radius: 8px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
-  padding: 6px 16px;
-  margin: 10px 0 0 0;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  padding: 10px 20px;
+  margin: 15px 0 0 0;
+  box-shadow: 0 3px 12px rgba(0,0,0,0.08);
   width: fit-content;
+  min-height: 50px;
 }
 .logo-millon-oficial, .logo-joker-oficial {
-  height: 35px;
-  max-width: 60px;
-  margin-right: 12px;
+  height: 45px;
+  max-width: 80px;
+  margin-right: 15px;
   object-fit: contain;
   display: block;
 }
 .codigo-millon-oficial, .codigo-joker-oficial {
-  font-size: 1.2em;
+  font-size: 1.3em;
   font-weight: bold;
   color: #333;
   letter-spacing: 2px;
