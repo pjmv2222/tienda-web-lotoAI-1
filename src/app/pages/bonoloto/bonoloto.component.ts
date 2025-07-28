@@ -9,6 +9,18 @@ import { HttpClient } from '@angular/common/http';
 import { LotteryBaseComponent } from '../../shared/lottery-base.component';
 import { PredictionService, PredictionResponse } from '../../services/prediction.service';
 
+interface LotteryData {
+  botes: { [key: string]: string };
+  resultados: {
+    [key: string]: {
+      fecha: string;
+      numeros: number[];
+      complementario?: number;
+      reintegro?: number;
+    };
+  };
+}
+
 @Component({
   selector: 'app-bonoloto',
   standalone: true,

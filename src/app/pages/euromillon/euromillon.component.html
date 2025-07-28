@@ -224,37 +224,22 @@
     <div class="last-results">
       <h2>Últimos resultados</h2>
       <div class="result-card">
-        <div class="result-date">Viernes, 5 de abril de 2024</div>
+        <div class="result-date">{{ ultimosResultados?.fecha || 'Cargando fecha...' }}</div>
         <div class="result-numbers">
           <div class="lottery-balls-container" id="last-results-container">
             <!-- Usar componente de bolas para los resultados -->
-            <div class="ball-wrapper" id="result-wrapper-12">
-              <app-euromillones-ball [number]="12" [size]="70" [priority]="2"></app-euromillones-ball>
+            <div class="ball-wrapper" *ngFor="let numero of ultimosResultados?.numeros || []; let i = index" [attr.id]="'result-wrapper-' + numero">
+              <app-euromillones-ball [number]="numero" [size]="70" [priority]="2"></app-euromillones-ball>
             </div>
-            <div class="ball-wrapper" id="result-wrapper-20">
-              <app-euromillones-ball [number]="20" [size]="70" [priority]="2"></app-euromillones-ball>
-            </div>
-            <div class="ball-wrapper" id="result-wrapper-25">
-              <app-euromillones-ball [number]="25" [size]="70" [priority]="2"></app-euromillones-ball>
-            </div>
-            <div class="ball-wrapper" id="result-wrapper-31">
-              <app-euromillones-ball [number]="31" [size]="70" [priority]="2"></app-euromillones-ball>
-            </div>
-            <div class="ball-wrapper" id="result-wrapper-48">
-              <app-euromillones-ball [number]="48" [size]="70" [priority]="2"></app-euromillones-ball>
-            </div>
-            <span class="lottery-balls-separator">+</span>
-            <div class="ball-wrapper" id="result-star-wrapper-4">
-              <app-euromillones-ball [number]="4" [type]="'star'" [size]="70" [priority]="2"></app-euromillones-ball>
-            </div>
-            <div class="ball-wrapper" id="result-star-wrapper-12">
-              <app-euromillones-ball [number]="12" [type]="'star'" [size]="70" [priority]="2"></app-euromillones-ball>
+            <span class="lottery-balls-separator" *ngIf="ultimosResultados?.estrellas?.length">+</span>
+            <div class="ball-wrapper" *ngFor="let estrella of ultimosResultados?.estrellas || []; let i = index" [attr.id]="'result-star-wrapper-' + estrella">
+              <app-euromillones-ball [number]="estrella" [type]="'star'" [size]="70" [priority]="2"></app-euromillones-ball>
             </div>
           </div>
         </div>
       </div>
       <div class="view-more">
-        <a href="#" class="view-more-link">Ver resultados anteriores</a>
+        <a routerLink="/resultados" class="view-more-link">Ver resultados anteriores</a>
       </div>
     </div>
 
