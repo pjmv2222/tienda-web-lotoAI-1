@@ -9,6 +9,21 @@ import { HttpClient } from '@angular/common/http';
 import { Subscription } from 'rxjs';
 import { LotteryBaseComponent } from '../../shared/lottery-base.component';
 
+interface LotteryData {
+  botes: { [key: string]: string };
+  resultados: {
+    [key: string]: {
+      fecha: string;
+      numeros: number[];
+      estrellas?: number[];
+      complementario?: number;
+      reintegro?: number;
+      joker?: string;
+      millon?: string;
+    };
+  };
+}
+
 @Component({
   selector: 'app-euromillon',
   standalone: true,
@@ -31,6 +46,13 @@ export class EuromillonComponent extends LotteryBaseComponent implements OnInit,
   isGeneratingPrediction = false;
   predictionResult: PredictionResponse['prediction'] | null = null;
   predictionError: string | null = null;
+
+  // Variables para los últimos resultados
+  ultimosResultados: {
+    fecha: string;
+    numeros: number[];
+    estrellas: number[];
+  } | null = null;
 
   constructor(
     private router: Router,
@@ -97,6 +119,9 @@ export class EuromillonComponent extends LotteryBaseComponent implements OnInit,
       this.isLoadingSubscriptionStatus = false;
       console.log('Usuario no autenticado, no tiene planes activos');
     }
+
+    // Cargar los últimos resultados desde lottery-data.json
+    this.loadUltimosResultados();
 
     console.log('[DIAGNÓSTICO] EuromillonComponent: ngOnInit iniciado');
 
@@ -518,5 +543,42 @@ export class EuromillonComponent extends LotteryBaseComponent implements OnInit,
     setTimeout(() => {
       this.checkBallsRendering();
     }, 5000);
+  }
+
+  /**
+   * Cargar los últimos resultados desde lottery-data.json
+   */
+  private async loadUltimosResultados(): Promise<void> {
+    try {
+      console.log('[EUROMILLONES] Cargando últimos resultados...');
+      const timestamp = new Date().getTime();
+      const response = await this.http.get<LotteryData>(`assets/lottery-data.json?t=${timestamp}`).toPromise();
+      
+      if (response?.resultados?.['euromillones']) {
+        const resultado = response.resultados['euromillones'];
+        this.ultimosResultados = {
+          fecha: resultado.fecha,
+          numeros: resultado.numeros || [],
+          estrellas: resultado.estrellas || []
+        };
+        console.log('[EUROMILLONES] Últimos resultados cargados:', this.ultimosResultados);
+      } else {
+        console.warn('[EUROMILLONES] No se encontraron datos de resultados en lottery-data.json');
+        // Usar datos de fallback
+        this.ultimosResultados = {
+          fecha: 'Viernes, 5 de abril de 2024',
+          numeros: [12, 20, 25, 31, 48],
+          estrellas: [4, 12]
+        };
+      }
+    } catch (error) {
+      console.error('[EUROMILLONES] Error al cargar últimos resultados:', error);
+      // Usar datos de fallback en caso de error
+      this.ultimosResultados = {
+        fecha: 'Viernes, 5 de abril de 2024',
+        numeros: [12, 20, 25, 31, 48],
+        estrellas: [4, 12]
+      };
+    }
   }
 }
