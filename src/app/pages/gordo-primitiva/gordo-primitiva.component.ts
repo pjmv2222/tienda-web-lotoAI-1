@@ -9,6 +9,16 @@ import { HttpClient } from '@angular/common/http';
 import { LotteryBaseComponent } from '../../shared/lottery-base.component';
 import { PredictionService, PredictionResponse } from '../../services/prediction.service';
 
+interface LotteryData {
+  botes: { [key: string]: string };
+  resultados: Array<{
+    game: string;
+    numbers: number[];
+    date: string;
+    clave?: number;
+  }>;
+}
+
 @Component({
   selector: 'app-gordo-primitiva',
   standalone: true,
@@ -25,6 +35,13 @@ export class GordoPrimitivaComponent extends LotteryBaseComponent implements OnI
   hasProPlan = false;
   private subscriptions: Subscription[] = [];
 
+  // Variables para los últimos resultados
+  ultimosResultados: {
+    fecha: string;
+    numeros: number[];
+    clave?: number;
+  } | null = null;
+
   // Variables para las predicciones
   isGeneratingPrediction = false;
   predictionResult: PredictionResponse['prediction'] | null = null;
@@ -40,8 +57,29 @@ export class GordoPrimitivaComponent extends LotteryBaseComponent implements OnI
     super(http, predictionService);
   }
 
+  loadUltimosResultados(): void {
+    this.http.get<LotteryData>('https://www.loto-ia.com/api/lottery-data').subscribe({
+      next: (response) => {
+        const gordoData = response.resultados.find(r => r.game === 'elgordo');
+        if (gordoData) {
+          this.ultimosResultados = {
+            fecha: gordoData.date,
+            numeros: gordoData.numbers,
+            clave: gordoData.clave
+          };
+        }
+      },
+      error: (error) => {
+        console.error('Error al cargar últimos resultados del Gordo:', error);
+      }
+    });
+  }
+
   override ngOnInit(): void {
     super.ngOnInit(); // Llama al método de la clase base para cargar la información del bote
+    
+    // Cargar los últimos resultados
+    this.loadUltimosResultados();
 
     // Verificar si el usuario está autenticado
     this.isLoggedIn = !!this.authService.currentUserValue;

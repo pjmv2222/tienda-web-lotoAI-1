@@ -9,6 +9,14 @@ import { HttpClient } from '@angular/common/http';
 import { LotteryBaseComponent } from '../../shared/lottery-base.component';
 import { PredictionService, PredictionResponse } from '../../services/prediction.service';
 
+interface LotteryData {
+  resultados: Array<{
+    game: string;
+    numbers: number[];
+    date: string;
+  }>;
+}
+
 @Component({
   selector: 'app-loteria-nacional',
   standalone: true,
@@ -30,6 +38,9 @@ export class LoteriaNacionalComponent extends LotteryBaseComponent implements On
   predictionResult: PredictionResponse['prediction'] | null = null;
   predictionError: string | null = null;
 
+  // Variable para los últimos resultados
+  ultimosResultados: { fecha: string; numeros: number[] } | null = null;
+
   constructor(
     private router: Router,
     private authService: AuthService,
@@ -40,8 +51,28 @@ export class LoteriaNacionalComponent extends LotteryBaseComponent implements On
     super(http, predictionService);
   }
 
+  loadUltimosResultados(): void {
+    this.http.get<LotteryData>('https://www.loto-ia.com/api/lottery-data').subscribe({
+      next: (response) => {
+        const loteriaNacionalData = response.resultados.find(r => r.game === 'loterianacional');
+        if (loteriaNacionalData) {
+          this.ultimosResultados = {
+            fecha: loteriaNacionalData.date,
+            numeros: loteriaNacionalData.numbers
+          };
+        }
+      },
+      error: (error) => {
+        console.error('Error al cargar últimos resultados de Lotería Nacional:', error);
+      }
+    });
+  }
+
   override ngOnInit(): void {
     super.ngOnInit(); // Llama al método de la clase base para cargar la información del bote
+    
+    // Cargar los últimos resultados
+    this.loadUltimosResultados();
 
     // Verificar si el usuario está autenticado
     this.isLoggedIn = !!this.authService.currentUserValue;
