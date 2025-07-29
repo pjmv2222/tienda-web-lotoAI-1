@@ -263,25 +263,55 @@ jobs:
               grep -c "euromillones\|primitiva\|bonoloto" src/assets/lottery-data.json 2>/dev/null | head -1 || echo "Error verificando lottery-data.json"
             fi
             
-            # 8. Reiniciar los servicios con PM2 - LIMPIEZA COMPLETA
+            # 8. Reiniciar los servicios con PM2 - LIMPIEZA COMPLETA Y AGRESIVA
             echo "--- Fase 8: Limpiando y reiniciando servicios con PM2 ---"
+            
+            # Parar y eliminar todos los procesos PM2
             pm2 stop all || echo "No había procesos corriendo"
             pm2 delete all || echo "No había procesos para eliminar"
             pm2 save --force
-            echo "✅ PM2 limpiado completamente"
+            pm2 kill || echo "PM2 daemon ya detenido"
             
-            # Iniciar con configuración limpia
+            # Limpiar procesos que puedan estar usando los puertos
+            echo "--- Liberando puertos 3000, 4000 y 5000 ---"
+            fuser -k 3000/tcp 2>/dev/null || echo "Puerto 3000 ya libre"
+            fuser -k 4000/tcp 2>/dev/null || echo "Puerto 4000 ya libre" 
+            fuser -k 5000/tcp 2>/dev/null || echo "Puerto 5000 ya libre"
+            
+            # Esperar un momento para que se liberen los puertos
+            sleep 3
+            
+            # Verificar que los puertos están libres
+            echo "--- Verificando puertos libres ---"
+            netstat -tuln | grep -E ':3000|:4000|:5000' || echo "✅ Puertos principales libres"
+            
+            echo "✅ PM2 y puertos limpiados completamente"
+            
+            # Iniciar PM2 daemon fresco y cargar configuración
             pm2 start ecosystem.config.js --env production
             pm2 save
             
             # 8.5. Verificar que PM2 está funcionando correctamente
             echo "--- Fase 8.5: Verificando estado de PM2 ---"
-            sleep 5
+            sleep 8
             pm2 status
+            
+            # Verificar específicamente cada servicio
+            echo "--- Verificando servicios individuales ---"
+            pm2 info backend | grep -E "status|pid|memory|cpu" || echo "❌ Backend no encontrado"
+            pm2 info frontend | grep -E "status|pid|memory|cpu" || echo "❌ Frontend no encontrado"
+            pm2 info ia-server | grep -E "status|pid|memory|cpu" || echo "❌ IA-Server no encontrado"
+            
+            # Verificar que los puertos están siendo usados correctamente
+            echo "--- Verificando asignación de puertos ---"
+            netstat -tuln | grep ":3000.*LISTEN" && echo "✅ Puerto 3000 (backend) en uso" || echo "❌ Puerto 3000 no ocupado"
+            netstat -tuln | grep ":4000.*LISTEN" && echo "✅ Puerto 4000 (frontend) en uso" || echo "❌ Puerto 4000 no ocupado"
+            netstat -tuln | grep ":5000.*LISTEN" && echo "✅ Puerto 5000 (ia-server) en uso" || echo "❌ Puerto 5000 no ocupado"
+            
             echo "--- Logs recientes del backend ---"
-            timeout 10 pm2 logs backend --lines 15 || echo "Timeout en logs, continuando..."
-            echo "--- Verificando si el backend está corriendo ---"
-            pm2 info backend
+            timeout 10 pm2 logs backend --lines 10 || echo "Timeout en logs backend, continuando..."
+            echo "--- Logs recientes del frontend ---"
+            timeout 10 pm2 logs frontend --lines 10 || echo "Timeout en logs frontend, continuando..."
             
             # 9. Actualizar y recargar NGINX
             echo "--- Fase 9: Actualizando configuración de NGINX ---"
