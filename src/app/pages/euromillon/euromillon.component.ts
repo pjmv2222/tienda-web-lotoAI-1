@@ -11,17 +11,16 @@ import { LotteryBaseComponent } from '../../shared/lottery-base.component';
 
 interface LotteryData {
   botes: { [key: string]: string };
-  resultados: {
-    [key: string]: {
-      fecha: string;
-      numeros: number[];
-      estrellas?: number[];
-      complementario?: number;
-      reintegro?: number;
-      joker?: string;
-      millon?: string;
-    };
-  };
+  resultados: Array<{
+    game: string;
+    numbers: number[];
+    stars?: number[];
+    date: string;
+    complementario?: number;
+    reintegro?: number;
+    joker?: string;
+    millon?: string;
+  }>;
 }
 
 @Component({
@@ -554,16 +553,26 @@ export class EuromillonComponent extends LotteryBaseComponent implements OnInit,
       const timestamp = new Date().getTime();
       const response = await this.http.get<LotteryData>(`assets/lottery-data.json?t=${timestamp}`).toPromise();
       
-      if (response?.resultados?.['euromillones']) {
-        const resultado = response.resultados['euromillones'];
-        this.ultimosResultados = {
-          fecha: resultado.fecha,
-          numeros: resultado.numeros || [],
-          estrellas: resultado.estrellas || []
-        };
-        console.log('[EUROMILLONES] Últimos resultados cargados:', this.ultimosResultados);
+      if (response?.resultados && Array.isArray(response.resultados)) {
+        const resultado = response.resultados.find(r => r.game === 'euromillones');
+        if (resultado) {
+          this.ultimosResultados = {
+            fecha: resultado.date,
+            numeros: resultado.numbers || [],
+            estrellas: resultado.stars || []
+          };
+          console.log('[EUROMILLONES] Últimos resultados cargados:', this.ultimosResultados);
+        } else {
+          console.warn('[EUROMILLONES] No se encontraron datos de euromillones en lottery-data.json');
+          // Usar datos de fallback
+          this.ultimosResultados = {
+            fecha: 'Viernes, 5 de abril de 2024',
+            numeros: [12, 20, 25, 31, 48],
+            estrellas: [4, 12]
+          };
+        }
       } else {
-        console.warn('[EUROMILLONES] No se encontraron datos de resultados en lottery-data.json');
+        console.warn('[EUROMILLONES] Estructura de datos incorrecta en lottery-data.json');
         // Usar datos de fallback
         this.ultimosResultados = {
           fecha: 'Viernes, 5 de abril de 2024',
