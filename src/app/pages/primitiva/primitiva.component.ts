@@ -11,16 +11,15 @@ import { PredictionService } from '../../services/prediction.service';
 
 interface LotteryData {
   botes: { [key: string]: string };
-  resultados: {
-    [key: string]: {
-      fecha: string;
-      numeros: number[];
-      complementario?: number;
-      reintegro?: number;
-      joker?: string;
-      millon?: string;
-    };
-  };
+  resultados: Array<{
+    game: string;
+    numbers: number[];
+    date: string;
+    complementario?: number;
+    reintegro?: number;
+    joker?: string;
+    millon?: string;
+  }>;
 }
 
 @Component({
@@ -118,17 +117,28 @@ export class PrimitivaComponent extends LotteryBaseComponent implements OnInit, 
       const timestamp = new Date().getTime();
       const response = await this.http.get<LotteryData>(`assets/lottery-data.json?t=${timestamp}`).toPromise();
       
-      if (response?.resultados?.['primitiva']) {
-        const resultado = response.resultados['primitiva'];
-        this.ultimosResultados = {
-          fecha: resultado.fecha,
-          numeros: resultado.numeros || [],
-          complementario: resultado.complementario,
-          reintegro: resultado.reintegro
-        };
-        console.log('[PRIMITIVA] Últimos resultados cargados:', this.ultimosResultados);
+      if (response?.resultados && Array.isArray(response.resultados)) {
+        const resultado = response.resultados.find(r => r.game === 'primitiva');
+        if (resultado) {
+          this.ultimosResultados = {
+            fecha: resultado.date,
+            numeros: resultado.numbers || [],
+            complementario: resultado.complementario,
+            reintegro: resultado.reintegro
+          };
+          console.log('[PRIMITIVA] Últimos resultados cargados:', this.ultimosResultados);
+        } else {
+          console.warn('[PRIMITIVA] No se encontraron datos de primitiva en lottery-data.json');
+          // Usar datos de fallback
+          this.ultimosResultados = {
+            fecha: 'Sábado, 6 de abril de 2024',
+            numeros: [2, 14, 22, 31, 37, 45],
+            complementario: 18,
+            reintegro: 6
+          };
+        }
       } else {
-        console.warn('[PRIMITIVA] No se encontraron datos de resultados en lottery-data.json');
+        console.warn('[PRIMITIVA] Estructura de datos incorrecta en lottery-data.json');
         // Usar datos de fallback
         this.ultimosResultados = {
           fecha: 'Sábado, 6 de abril de 2024',
