@@ -11,14 +11,13 @@ import { PredictionService, PredictionResponse } from '../../services/prediction
 
 interface LotteryData {
   botes: { [key: string]: string };
-  resultados: {
-    [key: string]: {
-      fecha: string;
-      numeros: number[];
-      complementario?: number;
-      reintegro?: number;
-    };
-  };
+  resultados: Array<{
+    game: string;
+    numbers: number[];
+    date: string;
+    complementario?: number;
+    reintegro?: number;
+  }>;
 }
 
 @Component({
