@@ -94,40 +94,9 @@ jobs:
             
             # 2. Actualizar desde GitHub  
             echo "--- Fase 2: Actualizando código fuente ---"
-            
-            # 2.1. Mover archivos JSON críticos fuera del directorio temporal antes del git reset
-            mkdir -p /tmp/lottery-backup-deploy
-            if [ -f "src/assets/botes.json" ]; then
-              cp src/assets/botes.json /tmp/lottery-backup-deploy/botes.json
-              echo "✅ botes.json movido a ubicación temporal segura"
-            fi
-            if [ -f "src/assets/lottery-data.json" ]; then
-              cp src/assets/lottery-data.json /tmp/lottery-backup-deploy/lottery-data.json  
-              echo "✅ lottery-data.json movido a ubicación temporal segura"
-            fi
-            if [ -f "scraper/scraper.ts" ]; then
-              cp scraper/scraper.ts /tmp/lottery-backup-deploy/scraper.ts
-              echo "✅ scraper.ts movido a ubicación temporal segura"
-            fi
-            
-            # 2.2. Actualizar código desde GitHub (ahora seguro)
             git fetch origin main
             git reset --hard origin/main  
             git pull origin main
-            
-            # 2.3. Restaurar archivos críticos inmediatamente después del git reset
-            if [ -f "/tmp/lottery-backup-deploy/botes.json" ]; then
-              cp /tmp/lottery-backup-deploy/botes.json src/assets/botes.json
-              echo "✅ botes.json restaurado desde ubicación temporal segura"
-            fi
-            if [ -f "/tmp/lottery-backup-deploy/lottery-data.json" ]; then
-              cp /tmp/lottery-backup-deploy/lottery-data.json src/assets/lottery-data.json
-              echo "✅ lottery-data.json restaurado desde ubicación temporal segura"  
-            fi
-            if [ -f "/tmp/lottery-backup-deploy/scraper.ts" ]; then
-              cp /tmp/lottery-backup-deploy/scraper.ts scraper/scraper.ts
-              echo "✅ scraper.ts restaurado desde ubicación temporal segura"
-            fi
             
             # 2.5. Restaurar archivos de configuración del servidor
             echo "--- Fase 2.5: Restaurando archivos de configuración del servidor ---"
@@ -144,27 +113,40 @@ jobs:
               echo "✅ Archivo .env.production restaurado"
             fi
             
-            # Los archivos JSON críticos ya fueron restaurados en la Fase 2.3
-            echo "✅ Archivos JSON críticos ya restaurados en Fase 2.3 (protegidos de git reset)"
-            
-            # Limpiar archivos temporales de respaldo obsoletos
-            rm -f src/assets/botes.json.backup 2>/dev/null || true
-            rm -f src/assets/lottery-data.json.backup 2>/dev/null || true  
-            rm -f scraper/scraper.ts.backup 2>/dev/null || true
-            rm -rf /tmp/lottery-backup-deploy 2>/dev/null || true
-            echo "✅ Archivos de respaldo temporales limpiados"
-            # Restaurar archivos dist (optimizado - los archivos ya están protegidos)
+            # Restaurar archivos críticos del scraper
+            if [ -f "src/assets/botes.json.backup" ]; then
+              cp src/assets/botes.json.backup src/assets/botes.json
+              rm src/assets/botes.json.backup
+              echo "✅ Archivo botes.json (src) restaurado con datos actualizados del scraper"
+            else
+              echo "❌ No se pudo restaurar botes.json - archivo de respaldo no encontrado"
+            fi
+            if [ -f "src/assets/lottery-data.json.backup" ]; then
+              cp src/assets/lottery-data.json.backup src/assets/lottery-data.json
+              rm src/assets/lottery-data.json.backup
+              echo "✅ Archivo lottery-data.json (src) restaurado con datos actualizados del scraper"
+            else
+              echo "❌ No se pudo restaurar lottery-data.json - archivo de respaldo no encontrado"
+            fi
+            if [ -f "scraper/scraper.ts.backup" ]; then
+              cp scraper/scraper.ts.backup scraper/scraper.ts
+              rm scraper/scraper.ts.backup
+              echo "✅ Archivo scraper.ts restaurado"
+            else
+              echo "❌ No se pudo restaurar scraper.ts - archivo de respaldo no encontrado"
+            fi
+            # Restaurar archivos dist (con datos actuales del scraper)
             if [ -f ".deploy-backups/botes.json.backup" ]; then
               mkdir -p dist/tienda-web-loto-ai/browser/assets/
               cp .deploy-backups/botes.json.backup dist/tienda-web-loto-ai/browser/assets/botes.json
               rm .deploy-backups/botes.json.backup
-              echo "✅ Archivo botes.json (dist) restaurado como fallback"
+              echo "✅ Archivo botes.json (dist) restaurado con datos actuales del scraper"
             fi
             if [ -f ".deploy-backups/lottery-data.json.backup" ]; then
               mkdir -p dist/tienda-web-loto-ai/browser/assets/
               cp .deploy-backups/lottery-data.json.backup dist/tienda-web-loto-ai/browser/assets/lottery-data.json
               rm .deploy-backups/lottery-data.json.backup
-              echo "✅ Archivo lottery-data.json (dist) restaurado como fallback"
+              echo "✅ Archivo lottery-data.json (dist) restaurado con datos actuales del scraper"
             fi
             
             # Restaurar configuraciones específicas del servidor IA
@@ -234,23 +216,6 @@ jobs:
             # Limpiar swap después de la compilación
             sudo swapoff /swapfile || true
             sudo rm /swapfile || true
-            
-            # 7.5. Verificar y restaurar archivos JSON en dist después del build
-            echo "--- Fase 7.5: Verificando archivos JSON en dist ---"
-            if [ -f "dist/tienda-web-loto-ai/browser/assets/botes.json" ]; then
-              echo "✅ Archivo botes.json encontrado en dist (copiado automáticamente por Angular)"
-            else
-              echo "⚠️  Archivo botes.json NO encontrado en dist - copiando desde src"
-              mkdir -p dist/tienda-web-loto-ai/browser/assets/
-              cp src/assets/botes.json dist/tienda-web-loto-ai/browser/assets/botes.json 2>/dev/null || echo "❌ No se pudo copiar botes.json"
-            fi
-            if [ -f "dist/tienda-web-loto-ai/browser/assets/lottery-data.json" ]; then
-              echo "✅ Archivo lottery-data.json encontrado en dist (copiado automáticamente por Angular)"
-            else
-              echo "⚠️  Archivo lottery-data.json NO encontrado en dist - copiando desde src"
-              mkdir -p dist/tienda-web-loto-ai/browser/assets/
-              cp src/assets/lottery-data.json dist/tienda-web-loto-ai/browser/assets/lottery-data.json 2>/dev/null || echo "❌ No se pudo copiar lottery-data.json"
-            fi
             
             # Verificar contenido de los archivos JSON
             echo "--- Verificando contenido de archivos JSON ---"
