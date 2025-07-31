@@ -25,29 +25,19 @@ jobs:
           username: root
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            echo "=== INICIO: DESPLIEGUE CON DIAGNÓSTICO (v3) ==="
+            echo "=== INICIO: DESPLIEGUE ATÓMICO (v4 - Final) ==="
 
             cd /var/www/tienda-web-lotoAI-1 || exit 1
 
-            echo "--- Fase 1.5: Respaldando archivos de configuración ---"
-            if [ -f ".env" ]; then cp .env .env.backup; fi
-            if [ -f ".env.production" ]; then cp .env.production .env.production.backup; fi
-            echo "✅ Backups de configuración creados."
-
-            echo "--- Fase 2: Actualizando código fuente ---"
+            echo "--- Fase 1: Actualizando código fuente ---"
             git fetch origin main
             git reset --hard origin/main
             git pull origin main
 
-            echo "--- Fase 2.5: Restaurando archivos de configuración ---"
-            if [ -f ".env.backup" ]; then mv .env.backup .env; fi
-            if [ -f ".env.production.backup" ]; then mv .env.production.backup .env.production; fi
-            echo "✅ Archivos de configuración restaurados."
-
-            echo "--- Fase 4: Instalando dependencias ---"
+            echo "--- Fase 2: Instalando dependencias ---"
             npm install --production=false
 
-            echo "--- Fase 6: Compilando Backend ---"
+            echo "--- Fase 3: Compilando Backend ---"
             cd src/backend
             npm install && npm run build
             cd /var/www/tienda-web-lotoAI-1
@@ -57,7 +47,7 @@ jobs:
             fi
             echo "✅ Backend compilado."
 
-            echo "--- Fase 7: Compilando Frontend (Build Atómico) ---"
+            echo "--- Fase 4: Compilando Frontend en directorio temporal ---"
             sudo fallocate -l 2G /swapfile || true
             sudo chmod 600 /swapfile || true
             sudo mkswap /swapfile || true
@@ -73,38 +63,39 @@ jobs:
             
             sudo swapoff /swapfile && sudo rm /swapfile
 
-            echo "--- Fase 8: Reemplazo Atómico y DIAGNÓSTICO ---"
+            echo "--- Fase 5: Reemplazo Atómico y Reinicio de PM2 ---"
             
+            # Reemplazo atómico
+            rm -rf dist_old && echo "🧹 Limpiado backup antiguo."
             if [ -d "dist" ]; then
-              rm -rf dist
+              mv dist dist_old
             fi
             mv dist_new dist
-            echo "✅ Nuevo build 'dist_new' renombrado a 'dist'."
-
-            # --- PASO DE DIAGNÓSTICO --- #
-            echo "🔍 CONTENIDO DEL DIRECTORIO 'dist' CREADO:"
-            ls -lR dist
-            # --------------------------- #
-
-            echo "--- Limpiando y reiniciando servicios con PM2 ---"
+            echo "✅ Directorio de build reemplazado atómicamente."
+            
+            # Reinicio robusto de PM2
             pm2 stop all || true
             pm2 delete all || true
             pm2 save --force
             
-            echo "--- Iniciando servicios con la nueva configuración ---"
+            echo "--- Iniciando todos los servicios ---"
             pm2 start ecosystem.config.js --env production
             pm2 save
+            
+            # Limpiar el directorio antiguo en segundo plano
+            rm -rf dist_old &
 
-            echo "--- Fase 8.5: Verificando estado de PM2 ---"
+            echo "--- Fase 6: Verificación Post-Despliegue ---"
             sleep 8
             pm2 status
+            netstat -tuln | grep -E ':3000|:4000|:5000'
             
-            echo "--- Fase 9: Actualizando configuración de NGINX ---"
+            echo "--- Fase 7: Actualizando NGINX ---"
             cp nginx.conf /etc/nginx/sites-available/loto-ia.com
             ln -sf /etc/nginx/sites-available/loto-ia.com /etc/nginx/sites-enabled/
             nginx -t && systemctl reload nginx
 
-            echo "✅ FIN: DESPLIEGUE DE DIAGNÓSTICO COMPLETADO."
+            echo "✅ FIN: DESPLIEGUE COMPLETADO CON ÉXITO."
 
       - name: Deployment success notification
         if: success()
