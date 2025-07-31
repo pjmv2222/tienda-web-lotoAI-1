@@ -25,77 +25,243 @@ jobs:
           username: root
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            echo "=== INICIO: DESPLIEGUE ATÓMICO (v4 - Final) ==="
-
+            echo "=== INICIO: DESPLIEGUE EN DOS FASES ==="
+            
+            # 1. Navegar al directorio del proyecto
             cd /var/www/tienda-web-lotoAI-1 || exit 1
-
-            echo "--- Fase 1: Actualizando código fuente ---"
+            
+            # 1.5. Respaldar archivos de configuración del servidor
+            echo "--- Fase 1.5: Respaldando archivos de configuración del servidor ---"
+            if [ -f ".env" ]; then
+              cp .env .env.backup
+              echo "✅ Archivo .env respaldado"
+            else
+              echo "⚠️  Archivo .env no encontrado para respaldar"
+            fi
+            if [ -f ".env.production" ]; then
+              cp .env.production .env.production.backup
+              echo "✅ Archivo .env.production respaldado"
+            fi
+            
+            # Respaldar archivos críticos del scraper
+            if [ -f "src/assets/botes.json" ]; then
+              cp src/assets/botes.json src/assets/botes.json.backup
+              echo "✅ Archivo botes.json (src) respaldado"
+            else
+              echo "⚠️  Archivo src/assets/botes.json no encontrado para respaldar"
+            fi
+            if [ -f "src/assets/lottery-data.json" ]; then
+              cp src/assets/lottery-data.json src/assets/lottery-data.json.backup
+              echo "✅ Archivo lottery-data.json (src) respaldado"
+            else
+              echo "⚠️  Archivo src/assets/lottery-data.json no encontrado para respaldar"
+            fi
+            if [ -f "dist/tienda-web-loto-ai/browser/assets/botes.json" ]; then
+              # Crear directorio temporal para respaldos fuera de dist/
+              mkdir -p .deploy-backups
+              cp dist/tienda-web-loto-ai/browser/assets/botes.json .deploy-backups/botes.json.backup
+              echo "✅ Archivo botes.json (dist) respaldado en .deploy-backups/"
+            else
+              echo "⚠️  Archivo dist botes.json no encontrado para respaldar"
+            fi
+            if [ -f "dist/tienda-web-loto-ai/browser/assets/lottery-data.json" ]; then
+              mkdir -p .deploy-backups
+              cp dist/tienda-web-loto-ai/browser/assets/lottery-data.json .deploy-backups/lottery-data.json.backup
+              echo "✅ Archivo lottery-data.json (dist) respaldado en .deploy-backups/"
+            else
+              echo "⚠️  Archivo dist lottery-data.json no encontrado para respaldar"
+            fi
+            
+            # Respaldar configuraciones específicas del servidor IA
+            if [ -f "archivos-para-servidor/server-ia-unificado.py" ]; then
+              cp archivos-para-servidor/server-ia-unificado.py archivos-para-servidor/server-ia-unificado.py.backup
+              echo "✅ Archivo server-ia-unificado.py (archivos-para-servidor) respaldado"
+            else
+              echo "⚠️  Archivo archivos-para-servidor/server-ia-unificado.py no encontrado para respaldar"
+            fi
+            if [ -f "server-ia-unificado.py" ]; then
+              cp server-ia-unificado.py server-ia-unificado.py.backup
+              echo "✅ Archivo server-ia-unificado.py (raíz) respaldado"
+            else
+              echo "⚠️  Archivo server-ia-unificado.py (raíz) no encontrado para respaldar"
+            fi
+            
+            # 2. Actualizar desde GitHub
+            echo "--- Fase 2: Actualizando código fuente ---"
             git fetch origin main
             git reset --hard origin/main
             git pull origin main
+            
+            # 2.5. Restaurar archivos de configuración del servidor
+            echo "--- Fase 2.5: Restaurando archivos de configuración del servidor ---"
+            if [ -f ".env.backup" ]; then
+              cp .env.backup .env
+              rm .env.backup
+              echo "✅ Archivo .env restaurado"
+            else
+              echo "❌ No se pudo restaurar .env - archivo de respaldo no encontrado"
+            fi
+            if [ -f ".env.production.backup" ]; then
+              cp .env.production.backup .env.production
+              rm .env.production.backup
+              echo "✅ Archivo .env.production restaurado"
+            fi
+            
+            # Restaurar archivos críticos del scraper
+            if [ -f "src/assets/botes.json.backup" ]; then
+              cp src/assets/botes.json.backup src/assets/botes.json
+              rm src/assets/botes.json.backup
+              echo "✅ Archivo botes.json (src) restaurado con datos actualizados del scraper"
+            else
+              echo "❌ No se pudo restaurar botes.json (src) - archivo de respaldo no encontrado"
+            fi
+            if [ -f "src/assets/lottery-data.json.backup" ]; then
+              cp src/assets/lottery-data.json.backup src/assets/lottery-data.json
+              rm src/assets/lottery-data.json.backup
+              echo "✅ Archivo lottery-data.json (src) restaurado con datos actualizados del scraper"
+            else
+              echo "❌ No se pudo restaurar lottery-data.json (src) - archivo de respaldo no encontrado"
+            fi
+            if [ -f ".deploy-backups/botes.json.backup" ]; then
+              # Crear directorio si no existe
+              mkdir -p dist/tienda-web-loto-ai/browser/assets/
+              cp .deploy-backups/botes.json.backup dist/tienda-web-loto-ai/browser/assets/botes.json
+              rm .deploy-backups/botes.json.backup
+              echo "✅ Archivo botes.json (dist) restaurado con datos actualizados del scraper"
+            else
+              echo "❌ No se pudo restaurar botes.json (dist) - archivo de respaldo no encontrado"
+            fi
+            if [ -f ".deploy-backups/lottery-data.json.backup" ]; then
+              mkdir -p dist/tienda-web-loto-ai/browser/assets/
+              cp .deploy-backups/lottery-data.json.backup dist/tienda-web-loto-ai/browser/assets/lottery-data.json
+              rm .deploy-backups/lottery-data.json.backup
+              echo "✅ Archivo lottery-data.json (dist) restaurado con datos actualizados del scraper"
+            else
+              echo "❌ No se pudo restaurar lottery-data.json (dist) - archivo de respaldo no encontrado"
+            fi
+            
+            # Restaurar configuraciones específicas del servidor IA
+            # IMPORTANTE: NO restaurar server-ia-unificado.py porque debe actualizarse desde el repositorio
+            echo "--- NOTA: server-ia-unificado.py NO se restaura - debe usar versión actualizada del repositorio ---"
+            if [ -f "archivos-para-servidor/server-ia-unificado.py.backup" ]; then
+              rm archivos-para-servidor/server-ia-unificado.py.backup
+              echo "✅ Backup obsoleto de server-ia-unificado.py eliminado - usando versión del repositorio"
+            fi
+            if [ -f "server-ia-unificado.py.backup" ]; then
+              rm server-ia-unificado.py.backup
+              echo "✅ Backup obsoleto de server-ia-unificado.py (raíz) eliminado - usando versión del repositorio"
+            fi
+            
+            # 3. Verificar variables de entorno
+            echo "--- Fase 3: Verificando variables de entorno ---"
+            if [ -f ".env" ]; then
+              echo "✅ Archivo .env del servidor encontrado"
+              # Verificar que contenga las claves importantes
+              if grep -q "STRIPE_SECRET_KEY" .env; then
+                echo "✅ STRIPE_SECRET_KEY encontrada en .env"
+              else
+                echo "❌ STRIPE_SECRET_KEY NO encontrada en .env"
+              fi
+            else
+              echo "❌ Archivo .env del servidor NO encontrado"
+            fi
 
-            echo "--- Fase 2: Instalando dependencias ---"
+            # 4. Instalar dependencias
+            echo "--- Fase 4: Instalando dependencias ---"
             npm install --production=false
-
-            echo "--- Fase 3: Compilando Backend ---"
+            
+            # 5. Limpiar builds anteriores
+            echo "--- Fase 5: Limpiando artefactos ---"
+            rm -rf dist/
+            
+            # 6. Compilar el Backend (TSC)
+            echo "--- Fase 6: Compilando Backend ---"
             cd src/backend
-            npm install && npm run build
+            npm install
+            npm run build
             cd /var/www/tienda-web-lotoAI-1
             if [ ! -f "src/backend/dist/index.js" ]; then
-              echo "❌ Error de compilación en el Backend. Abortando."
+              echo "❌ Error de compilación en el Backend. Archivo index.js no encontrado. Abortando despliegue."
               exit 1
             fi
-            echo "✅ Backend compilado."
-
-            echo "--- Fase 4: Compilando Frontend en directorio temporal ---"
+            echo "✅ Backend compilado correctamente en src/backend/dist/index.js"
+            
+            # 7. Compilar el Frontend (Angular SSR)
+            echo "--- Fase 7: Compilando Frontend ---"
+            # Aumentar memoria swap temporalmente para la compilación
             sudo fallocate -l 2G /swapfile || true
             sudo chmod 600 /swapfile || true
             sudo mkswap /swapfile || true
             sudo swapon /swapfile || true
             
-            NODE_OPTIONS="--max-old-space-size=4096" npx ng build --configuration=production --output-path=dist_new
+            # Compilar con opciones de memoria optimizadas
+            NODE_OPTIONS="--max-old-space-size=4096" npx ng build --configuration=production
             if [ $? -ne 0 ]; then
-              echo "❌ Error de compilación en el Frontend. Abortando."
-              sudo swapoff /swapfile && sudo rm /swapfile
+              echo "❌ Error de compilación en el Frontend. Abortando despliegue."
+              # Limpiar swap
+              sudo swapoff /swapfile || true
+              sudo rm /swapfile || true
               exit 1
             fi
-            echo "✅ Frontend compilado en 'dist_new'."
             
-            sudo swapoff /swapfile && sudo rm /swapfile
-
-            echo "--- Fase 5: Reemplazo Atómico y Reinicio de PM2 ---"
+            # Limpiar swap después de la compilación
+            sudo swapoff /swapfile || true
+            sudo rm /swapfile || true
             
-            # Reemplazo atómico
-            rm -rf dist_old && echo "🧹 Limpiado backup antiguo."
-            if [ -d "dist" ]; then
-              mv dist dist_old
+            # 7.5. Verificar que archivos JSON están en dist después del build
+            echo "--- Fase 7.5: Verificando archivos JSON en dist ---"
+            if [ -f "dist/tienda-web-loto-ai/browser/assets/botes.json" ]; then
+              echo "✅ Archivo botes.json encontrado en dist (copiado automáticamente por Angular)"
+            else
+              echo "⚠️  Archivo botes.json NO encontrado en dist"
             fi
-            mv dist_new dist
-            echo "✅ Directorio de build reemplazado atómicamente."
+            if [ -f "dist/tienda-web-loto-ai/browser/assets/lottery-data.json" ]; then
+              echo "✅ Archivo lottery-data.json encontrado en dist (copiado automáticamente por Angular)"
+            else
+              echo "⚠️  Archivo lottery-data.json NO encontrado en dist"
+            fi
             
-            # Reinicio robusto de PM2
-            pm2 stop all || true
-            pm2 delete all || true
+            # 8. Reiniciar los servicios con PM2 - LIMPIEZA COMPLETA
+            echo "--- Fase 8: Limpiando y reiniciando servicios con PM2 ---"
+            pm2 stop all || echo "No había procesos corriendo"
+            pm2 delete all || echo "No había procesos para eliminar"
             pm2 save --force
+            echo "✅ PM2 limpiado completamente"
             
-            echo "--- Iniciando todos los servicios ---"
+            # Iniciar con configuración limpia
             pm2 start ecosystem.config.js --env production
             pm2 save
             
-            # Limpiar el directorio antiguo en segundo plano
-            rm -rf dist_old &
-
-            echo "--- Fase 6: Verificación Post-Despliegue ---"
-            sleep 8
+            # 8.5. Verificar que PM2 está funcionando correctamente
+            echo "--- Fase 8.5: Verificando estado de PM2 ---"
+            sleep 5
             pm2 status
-            netstat -tuln | grep -E ':3000|:4000|:5000'
+            echo "--- Logs recientes del backend ---"
+            timeout 10 pm2 logs backend --lines 15 || echo "Timeout en logs, continuando..."
+            echo "--- Verificando si el backend está corriendo ---"
+            pm2 info backend
             
-            echo "--- Fase 7: Actualizando NGINX ---"
+            # 9. Actualizar y recargar NGINX
+            echo "--- Fase 9: Actualizando configuración de NGINX ---"
             cp nginx.conf /etc/nginx/sites-available/loto-ia.com
             ln -sf /etc/nginx/sites-available/loto-ia.com /etc/nginx/sites-enabled/
-            nginx -t && systemctl reload nginx
+            chown root:root /etc/nginx/sites-available/loto-ia.com
+            chmod 644 /etc/nginx/sites-available/loto-ia.com
+            nginx -t # Probar la sintaxis de la configuración
+            if [ $? -eq 0 ]; then
+              echo "✅ Sintaxis de NGINX correcta. Recargando NGINX..."
+              systemctl reload nginx
+            else
+              echo "❌ Error de sintaxis en nginx.conf. No se recargará NGINX."
+              exit 1
+            fi
 
-            echo "✅ FIN: DESPLIEGUE COMPLETADO CON ÉXITO."
+            # 10. Limpiar archivos temporales del despliegue
+            echo "--- Fase 10: Limpiando archivos temporales ---"
+            rm -rf .deploy-backups
+            echo "✅ Directorio temporal .deploy-backups eliminado"
+
+            echo "✅ FIN: DESPLIEGUE COMPLETADO CON ÉXITO"
 
       - name: Deployment success notification
         if: success()
