@@ -25,38 +25,28 @@ jobs:
           username: root
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            echo "=== INICIO: DESPLIEGUE ATÓMICO (v2) ==="
+            echo "=== INICIO: DESPLIEGUE CON DIAGNÓSTICO (v3) ==="
 
-            # 1. Navegar al directorio del proyecto
             cd /var/www/tienda-web-lotoAI-1 || exit 1
 
-            # (Mantenemos la lógica de backup y restauración de archivos)
             echo "--- Fase 1.5: Respaldando archivos de configuración ---"
             if [ -f ".env" ]; then cp .env .env.backup; fi
             if [ -f ".env.production" ]; then cp .env.production .env.production.backup; fi
-            if [ -f "src/assets/botes.json" ]; then cp src/assets/botes.json src/assets/botes.json.backup; fi
-            if [ -f "src/assets/lottery-data.json" ]; then cp src/assets/lottery-data.json src/assets/lottery-data.json.backup; fi
             echo "✅ Backups de configuración creados."
 
-            # 2. Actualizar desde GitHub
             echo "--- Fase 2: Actualizando código fuente ---"
             git fetch origin main
             git reset --hard origin/main
             git pull origin main
 
-            # 2.5. Restaurar archivos de configuración
             echo "--- Fase 2.5: Restaurando archivos de configuración ---"
             if [ -f ".env.backup" ]; then mv .env.backup .env; fi
             if [ -f ".env.production.backup" ]; then mv .env.production.backup .env.production; fi
-            if [ -f "src/assets/botes.json.backup" ]; then mv src/assets/botes.json.backup src/assets/botes.json; fi
-            if [ -f "src/assets/lottery-data.json.backup" ]; then mv src/assets/lottery-data.json.backup src/assets/lottery-data.json; fi
             echo "✅ Archivos de configuración restaurados."
 
-            # 4. Instalar dependencias
             echo "--- Fase 4: Instalando dependencias ---"
             npm install --production=false
 
-            # 6. Compilar el Backend
             echo "--- Fase 6: Compilando Backend ---"
             cd src/backend
             npm install && npm run build
@@ -67,7 +57,6 @@ jobs:
             fi
             echo "✅ Backend compilado."
 
-            # 7. Compilar el Frontend en un directorio temporal
             echo "--- Fase 7: Compilando Frontend (Build Atómico) ---"
             sudo fallocate -l 2G /swapfile || true
             sudo chmod 600 /swapfile || true
@@ -84,58 +73,38 @@ jobs:
             
             sudo swapoff /swapfile && sudo rm /swapfile
 
-            # 8. Reemplazo Atómico y Reinicio de PM2 (Método Robusto)
-            echo "--- Fase 8: Reemplazo Atómico y Reinicio de Servicios ---"
+            echo "--- Fase 8: Reemplazo Atómico y DIAGNÓSTICO ---"
             
-            # El reemplazo atómico: se hace ANTES de tocar PM2
-            rm -rf dist_old && echo "🧹 Limpiado backup antiguo."
             if [ -d "dist" ]; then
-              mv dist dist_old
-              echo "✅ Directorio 'dist' actual renombrado a 'dist_old'."
+              rm -rf dist
             fi
             mv dist_new dist
             echo "✅ Nuevo build 'dist_new' renombrado a 'dist'."
-            
-            # Ahora, reiniciar PM2 de forma agresiva como en el script original
+
+            # --- PASO DE DIAGNÓSTICO --- #
+            echo "🔍 CONTENIDO DEL DIRECTORIO 'dist' CREADO:"
+            ls -lR dist
+            # --------------------------- #
+
             echo "--- Limpiando y reiniciando servicios con PM2 ---"
-            pm2 stop all || echo "No había procesos corriendo."
-            pm2 delete all || echo "No había procesos para eliminar."
+            pm2 stop all || true
+            pm2 delete all || true
             pm2 save --force
             
-            # Liberar puertos por si acaso
-            fuser -k 3000/tcp 2>/dev/null || true
-            fuser -k 4000/tcp 2>/dev/null || true
-            fuser -k 5000/tcp 2>/dev/null || true
-            sleep 2
-            
-            # Iniciar de nuevo desde el ecosystem file (el método correcto)
             echo "--- Iniciando servicios con la nueva configuración ---"
             pm2 start ecosystem.config.js --env production
             pm2 save
-            
-            # Limpiar el directorio antiguo en segundo plano
-            rm -rf dist_old &
 
-            # 8.5. Verificación Post-Reinicio
             echo "--- Fase 8.5: Verificando estado de PM2 ---"
             sleep 8
             pm2 status
-            netstat -tuln | grep -E ':3000|:4000|:5000'
             
-            # 9. Actualizar y recargar NGINX
             echo "--- Fase 9: Actualizando configuración de NGINX ---"
             cp nginx.conf /etc/nginx/sites-available/loto-ia.com
             ln -sf /etc/nginx/sites-available/loto-ia.com /etc/nginx/sites-enabled/
-            nginx -t
-            if [ $? -eq 0 ]; then
-              systemctl reload nginx
-              echo "✅ NGINX recargado."
-            else
-              echo "❌ Error de sintaxis en nginx.conf."
-              exit 1
-            fi
+            nginx -t && systemctl reload nginx
 
-            echo "✅ FIN: DESPLIEGUE ATÓMICO (v2) COMPLETADO CON ÉXITO"
+            echo "✅ FIN: DESPLIEGUE DE DIAGNÓSTICO COMPLETADO."
 
       - name: Deployment success notification
         if: success()
