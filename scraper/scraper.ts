@@ -99,36 +99,10 @@ async function scrapeWithoutProxy() {
     // Esperar a que los elementos de botes estén cargados (¡CRUCIAL!)
     console.log('⏳ Esperando a que los elementos de botes se carguen...');
     try {
-      // Esperar más tiempo y con múltiples intentos
-      await page.waitForSelector('.c-parrilla-juegos__elemento_topaz', { timeout: 15000 });
+      await page.waitForSelector('.c-parrilla-juegos__elemento_topaz', { timeout: 10000 });
       console.log('✅ Elementos de botes encontrados');
     } catch (error) {
-      console.log('⚠️  Selectores estándar no encontrados, intentando con selectores alternativos...');
-      
-      // Intentar con selectores alternativos
-      const alternativos = [
-        '.c-parrilla-juegos__elemento',
-        '.parrilla-juegos__elemento',
-        '[class*="parrilla"]',
-        '[class*="elemento"]'
-      ];
-      
-      let encontrado = false;
-      for (const selector of alternativos) {
-        try {
-          await page.waitForSelector(selector, { timeout: 5000 });
-          console.log(`✅ Elementos de botes encontrados con selector: ${selector}`);
-          encontrado = true;
-          break;
-        } catch (e) {
-          // Continuar con el siguiente selector
-        }
-      }
-      
-      if (!encontrado) {
-        console.log('⚠️  No se encontraron elementos de botes con ningún selector, esperando tiempo adicional...');
-        await delay(5000); // Esperar 5 segundos adicionales
-      }
+      console.log('⚠️  No se encontraron elementos de botes inmediatamente, continuando...');
     }
 
     // Extraer botes
@@ -150,38 +124,15 @@ async function scrapeWithoutProxy() {
           '.parrilla-juegos__elemento',
           '[class*="parrilla"]',
           '[class*="elemento"]',
-          '[class*="topaz"]',
-          '.c-parrilla-juegos',
-          '.parrilla-juegos',
-          '[class*="juegos"]',
-          '.c-parrilla'
+          '[class*="topaz"]'
         ];
         
-        console.log('🔍 Buscando elementos con selectores alternativos...');
         variaciones.forEach(selector => {
           const encontrados = document.querySelectorAll(selector);
           if (encontrados.length > 0) {
             console.log(`📋 Encontrados ${encontrados.length} elementos con selector: ${selector}`);
-            // Mostrar las clases de los primeros elementos encontrados
-            for (let i = 0; i < Math.min(3, encontrados.length); i++) {
-              console.log(`  - Elemento ${i + 1}: clases="${encontrados[i].className}", id="${encontrados[i].id}"`);
-            }
           }
         });
-        
-        // También buscar específicamente por texto que contenga "millones" o "€"
-        const todosLosP = document.querySelectorAll('p');
-        let botesEncontrados = 0;
-        todosLosP.forEach((p, index) => {
-          const texto = p.textContent?.trim() || '';
-          if (texto.match(/\d+[.,]?\d*\s*(MILLONES|millones|€|EUROS)/i)) {
-            botesEncontrados++;
-            if (botesEncontrados <= 5) { // Solo mostrar los primeros 5
-              console.log(`💰 Posible bote encontrado en p[${index}]: "${texto}" (clases: ${p.className})`);
-            }
-          }
-        });
-        console.log(`💰 Total de posibles botes encontrados en elementos p: ${botesEncontrados}`);
       }
 
       // Intentar extraer botes desde datos JSON en la página
@@ -427,8 +378,8 @@ async function scrapeWithoutProxy() {
             game: 'primitiva',
             code: 'LAPR',
             mainNumbersSelector: '#qa_ultResult-combination-mainNumbers-LAPR .c-ultimo-resultado__combinacion-li--primitiva',
-            complementarySelector: '#qa_ultResult-LAPR-complementario',
-            reintegroSelector: '#qa_ultResult-LAPR-reintegro',
+            complementarySelector: '#qa_ultResult-combination-complementaryNumber-LAPR .c-ultimo-resultado__combinacion-li--complementario',
+            reintegroSelector: '#qa_ultResult-combination-reintegro-LAPR .c-ultimo-resultado__combinacion-li--reintegro',
             jokerSelector: '.c-ultimo-resultado__joker-ganador',
             dateSelector: '#qa_ultResult-LAPR-fecha'
           },
@@ -436,8 +387,8 @@ async function scrapeWithoutProxy() {
             game: 'bonoloto',
             code: 'BONO',
             mainNumbersSelector: '#qa_ultResult-combination-mainNumbers-BONO .c-ultimo-resultado__combinacion-li--bonoloto',
-            complementarySelector: '#qa_ultResult-BONO-complementario',
-            reintegroSelector: '#qa_ultResult-BONO-reintegro',
+            complementarySelector: '#qa_ultResult-combination-complementaryNumber-BONO .c-ultimo-resultado__combinacion-li--complementario',
+            reintegroSelector: '#qa_ultResult-combination-reintegro-BONO .c-ultimo-resultado__combinacion-li--reintegro',
             dateSelector: '#qa_ultResult-BONO-fecha'
           },
           {
@@ -451,7 +402,7 @@ async function scrapeWithoutProxy() {
             game: 'eurodreams',
             code: 'EDMS',
             mainNumbersSelector: '#qa_ultResult-combination-mainNumbers-EDMS .c-ultimo-resultado__combinacion-li--eurodreams',
-            dreamSelector: '#qa_ultResult-EDMS-reintegro',
+            dreamSelector: '#qa_ultResult-combination-dream-EDMS .c-ultimo-resultado__combinacion-li--dream',
             dateSelector: '#qa_ultResult-EDMS-fecha'
           },
           {
@@ -487,41 +438,24 @@ async function scrapeWithoutProxy() {
                 '.c-resultado-sorteo--loteria-nacional-jueves',
                 '.c-resultado-sorteo--loteria-nacional-sabado', 
                 '[id*="qa_resultadoSorteo-sorteo-LNAC"]',
-                '[class*="resultado-sorteo"][class*="loteria-nacional"]'
+                '[class*="resultado-sorteo"][class*="loteria-nacional"]',
+                '.c-resultado-sorteo'
               ];
               
-              let todosLosSorteos: Element[] = [];
+              let elementosSorteo: NodeListOf<Element> | null = null;
+              let selectorUsado = '';
               
-              // Buscar con cada selector específico para asegurar que encontramos ambos sorteos
-              selectoresSorteos.forEach(selector => {
+              for (const selector of selectoresSorteos) {
                 const elementos = document.querySelectorAll(selector);
-                elementos.forEach(el => {
-                  const html = el.innerHTML;
-                  if ((html.includes('loteria-nacional') || 
-                       html.includes('LNAC') || 
-                       html.includes('jueves') || 
-                       html.includes('sábado') ||
-                       el.querySelector('[id*="LNAC"]') !== null) &&
-                      !todosLosSorteos.includes(el)) {
-                    todosLosSorteos.push(el);
-                  }
-                });
-              });
-              
-              // También buscar directamente por IDs específicos
-              const sorteoJueves = document.querySelector('#qa_resultadoSorteo-sorteo-LNACJ');
-              const sorteoSabado = document.querySelector('#qa_resultadoSorteo-sorteo-LNACS');
-              
-              if (sorteoJueves && !todosLosSorteos.includes(sorteoJueves)) {
-                todosLosSorteos.push(sorteoJueves);
-              }
-              if (sorteoSabado && !todosLosSorteos.includes(sorteoSabado)) {
-                todosLosSorteos.push(sorteoSabado);
+                if (elementos.length > 0) {
+                  elementosSorteo = elementos;
+                  selectorUsado = selector;
+                  console.log(`📋 Encontrados ${elementos.length} sorteos con selector: ${selector}`);
+                  break;
+                }
               }
               
-              console.log(`📋 Total de sorteos LN encontrados: ${todosLosSorteos.length}`);
-              
-              if (todosLosSorteos.length === 0) {
+              if (!elementosSorteo || elementosSorteo.length === 0) {
                 console.log('🔍 No se encontraron sorteos con selectores estándar, buscando en toda la página...');
                 
                 // Buscar elementos que contengan texto relacionado con días de la semana
@@ -537,7 +471,7 @@ async function scrapeWithoutProxy() {
                 const premiosEncontrados = todoElHTML.match(patronesPremios);
                 
                 console.log(`  📅 Días encontrados: ${diasEncontrados?.length || 0}`);
-                console.log(`  📅 Fechas encontradas: ${fechasEncontradas?.length || 0}`);
+                console.log(`  � Fechas encontradas: ${fechasEncontradas?.length || 0}`);
                 console.log(`  🎁 Premios potenciales: ${premiosEncontrados?.length || 0}`);
                 
                 if (fechasEncontradas && fechasEncontradas.length >= 2 && premiosEncontrados && premiosEncontrados.length >= 2) {
@@ -557,9 +491,9 @@ async function scrapeWithoutProxy() {
                   }
                 }
               } else {
-                console.log(`📋 Procesando ${todosLosSorteos.length} sorteos encontrados`);
+                console.log(`📋 Procesando ${elementosSorteo.length} sorteos encontrados con selector: ${selectorUsado}`);
                 
-                todosLosSorteos.forEach((el: Element, index: number) => {
+                elementosSorteo.forEach((el, index) => {
                   // Extraer día y fecha
                   let dia = '';
                   let fecha = '';
@@ -595,7 +529,7 @@ async function scrapeWithoutProxy() {
                   
                   console.log(`  🎁 Encontrados ${premiosElements.length} elementos de premio en sorteo ${index + 1}`);
                   
-                  premiosElements.forEach((premio: Element, i: number) => {
+                  premiosElements.forEach((premio, i) => {
                     const numero = premio.textContent?.trim() || '';
                     if (numero && numero.match(/^\d{5}$/)) {
                       premios.push(numero);
@@ -606,7 +540,7 @@ async function scrapeWithoutProxy() {
                   // Extraer reintegros
                   const reintegros: string[] = [];
                   const reintegroElements = el.querySelectorAll('.c-resultado-sorteo__reintegros-li');
-                  reintegroElements.forEach((r: Element) => {
+                  reintegroElements.forEach(r => {
                     const texto = r.textContent?.trim() || '';
                     // Extraer solo el número, quitando la "R"
                     const numeroMatch = texto.match(/\d+/);
@@ -685,23 +619,11 @@ async function scrapeWithoutProxy() {
                   // Para lototurf, el reintegro está en un li dentro del elemento
                   let reintegroText = '';
                   if (config.game === 'lototurf') {
-                    // Intentar múltiples selectores para el reintegro de lototurf
                     const reintegroLi = reintegroElement.querySelector('li');
-                    const reintegroP = reintegroElement.querySelector('p');
-                    const reintegroSpan = reintegroElement.querySelector('span');
-                    
                     if (reintegroLi) {
                       reintegroText = reintegroLi.textContent?.trim() || '';
-                    } else if (reintegroP) {
-                      reintegroText = reintegroP.textContent?.trim() || '';
-                    } else if (reintegroSpan) {
-                      reintegroText = reintegroSpan.textContent?.trim() || '';
-                    } else {
-                      reintegroText = reintegroElement.textContent?.trim() || '';
                     }
-                    console.log(`  🔍 Lototurf reintegro element found: ${!!reintegroElement}, li: ${!!reintegroElement.querySelector('li')}, p: ${!!reintegroElement.querySelector('p')}, span: ${!!reintegroElement.querySelector('span')}, text: "${reintegroText}"`);
                   } else {
-                    // Para primitiva y bonoloto, usar directamente el ID
                     reintegroText = reintegroElement.textContent?.trim() || '';
                   }
                   
@@ -709,11 +631,7 @@ async function scrapeWithoutProxy() {
                   if (!isNaN(reintegro)) {
                     result.reintegro = reintegro;
                     console.log(`  💰 Reintegro: ${reintegro}`);
-                  } else {
-                    console.log(`  ❌ No se pudo extraer reintegro de "${reintegroText}"`);
                   }
-                } else {
-                  console.log(`  ❌ No se encontró elemento reintegro con selector: ${config.reintegroSelector}`);
                 }
               }
 
@@ -734,58 +652,14 @@ async function scrapeWithoutProxy() {
               if (config.caballoSelector) {
                 const caballoElement = document.querySelector(config.caballoSelector);
                 if (caballoElement) {
-                  // Intentar múltiples selectores para el caballo de lototurf
+                  // El caballo está en el li dentro del elemento complementario
                   const caballoLi = caballoElement.querySelector('li');
-                  const caballoP = caballoElement.querySelector('p');
-                  const caballoSpan = caballoElement.querySelector('span');
-                  
-                  let caballoText = '';
                   if (caballoLi) {
-                    caballoText = caballoLi.textContent?.trim() || '';
-                  } else if (caballoP) {
-                    caballoText = caballoP.textContent?.trim() || '';
-                  } else if (caballoSpan) {
-                    caballoText = caballoSpan.textContent?.trim() || '';
-                  } else {
-                    caballoText = caballoElement.textContent?.trim() || '';
-                  }
-                  
-                  console.log(`  🔍 Lototurf caballo element found: ${!!caballoElement}, li: ${!!caballoElement.querySelector('li')}, p: ${!!caballoElement.querySelector('p')}, span: ${!!caballoElement.querySelector('span')}, text: "${caballoText}"`);
-                  
-                  if (caballoText) {
-                    // Remover espacios y ceros iniciales si los hay
-                    const caballoClean = caballoText.replace(/^0+/, '') || caballoText;
-                    const caballo = parseInt(caballoClean);
+                    const caballoText = caballoLi.textContent?.trim() || '';
+                    const caballo = parseInt(caballoText);
                     if (!isNaN(caballo)) {
                       result.caballo = caballo;
                       console.log(`  🐎 Caballo: ${caballo}`);
-                    } else {
-                      console.log(`  ❌ No se pudo extraer caballo de "${caballoText}" (clean: "${caballoClean}")`);
-                    }
-                  } else {
-                    console.log(`  ❌ No se encontró texto del caballo en ningún subelemento`);
-                  }
-                } else {
-                  console.log(`  ❌ No se encontró elemento caballo con selector: ${config.caballoSelector}`);
-                  
-                  // Buscar con selectores alternativos específicos para caballo
-                  const selectoresAlternativos = [
-                    '.c-ultimo-resultado__complementario-u--lototurf',
-                    '[class*="complementario"][class*="lototurf"]',
-                    '#qa_ultResult-LOTU-caballo'
-                  ];
-                  
-                  for (const selectorAlt of selectoresAlternativos) {
-                    const elementoAlt = document.querySelector(selectorAlt);
-                    if (elementoAlt) {
-                      console.log(`  🔍 Caballo encontrado con selector alternativo: ${selectorAlt}`);
-                      const textoAlt = elementoAlt.textContent?.trim() || '';
-                      const caballoAlt = parseInt(textoAlt.replace(/^0+/, '') || textoAlt);
-                      if (!isNaN(caballoAlt)) {
-                        result.caballo = caballoAlt;
-                        console.log(`  🐎 Caballo extraído con selector alternativo: ${caballoAlt}`);
-                        break;
-                      }
                     }
                   }
                 }
@@ -795,57 +669,12 @@ async function scrapeWithoutProxy() {
               if (config.millonSelector) {
                 const millonElement = document.querySelector(config.millonSelector);
                 if (millonElement) {
-                  const millonText = millonElement.textContent?.trim() || '';
-                  console.log(`  🔍 El Millón element found: ${!!millonElement}, text: "${millonText}"`);
-                  
-                  // El código del millón debe tener formato de 3 letras seguidas de 5 números
-                  if (millonText && millonText.match(/^[A-Z]{3}\d{5}$/)) {
-                    result.millon = millonText;
-                    console.log(`  💎 El Millón: ${result.millon}`);
-                  } else {
-                    console.log(`  ❌ Formato de El Millón no válido: "${millonText}"`);
-                    
-                    // Buscar con selectores alternativos
-                    const selectoresAlternativos = [
-                      '.c-ultimo-resultado__desplegable-titulo',
-                      '#qa_ultResult-EMIL-millon',
-                      '[class*="desplegable-titulo"]',
-                      '[class*="millon"]'
-                    ];
-                    
-                    for (const selectorAlt of selectoresAlternativos) {
-                      const elementoAlt = document.querySelector(selectorAlt);
-                      if (elementoAlt) {
-                        const textoAlt = elementoAlt.textContent?.trim() || '';
-                        console.log(`  🔍 El Millón encontrado con selector alternativo ${selectorAlt}: "${textoAlt}"`);
-                        if (textoAlt && textoAlt.match(/^[A-Z]{3}\d{5}$/)) {
-                          result.millon = textoAlt;
-                          console.log(`  💎 El Millón extraído con selector alternativo: ${result.millon}`);
-                          break;
-                        }
-                      }
-                    }
-                  }
-                } else {
-                  console.log(`  ❌ No se encontró elemento El Millón con selector: ${config.millonSelector}`);
-                  
-                  // Buscar directamente con selectores específicos
-                  const selectoresDirectos = [
-                    '.c-ultimo-resultado__desplegable-titulo',
-                    '#qa_ultResult-EMIL-millon',
-                    '[class*="desplegable-titulo"]'
-                  ];
-                  
-                  for (const selectorDirecto of selectoresDirectos) {
-                    const elementoDirecto = document.querySelector(selectorDirecto);
-                    if (elementoDirecto) {
-                      const textoDirecto = elementoDirecto.textContent?.trim() || '';
-                      console.log(`  🔍 El Millón encontrado con selector directo ${selectorDirecto}: "${textoDirecto}"`);
-                      if (textoDirecto && textoDirecto.match(/^[A-Z]{3}\d{5}$/)) {
-                        result.millon = textoDirecto;
-                        console.log(`  💎 El Millón extraído con selector directo: ${result.millon}`);
-                        break;
-                      }
+                  const millon = millonElement.textContent?.trim() || '';
+                  if (millon && millon.includes('Millón')) {
+                    const match = millon.match(/([A-Z]{3}\d{5})/);
+                    if (match) {
+                      result.millon = match[1];
+                      console.log(`  💎 El Millón: ${result.millon}`);
                     }
                   }
                 }
