@@ -146,15 +146,28 @@ export class SubscriptionService {
         // Verificar si tiene suscripción activa del plan específico
         if (response.hasActiveSubscription && response.subscription) {
           console.log(`hasActivePlan: plan_id en respuesta: '${response.subscription.plan_id}', buscando: '${planId}'`);
-          const hasMatchingPlan = response.subscription.plan_id === planId;
+          
+          // CORRECCIÓN PRINCIPAL: Verificar tanto plan_id como plan_type
+          const hasMatchingPlanId = response.subscription.plan_id === planId;
+          const hasMatchingPlanType = response.subscription.plan_type === planId;
+          const hasMatchingPlan = hasMatchingPlanId || hasMatchingPlanType;
+          
+          console.log(`hasActivePlan: plan_id coincide: ${hasMatchingPlanId}`);
+          console.log(`hasActivePlan: plan_type coincide: ${hasMatchingPlanType}`);
           console.log(`hasActivePlan: ¿Plan coincide? ${hasMatchingPlan}`);
+          
           return hasMatchingPlan;
         }
+        
         console.log('hasActivePlan: No hay suscripción activa o no se encontró la suscripción en la respuesta');
+        console.log('hasActivePlan: response.hasActiveSubscription:', response.hasActiveSubscription);
+        console.log('hasActivePlan: response.subscription:', response.subscription);
         return false;
       }),
       catchError(error => {
         console.error('hasActivePlan: Error al verificar plan específico:', error);
+        console.error('hasActivePlan: Status:', error.status);
+        console.error('hasActivePlan: Message:', error.message);
         return of(false);
       })
     );
