@@ -698,11 +698,7 @@ export class ProfileComponent implements OnInit {
           console.log('🔄 [PROFILE] No se encontraron suscripciones, cargando Plan Básico...');
           this.loadBasicPlanData();
         } else {
-          // Verificar si todas las suscripciones son del Plan Básico
-          const hasOnlyBasicPlan = subscriptions.every((sub: any) => 
-            !sub.planId || sub.planId === 'basic' || sub.planId === ''
-          );
-          
+          // CORRECCIÓN: Mostrar TODAS las suscripciones activas, incluyendo múltiples planes
           console.log('🔍 [PROFILE] Análisis de suscripciones:');
           subscriptions.forEach((sub: any, index) => {
             console.log(`📋 [PROFILE] Suscripción ${index}:`, {
@@ -713,16 +709,25 @@ export class ProfileComponent implements OnInit {
               endDate: sub.endDate
             });
           });
-          console.log('🔍 [PROFILE] ¿Solo Plan Básico?:', hasOnlyBasicPlan);
           
-          if (hasOnlyBasicPlan) {
-            // Todas las suscripciones son del Plan Básico - cargar predicciones
-            console.log('🔄 [PROFILE] Solo Plan Básico encontrado, cargando predicciones...');
-            this.loadBasicPlanData();
-          } else {
-            // Suscripciones premium/temporales encontradas
-            console.log('💎 [PROFILE] Suscripciones premium encontradas:', subscriptions);
-            this.activeSubscriptions = subscriptions.map((sub: any) => ({
+          // Separar suscripciones básicas y premium
+          const basicSubscriptions = subscriptions.filter((sub: any) =>
+            !sub.planId || sub.planId === 'basic' || sub.planId === ''
+          );
+          const premiumSubscriptions = subscriptions.filter((sub: any) =>
+            sub.planId && sub.planId !== 'basic' && sub.planId !== ''
+          );
+          
+          console.log('🔍 [PROFILE] Suscripciones básicas:', basicSubscriptions.length);
+          console.log('🔍 [PROFILE] Suscripciones premium:', premiumSubscriptions.length);
+          
+          // Inicializar array de suscripciones activas
+          this.activeSubscriptions = [];
+          
+          // Agregar suscripciones premium primero
+          if (premiumSubscriptions.length > 0) {
+            console.log('💎 [PROFILE] Agregando suscripciones premium:', premiumSubscriptions);
+            const premiumMapped = premiumSubscriptions.map((sub: any) => ({
               id: sub.id,
               plan_id: sub.planId,
               plan_name: this.getPlanDisplayName(sub.planId),
@@ -733,8 +738,16 @@ export class ProfileComponent implements OnInit {
               price: this.getPlanPrice(sub.planId),
               is_basic_plan: false
             }));
-            console.log('💎 [PROFILE] activeSubscriptions mapeadas:', this.activeSubscriptions);
+            this.activeSubscriptions.push(...premiumMapped);
           }
+          
+          // Agregar plan básico si existe o como fallback
+          if (basicSubscriptions.length > 0 || premiumSubscriptions.length === 0) {
+            console.log('🔄 [PROFILE] Agregando Plan Básico con predicciones...');
+            this.loadBasicPlanDataAndMerge();
+          }
+          
+          console.log('📊 [PROFILE] activeSubscriptions final:', this.activeSubscriptions);
         }
       },
       error: (error: any) => {
@@ -836,6 +849,64 @@ export class ProfileComponent implements OnInit {
       is_basic_plan: true,
       predictions_used: this.getDefaultPredictionData()
     };
+  }
+
+  /**
+   * Carga datos del Plan Básico y los combina con suscripciones premium existentes
+   */
+  private loadBasicPlanDataAndMerge(): void {
+    console.log('🔄 [PROFILE] Cargando datos del Plan Básico para combinar con planes premium...');
+    
+    this.userPredictionService.getProfilePredictionSummary().subscribe({
+      next: (response) => {
+        console.log('📊 [PROFILE] Respuesta del servidor para combinar:', response);
+        
+        let basicPlanData: UserSubscriptionInfo;
+        
+        if (response.success && response.data && response.data.games && Array.isArray(response.data.games)) {
+          console.log('✅ [PROFILE] Datos válidos recibidos para combinar, games:', response.data.games);
+          
+          basicPlanData = {
+            id: 0,
+            plan_id: 'basic',
+            plan_name: 'Plan Básico',
+            status: 'active',
+            status_display: 'Activo',
+            created_at: new Date().toISOString(),
+            expires_at: '',
+            price: '1,22€',
+            is_basic_plan: true,
+            predictions_used: response.data.games
+          };
+        } else {
+          console.warn('⚠️ [PROFILE] Respuesta inválida para combinar, usando datos por defecto');
+          basicPlanData = this.createDefaultBasicPlan();
+        }
+        
+        // Agregar plan básico al array existente de suscripciones premium
+        this.activeSubscriptions.push(basicPlanData);
+        
+        console.log('✅ [PROFILE] Plan Básico agregado a suscripciones existentes:', this.activeSubscriptions);
+        console.log('📊 [PROFILE] Total de suscripciones activas:', this.activeSubscriptions.length);
+        
+        // Forzar detección de cambios
+        this.cdr.markForCheck();
+        this.cdr.detectChanges();
+      },
+      error: (error) => {
+        console.error('❌ [PROFILE] Error cargando predicciones para combinar:', error);
+        
+        // Agregar Plan Básico por defecto en caso de error
+        const basicPlanData = this.createDefaultBasicPlan();
+        this.activeSubscriptions.push(basicPlanData);
+        
+        console.log('✅ [PROFILE] Plan Básico por defecto agregado tras error:', this.activeSubscriptions);
+        
+        // Forzar detección de cambios
+        this.cdr.markForCheck();
+        this.cdr.detectChanges();
+      }
+    });
   }
 
   private getPlanDisplayName(planId: string): string {

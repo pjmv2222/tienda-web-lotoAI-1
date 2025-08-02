@@ -126,6 +126,7 @@ export class SubscriptionService {
 
   /**
    * Verifica si el usuario tiene una suscripción activa de un plan específico
+   * CORREGIDO: Ahora maneja múltiples suscripciones por usuario
    */
   hasActivePlan(planId: string): Observable<boolean> {
     const currentUser = this.authService.currentUserValue;
@@ -136,33 +137,37 @@ export class SubscriptionService {
 
     console.log(`hasActivePlan: Verificando plan '${planId}' para usuario ${currentUser.id}`);
 
-    // Consultar directamente la API para verificar el plan específico
-    return this.http.get<any>(`${this.apiUrl}/subscriptions/check/${currentUser.id}`, {
-      headers: this.getAuthHeaders()
-    }).pipe(
-      map(response => {
-        console.log('hasActivePlan: Respuesta de la API:', response);
+    // CORRECCIÓN: Usar getUserSubscriptions para obtener TODAS las suscripciones
+    return this.getUserSubscriptions().pipe(
+      map(subscriptions => {
+        console.log('hasActivePlan: Todas las suscripciones del usuario:', subscriptions);
         
-        // Verificar si tiene suscripción activa del plan específico
-        if (response.hasActiveSubscription && response.subscription) {
-          console.log(`hasActivePlan: plan_id en respuesta: '${response.subscription.plan_id}', buscando: '${planId}'`);
-          
-          // CORRECCIÓN PRINCIPAL: Verificar tanto plan_id como plan_type
-          const hasMatchingPlanId = response.subscription.plan_id === planId;
-          const hasMatchingPlanType = response.subscription.plan_type === planId;
-          const hasMatchingPlan = hasMatchingPlanId || hasMatchingPlanType;
-          
-          console.log(`hasActivePlan: plan_id coincide: ${hasMatchingPlanId}`);
-          console.log(`hasActivePlan: plan_type coincide: ${hasMatchingPlanType}`);
-          console.log(`hasActivePlan: ¿Plan coincide? ${hasMatchingPlan}`);
-          
-          return hasMatchingPlan;
+        if (!subscriptions || subscriptions.length === 0) {
+          console.log('hasActivePlan: No se encontraron suscripciones');
+          return false;
         }
-        
-        console.log('hasActivePlan: No hay suscripción activa o no se encontró la suscripción en la respuesta');
-        console.log('hasActivePlan: response.hasActiveSubscription:', response.hasActiveSubscription);
-        console.log('hasActivePlan: response.subscription:', response.subscription);
-        return false;
+
+        // Buscar si alguna suscripción activa coincide con el plan solicitado
+        const hasMatchingPlan = subscriptions.some((subscription: any) => {
+          const isActive = subscription.status === 'active';
+          const hasMatchingPlanId = subscription.planId === planId;
+          const hasMatchingPlanType = subscription.plan_type === planId;
+          const planMatches = hasMatchingPlanId || hasMatchingPlanType;
+          
+          console.log(`hasActivePlan: Suscripción ${subscription.id}:`, {
+            planId: subscription.planId,
+            plan_type: subscription.plan_type,
+            status: subscription.status,
+            isActive,
+            planMatches,
+            buscando: planId
+          });
+          
+          return isActive && planMatches;
+        });
+
+        console.log(`hasActivePlan: ¿Usuario tiene plan '${planId}' activo? ${hasMatchingPlan}`);
+        return hasMatchingPlan;
       }),
       catchError(error => {
         console.error('hasActivePlan: Error al verificar plan específico:', error);
