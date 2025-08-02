@@ -67,56 +67,31 @@ export class EuromillonComponent extends LotteryBaseComponent implements OnInit,
   override ngOnInit(): void {
     super.ngOnInit(); // Llama al método de la clase base para cargar la información del bote
 
-    // Verificar si el usuario está autenticado
-    this.isLoggedIn = !!this.authService.currentUserValue;
+    // CORRECCIÓN: Suscribirse a cambios en el estado de autenticación
+    const authSub = this.authService.currentUser.subscribe(user => {
+      const wasLoggedIn = this.isLoggedIn;
+      this.isLoggedIn = !!user;
+      
+      console.log('Estado de autenticación cambió:', {
+        wasLoggedIn,
+        isLoggedIn: this.isLoggedIn,
+        user: user ? 'presente' : 'null'
+      });
 
-    // Verificar si el usuario tiene suscripciones activas
+      // Si el usuario se autentica (login inicial o re-login después de token expirado)
+      if (this.isLoggedIn && (!wasLoggedIn || user)) {
+        console.log('Usuario autenticado, verificando suscripciones...');
+        this.checkSubscriptions();
+      } else if (!this.isLoggedIn) {
+        // El usuario no está autenticado, resetear planes
+        this.resetSubscriptionStatus();
+      }
+    });
+    this.subscriptions.push(authSub);
+
+    // Verificación inicial si ya está autenticado
     if (this.isLoggedIn) {
-      this.isLoadingSubscriptionStatus = true; // Marcar como cargando
-      let completedChecks = 0;
-      const totalChecks = 3;
-
-      const checkCompleted = () => {
-        completedChecks++;
-        if (completedChecks === totalChecks) {
-          this.isLoadingSubscriptionStatus = false; // Marcar como completado
-          console.log('Todas las verificaciones de suscripción completadas');
-        }
-      };
-
-      // Verificar plan básico
-      const basicSub = this.subscriptionService.hasActivePlan('basic').subscribe(hasBasic => {
-        this.hasBasicPlan = hasBasic;
-        console.log('Usuario tiene plan básico:', this.hasBasicPlan);
-        checkCompleted();
-      });
-      this.subscriptions.push(basicSub);
-
-      // Verificar plan mensual
-      const monthlySub = this.subscriptionService.hasActivePlan('monthly').subscribe(hasMonthly => {
-        this.hasMonthlyPlan = hasMonthly;
-        console.log('Usuario tiene plan mensual:', this.hasMonthlyPlan);
-        checkCompleted();
-      });
-      this.subscriptions.push(monthlySub);
-
-      // Verificar plan pro
-      const proSub = this.subscriptionService.hasActivePlan('pro').subscribe(hasPro => {
-        this.hasProPlan = hasPro;
-        console.log('Usuario tiene plan pro:', this.hasProPlan);
-        checkCompleted();
-      });
-      this.subscriptions.push(proSub);
-
-      // Verificar si hay una predicción guardada en localStorage
-      this.loadSavedPrediction();
-    } else {
-      // El usuario no está autenticado, no tiene ningún plan
-      this.hasBasicPlan = false;
-      this.hasMonthlyPlan = false;
-      this.hasProPlan = false;
-      this.isLoadingSubscriptionStatus = false;
-      console.log('Usuario no autenticado, no tiene planes activos');
+      this.checkSubscriptions();
     }
 
     // Cargar los últimos resultados desde lottery-data.json
@@ -150,6 +125,67 @@ export class EuromillonComponent extends LotteryBaseComponent implements OnInit,
       // Intentar una última vez con las bolas que aún falten
       this.forceRenderMissingBalls();
     }, 10000);
+  }
+
+  /**
+   * NUEVA FUNCIÓN: Verificar suscripciones del usuario
+   * Se puede llamar tanto en la inicialización como después del re-login
+   */
+  private checkSubscriptions(): void {
+    this.isLoadingSubscriptionStatus = true;
+    let completedChecks = 0;
+    const totalChecks = 3;
+
+    const checkCompleted = () => {
+      completedChecks++;
+      if (completedChecks === totalChecks) {
+        this.isLoadingSubscriptionStatus = false;
+        console.log('Todas las verificaciones de suscripción completadas');
+        console.log('Estado final de planes:', {
+          hasBasicPlan: this.hasBasicPlan,
+          hasMonthlyPlan: this.hasMonthlyPlan,
+          hasProPlan: this.hasProPlan
+        });
+      }
+    };
+
+    // Verificar plan básico
+    const basicSub = this.subscriptionService.hasActivePlan('basic').subscribe(hasBasic => {
+      this.hasBasicPlan = hasBasic;
+      console.log('Usuario tiene plan básico:', this.hasBasicPlan);
+      checkCompleted();
+    });
+    this.subscriptions.push(basicSub);
+
+    // Verificar plan mensual
+    const monthlySub = this.subscriptionService.hasActivePlan('monthly').subscribe(hasMonthly => {
+      this.hasMonthlyPlan = hasMonthly;
+      console.log('Usuario tiene plan mensual:', this.hasMonthlyPlan);
+      checkCompleted();
+    });
+    this.subscriptions.push(monthlySub);
+
+    // Verificar plan pro
+    const proSub = this.subscriptionService.hasActivePlan('pro').subscribe(hasPro => {
+      this.hasProPlan = hasPro;
+      console.log('Usuario tiene plan pro:', this.hasProPlan);
+      checkCompleted();
+    });
+    this.subscriptions.push(proSub);
+
+    // Verificar si hay una predicción guardada en localStorage
+    this.loadSavedPrediction();
+  }
+
+  /**
+   * NUEVA FUNCIÓN: Resetear estado de suscripciones cuando el usuario no está autenticado
+   */
+  private resetSubscriptionStatus(): void {
+    this.hasBasicPlan = false;
+    this.hasMonthlyPlan = false;
+    this.hasProPlan = false;
+    this.isLoadingSubscriptionStatus = false;
+    console.log('Usuario no autenticado, planes reseteados');
   }
 
   ngOnDestroy(): void {
