@@ -78,7 +78,10 @@
             </ul>
           </div>
           <button class="generate-btn premium-btn" *ngIf="!hasMonthlyPlan" (click)="showSubscriptionOptions()">Suscribir</button>
-          <button class="generate-btn premium-btn" *ngIf="hasMonthlyPlan" [disabled]="true">Generar</button>
+          <button class="generate-btn premium-btn" *ngIf="hasMonthlyPlan" (click)="generateBasicPrediction()" [disabled]="isGeneratingPrediction">
+            <span *ngIf="!isGeneratingPrediction">Generar</span>
+            <span *ngIf="isGeneratingPrediction">Generando...</span>
+          </button>
           <p *ngIf="!isLoggedIn" class="login-required">Necesitas <a routerLink="/auth/login">iniciar sesión</a> para generar predicciones premium</p>
         </div>
 
@@ -100,7 +103,10 @@
             </ul>
           </div>
           <button class="generate-btn premium-btn" *ngIf="!hasProPlan" (click)="showSubscriptionOptions()">Suscribir</button>
-          <button class="generate-btn premium-btn" *ngIf="hasProPlan" [disabled]="true">Generar</button>
+          <button class="generate-btn premium-btn" *ngIf="hasProPlan" (click)="generateBasicPrediction()" [disabled]="isGeneratingPrediction">
+            <span *ngIf="!isGeneratingPrediction">Generar</span>
+            <span *ngIf="isGeneratingPrediction">Generando...</span>
+          </button>
           <p *ngIf="!isLoggedIn" class="login-required">Necesitas <a routerLink="/auth/login">iniciar sesión</a> para generar predicciones premium</p>
         </div>
       </div>
