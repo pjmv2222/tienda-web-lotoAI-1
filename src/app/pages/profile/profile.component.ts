@@ -151,7 +151,7 @@ interface GamePredictionUsage {
                       <i class="feature-icon">✓</i>
                       <span>Análisis avanzados con IA</span>
                     </div>
-                    <div class="feature-item" *ngIf="subscription.plan_id === 'pro'">
+                    <div class="feature-item" *ngIf="isProPlan(subscription)">
                       <i class="feature-icon">✓</i>
                       <span>Soporte prioritario</span>
                     </div>
@@ -1039,7 +1039,16 @@ export class ProfileComponent implements OnInit {
           
           // Mapear todas las suscripciones a formato de display
           this.activeSubscriptions = subscriptions.map((sub: any) => {
-            const isBasicPlan = sub.planId === 'basic';
+            console.log('🔍 [PROFILE] Mapeo de suscripción:', {
+              id: sub.id,
+              planId: sub.planId,
+              planName: this.getPlanDisplayName(sub.planId),
+              status: sub.status
+            });
+            
+            const tabId = this.getTabIdFromPlanId(sub.planId);
+            const isBasicPlan = tabId === 'basic';
+            
             return {
               id: sub.id,
               plan_id: sub.planId,
@@ -1288,12 +1297,23 @@ export class ProfileComponent implements OnInit {
     });
   }
 
-  private getPlanDisplayName(planId: string): string {
-    switch (planId) {
-      case 'basic': return 'Plan Básico';
-      case 'monthly': return 'Plan Mensual';
-      case 'pro': return 'Plan Pro';
-      default: return planId;
+  private getPlanDisplayName(planId: string | number): string {
+    // Convertir a string para comparación consistente
+    const planIdStr = String(planId);
+    
+    switch (planIdStr) {
+      case 'basic':
+      case '10': // ID del Plan Básico
+        return 'Plan Básico';
+      case 'monthly':
+      case '7': // ID del Plan Mensual
+        return 'Plan Mensual';
+      case 'pro':
+      case '12': // ID del Plan Pro
+        return 'Plan Pro';
+      default:
+        console.warn('⚠️ [PROFILE] Plan ID desconocido:', planId);
+        return `Plan ${planId}`;
     }
   }
 
@@ -1307,12 +1327,23 @@ export class ProfileComponent implements OnInit {
     }
   }
 
-  private getPlanPrice(planId: string): string {
-    switch (planId) {
-      case 'basic': return '1,22€';
-      case 'monthly': return '10,22€';
-      case 'pro': return '122€';
-      default: return 'N/A';
+  private getPlanPrice(planId: string | number): string {
+    // Convertir a string para comparación consistente
+    const planIdStr = String(planId);
+    
+    switch (planIdStr) {
+      case 'basic':
+      case '10': // ID del Plan Básico
+        return '1,22€';
+      case 'monthly':
+      case '7': // ID del Plan Mensual
+        return '10,22€';
+      case 'pro':
+      case '12': // ID del Plan Pro
+        return '122€';
+      default:
+        console.warn('⚠️ [PROFILE] Plan ID desconocido para precio:', planId);
+        return 'N/A';
     }
   }
 
@@ -1466,6 +1497,36 @@ export class ProfileComponent implements OnInit {
   }
 
   /**
+   * Verifica si una suscripción corresponde al Plan Pro
+   */
+  isProPlan(subscription: UserSubscriptionInfo): boolean {
+    const tabId = this.getTabIdFromPlanId(subscription.plan_id);
+    return tabId === 'pro';
+  }
+
+  /**
+   * Convierte un plan ID (numérico o string) a un tab ID para el sistema de pestañas
+   */
+  private getTabIdFromPlanId(planId: string | number): string {
+    const planIdStr = String(planId);
+    
+    switch (planIdStr) {
+      case 'basic':
+      case '10': // ID del Plan Básico
+        return 'basic';
+      case 'monthly':
+      case '7': // ID del Plan Mensual
+        return 'monthly';
+      case 'pro':
+      case '12': // ID del Plan Pro
+        return 'pro';
+      default:
+        console.warn('⚠️ [PROFILE] Plan ID desconocido para tab:', planId);
+        return `plan-${planId}`;
+    }
+  }
+
+  /**
    * Actualiza las pestañas disponibles basándose en las suscripciones activas
    */
   private updateAvailableTabs(): void {
@@ -1482,9 +1543,12 @@ export class ProfileComponent implements OnInit {
         plan_name: sub.plan_name
       });
       
-      if (sub.plan_id && !this.availableTabs.includes(sub.plan_id)) {
-        this.availableTabs.push(sub.plan_id);
-        console.log(`✅ [PROFILE] Agregada pestaña: ${sub.plan_id}`);
+      if (sub.plan_id) {
+        const tabId = this.getTabIdFromPlanId(sub.plan_id);
+        if (!this.availableTabs.includes(tabId)) {
+          this.availableTabs.push(tabId);
+          console.log(`✅ [PROFILE] Agregada pestaña: ${tabId} (plan_id: ${sub.plan_id})`);
+        }
       }
     });
     
@@ -1530,7 +1594,12 @@ export class ProfileComponent implements OnInit {
     if (tabId === 'overview') {
       return this.activeSubscriptions;
     }
-    return this.activeSubscriptions.filter(sub => sub.plan_id === tabId);
+    
+    // Filtrar suscripciones que corresponden al tabId
+    return this.activeSubscriptions.filter(sub => {
+      const subTabId = this.getTabIdFromPlanId(sub.plan_id);
+      return subTabId === tabId;
+    });
   }
 
   /**
@@ -1543,8 +1612,11 @@ export class ProfileComponent implements OnInit {
   /**
    * Obtiene la etiqueta de expiración según el tipo de plan
    */
-  getExpirationLabel(planId: string): string {
-    switch (planId) {
+  getExpirationLabel(planId: string | number): string {
+    const planIdStr = String(planId);
+    const tabId = this.getTabIdFromPlanId(planIdStr);
+    
+    switch (tabId) {
       case 'basic': return 'Vigencia';
       case 'monthly': return 'Fecha de caducidad';
       case 'pro': return 'Fecha de caducidad';
@@ -1556,7 +1628,9 @@ export class ProfileComponent implements OnInit {
    * Obtiene el valor de expiración formateado según el tipo de plan
    */
   getExpirationValue(subscription: UserSubscriptionInfo): string {
-    if (subscription.plan_id === 'basic') {
+    const tabId = this.getTabIdFromPlanId(subscription.plan_id);
+    
+    if (tabId === 'basic') {
       return 'Ilimitada (por cantidad de pronósticos)';
     }
     
