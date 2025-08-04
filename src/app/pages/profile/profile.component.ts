@@ -46,11 +46,26 @@ interface GamePredictionUsage {
       <!-- Sección de Suscripciones -->
       <div class="subscriptions-section" *ngIf="!isEditing && !isChangingPassword">
         <h3>Mis Suscripciones</h3>
+        
+        <!-- Sistema de pestañas -->
+        <div class="tabs-container" *ngIf="!loadingSubscriptions && availableTabs.length > 1">
+          <div class="tabs-header">
+            <button 
+              *ngFor="let tab of availableTabs" 
+              class="tab-button"
+              [class.active]="isTabActive(tab)"
+              (click)="setActiveTab(tab)">
+              {{getTabDisplayName(tab)}}
+            </button>
+          </div>
+        </div>
+        
         <div *ngIf="loadingSubscriptions" class="loading-message">
           Cargando suscripciones...
         </div>
+        
         <div *ngIf="!loadingSubscriptions && activeSubscriptions.length > 0" class="subscriptions-container">
-          <div *ngFor="let subscription of activeSubscriptions" class="subscription-card">
+          <div *ngFor="let subscription of getSubscriptionsForTab(activeTab)" class="subscription-card">
             <div class="subscription-header">
               <h4>{{subscription.plan_name}}</h4>
               <span class="subscription-status" [class]="getStatusClass(subscription.status)">
@@ -307,6 +322,43 @@ interface GamePredictionUsage {
       font-size: 1.3rem;
     }
 
+    /* Estilos para el sistema de pestañas */
+    .tabs-container {
+      margin-bottom: 1.5rem;
+    }
+
+    .tabs-header {
+      display: flex;
+      border-bottom: 2px solid #e0e0e0;
+      margin-bottom: 1rem;
+      overflow-x: auto;
+    }
+
+    .tab-button {
+      background: none;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      cursor: pointer;
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: #666;
+      border-bottom: 3px solid transparent;
+      transition: all 0.3s ease;
+      white-space: nowrap;
+      min-width: fit-content;
+    }
+
+    .tab-button:hover {
+      background-color: #f5f5f5;
+      color: #333;
+    }
+
+    .tab-button.active {
+      color: #007bff;
+      border-bottom-color: #007bff;
+      background-color: #fff;
+    }
+
     .loading-message {
       text-align: center;
       color: #666;
@@ -540,6 +592,26 @@ interface GamePredictionUsage {
       .prediction-card {
         padding: 0.75rem;
       }
+
+      /* Responsivo para pestañas */
+      .tabs-header {
+        flex-direction: column;
+        border-bottom: none;
+        gap: 0.5rem;
+      }
+
+      .tab-button {
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        text-align: center;
+        border-bottom: 1px solid #ddd;
+      }
+
+      .tab-button.active {
+        border-color: #007bff;
+        background-color: #007bff;
+        color: white;
+      }
     }
   `]
 })
@@ -552,6 +624,10 @@ export class ProfileComponent implements OnInit {
   passwordForm: FormGroup;
   loadingSubscriptions = false;
   activeSubscriptions: UserSubscriptionInfo[] = [];
+  
+  // Variables para el sistema de pestañas
+  activeTab: string = 'overview';
+  availableTabs: string[] = [];
 
   constructor(
     private authService: AuthService,
@@ -710,24 +786,13 @@ export class ProfileComponent implements OnInit {
             });
           });
           
-          // Separar suscripciones básicas y premium
-          const basicSubscriptions = subscriptions.filter((sub: any) =>
-            !sub.planId || sub.planId === 'basic' || sub.planId === ''
-          );
-          const premiumSubscriptions = subscriptions.filter((sub: any) =>
-            sub.planId && sub.planId !== 'basic' && sub.planId !== ''
-          );
+          // NUEVO: Mostrar TODAS las suscripciones activas sin filtrar
+          console.log('� [PROFILE] Procesando todas las suscripciones activas...');
           
-          console.log('🔍 [PROFILE] Suscripciones básicas:', basicSubscriptions.length);
-          console.log('🔍 [PROFILE] Suscripciones premium:', premiumSubscriptions.length);
-          
-          // Inicializar array de suscripciones activas
-          this.activeSubscriptions = [];
-          
-          // Agregar suscripciones premium primero
-          if (premiumSubscriptions.length > 0) {
-            console.log('💎 [PROFILE] Agregando suscripciones premium:', premiumSubscriptions);
-            const premiumMapped = premiumSubscriptions.map((sub: any) => ({
+          // Mapear todas las suscripciones a formato de display
+          this.activeSubscriptions = subscriptions.map((sub: any) => {
+            const isBasicPlan = sub.planId === 'basic';
+            return {
               id: sub.id,
               plan_id: sub.planId,
               plan_name: this.getPlanDisplayName(sub.planId),
@@ -736,18 +801,22 @@ export class ProfileComponent implements OnInit {
               created_at: sub.startDate,
               expires_at: sub.endDate,
               price: this.getPlanPrice(sub.planId),
-              is_basic_plan: false
-            }));
-            this.activeSubscriptions.push(...premiumMapped);
-          }
+              is_basic_plan: isBasicPlan,
+              predictions_used: isBasicPlan ? [] : undefined // Solo para básico, se cargará después
+            };
+          });
           
-          // Agregar plan básico si existe o como fallback
-          if (basicSubscriptions.length > 0 || premiumSubscriptions.length === 0) {
-            console.log('🔄 [PROFILE] Agregando Plan Básico con predicciones...');
-            this.loadBasicPlanDataAndMerge();
+          // Si hay un plan básico, cargar los datos de predicciones para ese plan específicamente
+          const basicPlan = this.activeSubscriptions.find(sub => sub.is_basic_plan);
+          if (basicPlan) {
+            console.log('🔄 [PROFILE] Cargando datos de predicciones para plan básico...');
+            this.loadBasicPlanPredictions();
           }
           
           console.log('📊 [PROFILE] activeSubscriptions final:', this.activeSubscriptions);
+          
+          // Actualizar pestañas disponibles
+          this.updateAvailableTabs();
         }
       },
       error: (error: any) => {
@@ -819,6 +888,9 @@ export class ProfileComponent implements OnInit {
         // Verificar estado final
         console.log('🔚 [PROFILE] Estado final - activeSubscriptions:', this.activeSubscriptions);
         console.log('🔚 [PROFILE] Estado final - loadingSubscriptions:', this.loadingSubscriptions);
+        
+        // Actualizar pestañas disponibles
+        this.updateAvailableTabs();
       },
       error: (error) => {
         console.error('❌ [PROFILE] Error cargando predicciones:', error);
@@ -901,6 +973,65 @@ export class ProfileComponent implements OnInit {
         this.activeSubscriptions.push(basicPlanData);
         
         console.log('✅ [PROFILE] Plan Básico por defecto agregado tras error:', this.activeSubscriptions);
+        
+        // Forzar detección de cambios
+        this.cdr.markForCheck();
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  /**
+   * Carga datos de predicciones específicamente para el plan básico
+   */
+  private loadBasicPlanPredictions(): void {
+    console.log('🔄 [PROFILE] Cargando predicciones del Plan Básico...');
+    
+    this.userPredictionService.getProfilePredictionSummary().subscribe({
+      next: (response) => {
+        console.log('📊 [PROFILE] Respuesta del servidor para Plan Básico:', response);
+        
+        if (response.success && response.data && response.data.games && Array.isArray(response.data.games)) {
+          console.log('✅ [PROFILE] Datos válidos recibidos para Plan Básico, games:', response.data.games);
+          
+          const basicPlanData: UserSubscriptionInfo = {
+            id: 0,
+            plan_id: 'basic',
+            plan_name: 'Plan Básico',
+            status: 'active',
+            status_display: 'Activo',
+            created_at: new Date().toISOString(),
+            expires_at: '',
+            price: '1,22€',
+            is_basic_plan: true,
+            predictions_used: response.data.games
+          };
+
+          // Establecer la suscripción del plan básico
+          this.activeSubscriptions = [basicPlanData];
+          
+          console.log('✅ [PROFILE] Plan Básico cargado correctamente:', this.activeSubscriptions);
+          
+        } else {
+          console.warn('⚠️ [PROFILE] Respuesta inválida para Plan Básico, usando datos por defecto');
+          const basicPlanData = this.createDefaultBasicPlan();
+          this.activeSubscriptions = [basicPlanData];
+        }
+        
+        console.log('📊 [PROFILE] Suscripciones activas establecidas:', this.activeSubscriptions.length);
+        
+        // Forzar detección de cambios
+        this.cdr.markForCheck();
+        this.cdr.detectChanges();
+      },
+      error: (error) => {
+        console.error('❌ [PROFILE] Error cargando predicciones del Plan Básico:', error);
+        
+        // Establecer Plan Básico por defecto en caso de error
+        const basicPlanData = this.createDefaultBasicPlan();
+        this.activeSubscriptions = [basicPlanData];
+        
+        console.log('✅ [PROFILE] Plan Básico por defecto establecido tras error:', this.activeSubscriptions);
         
         // Forzar detección de cambios
         this.cdr.markForCheck();
@@ -1084,6 +1215,67 @@ export class ProfileComponent implements OnInit {
   logout() {
     this.authService.logout();
     this.router.navigate(['/home']);
+  }
+
+  /**
+   * Actualiza las pestañas disponibles basándose en las suscripciones activas
+   */
+  private updateAvailableTabs(): void {
+    this.availableTabs = ['overview']; // Siempre incluir resumen general
+    
+    // Agregar pestañas según los planes activos
+    this.activeSubscriptions.forEach(sub => {
+      if (sub.plan_id && !this.availableTabs.includes(sub.plan_id)) {
+        this.availableTabs.push(sub.plan_id);
+      }
+    });
+    
+    console.log('📋 [PROFILE] Pestañas disponibles:', this.availableTabs);
+    
+    // Si la pestaña activa no está disponible, cambiar a overview
+    if (!this.availableTabs.includes(this.activeTab)) {
+      this.activeTab = 'overview';
+    }
+  }
+
+  /**
+   * Cambia la pestaña activa
+   */
+  setActiveTab(tabId: string): void {
+    if (this.availableTabs.includes(tabId)) {
+      this.activeTab = tabId;
+      console.log('📋 [PROFILE] Pestaña activa cambiada a:', this.activeTab);
+    }
+  }
+
+  /**
+   * Obtiene el nombre de display para una pestaña
+   */
+  getTabDisplayName(tabId: string): string {
+    switch (tabId) {
+      case 'overview': return 'Resumen General';
+      case 'basic': return 'Plan Básico';
+      case 'monthly': return 'Plan Mensual';
+      case 'pro': return 'Plan Pro';
+      default: return tabId;
+    }
+  }
+
+  /**
+   * Obtiene las suscripciones para una pestaña específica
+   */
+  getSubscriptionsForTab(tabId: string): UserSubscriptionInfo[] {
+    if (tabId === 'overview') {
+      return this.activeSubscriptions;
+    }
+    return this.activeSubscriptions.filter(sub => sub.plan_id === tabId);
+  }
+
+  /**
+   * Verifica si una pestaña está activa
+   */
+  isTabActive(tabId: string): boolean {
+    return this.activeTab === tabId;
   }
 
   private passwordMatchValidator(group: FormGroup): ValidationErrors | null {

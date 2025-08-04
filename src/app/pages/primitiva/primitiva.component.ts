@@ -64,6 +64,21 @@ export class PrimitivaComponent extends LotteryBaseComponent implements OnInit, 
   override ngOnInit(): void {
     super.ngOnInit(); // Llama al método de la clase base para cargar la información del bote
 
+    // CORRECCIÓN: Obtener estado inicial de autenticación
+    const currentUser = this.authService.currentUserValue;
+    this.isLoggedIn = !!currentUser;
+    
+    console.log('Estado inicial de autenticación:', {
+      isLoggedIn: this.isLoggedIn,
+      user: currentUser ? 'presente' : 'null'
+    });
+
+    // Verificación inicial si ya está autenticado
+    if (this.isLoggedIn) {
+      console.log('Usuario ya autenticado al inicializar, verificando suscripciones...');
+      this.checkSubscriptions();
+    }
+
     // CORRECCIÓN: Suscribirse a cambios en el estado de autenticación
     const authSub = this.authService.currentUser.subscribe(user => {
       const wasLoggedIn = this.isLoggedIn;
@@ -85,11 +100,6 @@ export class PrimitivaComponent extends LotteryBaseComponent implements OnInit, 
       }
     });
     this.subscriptions.push(authSub);
-
-    // Verificación inicial si ya está autenticado
-    if (this.isLoggedIn) {
-      this.checkSubscriptions();
-    }
 
     // Cargar los últimos resultados desde lottery-data.json
     this.loadUltimosResultados();

@@ -137,13 +137,19 @@ export class SubscriptionService {
 
     console.log(`hasActivePlan: Verificando plan '${planId}' para usuario ${currentUser.id}`);
 
-    // CORRECCIÓN: Usar getUserSubscriptions para obtener TODAS las suscripciones
+    // CORRECCIÓN ESPECIAL: El plan básico está disponible para todos los usuarios autenticados
+    if (planId === 'basic') {
+      console.log('hasActivePlan: Plan básico solicitado - disponible para usuarios autenticados');
+      return of(true);
+    }
+
+    // Para planes premium, verificar suscripciones reales en la base de datos
     return this.getUserSubscriptions().pipe(
       map(subscriptions => {
         console.log('hasActivePlan: Todas las suscripciones del usuario:', subscriptions);
         
         if (!subscriptions || subscriptions.length === 0) {
-          console.log('hasActivePlan: No se encontraron suscripciones');
+          console.log('hasActivePlan: No se encontraron suscripciones premium');
           return false;
         }
 
