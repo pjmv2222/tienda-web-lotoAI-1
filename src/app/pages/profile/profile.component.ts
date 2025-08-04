@@ -47,8 +47,12 @@ interface GamePredictionUsage {
       <div class="subscriptions-section" *ngIf="!isEditing && !isChangingPassword">
         <h3>Mis Suscripciones</h3>
         
+        <div *ngIf="loadingSubscriptions" class="loading-message">
+          Cargando suscripciones...
+        </div>
+        
         <!-- Sistema de pestañas -->
-        <div class="tabs-container" *ngIf="!loadingSubscriptions && availableTabs.length > 1">
+        <div *ngIf="!loadingSubscriptions && availableTabs.length > 1" class="tabs-container">
           <div class="tabs-header">
             <button 
               *ngFor="let tab of availableTabs" 
@@ -58,14 +62,109 @@ interface GamePredictionUsage {
               {{getTabDisplayName(tab)}}
             </button>
           </div>
+          
+          <!-- Contenido de la pestaña activa -->
+          <div class="tab-content">
+            <!-- Vista general (overview) -->
+            <div *ngIf="activeTab === 'overview'" class="overview-content">
+              <div class="overview-summary">
+                <h4>Resumen de tus planes activos</h4>
+                <div class="plans-summary">
+                  <div *ngFor="let subscription of activeSubscriptions" class="plan-summary-card">
+                    <h5>{{subscription.plan_name}}</h5>
+                    <div class="summary-details">
+                      <span class="price">{{subscription.price}}</span>
+                      <span class="status" [class]="getStatusClass(subscription.status)">
+                        {{subscription.status_display}}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <p class="overview-note">
+                  Selecciona una pestaña arriba para ver los detalles específicos de cada plan.
+                </p>
+              </div>
+            </div>
+            
+            <!-- Vista específica del plan seleccionado -->
+            <div *ngIf="activeTab !== 'overview'" class="plan-content">
+              <div *ngFor="let subscription of getSubscriptionsForTab(activeTab)" class="subscription-detail">
+                <div class="plan-header">
+                  <h4>{{subscription.plan_name}}</h4>
+                  <span class="subscription-status" [class]="getStatusClass(subscription.status)">
+                    {{subscription.status_display}}
+                  </span>
+                </div>
+                
+                <div class="plan-info">
+                  <div class="detail-row">
+                    <span class="detail-label">Precio:</span>
+                    <span class="detail-value price-highlight">{{subscription.price}}</span>
+                  </div>
+                  <div class="detail-row">
+                    <span class="detail-label">Fecha de contratación:</span>
+                    <span class="detail-value">{{subscription.created_at | date:'dd/MM/yyyy'}}</span>
+                  </div>
+                  <div class="detail-row">
+                    <span class="detail-label">{{getExpirationLabel(subscription.plan_id)}}:</span>
+                    <span class="detail-value">{{getExpirationValue(subscription)}}</span>
+                  </div>
+                </div>
+                
+                <!-- Información específica para Plan Básico -->
+                <div *ngIf="subscription.is_basic_plan && subscription.predictions_used" class="basic-plan-details">
+                  <h5 class="predictions-header">Pronósticos disponibles por juego:</h5>
+                  <div class="predictions-grid">
+                    <div *ngFor="let game of subscription.predictions_used" class="prediction-card">
+                      <div class="game-info">
+                        <span class="game-name">{{game.game_name}}</span>
+                        <div class="usage-stats">
+                          <span class="used">{{game.used}}</span>
+                          <span class="separator">/</span>
+                          <span class="total">{{game.total_allowed}}</span>
+                          <span class="label">utilizados</span>
+                        </div>
+                        <div class="remaining-count" [class.low-remaining]="game.remaining <= 1">
+                          {{game.remaining}} restantes
+                        </div>
+                      </div>
+                      <div class="progress-bar">
+                        <div class="progress-fill" [style.width.%]="(game.used / game.total_allowed) * 100"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Información para planes temporales (Mensual/Pro) -->
+                <div *ngIf="!subscription.is_basic_plan" class="premium-plan-details">
+                  <h5>Características del {{subscription.plan_name}}:</h5>
+                  <div class="plan-features">
+                    <div class="feature-item">
+                      <i class="feature-icon">✓</i>
+                      <span>Acceso ilimitado a todos los juegos</span>
+                    </div>
+                    <div class="feature-item">
+                      <i class="feature-icon">✓</i>
+                      <span>Pronósticos sin límite de uso</span>
+                    </div>
+                    <div class="feature-item">
+                      <i class="feature-icon">✓</i>
+                      <span>Análisis avanzados con IA</span>
+                    </div>
+                    <div class="feature-item" *ngIf="subscription.plan_id === 'pro'">
+                      <i class="feature-icon">✓</i>
+                      <span>Soporte prioritario</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
         
-        <div *ngIf="loadingSubscriptions" class="loading-message">
-          Cargando suscripciones...
-        </div>
-        
-        <div *ngIf="!loadingSubscriptions && activeSubscriptions.length > 0" class="subscriptions-container">
-          <div *ngFor="let subscription of getSubscriptionsForTab(activeTab)" class="subscription-card">
+        <!-- Vista cuando solo hay un plan o no hay pestañas -->
+        <div *ngIf="!loadingSubscriptions && availableTabs.length <= 1 && activeSubscriptions.length > 0" class="single-plan-view">
+          <div *ngFor="let subscription of activeSubscriptions" class="subscription-card">
             <div class="subscription-header">
               <h4>{{subscription.plan_name}}</h4>
               <span class="subscription-status" [class]="getStatusClass(subscription.status)">
@@ -359,6 +458,133 @@ interface GamePredictionUsage {
       background-color: #fff;
     }
 
+    /* Estilos para el contenido de las pestañas */
+    .tab-content {
+      min-height: 300px;
+      padding: 1rem 0;
+    }
+
+    .overview-content {
+      text-align: center;
+    }
+
+    .overview-summary h4 {
+      color: #333;
+      margin-bottom: 1.5rem;
+    }
+
+    .plans-summary {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 2rem;
+    }
+
+    .plan-summary-card {
+      background: #fff;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 1rem;
+      min-width: 150px;
+      text-align: center;
+    }
+
+    .plan-summary-card h5 {
+      margin: 0 0 0.5rem 0;
+      color: #333;
+      font-size: 1rem;
+    }
+
+    .summary-details {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .summary-details .price {
+      font-weight: bold;
+      color: #007bff;
+      font-size: 1.1rem;
+    }
+
+    .overview-note {
+      color: #666;
+      font-style: italic;
+      margin: 0;
+    }
+
+    .plan-content {
+      background: #fff;
+      border-radius: 8px;
+      padding: 1.5rem;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .subscription-detail {
+      width: 100%;
+    }
+
+    .plan-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 2px solid #f0f0f0;
+    }
+
+    .plan-header h4 {
+      margin: 0;
+      color: #333;
+      font-size: 1.4rem;
+    }
+
+    .plan-info {
+      margin-bottom: 2rem;
+    }
+
+    .price-highlight {
+      color: #007bff;
+      font-weight: bold;
+      font-size: 1.1rem;
+    }
+
+    .basic-plan-details h5,
+    .premium-plan-details h5 {
+      color: #333;
+      margin: 1.5rem 0 1rem 0;
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+
+    .plan-features {
+      display: grid;
+      gap: 0.75rem;
+      margin-top: 1rem;
+    }
+
+    .feature-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.5rem;
+      background: #f8f9fa;
+      border-radius: 6px;
+    }
+
+    .feature-icon {
+      color: #28a745;
+      font-weight: bold;
+      font-size: 1.1rem;
+      width: 20px;
+      text-align: center;
+    }
+
+    .single-plan-view {
+      padding: 1rem 0;
+    }
+
     .loading-message {
       text-align: center;
       color: #666;
@@ -611,6 +837,27 @@ interface GamePredictionUsage {
         border-color: #007bff;
         background-color: #007bff;
         color: white;
+      }
+
+      /* Responsivo para contenido de pestañas */
+      .plans-summary {
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .plan-summary-card {
+        width: 100%;
+        max-width: 300px;
+      }
+
+      .plan-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+      }
+
+      .plan-content {
+        padding: 1rem;
       }
     }
   `]
@@ -1276,6 +1523,33 @@ export class ProfileComponent implements OnInit {
    */
   isTabActive(tabId: string): boolean {
     return this.activeTab === tabId;
+  }
+
+  /**
+   * Obtiene la etiqueta de expiración según el tipo de plan
+   */
+  getExpirationLabel(planId: string): string {
+    switch (planId) {
+      case 'basic': return 'Vigencia';
+      case 'monthly': return 'Fecha de caducidad';
+      case 'pro': return 'Fecha de caducidad';
+      default: return 'Vencimiento';
+    }
+  }
+
+  /**
+   * Obtiene el valor de expiración formateado según el tipo de plan
+   */
+  getExpirationValue(subscription: UserSubscriptionInfo): string {
+    if (subscription.plan_id === 'basic') {
+      return 'Ilimitada (por cantidad de pronósticos)';
+    }
+    
+    if (subscription.expires_at) {
+      return new Date(subscription.expires_at).toLocaleDateString('es-ES');
+    }
+    
+    return 'No disponible';
   }
 
   private passwordMatchValidator(group: FormGroup): ValidationErrors | null {
