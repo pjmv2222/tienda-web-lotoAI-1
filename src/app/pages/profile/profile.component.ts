@@ -103,11 +103,11 @@ interface GamePredictionUsage {
                   </div>
                   <div class="detail-row">
                     <span class="detail-label">Fecha de contratación:</span>
-                    <span class="detail-value">{{subscription.created_at | date:'dd/MM/yyyy'}}</span>
+                    <span class="detail-value">{{subscription.created_at | date:'dd/MM/yyyy'}} ({{subscription.created_at}})</span>
                   </div>
                   <div class="detail-row">
                     <span class="detail-label">{{getExpirationLabel(subscription.plan_id)}}:</span>
-                    <span class="detail-value">{{getExpirationValue(subscription)}}</span>
+                    <span class="detail-value">{{getExpirationValue(subscription)}} ({{subscription.expires_at}})</span>
                   </div>
                 </div>
                 
@@ -1046,7 +1046,9 @@ export class ProfileComponent implements OnInit {
             planName: this.getPlanDisplayName(sub.id),
             status: sub.status,
             startDate: sub.startDate,
-            endDate: sub.endDate
+            endDate: sub.endDate,
+            startDateType: typeof sub.startDate,
+            endDateType: typeof sub.endDate
           });            // CORRECCIÓN: Usar sub.id como plan_id porque es donde está el ID del plan
             const planId = sub.id;
             const tabId = this.getTabIdFromPlanId(planId);
@@ -1696,6 +1698,12 @@ export class ProfileComponent implements OnInit {
    * Obtiene el valor de expiración formateado según el tipo de plan
    */
   getExpirationValue(subscription: UserSubscriptionInfo): string {
+    console.log('🔍 [PROFILE] getExpirationValue llamado con:', {
+      plan_id: subscription.plan_id,
+      expires_at: subscription.expires_at,
+      expires_at_type: typeof subscription.expires_at
+    });
+    
     const tabId = this.getTabIdFromPlanId(subscription.plan_id);
     
     if (tabId === 'basic') {
@@ -1703,9 +1711,17 @@ export class ProfileComponent implements OnInit {
     }
     
     if (subscription.expires_at) {
-      return new Date(subscription.expires_at).toLocaleDateString('es-ES');
+      const date = new Date(subscription.expires_at);
+      console.log('🔍 [PROFILE] Convirtiendo fecha:', {
+        originalValue: subscription.expires_at,
+        convertedDate: date,
+        isValidDate: !isNaN(date.getTime()),
+        formattedDate: date.toLocaleDateString('es-ES')
+      });
+      return date.toLocaleDateString('es-ES');
     }
     
+    console.log('⚠️ [PROFILE] expires_at está vacío o es falsy');
     return 'No disponible';
   }
 
