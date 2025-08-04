@@ -52,7 +52,7 @@ interface GamePredictionUsage {
         </div>
         
         <!-- Sistema de pestañas -->
-        <div *ngIf="!loadingSubscriptions && availableTabs.length > 1" class="tabs-container">
+        <div *ngIf="!loadingSubscriptions && activeSubscriptions.length > 0" class="tabs-container">
           <div class="tabs-header">
             <button 
               *ngFor="let tab of availableTabs" 
@@ -163,6 +163,7 @@ interface GamePredictionUsage {
         </div>
         
         <!-- Vista cuando solo hay un plan o no hay pestañas -->
+        <!-- TEMPORALMENTE COMENTADO PARA TESTING DE PESTAÑAS
         <div *ngIf="!loadingSubscriptions && availableTabs.length <= 1 && activeSubscriptions.length > 0" class="single-plan-view">
           <div *ngFor="let subscription of activeSubscriptions" class="subscription-card">
             <div class="subscription-header">
@@ -181,7 +182,6 @@ interface GamePredictionUsage {
                 <span class="detail-value">{{subscription.price}}</span>
               </div>
               
-              <!-- Información específica para Plan Básico -->
               <div *ngIf="subscription.is_basic_plan && subscription.predictions_used" class="basic-plan-info">
                 <div class="detail-row">
                   <span class="detail-label">Fecha de contratación:</span>
@@ -209,7 +209,6 @@ interface GamePredictionUsage {
                 </div>
               </div>
               
-              <!-- Información para planes temporales (Mensual/Pro) -->
               <div *ngIf="!subscription.is_basic_plan">
                 <div class="detail-row">
                   <span class="detail-label">Fecha de contratación:</span>
@@ -223,6 +222,8 @@ interface GamePredictionUsage {
             </div>
           </div>
         </div>
+        -->
+        
         <div *ngIf="!loadingSubscriptions && activeSubscriptions.length === 0" class="no-subscriptions">
           <p>No tienes suscripciones activas actualmente.</p>
           <button class="btn-primary" routerLink="/planes">Ver planes disponibles</button>
@@ -1468,21 +1469,35 @@ export class ProfileComponent implements OnInit {
    * Actualiza las pestañas disponibles basándose en las suscripciones activas
    */
   private updateAvailableTabs(): void {
+    console.log('🔄 [PROFILE] Actualizando pestañas disponibles...');
+    console.log('🔄 [PROFILE] activeSubscriptions:', this.activeSubscriptions);
+    
     this.availableTabs = ['overview']; // Siempre incluir resumen general
     
     // Agregar pestañas según los planes activos
-    this.activeSubscriptions.forEach(sub => {
+    this.activeSubscriptions.forEach((sub, index) => {
+      console.log(`📋 [PROFILE] Procesando suscripción ${index}:`, {
+        id: sub.id,
+        plan_id: sub.plan_id,
+        plan_name: sub.plan_name
+      });
+      
       if (sub.plan_id && !this.availableTabs.includes(sub.plan_id)) {
         this.availableTabs.push(sub.plan_id);
+        console.log(`✅ [PROFILE] Agregada pestaña: ${sub.plan_id}`);
       }
     });
     
-    console.log('📋 [PROFILE] Pestañas disponibles:', this.availableTabs);
+    console.log('📋 [PROFILE] Pestañas disponibles finales:', this.availableTabs);
+    console.log('📋 [PROFILE] Pestaña activa actual:', this.activeTab);
     
     // Si la pestaña activa no está disponible, cambiar a overview
     if (!this.availableTabs.includes(this.activeTab)) {
+      console.log('⚠️ [PROFILE] Pestaña activa no válida, cambiando a overview');
       this.activeTab = 'overview';
     }
+    
+    console.log('📋 [PROFILE] Pestaña activa final:', this.activeTab);
   }
 
   /**
