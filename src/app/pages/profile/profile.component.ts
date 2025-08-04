@@ -1049,10 +1049,23 @@ export class ProfileComponent implements OnInit {
             endDate: sub.endDate,
             startDateType: typeof sub.startDate,
             endDateType: typeof sub.endDate
-          });            // CORRECCIÓN: Usar sub.id como plan_id porque es donde está el ID del plan
+          });            
+          
+          // CORRECCIÓN: Usar sub.id como plan_id porque es donde está el ID del plan
             const planId = sub.id;
             const tabId = this.getTabIdFromPlanId(planId);
             const isBasicPlan = tabId === 'basic';
+            
+            // CORRECCIÓN CRÍTICA: Convertir fechas al formato correcto para Angular
+            const startDate = sub.startDate ? new Date(sub.startDate).toISOString() : new Date().toISOString();
+            const endDate = sub.endDate ? new Date(sub.endDate).toISOString() : '';
+            
+            console.log('📅 [PROFILE] Fechas procesadas:', {
+              original_startDate: sub.startDate,
+              original_endDate: sub.endDate,
+              processed_startDate: startDate,
+              processed_endDate: endDate
+            });
             
             return {
               id: sub.id,
@@ -1060,8 +1073,8 @@ export class ProfileComponent implements OnInit {
               plan_name: this.getPlanDisplayName(planId),
               status: sub.status,
               status_display: this.getStatusDisplayName(sub.status),
-              created_at: sub.startDate,
-              expires_at: sub.endDate,
+              created_at: startDate,
+              expires_at: endDate,
               price: this.getPlanPrice(planId),
               is_basic_plan: isBasicPlan,
               predictions_used: isBasicPlan ? [] : undefined // Solo para básico, se cargará después
