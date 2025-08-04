@@ -905,6 +905,20 @@ export class ProfileComponent implements OnInit {
     this.loadUserSubscriptions();
   }
 
+  /**
+   * Método público para forzar recarga de datos (útil después de renovaciones)
+   */
+  refreshSubscriptionData(): void {
+    console.log('🔄 [PROFILE] Forzando recarga de datos de suscripciones...');
+    this.loadingSubscriptions = true;
+    this.activeSubscriptions = [];
+    this.availableTabs = [];
+    this.activeTab = 'overview';
+    
+    // Recargar desde cero
+    this.loadUserSubscriptions();
+  }
+
   private loadUserProfile() {
     this.authService.getCurrentUser().subscribe({
       next: (response) => {
@@ -1066,16 +1080,13 @@ export class ProfileComponent implements OnInit {
             };
           });
           
-          // Si hay un plan básico, cargar los datos de predicciones para ese plan específicamente
-          const basicPlan = this.activeSubscriptions.find(sub => sub.is_basic_plan);
-          if (basicPlan) {
-            console.log('🔄 [PROFILE] Cargando datos de predicciones para plan básico...');
-            this.loadBasicPlanPredictions();
-          }
+          // NUEVA LÓGICA: Siempre agregar Plan Básico para que esté disponible
+          console.log('🔄 [PROFILE] Agregando Plan Básico a las suscripciones existentes...');
+          this.loadBasicPlanDataAndMerge();
           
-          console.log('📊 [PROFILE] activeSubscriptions final:', this.activeSubscriptions);
+          console.log('📊 [PROFILE] activeSubscriptions inicial (sin básico):', this.activeSubscriptions);
           
-          // Actualizar pestañas disponibles
+          // Actualizar pestañas disponibles (se llamará de nuevo después de cargar el básico)
           this.updateAvailableTabs();
         }
       },
@@ -1198,6 +1209,17 @@ export class ProfileComponent implements OnInit {
         if (response.success && response.data && response.data.games && Array.isArray(response.data.games)) {
           console.log('✅ [PROFILE] Datos válidos recibidos para combinar, games:', response.data.games);
           
+          // CORRECCIÓN: Formatear correctamente los datos del backend
+          const formattedGames = response.data.games.map((game: any) => ({
+            game_id: game.game_id,
+            game_name: game.game_name,
+            total_allowed: parseInt(game.total_allowed) || 3, // Convertir a número
+            used: parseInt(game.used) || 0, // Convertir a número
+            remaining: parseInt(game.remaining) || (parseInt(game.total_allowed) || 3) - (parseInt(game.used) || 0)
+          }));
+          
+          console.log('📊 [PROFILE] Juegos formateados:', formattedGames);
+          
           basicPlanData = {
             id: 0,
             plan_id: 'basic',
@@ -1208,18 +1230,31 @@ export class ProfileComponent implements OnInit {
             expires_at: '',
             price: '1,22€',
             is_basic_plan: true,
-            predictions_used: response.data.games
+            predictions_used: formattedGames
           };
         } else {
           console.warn('⚠️ [PROFILE] Respuesta inválida para combinar, usando datos por defecto');
           basicPlanData = this.createDefaultBasicPlan();
         }
         
-        // Agregar plan básico al array existente de suscripciones premium
-        this.activeSubscriptions.push(basicPlanData);
+        // Verificar si ya existe un plan básico en las suscripciones
+        const existingBasicIndex = this.activeSubscriptions.findIndex(sub => sub.is_basic_plan);
         
-        console.log('✅ [PROFILE] Plan Básico agregado a suscripciones existentes:', this.activeSubscriptions);
-        console.log('📊 [PROFILE] Total de suscripciones activas:', this.activeSubscriptions.length);
+        if (existingBasicIndex >= 0) {
+          // Reemplazar el plan básico existente con datos actualizados
+          this.activeSubscriptions[existingBasicIndex] = basicPlanData;
+          console.log('✅ [PROFILE] Plan Básico existente actualizado con datos frescos');
+        } else {
+          // Agregar plan básico al array existente de suscripciones premium
+          this.activeSubscriptions.push(basicPlanData);
+          console.log('✅ [PROFILE] Plan Básico agregado a suscripciones existentes');
+        }
+        
+        console.log('📊 [PROFILE] Total de suscripciones activas finales:', this.activeSubscriptions.length);
+        console.log('📊 [PROFILE] activeSubscriptions completas:', this.activeSubscriptions);
+        
+        // Actualizar pestañas disponibles con la nueva configuración
+        this.updateAvailableTabs();
         
         // Forzar detección de cambios
         this.cdr.markForCheck();
@@ -1230,9 +1265,18 @@ export class ProfileComponent implements OnInit {
         
         // Agregar Plan Básico por defecto en caso de error
         const basicPlanData = this.createDefaultBasicPlan();
-        this.activeSubscriptions.push(basicPlanData);
+        
+        const existingBasicIndex = this.activeSubscriptions.findIndex(sub => sub.is_basic_plan);
+        if (existingBasicIndex >= 0) {
+          this.activeSubscriptions[existingBasicIndex] = basicPlanData;
+        } else {
+          this.activeSubscriptions.push(basicPlanData);
+        }
         
         console.log('✅ [PROFILE] Plan Básico por defecto agregado tras error:', this.activeSubscriptions);
+        
+        // Actualizar pestañas disponibles
+        this.updateAvailableTabs();
         
         // Forzar detección de cambios
         this.cdr.markForCheck();
@@ -1354,6 +1398,7 @@ export class ProfileComponent implements OnInit {
    * Datos por defecto si falla la carga desde el backend
    */
   private getDefaultPredictionData(): GamePredictionUsage[] {
+    console.log('📊 [PROFILE] Generando datos por defecto para Plan Básico...');
     return [
       {
         game_id: 'euromillon',
@@ -1597,15 +1642,29 @@ export class ProfileComponent implements OnInit {
    * Obtiene las suscripciones para una pestaña específica
    */
   getSubscriptionsForTab(tabId: string): UserSubscriptionInfo[] {
+    console.log(`🔍 [PROFILE] getSubscriptionsForTab(${tabId})`);
+    console.log(`🔍 [PROFILE] activeSubscriptions:`, this.activeSubscriptions);
+    
     if (tabId === 'overview') {
+      console.log(`📋 [PROFILE] Retornando vista general con ${this.activeSubscriptions.length} suscripciones`);
       return this.activeSubscriptions;
     }
     
     // Filtrar suscripciones que corresponden al tabId
-    return this.activeSubscriptions.filter(sub => {
+    const filteredSubs = this.activeSubscriptions.filter(sub => {
       const subTabId = this.getTabIdFromPlanId(sub.plan_id);
+      console.log(`🔍 [PROFILE] Evaluando suscripción:`, {
+        plan_id: sub.plan_id,
+        plan_name: sub.plan_name,
+        subTabId: subTabId,
+        targetTabId: tabId,
+        matches: subTabId === tabId
+      });
       return subTabId === tabId;
     });
+    
+    console.log(`📋 [PROFILE] Para tab '${tabId}' encontradas ${filteredSubs.length} suscripciones:`, filteredSubs);
+    return filteredSubs;
   }
 
   /**
