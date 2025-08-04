@@ -81,69 +81,38 @@ export class GordoPrimitivaComponent extends LotteryBaseComponent implements OnI
     // Cargar los últimos resultados
     this.loadUltimosResultados();
 
-    // CORRECCIÓN: Suscribirse a cambios en el estado de autenticación
-    const authSub = this.authService.currentUser.subscribe(user => {
-      const wasLoggedIn = this.isLoggedIn;
-      this.isLoggedIn = !!user;
-      
-      console.log('Estado de autenticación cambió:', {
-        wasLoggedIn,
-        isLoggedIn: this.isLoggedIn,
-        user: user ? 'presente' : 'null'
-      });
+    // Verificar si el usuario está autenticado
+    this.isLoggedIn = !!this.authService.currentUserValue;
 
-      // Si el usuario se autentica (login inicial o re-login después de token expirado)
-      if (this.isLoggedIn && (!wasLoggedIn || user)) {
-        console.log('Usuario autenticado, verificando suscripciones...');
-        this.checkSubscriptions();
-      } else if (!this.isLoggedIn) {
-        // El usuario no está autenticado, resetear planes
-        this.resetSubscriptionStatus();
-      }
-    });
-    this.subscriptions.push(authSub);
-
-    // Verificación inicial si ya está autenticado
+    // Verificar si el usuario tiene suscripciones activas
     if (this.isLoggedIn) {
-      this.checkSubscriptions();
+      // Verificar plan básico
+      const basicSub = this.subscriptionService.hasActivePlan('basic').subscribe(hasBasic => {
+        this.hasBasicPlan = hasBasic;
+        console.log('Usuario tiene plan básico:', this.hasBasicPlan);
+      });
+      this.subscriptions.push(basicSub);
+
+      // Verificar plan mensual
+      const monthlySub = this.subscriptionService.hasActivePlan('monthly').subscribe(hasMonthly => {
+        this.hasMonthlyPlan = hasMonthly;
+        console.log('Usuario tiene plan mensual:', this.hasMonthlyPlan);
+      });
+      this.subscriptions.push(monthlySub);
+
+      // Verificar plan pro
+      const proSub = this.subscriptionService.hasActivePlan('pro').subscribe(hasPro => {
+        this.hasProPlan = hasPro;
+        console.log('Usuario tiene plan pro:', this.hasProPlan);
+      });
+      this.subscriptions.push(proSub);
+    } else {
+      // El usuario no está autenticado, no tiene ningún plan
+      this.hasBasicPlan = false;
+      this.hasMonthlyPlan = false;
+      this.hasProPlan = false;
+      console.log('Usuario no autenticado, no tiene planes activos');
     }
-  }
-
-  /**
-   * NUEVA FUNCIÓN: Verificar suscripciones del usuario
-   * Se puede llamar tanto en la inicialización como después del re-login
-   */
-  private checkSubscriptions(): void {
-    // Verificar plan básico
-    const basicSub = this.subscriptionService.hasActivePlan('basic').subscribe(hasBasic => {
-      this.hasBasicPlan = hasBasic;
-      console.log('Usuario tiene plan básico:', this.hasBasicPlan);
-    });
-    this.subscriptions.push(basicSub);
-
-    // Verificar plan mensual
-    const monthlySub = this.subscriptionService.hasActivePlan('monthly').subscribe(hasMonthly => {
-      this.hasMonthlyPlan = hasMonthly;
-      console.log('Usuario tiene plan mensual:', this.hasMonthlyPlan);
-    });
-    this.subscriptions.push(monthlySub);
-
-    // Verificar plan pro
-    const proSub = this.subscriptionService.hasActivePlan('pro').subscribe(hasPro => {
-      this.hasProPlan = hasPro;
-      console.log('Usuario tiene plan pro:', this.hasProPlan);
-    });
-    this.subscriptions.push(proSub);
-  }
-
-  /**
-   * NUEVA FUNCIÓN: Resetear estado de suscripciones cuando el usuario no está autenticado
-   */
-  private resetSubscriptionStatus(): void {
-    this.hasBasicPlan = false;
-    this.hasMonthlyPlan = false;
-    this.hasProPlan = false;
-    console.log('Usuario no autenticado, planes reseteados');
   }
 
   generateBasicPrediction(): void {
