@@ -45,7 +45,12 @@ interface GamePredictionUsage {
 
       <!-- Sección de Suscripciones -->
       <div class="subscriptions-section" *ngIf="!isEditing && !isChangingPassword">
-        <h3>Mis Suscripciones</h3>
+        <div class="subscriptions-header">
+          <h3>Mis Suscripciones</h3>
+          <button class="btn-refresh" (click)="refreshSubscriptionData()" [disabled]="loadingSubscriptions">
+            🔄 {{ loadingSubscriptions ? 'Actualizando...' : 'Actualizar datos' }}
+          </button>
+        </div>
         
         <div *ngIf="loadingSubscriptions" class="loading-message">
           Cargando suscripciones...
@@ -104,10 +109,12 @@ interface GamePredictionUsage {
                   <div class="detail-row">
                     <span class="detail-label">Fecha de contratación:</span>
                     <span class="detail-value">{{subscription.created_at | date:'dd/MM/yyyy'}}</span>
+                    <!-- DEBUG: {{subscription.created_at}} -->
                   </div>
                   <div class="detail-row">
                     <span class="detail-label">{{getExpirationLabel(subscription.plan_id)}}:</span>
                     <span class="detail-value">{{getExpirationValue(subscription)}}</span>
+                    <!-- DEBUG: expires_at={{subscription.expires_at}} -->
                   </div>
                 </div>
                 
@@ -416,10 +423,37 @@ interface GamePredictionUsage {
       background-color: #f9f9f9;
     }
 
+    .subscriptions-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
     .subscriptions-section h3 {
       color: #333;
-      margin-bottom: 1rem;
+      margin: 0;
       font-size: 1.3rem;
+    }
+
+    .btn-refresh {
+      background-color: #28a745;
+      color: white;
+      padding: 0.5rem 1rem;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: background-color 0.3s;
+    }
+
+    .btn-refresh:hover:not(:disabled) {
+      background-color: #218838;
+    }
+
+    .btn-refresh:disabled {
+      background-color: #6c757d;
+      cursor: not-allowed;
     }
 
     /* Estilos para el sistema de pestañas */
@@ -1058,7 +1092,11 @@ export class ProfileComponent implements OnInit {
               planId: sub.planId,
               planIdFromId: sub.id, // El planId real está en sub.id
               planName: this.getPlanDisplayName(sub.id),
-              status: sub.status
+              status: sub.status,
+              startDate: sub.startDate,
+              endDate: sub.endDate,
+              createdAt: sub.created_at,
+              expiresAt: sub.expires_at
             });
             
             // CORRECCIÓN: Usar sub.id como plan_id porque es donde está el ID del plan
@@ -1066,14 +1104,28 @@ export class ProfileComponent implements OnInit {
             const tabId = this.getTabIdFromPlanId(planId);
             const isBasicPlan = tabId === 'basic';
             
+            // CORRECCIÓN: Mapear correctamente las fechas desde diferentes campos posibles
+            const createdAt = sub.startDate || sub.created_at || sub.createdAt || new Date().toISOString();
+            const expiresAt = sub.endDate || sub.expires_at || sub.expiresAt || '';
+            
+            console.log('📅 [PROFILE] Fechas mapeadas:', {
+              planId,
+              original_startDate: sub.startDate,
+              original_endDate: sub.endDate,
+              original_created_at: sub.created_at,
+              original_expires_at: sub.expires_at,
+              mapped_createdAt: createdAt,
+              mapped_expiresAt: expiresAt
+            });
+            
             return {
               id: sub.id,
               plan_id: planId, // Usar sub.id como plan_id
               plan_name: this.getPlanDisplayName(planId),
-              status: sub.status,
-              status_display: this.getStatusDisplayName(sub.status),
-              created_at: sub.startDate,
-              expires_at: sub.endDate,
+              status: sub.status || 'active',
+              status_display: this.getStatusDisplayName(sub.status || 'active'),
+              created_at: createdAt,
+              expires_at: expiresAt,
               price: this.getPlanPrice(planId),
               is_basic_plan: isBasicPlan,
               predictions_used: isBasicPlan ? [] : undefined // Solo para básico, se cargará después
@@ -1227,7 +1279,7 @@ export class ProfileComponent implements OnInit {
             status: 'active',
             status_display: 'Activo',
             created_at: new Date().toISOString(),
-            expires_at: '',
+            expires_at: '', // Plan básico no tiene fecha de expiración
             price: '1,22€',
             is_basic_plan: true,
             predictions_used: formattedGames
@@ -1695,12 +1747,39 @@ export class ProfileComponent implements OnInit {
   getExpirationValue(subscription: UserSubscriptionInfo): string {
     const tabId = this.getTabIdFromPlanId(subscription.plan_id);
     
+    console.log('📅 [PROFILE] getExpirationValue:', {
+      plan_id: subscription.plan_id,
+      tabId: tabId,
+      expires_at: subscription.expires_at,
+      raw_expires_at: subscription.expires_at
+    });
+    
     if (tabId === 'basic') {
       return 'Ilimitada (por cantidad de pronósticos)';
     }
     
-    if (subscription.expires_at) {
-      return new Date(subscription.expires_at).toLocaleDateString('es-ES');
+    if (subscription.expires_at && subscription.expires_at !== '') {
+      try {
+        const expirationDate = new Date(subscription.expires_at);
+        
+        // Verificar si la fecha es válida
+        if (!isNaN(expirationDate.getTime())) {
+          return expirationDate.toLocaleDateString('es-ES');
+        } else {
+          console.warn('⚠️ [PROFILE] Fecha de expiración inválida:', subscription.expires_at);
+          return 'Fecha inválida';
+        }
+      } catch (error) {
+        console.error('❌ [PROFILE] Error parseando fecha de expiración:', error);
+        return 'Error en fecha';
+      }
+    }
+    
+    // Para planes premium sin fecha de expiración, mostrar mensaje apropiado
+    if (tabId === 'monthly') {
+      return 'Plan mensual sin fecha de expiración registrada';
+    } else if (tabId === 'pro') {
+      return 'Plan anual sin fecha de expiración registrada';
     }
     
     return 'No disponible';
