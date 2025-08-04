@@ -140,53 +140,73 @@ export function app(): express.Express {
       
       const client = await pgPool.connect();
       try {
-        // Obtener información de suscripción del usuario
+        // Obtener información de la suscripción básica ACTUAL del usuario
         const subscriptionQuery = `
-          SELECT plan_type, status 
+          SELECT plan_type, status, start_date, plan_id 
           FROM subscriptions 
-          WHERE user_id = $1 AND status = 'active' 
+          WHERE user_id = $1 AND status = 'active' AND plan_id = 'basic'
           ORDER BY created_at DESC 
           LIMIT 1
         `;
         
         const subscriptionResult = await client.query(subscriptionQuery, [userId]);
         const subscription = subscriptionResult.rows[0];
-        const planType = subscription?.plan_type || 'free';
         
-        // Definir límites por tipo de plan
-        const limits: Record<string, number> = {
-          free: 3,
-          basic: 15,
-          premium: 50
-        };
+        console.log('📊 [SERVER] Suscripción básica actual:', subscription);
         
-        const totalAllowed = limits[planType] || 3;
+        // Si no hay plan básico activo, devolver datos por defecto
+        if (!subscription) {
+          console.log('⚠️ [SERVER] No hay plan básico activo para usuario', userId);
+          const defaultGames = [
+            { game_id: 'primitiva', game_name: 'La Primitiva', total_allowed: 3, used: 0, remaining: 3 },
+            { game_id: 'bonoloto', game_name: 'Bonoloto', total_allowed: 3, used: 0, remaining: 3 },
+            { game_id: 'euromillon', game_name: 'EuroMillones', total_allowed: 3, used: 0, remaining: 3 },
+            { game_id: 'elgordo', game_name: 'El Gordo', total_allowed: 3, used: 0, remaining: 3 },
+            { game_id: 'lototurf', game_name: 'Lototurf', total_allowed: 3, used: 0, remaining: 3 },
+            { game_id: 'eurodreams', game_name: 'EuroDreams', total_allowed: 3, used: 0, remaining: 3 },
+            { game_id: 'loterianacional', game_name: 'Lotería Nacional', total_allowed: 3, used: 0, remaining: 3 }
+          ];
+          
+          return res.json({
+            success: true,
+            data: { games: defaultGames }
+          });
+        }
         
-        // Lista de juegos disponibles
+        const planStartDate = subscription.start_date;
+        
+        // Para Plan Básico, el límite es 3 predicciones por juego
+        const totalAllowed = 3;
+        
+        // Lista de juegos disponibles con IDs corregidos según la tabla user_predictions
         const games = [
-          { id: 1, name: 'La Primitiva' },
-          { id: 2, name: 'Bonoloto' },
-          { id: 3, name: 'EuroMillones' },
-          { id: 4, name: 'El Gordo' },
-          { id: 5, name: 'Lototurf' },
-          { id: 6, name: 'EuroDreams' },
-          { id: 7, name: 'Lotería Nacional' }
+          { id: 'primitiva', name: 'La Primitiva' },
+          { id: 'bonoloto', name: 'Bonoloto' },
+          { id: 'euromillon', name: 'EuroMillones' },
+          { id: 'elgordo', name: 'El Gordo' },
+          { id: 'lototurf', name: 'Lototurf' },
+          { id: 'eurodreams', name: 'EuroDreams' },
+          { id: 'loterianacional', name: 'Lotería Nacional' }
         ];
         
-        // Obtener conteo de predicciones usadas por juego
+        // CORRECCIÓN CLAVE: Obtener conteo de predicciones SOLO desde la fecha de inicio del plan básico actual
         const usageQuery = `
-          SELECT game_id, COUNT(*) as used_count
+          SELECT game_type as game_id, COUNT(*) as used_count
           FROM user_predictions 
           WHERE user_id = $1 
-          AND created_at >= DATE_TRUNC('month', CURRENT_DATE)
-          GROUP BY game_id
+          AND created_at >= $2
+          GROUP BY game_type
         `;
         
-        const usageResult = await client.query(usageQuery, [userId]);
+        console.log('📊 [SERVER] Consultando predicciones desde:', planStartDate, 'para usuario:', userId);
+        
+        const usageResult = await client.query(usageQuery, [userId, planStartDate]);
         const usageByGame = usageResult.rows.reduce((acc: any, row: any) => {
           acc[row.game_id] = parseInt(row.used_count);
           return acc;
         }, {});
+        
+        console.log('📊 [SERVER] Uso por juego desde plan actual:', usageByGame);
         
         // Crear respuesta con datos de cada juego
         const gamePredictionUsage = games.map(game => ({
@@ -197,9 +217,13 @@ export function app(): express.Express {
           remaining: totalAllowed - (usageByGame[game.id] || 0)
         }));
         
+        console.log('📊 [SERVER] Respuesta final:', { games: gamePredictionUsage });
+        
         res.json({
           success: true,
-          data: gamePredictionUsage
+          data: {
+            games: gamePredictionUsage
+          }
         });
         
       } finally {
@@ -207,6 +231,65 @@ export function app(): express.Express {
       }
     } catch (error) {
       console.error('Error obteniendo resumen de predicciones:', error);
+      res.status(500).json({ error: 'Error interno del servidor' });
+    }
+  });
+
+  // Obtener suscripciones del usuario
+  server.get('/api/subscriptions/user/:userId', authenticateToken, async (req: any, res: any) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      
+      // Verificar que el usuario autenticado solo puede acceder a sus propias suscripciones
+      if (req.user.id !== userId) {
+        return res.status(403).json({ error: 'Acceso denegado' });
+      }
+      
+      const client = await pgPool.connect();
+      try {
+        // Obtener todas las suscripciones activas del usuario
+        const subscriptionsQuery = `
+          SELECT 
+            id,
+            plan_id,
+            status,
+            start_date,
+            end_date,
+            amount,
+            currency,
+            created_at,
+            plan_type
+          FROM subscriptions 
+          WHERE user_id = $1 AND status = 'active'
+          ORDER BY created_at DESC
+        `;
+        
+        const result = await client.query(subscriptionsQuery, [userId]);
+        
+        // Mapear los resultados al formato esperado por el frontend
+        const subscriptions = result.rows.map(sub => ({
+          id: sub.plan_id, // IMPORTANTE: Usar plan_id como id para que el frontend funcione correctamente
+          planId: sub.plan_id,
+          status: sub.status,
+          startDate: sub.start_date,
+          endDate: sub.end_date,
+          amount: sub.amount,
+          currency: sub.currency,
+          createdAt: sub.created_at,
+          planType: sub.plan_type || sub.plan_id
+        }));
+        
+        console.log('📊 [SERVER] Suscripciones encontradas para user', userId, ':', subscriptions);
+        
+        res.json({
+          subscriptions: subscriptions
+        });
+        
+      } finally {
+        client.release();
+      }
+    } catch (error) {
+      console.error('❌ [SERVER] Error obteniendo suscripciones del usuario:', error);
       res.status(500).json({ error: 'Error interno del servidor' });
     }
   });

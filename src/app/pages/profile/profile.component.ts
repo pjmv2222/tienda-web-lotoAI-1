@@ -45,12 +45,7 @@ interface GamePredictionUsage {
 
       <!-- Sección de Suscripciones -->
       <div class="subscriptions-section" *ngIf="!isEditing && !isChangingPassword">
-        <div class="subscriptions-header">
-          <h3>Mis Suscripciones</h3>
-          <button class="btn-refresh" (click)="refreshSubscriptionData()" [disabled]="loadingSubscriptions">
-            🔄 {{ loadingSubscriptions ? 'Actualizando...' : 'Actualizar datos' }}
-          </button>
-        </div>
+        <h3>Mis Suscripciones</h3>
         
         <div *ngIf="loadingSubscriptions" class="loading-message">
           Cargando suscripciones...
@@ -109,12 +104,10 @@ interface GamePredictionUsage {
                   <div class="detail-row">
                     <span class="detail-label">Fecha de contratación:</span>
                     <span class="detail-value">{{subscription.created_at | date:'dd/MM/yyyy'}}</span>
-                    <!-- DEBUG: {{subscription.created_at}} -->
                   </div>
                   <div class="detail-row">
                     <span class="detail-label">{{getExpirationLabel(subscription.plan_id)}}:</span>
                     <span class="detail-value">{{getExpirationValue(subscription)}}</span>
-                    <!-- DEBUG: expires_at={{subscription.expires_at}} -->
                   </div>
                 </div>
                 
@@ -423,37 +416,10 @@ interface GamePredictionUsage {
       background-color: #f9f9f9;
     }
 
-    .subscriptions-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1rem;
-    }
-
     .subscriptions-section h3 {
       color: #333;
-      margin: 0;
+      margin-bottom: 1rem;
       font-size: 1.3rem;
-    }
-
-    .btn-refresh {
-      background-color: #28a745;
-      color: white;
-      padding: 0.5rem 1rem;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 0.9rem;
-      transition: background-color 0.3s;
-    }
-
-    .btn-refresh:hover:not(:disabled) {
-      background-color: #218838;
-    }
-
-    .btn-refresh:disabled {
-      background-color: #6c757d;
-      cursor: not-allowed;
     }
 
     /* Estilos para el sistema de pestañas */
@@ -939,20 +905,6 @@ export class ProfileComponent implements OnInit {
     this.loadUserSubscriptions();
   }
 
-  /**
-   * Método público para forzar recarga de datos (útil después de renovaciones)
-   */
-  refreshSubscriptionData(): void {
-    console.log('🔄 [PROFILE] Forzando recarga de datos de suscripciones...');
-    this.loadingSubscriptions = true;
-    this.activeSubscriptions = [];
-    this.availableTabs = [];
-    this.activeTab = 'overview';
-    
-    // Recargar desde cero
-    this.loadUserSubscriptions();
-  }
-
   private loadUserProfile() {
     this.authService.getCurrentUser().subscribe({
       next: (response) => {
@@ -1092,11 +1044,7 @@ export class ProfileComponent implements OnInit {
               planId: sub.planId,
               planIdFromId: sub.id, // El planId real está en sub.id
               planName: this.getPlanDisplayName(sub.id),
-              status: sub.status,
-              startDate: sub.startDate,
-              endDate: sub.endDate,
-              createdAt: sub.created_at,
-              expiresAt: sub.expires_at
+              status: sub.status
             });
             
             // CORRECCIÓN: Usar sub.id como plan_id porque es donde está el ID del plan
@@ -1104,41 +1052,30 @@ export class ProfileComponent implements OnInit {
             const tabId = this.getTabIdFromPlanId(planId);
             const isBasicPlan = tabId === 'basic';
             
-            // CORRECCIÓN: Mapear correctamente las fechas desde diferentes campos posibles
-            const createdAt = sub.startDate || sub.created_at || sub.createdAt || new Date().toISOString();
-            const expiresAt = sub.endDate || sub.expires_at || sub.expiresAt || '';
-            
-            console.log('📅 [PROFILE] Fechas mapeadas:', {
-              planId,
-              original_startDate: sub.startDate,
-              original_endDate: sub.endDate,
-              original_created_at: sub.created_at,
-              original_expires_at: sub.expires_at,
-              mapped_createdAt: createdAt,
-              mapped_expiresAt: expiresAt
-            });
-            
             return {
               id: sub.id,
               plan_id: planId, // Usar sub.id como plan_id
               plan_name: this.getPlanDisplayName(planId),
-              status: sub.status || 'active',
-              status_display: this.getStatusDisplayName(sub.status || 'active'),
-              created_at: createdAt,
-              expires_at: expiresAt,
+              status: sub.status,
+              status_display: this.getStatusDisplayName(sub.status),
+              created_at: sub.startDate,
+              expires_at: sub.endDate,
               price: this.getPlanPrice(planId),
               is_basic_plan: isBasicPlan,
               predictions_used: isBasicPlan ? [] : undefined // Solo para básico, se cargará después
             };
           });
           
-          // NUEVA LÓGICA: Siempre agregar Plan Básico para que esté disponible
-          console.log('🔄 [PROFILE] Agregando Plan Básico a las suscripciones existentes...');
-          this.loadBasicPlanDataAndMerge();
+          // Si hay un plan básico, cargar los datos de predicciones para ese plan específicamente
+          const basicPlan = this.activeSubscriptions.find(sub => sub.is_basic_plan);
+          if (basicPlan) {
+            console.log('🔄 [PROFILE] Cargando datos de predicciones para plan básico...');
+            this.loadBasicPlanPredictions();
+          }
           
-          console.log('📊 [PROFILE] activeSubscriptions inicial (sin básico):', this.activeSubscriptions);
+          console.log('📊 [PROFILE] activeSubscriptions final:', this.activeSubscriptions);
           
-          // Actualizar pestañas disponibles (se llamará de nuevo después de cargar el básico)
+          // Actualizar pestañas disponibles
           this.updateAvailableTabs();
         }
       },
@@ -1261,17 +1198,6 @@ export class ProfileComponent implements OnInit {
         if (response.success && response.data && response.data.games && Array.isArray(response.data.games)) {
           console.log('✅ [PROFILE] Datos válidos recibidos para combinar, games:', response.data.games);
           
-          // CORRECCIÓN: Formatear correctamente los datos del backend
-          const formattedGames = response.data.games.map((game: any) => ({
-            game_id: game.game_id,
-            game_name: game.game_name,
-            total_allowed: parseInt(game.total_allowed) || 3, // Convertir a número
-            used: parseInt(game.used) || 0, // Convertir a número
-            remaining: parseInt(game.remaining) || (parseInt(game.total_allowed) || 3) - (parseInt(game.used) || 0)
-          }));
-          
-          console.log('📊 [PROFILE] Juegos formateados:', formattedGames);
-          
           basicPlanData = {
             id: 0,
             plan_id: 'basic',
@@ -1279,34 +1205,21 @@ export class ProfileComponent implements OnInit {
             status: 'active',
             status_display: 'Activo',
             created_at: new Date().toISOString(),
-            expires_at: '', // Plan básico no tiene fecha de expiración
+            expires_at: '',
             price: '1,22€',
             is_basic_plan: true,
-            predictions_used: formattedGames
+            predictions_used: response.data.games
           };
         } else {
           console.warn('⚠️ [PROFILE] Respuesta inválida para combinar, usando datos por defecto');
           basicPlanData = this.createDefaultBasicPlan();
         }
         
-        // Verificar si ya existe un plan básico en las suscripciones
-        const existingBasicIndex = this.activeSubscriptions.findIndex(sub => sub.is_basic_plan);
+        // Agregar plan básico al array existente de suscripciones premium
+        this.activeSubscriptions.push(basicPlanData);
         
-        if (existingBasicIndex >= 0) {
-          // Reemplazar el plan básico existente con datos actualizados
-          this.activeSubscriptions[existingBasicIndex] = basicPlanData;
-          console.log('✅ [PROFILE] Plan Básico existente actualizado con datos frescos');
-        } else {
-          // Agregar plan básico al array existente de suscripciones premium
-          this.activeSubscriptions.push(basicPlanData);
-          console.log('✅ [PROFILE] Plan Básico agregado a suscripciones existentes');
-        }
-        
-        console.log('📊 [PROFILE] Total de suscripciones activas finales:', this.activeSubscriptions.length);
-        console.log('📊 [PROFILE] activeSubscriptions completas:', this.activeSubscriptions);
-        
-        // Actualizar pestañas disponibles con la nueva configuración
-        this.updateAvailableTabs();
+        console.log('✅ [PROFILE] Plan Básico agregado a suscripciones existentes:', this.activeSubscriptions);
+        console.log('📊 [PROFILE] Total de suscripciones activas:', this.activeSubscriptions.length);
         
         // Forzar detección de cambios
         this.cdr.markForCheck();
@@ -1317,18 +1230,9 @@ export class ProfileComponent implements OnInit {
         
         // Agregar Plan Básico por defecto en caso de error
         const basicPlanData = this.createDefaultBasicPlan();
-        
-        const existingBasicIndex = this.activeSubscriptions.findIndex(sub => sub.is_basic_plan);
-        if (existingBasicIndex >= 0) {
-          this.activeSubscriptions[existingBasicIndex] = basicPlanData;
-        } else {
-          this.activeSubscriptions.push(basicPlanData);
-        }
+        this.activeSubscriptions.push(basicPlanData);
         
         console.log('✅ [PROFILE] Plan Básico por defecto agregado tras error:', this.activeSubscriptions);
-        
-        // Actualizar pestañas disponibles
-        this.updateAvailableTabs();
         
         // Forzar detección de cambios
         this.cdr.markForCheck();
@@ -1450,7 +1354,6 @@ export class ProfileComponent implements OnInit {
    * Datos por defecto si falla la carga desde el backend
    */
   private getDefaultPredictionData(): GamePredictionUsage[] {
-    console.log('📊 [PROFILE] Generando datos por defecto para Plan Básico...');
     return [
       {
         game_id: 'euromillon',
@@ -1694,29 +1597,15 @@ export class ProfileComponent implements OnInit {
    * Obtiene las suscripciones para una pestaña específica
    */
   getSubscriptionsForTab(tabId: string): UserSubscriptionInfo[] {
-    console.log(`🔍 [PROFILE] getSubscriptionsForTab(${tabId})`);
-    console.log(`🔍 [PROFILE] activeSubscriptions:`, this.activeSubscriptions);
-    
     if (tabId === 'overview') {
-      console.log(`📋 [PROFILE] Retornando vista general con ${this.activeSubscriptions.length} suscripciones`);
       return this.activeSubscriptions;
     }
     
     // Filtrar suscripciones que corresponden al tabId
-    const filteredSubs = this.activeSubscriptions.filter(sub => {
+    return this.activeSubscriptions.filter(sub => {
       const subTabId = this.getTabIdFromPlanId(sub.plan_id);
-      console.log(`🔍 [PROFILE] Evaluando suscripción:`, {
-        plan_id: sub.plan_id,
-        plan_name: sub.plan_name,
-        subTabId: subTabId,
-        targetTabId: tabId,
-        matches: subTabId === tabId
-      });
       return subTabId === tabId;
     });
-    
-    console.log(`📋 [PROFILE] Para tab '${tabId}' encontradas ${filteredSubs.length} suscripciones:`, filteredSubs);
-    return filteredSubs;
   }
 
   /**
@@ -1747,39 +1636,12 @@ export class ProfileComponent implements OnInit {
   getExpirationValue(subscription: UserSubscriptionInfo): string {
     const tabId = this.getTabIdFromPlanId(subscription.plan_id);
     
-    console.log('📅 [PROFILE] getExpirationValue:', {
-      plan_id: subscription.plan_id,
-      tabId: tabId,
-      expires_at: subscription.expires_at,
-      raw_expires_at: subscription.expires_at
-    });
-    
     if (tabId === 'basic') {
       return 'Ilimitada (por cantidad de pronósticos)';
     }
     
-    if (subscription.expires_at && subscription.expires_at !== '') {
-      try {
-        const expirationDate = new Date(subscription.expires_at);
-        
-        // Verificar si la fecha es válida
-        if (!isNaN(expirationDate.getTime())) {
-          return expirationDate.toLocaleDateString('es-ES');
-        } else {
-          console.warn('⚠️ [PROFILE] Fecha de expiración inválida:', subscription.expires_at);
-          return 'Fecha inválida';
-        }
-      } catch (error) {
-        console.error('❌ [PROFILE] Error parseando fecha de expiración:', error);
-        return 'Error en fecha';
-      }
-    }
-    
-    // Para planes premium sin fecha de expiración, mostrar mensaje apropiado
-    if (tabId === 'monthly') {
-      return 'Plan mensual sin fecha de expiración registrada';
-    } else if (tabId === 'pro') {
-      return 'Plan anual sin fecha de expiración registrada';
+    if (subscription.expires_at) {
+      return new Date(subscription.expires_at).toLocaleDateString('es-ES');
     }
     
     return 'No disponible';
