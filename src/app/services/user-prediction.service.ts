@@ -96,7 +96,7 @@ export class UserPredictionService {
    */
   getProfilePredictionSummary(): Observable<{success: boolean, data: ProfilePredictionSummary}> {
     return this.http.get<{success: boolean, data: ProfilePredictionSummary}>(
-      `${this.apiUrl}/summary`,
+      `${environment.apiUrl}/predictions/summary`,
       { headers: this.getAuthHeaders() }
     );
   }
