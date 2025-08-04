@@ -1039,25 +1039,28 @@ export class ProfileComponent implements OnInit {
           
           // Mapear todas las suscripciones a formato de display
           this.activeSubscriptions = subscriptions.map((sub: any) => {
-            console.log('🔍 [PROFILE] Mapeo de suscripción:', {
+            console.log('🔍 [PROFILE] Mapeo de suscripción (CORREGIDO):', {
               id: sub.id,
               planId: sub.planId,
-              planName: this.getPlanDisplayName(sub.planId),
+              planIdFromId: sub.id, // El planId real está en sub.id
+              planName: this.getPlanDisplayName(sub.id),
               status: sub.status
             });
             
-            const tabId = this.getTabIdFromPlanId(sub.planId);
+            // CORRECCIÓN: Usar sub.id como plan_id porque es donde está el ID del plan
+            const planId = sub.id;
+            const tabId = this.getTabIdFromPlanId(planId);
             const isBasicPlan = tabId === 'basic';
             
             return {
               id: sub.id,
-              plan_id: sub.planId,
-              plan_name: this.getPlanDisplayName(sub.planId),
+              plan_id: planId, // Usar sub.id como plan_id
+              plan_name: this.getPlanDisplayName(planId),
               status: sub.status,
               status_display: this.getStatusDisplayName(sub.status),
               created_at: sub.startDate,
               expires_at: sub.endDate,
-              price: this.getPlanPrice(sub.planId),
+              price: this.getPlanPrice(planId),
               is_basic_plan: isBasicPlan,
               predictions_used: isBasicPlan ? [] : undefined // Solo para básico, se cargará después
             };
@@ -1537,18 +1540,21 @@ export class ProfileComponent implements OnInit {
     
     // Agregar pestañas según los planes activos
     this.activeSubscriptions.forEach((sub, index) => {
-      console.log(`📋 [PROFILE] Procesando suscripción ${index}:`, {
+      console.log(`📋 [PROFILE] Procesando suscripción ${index} (CORREGIDO):`, {
         id: sub.id,
         plan_id: sub.plan_id,
-        plan_name: sub.plan_name
+        plan_name: sub.plan_name,
+        tabId: this.getTabIdFromPlanId(sub.plan_id)
       });
       
-      if (sub.plan_id) {
+      if (sub.plan_id !== undefined && sub.plan_id !== null) {
         const tabId = this.getTabIdFromPlanId(sub.plan_id);
         if (!this.availableTabs.includes(tabId)) {
           this.availableTabs.push(tabId);
           console.log(`✅ [PROFILE] Agregada pestaña: ${tabId} (plan_id: ${sub.plan_id})`);
         }
+      } else {
+        console.warn(`⚠️ [PROFILE] plan_id es undefined para suscripción ${index}:`, sub);
       }
     });
     
