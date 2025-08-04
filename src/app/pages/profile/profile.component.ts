@@ -6,7 +6,7 @@ import { SubscriptionService, Subscription } from '../../services/subscription.s
 import { UserPredictionService } from '../../services/user-prediction.service';
 import { UserProfile } from '../../models/user.model';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, ValidationErrors } from '@angular/forms';
-import { forkJoin } from 'rxjs';
+import { forkJoin, map } from 'rxjs';
 
 // Interfaz para mostrar información de suscripciones
 interface UserSubscriptionInfo {
@@ -1039,15 +1039,15 @@ export class ProfileComponent implements OnInit {
           
           // Mapear todas las suscripciones a formato de display
           this.activeSubscriptions = subscriptions.map((sub: any) => {
-            console.log('🔍 [PROFILE] Mapeo de suscripción (CORREGIDO):', {
-              id: sub.id,
-              planId: sub.planId,
-              planIdFromId: sub.id, // El planId real está en sub.id
-              planName: this.getPlanDisplayName(sub.id),
-              status: sub.status
-            });
-            
-            // CORRECCIÓN: Usar sub.id como plan_id porque es donde está el ID del plan
+          console.log('🔍 [PROFILE] Mapeo de suscripción (CORREGIDO):', {
+            id: sub.id,
+            planId: sub.planId,
+            planIdFromId: sub.id, // El planId real está en sub.id
+            planName: this.getPlanDisplayName(sub.id),
+            status: sub.status,
+            startDate: sub.startDate,
+            endDate: sub.endDate
+          });            // CORRECCIÓN: Usar sub.id como plan_id porque es donde está el ID del plan
             const planId = sub.id;
             const tabId = this.getTabIdFromPlanId(planId);
             const isBasicPlan = tabId === 'basic';
@@ -1066,11 +1066,15 @@ export class ProfileComponent implements OnInit {
             };
           });
           
-          // Si hay un plan básico, cargar los datos de predicciones para ese plan específicamente
+          // CORRECCIÓN CRÍTICA: Si hay un plan básico, cargar los datos de predicciones
+          // Si NO hay plan básico en las suscripciones de la BD, pero debería haberlo, agregarlo
           const basicPlan = this.activeSubscriptions.find(sub => sub.is_basic_plan);
           if (basicPlan) {
-            console.log('🔄 [PROFILE] Cargando datos de predicciones para plan básico...');
+            console.log('🔄 [PROFILE] Plan básico encontrado en BD, cargando datos de predicciones...');
             this.loadBasicPlanPredictions();
+          } else {
+            console.log('🔄 [PROFILE] No hay plan básico en BD, cargando plan básico por defecto...');
+            this.loadBasicPlanDataAndMerge();
           }
           
           console.log('📊 [PROFILE] activeSubscriptions final:', this.activeSubscriptions);
@@ -1189,14 +1193,33 @@ export class ProfileComponent implements OnInit {
   private loadBasicPlanDataAndMerge(): void {
     console.log('🔄 [PROFILE] Cargando datos del Plan Básico para combinar con planes premium...');
     
-    this.userPredictionService.getProfilePredictionSummary().subscribe({
-      next: (response) => {
-        console.log('📊 [PROFILE] Respuesta del servidor para combinar:', response);
+    // CORRECCIÓN: Hacer ambas consultas en paralelo - predicciones Y suscripción básica de la BD
+    const currentUser = this.authService.currentUserValue;
+    if (!currentUser) {
+      console.error('❌ [PROFILE] No hay usuario autenticado');
+      return;
+    }
+
+    const predictionSummary$ = this.userPredictionService.getProfilePredictionSummary();
+    const basicSubscription$ = this.subscriptionService.getUserSubscriptions().pipe(
+      map((subs: any[]) => subs.find(sub => sub.id === 'basic' || sub.planId === 'basic'))
+    );
+
+    forkJoin({
+      predictions: predictionSummary$,
+      basicSub: basicSubscription$
+    }).subscribe({
+      next: (result) => {
+        console.log('📊 [PROFILE] Respuesta combinada:', result);
         
         let basicPlanData: UserSubscriptionInfo;
         
-        if (response.success && response.data && response.data.games && Array.isArray(response.data.games)) {
-          console.log('✅ [PROFILE] Datos válidos recibidos para combinar, games:', response.data.games);
+        // Usar fechas reales de la BD si están disponibles
+        const realStartDate = result.basicSub?.startDate || new Date().toISOString();
+        const realEndDate = result.basicSub?.endDate || '';
+        
+        if (result.predictions.success && result.predictions.data && result.predictions.data.games && Array.isArray(result.predictions.data.games)) {
+          console.log('✅ [PROFILE] Datos válidos recibidos para combinar, games:', result.predictions.data.games);
           
           basicPlanData = {
             id: 0,
@@ -1204,15 +1227,19 @@ export class ProfileComponent implements OnInit {
             plan_name: 'Plan Básico',
             status: 'active',
             status_display: 'Activo',
-            created_at: new Date().toISOString(),
-            expires_at: '',
+            created_at: realStartDate, // ✅ USAR FECHA REAL DE LA BD
+            expires_at: realEndDate,   // ✅ USAR FECHA REAL DE LA BD
             price: '1,22€',
             is_basic_plan: true,
-            predictions_used: response.data.games
+            predictions_used: result.predictions.data.games
           };
         } else {
           console.warn('⚠️ [PROFILE] Respuesta inválida para combinar, usando datos por defecto');
-          basicPlanData = this.createDefaultBasicPlan();
+          const defaultPlan = this.createDefaultBasicPlan();
+          // Pero usar fechas reales si están disponibles
+          defaultPlan.created_at = realStartDate;
+          defaultPlan.expires_at = realEndDate;
+          basicPlanData = defaultPlan;
         }
         
         // Agregar plan básico al array existente de suscripciones premium
@@ -1220,6 +1247,9 @@ export class ProfileComponent implements OnInit {
         
         console.log('✅ [PROFILE] Plan Básico agregado a suscripciones existentes:', this.activeSubscriptions);
         console.log('📊 [PROFILE] Total de suscripciones activas:', this.activeSubscriptions.length);
+        
+        // Actualizar pestañas disponibles después de agregar el plan básico
+        this.updateAvailableTabs();
         
         // Forzar detección de cambios
         this.cdr.markForCheck();
@@ -1233,6 +1263,9 @@ export class ProfileComponent implements OnInit {
         this.activeSubscriptions.push(basicPlanData);
         
         console.log('✅ [PROFILE] Plan Básico por defecto agregado tras error:', this.activeSubscriptions);
+        
+        // Actualizar pestañas disponibles
+        this.updateAvailableTabs();
         
         // Forzar detección de cambios
         this.cdr.markForCheck();
@@ -1254,31 +1287,51 @@ export class ProfileComponent implements OnInit {
         if (response.success && response.data && response.data.games && Array.isArray(response.data.games)) {
           console.log('✅ [PROFILE] Datos válidos recibidos para Plan Básico, games:', response.data.games);
           
-          const basicPlanData: UserSubscriptionInfo = {
-            id: 0,
-            plan_id: 'basic',
-            plan_name: 'Plan Básico',
-            status: 'active',
-            status_display: 'Activo',
-            created_at: new Date().toISOString(),
-            expires_at: '',
-            price: '1,22€',
-            is_basic_plan: true,
-            predictions_used: response.data.games
-          };
-
-          // Establecer la suscripción del plan básico
-          this.activeSubscriptions = [basicPlanData];
+          // CORRECCIÓN: Buscar la suscripción básica existente y actualizar sus datos
+          const basicSubscriptionIndex = this.activeSubscriptions.findIndex(sub => sub.is_basic_plan);
           
-          console.log('✅ [PROFILE] Plan Básico cargado correctamente:', this.activeSubscriptions);
+          if (basicSubscriptionIndex !== -1) {
+            // Actualizar la suscripción básica existente con los datos de predicciones
+            this.activeSubscriptions[basicSubscriptionIndex].predictions_used = response.data.games;
+            console.log('✅ [PROFILE] Datos de predicciones actualizados para plan básico existente');
+          } else {
+            // Si no existe plan básico en las suscripciones, agregarlo
+            const basicPlanData: UserSubscriptionInfo = {
+              id: 0,
+              plan_id: 'basic',
+              plan_name: 'Plan Básico',
+              status: 'active',
+              status_display: 'Activo',
+              created_at: new Date().toISOString(),
+              expires_at: '',
+              price: '1,22€',
+              is_basic_plan: true,
+              predictions_used: response.data.games
+            };
+            
+            this.activeSubscriptions.push(basicPlanData);
+            console.log('✅ [PROFILE] Plan Básico agregado a suscripciones existentes');
+          }
           
         } else {
           console.warn('⚠️ [PROFILE] Respuesta inválida para Plan Básico, usando datos por defecto');
-          const basicPlanData = this.createDefaultBasicPlan();
-          this.activeSubscriptions = [basicPlanData];
+          
+          // Buscar plan básico y actualizar con datos por defecto
+          const basicSubscriptionIndex = this.activeSubscriptions.findIndex(sub => sub.is_basic_plan);
+          
+          if (basicSubscriptionIndex !== -1) {
+            this.activeSubscriptions[basicSubscriptionIndex].predictions_used = this.getDefaultPredictionData();
+          } else {
+            const basicPlanData = this.createDefaultBasicPlan();
+            this.activeSubscriptions.push(basicPlanData);
+          }
         }
         
-        console.log('📊 [PROFILE] Suscripciones activas establecidas:', this.activeSubscriptions.length);
+        console.log('📊 [PROFILE] Suscripciones activas finales (con Plan Básico):', this.activeSubscriptions.length);
+        console.log('📊 [PROFILE] Detalles:', this.activeSubscriptions.map(sub => ({ plan_id: sub.plan_id, plan_name: sub.plan_name })));
+        
+        // Actualizar pestañas disponibles después de agregar el plan básico
+        this.updateAvailableTabs();
         
         // Forzar detección de cambios
         this.cdr.markForCheck();
@@ -1287,11 +1340,20 @@ export class ProfileComponent implements OnInit {
       error: (error) => {
         console.error('❌ [PROFILE] Error cargando predicciones del Plan Básico:', error);
         
-        // Establecer Plan Básico por defecto en caso de error
-        const basicPlanData = this.createDefaultBasicPlan();
-        this.activeSubscriptions = [basicPlanData];
+        // En caso de error, agregar Plan Básico por defecto si no existe
+        const basicSubscriptionIndex = this.activeSubscriptions.findIndex(sub => sub.is_basic_plan);
         
-        console.log('✅ [PROFILE] Plan Básico por defecto establecido tras error:', this.activeSubscriptions);
+        if (basicSubscriptionIndex !== -1) {
+          this.activeSubscriptions[basicSubscriptionIndex].predictions_used = this.getDefaultPredictionData();
+        } else {
+          const basicPlanData = this.createDefaultBasicPlan();
+          this.activeSubscriptions.push(basicPlanData);
+        }
+        
+        console.log('✅ [PROFILE] Plan Básico por defecto agregado tras error');
+        
+        // Actualizar pestañas disponibles
+        this.updateAvailableTabs();
         
         // Forzar detección de cambios
         this.cdr.markForCheck();
