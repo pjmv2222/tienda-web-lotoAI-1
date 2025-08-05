@@ -15,8 +15,8 @@ interface UserSubscriptionInfo {
   plan_name: string;
   status: string;
   status_display: string;
-  created_at: string;
-  expires_at: string;
+  created_at: string | null;
+  expires_at: string | null;
   price: string;
   // Para Plan Básico - tracking de pronósticos
   is_basic_plan?: boolean;
@@ -103,11 +103,19 @@ interface GamePredictionUsage {
                   </div>
                   <div class="detail-row">
                     <span class="detail-label">Fecha de contratación:</span>
-                    <span class="detail-value">{{subscription.created_at | date:'dd/MM/yyyy'}} ({{subscription.created_at}})</span>
+                    <span class="detail-value" *ngIf="subscription.created_at; else noStartDate">
+                      {{subscription.created_at | date:'dd/MM/yyyy'}} ({{subscription.created_at}})
+                    </span>
+                    <ng-template #noStartDate>
+                      <span class="detail-value">No disponible - Plan sin fecha de inicio</span>
+                    </ng-template>
                   </div>
                   <div class="detail-row">
                     <span class="detail-label">{{getExpirationLabel(subscription.plan_id)}}:</span>
-                    <span class="detail-value">{{getExpirationValue(subscription)}} ({{subscription.expires_at}})</span>
+                    <span class="detail-value">{{getExpirationValue(subscription)}} 
+                      <span *ngIf="subscription.expires_at">({{subscription.expires_at}})</span>
+                      <span *ngIf="!subscription.expires_at">(Sin fecha de caducidad en BD)</span>
+                    </span>
                   </div>
                 </div>
                 
@@ -1022,64 +1030,44 @@ export class ProfileComponent implements OnInit {
           console.log('🔄 [PROFILE] No se encontraron suscripciones, cargando Plan Básico...');
           this.loadBasicPlanData();
         } else {
-          // CORRECCIÓN: Mostrar TODAS las suscripciones activas, incluyendo múltiples planes
-          console.log('🔍 [PROFILE] Análisis de suscripciones:');
+          // DEBUGGING CRÍTICO: Ver exactamente qué datos llegan del servidor
+          console.log('� [PROFILE] DATOS REALES DEL SERVIDOR:');
+          console.log('� [PROFILE] subscriptions RAW:', JSON.stringify(subscriptions, null, 2));
+          
           subscriptions.forEach((sub: any, index) => {
-            console.log(`📋 [PROFILE] Suscripción ${index}:`, {
-              id: sub.id,
-              planId: sub.planId,
-              status: sub.status,
-              startDate: sub.startDate,
-              endDate: sub.endDate
-            });
+            console.log(`🚨 [PROFILE] Suscripción ${index}:`);
+            console.log(`  - sub.id: "${sub.id}" (${typeof sub.id})`);
+            console.log(`  - sub.planId: "${sub.planId}" (${typeof sub.planId})`);
+            console.log(`  - sub.startDate: "${sub.startDate}" (${typeof sub.startDate})`);
+            console.log(`  - sub.endDate: "${sub.endDate}" (${typeof sub.endDate})`);
+            console.log(`  - sub.createdAt: "${sub.createdAt}" (${typeof sub.createdAt})`);
           });
           
-          // NUEVO: Mostrar TODAS las suscripciones activas sin filtrar
-          console.log('� [PROFILE] Procesando todas las suscripciones activas...');
-          
-          // Mapear todas las suscripciones a formato de display
+          // SIMPLIFICACIÓN RADICAL: Mapear directamente sin conversiones
           this.activeSubscriptions = subscriptions.map((sub: any) => {
-          console.log('🔍 [PROFILE] Mapeo de suscripción (CORREGIDO):', {
-            id: sub.id,
-            planId: sub.planId,
-            planIdFromId: sub.id, // El planId real está en sub.id
-            planName: this.getPlanDisplayName(sub.id),
-            status: sub.status,
-            startDate: sub.startDate,
-            endDate: sub.endDate,
-            startDateType: typeof sub.startDate,
-            endDateType: typeof sub.endDate
-          });            
-          
-          // CORRECCIÓN: Usar sub.id como plan_id porque es donde está el ID del plan
             const planId = sub.id;
             const tabId = this.getTabIdFromPlanId(planId);
             const isBasicPlan = tabId === 'basic';
             
-            // CORRECCIÓN CRÍTICA: Convertir fechas al formato correcto para Angular
-            const startDate = sub.startDate ? new Date(sub.startDate).toISOString() : new Date().toISOString();
-            const endDate = sub.endDate ? new Date(sub.endDate).toISOString() : '';
-            
-            console.log('📅 [PROFILE] Fechas procesadas:', {
-              original_startDate: sub.startDate,
-              original_endDate: sub.endDate,
-              processed_startDate: startDate,
-              processed_endDate: endDate
-            });
+            console.log('🚨 [PROFILE] Creando suscripción con fechas DIRECTAS:');
+            console.log(`  - created_at: ${sub.startDate} (original: ${sub.startDate})`);
+            console.log(`  - expires_at: ${sub.endDate} (original: ${sub.endDate})`);
             
             return {
               id: sub.id,
-              plan_id: planId, // Usar sub.id como plan_id
+              plan_id: planId,
               plan_name: this.getPlanDisplayName(planId),
               status: sub.status,
               status_display: this.getStatusDisplayName(sub.status),
-              created_at: startDate,
-              expires_at: endDate,
+              created_at: sub.startDate, // SIN CONVERSIÓN - USAR DIRECTAMENTE
+              expires_at: sub.endDate,   // SIN CONVERSIÓN - USAR DIRECTAMENTE
               price: this.getPlanPrice(planId),
               is_basic_plan: isBasicPlan,
-              predictions_used: isBasicPlan ? [] : undefined // Solo para básico, se cargará después
+              predictions_used: isBasicPlan ? [] : undefined
             };
           });
+          
+          console.log('🚨 [PROFILE] activeSubscriptions FINAL:', this.activeSubscriptions);
           
           // CORRECCIÓN CRÍTICA: Si hay un plan básico, cargar los datos de predicciones
           // Si NO hay plan básico en las suscripciones de la BD, pero debería haberlo, agregarlo
@@ -1139,8 +1127,8 @@ export class ProfileComponent implements OnInit {
             plan_name: 'Plan Básico',
             status: 'active',
             status_display: 'Activo',
-            created_at: new Date().toISOString(),
-            expires_at: '',
+            created_at: null, // No hay fecha real en BD para plan básico por defecto
+            expires_at: null, // Plan básico no tiene fecha de caducidad
             price: '1,22€',
             is_basic_plan: true,
             predictions_used: response.data.games
@@ -1194,8 +1182,8 @@ export class ProfileComponent implements OnInit {
       plan_name: 'Plan Básico',
       status: 'active',
       status_display: 'Activo',
-      created_at: new Date().toISOString(),
-      expires_at: '',
+      created_at: null, // No hay fecha real en BD para plan básico por defecto
+      expires_at: null, // Plan básico no tiene fecha de caducidad
       price: '1,22€',
       is_basic_plan: true,
       predictions_used: this.getDefaultPredictionData()

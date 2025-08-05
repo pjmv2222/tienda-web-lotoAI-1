@@ -5,7 +5,7 @@ Backend para el sistema de tienda web desarrollado con Node.js, Express y MongoD
 ## Requisitos Previos
 
 - Node.js (versión 14 o superior)
-- MongoDB Atlas cuenta configurada
+- PostgreSQL cuenta configurada
 - npm o yarn
 - Cuenta en Render.com
 

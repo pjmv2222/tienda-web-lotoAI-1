@@ -279,7 +279,16 @@ export function app(): express.Express {
           planType: sub.plan_type || sub.plan_id
         }));
         
-        console.log('📊 [SERVER] Suscripciones encontradas para user', userId, ':', subscriptions);
+        console.log('📊 [SERVER] Datos completos de la BD para user', userId);
+        console.log('📊 [SERVER] result.rows RAW:', result.rows);
+        console.log('📊 [SERVER] subscriptions MAPEADAS:', subscriptions);
+        
+        // DEBUGGING CRÍTICO: Mostrar cada campo de fecha individualmente
+        result.rows.forEach((row, index) => {
+          console.log(`🔍 [SERVER] Fila ${index} - start_date:`, row.start_date, typeof row.start_date);
+          console.log(`🔍 [SERVER] Fila ${index} - end_date:`, row.end_date, typeof row.end_date);
+          console.log(`🔍 [SERVER] Fila ${index} - created_at:`, row.created_at, typeof row.created_at);
+        });
         
         res.json({
           subscriptions: subscriptions
