@@ -138,10 +138,10 @@
       <div class="action-buttons">
         <button class="btn-primary" 
                 (click)="generatePredictions()" 
-                [disabled]="isGeneratingPrediction || predictionResults.length >= 3">
-          <span *ngIf="!isGeneratingPrediction && predictionResults.length < 3">Generar nueva predicción</span>
+                [disabled]="isGeneratingPrediction || predictionResults.length >= maxPredictions">
+          <span *ngIf="!isGeneratingPrediction && predictionResults.length < maxPredictions">Generar nueva predicción</span>
           <span *ngIf="isGeneratingPrediction">Generando...</span>
-          <span *ngIf="predictionResults.length >= 3">Límite de 3 predicciones alcanzado</span>
+          <span *ngIf="predictionResults.length >= maxPredictions">Límite de {{ maxPredictions }} predicciones alcanzado</span>
         </button>
         <button class="btn-secondary" 
                 (click)="clearPredictions()" 

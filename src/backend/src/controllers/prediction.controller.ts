@@ -488,13 +488,25 @@ export const PredictionController = {
 
       const { gameType } = req.params;
       
+      console.log('🚨 [BACKEND] getPredictionStatus called for:', { userId, gameType });
+      
       // Obtener el plan actual del usuario
       const userPlan = await getUserCurrentPlan(userId);
+      console.log('🚨 [BACKEND] Plan del usuario detectado:', userPlan);
+      
       const limits = getPredictionLimitsByPlan(userPlan);
+      console.log('🚨 [BACKEND] Límites por plan:', limits);
       
       // Contar predicciones actuales
       const currentCount = await PredictionModel.countUserPredictions(userId, gameType);
       const maxAllowed = limits[gameType] || 3;
+      
+      console.log('🚨 [BACKEND] Estado de predicciones:', {
+        currentCount,
+        maxAllowed,
+        remaining: Math.max(0, maxAllowed - currentCount),
+        canGenerate: currentCount < maxAllowed
+      });
       
       // Obtener predicciones existentes
       const predictions = await PredictionModel.getUserPredictions(userId, gameType);
@@ -754,14 +766,21 @@ export const PredictionController = {
  */
 async function getUserCurrentPlan(userId: number): Promise<string> {
   try {
+    console.log('🚨 [BACKEND] Obteniendo plan para usuario:', userId);
+    
     const result = await pgPool.query(
-      `SELECT plan_type FROM subscriptions 
+      `SELECT plan_type, plan_id, status, end_date FROM subscriptions 
        WHERE user_id = $1 AND status = 'active' AND end_date > NOW()
        ORDER BY created_at DESC LIMIT 1`,
       [userId]
     );
     
-    return result.rows[0]?.plan_type || 'basic';
+    console.log('🚨 [BACKEND] Resultado de suscripciones:', result.rows);
+    
+    const plan = result.rows[0]?.plan_type || 'basic';
+    console.log('🚨 [BACKEND] Plan seleccionado:', plan);
+    
+    return plan;
   } catch (error) {
     console.error('Error obteniendo plan del usuario:', error);
     return 'basic'; // Plan por defecto
