@@ -189,16 +189,28 @@ export class SubscriptionService {
    */
   getUserSubscriptions(): Observable<Subscription[]> {
     const currentUser = this.authService.currentUserValue;
+    console.log('🔍 [SUBSCRIPTION-SERVICE] getUserSubscriptions - currentUser:', currentUser);
+    
     if (!currentUser) {
+      console.warn('⚠️ [SUBSCRIPTION-SERVICE] No hay usuario logueado');
       return of([]);
     }
 
-    return this.http.get<any>(`${this.apiUrl}/subscriptions/user/${currentUser.id}`, {
+    const url = `${this.apiUrl}/subscriptions/user/${currentUser.id}`;
+    console.log('🔍 [SUBSCRIPTION-SERVICE] Llamando a URL:', url);
+
+    return this.http.get<any>(url, {
       headers: this.getAuthHeaders()
     }).pipe(
-      map(response => response.subscriptions || []),
+      map(response => {
+        console.log('📨 [SUBSCRIPTION-SERVICE] Respuesta del servidor:', response);
+        console.log('📨 [SUBSCRIPTION-SERVICE] response.subscriptions:', response.subscriptions);
+        return response.subscriptions || [];
+      }),
       catchError(error => {
-        console.error('Error al obtener suscripciones:', error);
+        console.error('❌ [SUBSCRIPTION-SERVICE] Error al obtener suscripciones:', error);
+        console.error('❌ [SUBSCRIPTION-SERVICE] Error status:', error.status);
+        console.error('❌ [SUBSCRIPTION-SERVICE] Error message:', error.message);
         return of([]);
       })
     );
