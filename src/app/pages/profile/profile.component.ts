@@ -913,17 +913,31 @@ export class ProfileComponent implements OnInit {
   private loadUserProfile() {
     this.authService.getCurrentUser().subscribe({
       next: (response) => {
+        console.log('🚨 [PROFILE] Respuesta completa del servidor para perfil:', response);
+        
         if (response && response.user) {
           // Extraer nombre y apellido desde response.user
           const user = response.user;
+          
+          console.log('🚨 [PROFILE] Datos del usuario del servidor:');
+          console.log('  - user.fechaRegistro:', user.fechaRegistro, '(tipo:', typeof user.fechaRegistro, ')');
+          console.log('  - user.created_at:', user.created_at, '(tipo:', typeof user.created_at, ')');
+          console.log('  - user completo:', JSON.stringify(user, null, 2));
+          
+          // CORRECCIÓN: Usar fechaRegistro del servidor o created_at como fallback
+          const fechaRegistroReal = user.fechaRegistro || user.created_at;
+          console.log('🚨 [PROFILE] Fecha real seleccionada:', fechaRegistroReal);
+          
           this.userProfile = {
             id: user.id.toString(),
             nombre: user.nombre || this.extractFirstName(user.name) || '',
             apellido: user.apellido || this.extractLastName(user.name) || '',
             email: user.email,
             telefono: user.telefono,
-            fechaRegistro: user.fechaRegistro || new Date()
+            fechaRegistro: fechaRegistroReal || new Date() // Solo usar new Date() si no hay ninguna fecha
           };
+          
+          console.log('🚨 [PROFILE] userProfile final con fecha:', this.userProfile.fechaRegistro);
           
           this.editForm.patchValue({
             nombre: this.userProfile.nombre,
@@ -934,13 +948,14 @@ export class ProfileComponent implements OnInit {
           // Intentar usar el usuario actual del servicio como fallback
           const currentUser = this.authService.currentUserValue;
           if (currentUser) {
+            console.log('⚠️ [PROFILE] Usando currentUser como fallback:', currentUser);
             this.userProfile = {
               id: currentUser.id.toString(),
               nombre: currentUser.nombre || this.extractFirstName(currentUser.name) || '',
               apellido: currentUser.apellido || this.extractLastName(currentUser.name) || '',
               email: currentUser.email,
               telefono: currentUser.telefono,
-              fechaRegistro: new Date() // Valor por defecto
+              fechaRegistro: new Date() // Solo para fallback local, sin fecha real del servidor
             };
             this.editForm.patchValue({
               nombre: this.userProfile.nombre,
@@ -953,19 +968,25 @@ export class ProfileComponent implements OnInit {
         }
       },
       error: (error: any) => {
-        console.error('Error al cargar perfil de usuario:', error);
+        console.error('❌ [PROFILE] Error al cargar perfil de usuario:', error);
+        console.error('❌ [PROFILE] Error detallado:', {
+          message: error.message,
+          status: error.status,
+          url: error.url
+        });
         this.loading = false;
         
-        // Fallback usando datos del token
+        // Fallback usando datos del token - SIN fecha real del servidor
         const currentUser = this.authService.currentUserValue;
         if (currentUser) {
+          console.log('⚠️ [PROFILE] Usando currentUser tras error, SIN fecha real:', currentUser);
           this.userProfile = {
             id: currentUser.id.toString(),
             nombre: currentUser.nombre || this.extractFirstName(currentUser.name) || '',
             apellido: currentUser.apellido || this.extractLastName(currentUser.name) || '',
             email: currentUser.email,
             telefono: currentUser.telefono,
-            fechaRegistro: new Date()
+            fechaRegistro: new Date() // ⚠️ AVISO: Esta será la fecha actual porque no hay conexión al servidor
           };
           this.editForm.patchValue({
             nombre: this.userProfile.nombre,

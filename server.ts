@@ -110,7 +110,13 @@ export function app(): express.Express {
         
         const user = userResult.rows[0];
         
-        res.json({
+        // ✅ DEBUGGING CRÍTICO: Ver exactamente qué devuelve la BD
+        console.log('🚨 [SERVER] Datos RAW del usuario desde BD:');
+        console.log(`  - user.id: "${user.id}" (${typeof user.id})`);
+        console.log(`  - user.created_at: "${user.created_at}" (${typeof user.created_at})`);
+        console.log(`  - user completo:`, JSON.stringify(user, null, 2));
+        
+        const responseData = {
           success: true,
           user: {
             id: user.id.toString(),
@@ -120,7 +126,13 @@ export function app(): express.Express {
             telefono: '', // Agregar si existe en la tabla
             fechaRegistro: user.created_at
           }
-        });
+        };
+        
+        console.log('🚨 [SERVER] Respuesta que se envía al frontend:');
+        console.log('  - fechaRegistro enviado:', responseData.user.fechaRegistro);
+        console.log('  - Respuesta completa:', JSON.stringify(responseData, null, 2));
+        
+        res.json(responseData);
         
       } finally {
         client.release();
