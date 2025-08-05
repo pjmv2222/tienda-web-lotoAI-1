@@ -133,15 +133,33 @@ export class AuthController {
   async getProfile(req: Request, res: Response) {
     try {
       const userId = (req as any).user.id;
+      
+      console.log('🚨 [BACKEND] getProfile called for userId:', userId);
+      
       const user = await UserModel.findById(userId);
 
       if (!user) {
         return res.status(404).json({ message: 'Usuario no encontrado' });
       }
 
-      // Retornar solo los campos necesarios
-      const { id, email, nombre, apellido, telefono, is_verified, role } = user;
-      return res.status(200).json({ id, email, nombre, apellido, telefono, is_verified, role });
+      console.log('🚨 [BACKEND] User data from DB:', JSON.stringify(user, null, 2));
+
+      // ✅ CORRECCIÓN: Incluir created_at y formatear respuesta como espera el frontend
+      const responseData = {
+        success: true,
+        user: {
+          id: user.id.toString(),
+          email: user.email,
+          nombre: user.nombre,
+          apellido: user.apellido,
+          telefono: user.telefono || '',
+          fechaRegistro: user.created_at  // ← CLAVE: Incluir fecha de registro
+        }
+      };
+
+      console.log('🚨 [BACKEND] Response being sent:', JSON.stringify(responseData, null, 2));
+      
+      return res.status(200).json(responseData);
     } catch (error) {
       console.error('Error en getProfile:', error);
       return res.status(500).json({ message: 'Error interno del servidor' });
