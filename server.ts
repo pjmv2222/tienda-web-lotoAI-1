@@ -90,10 +90,13 @@ export function app(): express.Express {
   
   // Endpoint para obtener perfil de usuario (con autenticación)
   server.get('/api/auth/profile', authenticateToken, async (req: any, res: any) => {
+    console.log('🚨🚨🚨 [SERVER] ENDPOINT /api/auth/profile EJECUTÁNDOSE 🚨🚨🚨');
+    console.log('🚨🚨🚨 [SERVER] Este mensaje DEBE aparecer en la consola del servidor 🚨🚨🚨');
+    
     try {
       const userId = req.user.id; // Obtener ID del token JWT verificado
       
-      console.log(`Obteniendo perfil para usuario autenticado: ${userId}`);
+      console.log(`🚨🚨🚨 [SERVER] Obteniendo perfil para usuario autenticado: ${userId} 🚨🚨🚨`);
       
       const client = await pgPool.connect();
       try {
