@@ -100,9 +100,8 @@
             </ul>
           </div>
           <button class="generate-btn premium-btn" *ngIf="hasMonthlyPlan === false" (click)="showSubscriptionOptions()">Suscribir</button>
-          <button class="generate-btn premium-btn" *ngIf="hasMonthlyPlan === true" (click)="generateBasicPrediction()" [disabled]="isGeneratingPrediction">
-            <span *ngIf="!isGeneratingPrediction">Generar</span>
-            <span *ngIf="isGeneratingPrediction">Generando...</span>
+          <button class="generate-btn premium-btn" *ngIf="hasMonthlyPlan === true" routerLink="/euromillon/prediccion">
+            Generar predicción
           </button>
           <p *ngIf="!isLoggedIn" class="login-required">Necesitas <a routerLink="/auth/login">iniciar sesión</a> para generar predicciones premium</p>
         </div>
@@ -125,9 +124,8 @@
             </ul>
           </div>
           <button class="generate-btn premium-btn" *ngIf="hasProPlan === false" (click)="showSubscriptionOptions()">Suscribir</button>
-          <button class="generate-btn premium-btn" *ngIf="hasProPlan === true" (click)="generateBasicPrediction()" [disabled]="isGeneratingPrediction">
-            <span *ngIf="!isGeneratingPrediction">Generar</span>
-            <span *ngIf="isGeneratingPrediction">Generando...</span>
+          <button class="generate-btn premium-btn" *ngIf="hasProPlan === true" routerLink="/euromillon/prediccion">
+            Generar predicción
           </button>
           <p *ngIf="!isLoggedIn" class="login-required">Necesitas <a routerLink="/auth/login">iniciar sesión</a> para generar predicciones premium</p>
         </div>
