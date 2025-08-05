@@ -266,29 +266,36 @@ export function app(): express.Express {
         
         const result = await client.query(subscriptionsQuery, [userId]);
         
-        // Mapear los resultados al formato esperado por el frontend
-        const subscriptions = result.rows.map(sub => ({
-          id: sub.plan_id, // IMPORTANTE: Usar plan_id como id para que el frontend funcione correctamente
-          planId: sub.plan_id,
-          status: sub.status,
-          startDate: sub.start_date,
-          endDate: sub.end_date,
-          amount: sub.amount,
-          currency: sub.currency,
-          createdAt: sub.created_at,
-          planType: sub.plan_type || sub.plan_id
-        }));
+        console.log('🚨 [SERVER] QUERY RESULT RAW:', JSON.stringify(result.rows, null, 2));
         
-        console.log('📊 [SERVER] Datos completos de la BD para user', userId);
-        console.log('📊 [SERVER] result.rows RAW:', result.rows);
-        console.log('📊 [SERVER] subscriptions MAPEADAS:', subscriptions);
-        
-        // DEBUGGING CRÍTICO: Mostrar cada campo de fecha individualmente
+        // VERIFICAR que las fechas existen en la BD antes del mapeo
         result.rows.forEach((row, index) => {
-          console.log(`🔍 [SERVER] Fila ${index} - start_date:`, row.start_date, typeof row.start_date);
-          console.log(`🔍 [SERVER] Fila ${index} - end_date:`, row.end_date, typeof row.end_date);
-          console.log(`🔍 [SERVER] Fila ${index} - created_at:`, row.created_at, typeof row.created_at);
+          console.log(`🚨 [SERVER] Row ${index} BEFORE mapping:`);
+          console.log(`  start_date: "${row.start_date}" (${typeof row.start_date})`);
+          console.log(`  end_date: "${row.end_date}" (${typeof row.end_date})`);
+          console.log(`  created_at: "${row.created_at}" (${typeof row.created_at})`);
+          console.log(`  plan_id: "${row.plan_id}" (${typeof row.plan_id})`);
         });
+        
+        // Mapear los resultados al formato esperado por el frontend
+        const subscriptions = result.rows.map(sub => {
+          const mapped = {
+            id: sub.plan_id, // IMPORTANTE: Usar plan_id como id para que el frontend funcione correctamente
+            planId: sub.plan_id,
+            status: sub.status,
+            startDate: sub.start_date, // CRÍTICO: Asegurar mapeo directo
+            endDate: sub.end_date,     // CRÍTICO: Asegurar mapeo directo
+            amount: sub.amount,
+            currency: sub.currency,
+            createdAt: sub.created_at,
+            planType: sub.plan_type || sub.plan_id
+          };
+          
+          console.log('� [SERVER] MAPPED subscription:', JSON.stringify(mapped, null, 2));
+          return mapped;
+        });
+        
+        console.log('� [SERVER] FINAL subscriptions array:', JSON.stringify(subscriptions, null, 2));
         
         res.json({
           subscriptions: subscriptions
