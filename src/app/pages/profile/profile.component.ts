@@ -104,7 +104,7 @@ interface GamePredictionUsage {
                   <div class="detail-row">
                     <span class="detail-label">Fecha de contratación:</span>
                     <span class="detail-value" *ngIf="subscription.created_at; else noStartDate">
-                      {{subscription.created_at | date:'dd/MM/yyyy'}} ({{subscription.created_at}})
+                      {{subscription.created_at | date:'dd/MM/yyyy'}}
                     </span>
                     <ng-template #noStartDate>
                       <span class="detail-value">No disponible - Plan sin fecha de inicio</span>
@@ -112,10 +112,7 @@ interface GamePredictionUsage {
                   </div>
                   <div class="detail-row">
                     <span class="detail-label">{{getExpirationLabel(subscription.plan_id)}}:</span>
-                    <span class="detail-value">{{getExpirationValue(subscription)}} 
-                      <span *ngIf="subscription.expires_at">({{subscription.expires_at}})</span>
-                      <span *ngIf="!subscription.expires_at">(Sin fecha de caducidad en BD)</span>
-                    </span>
+                    <span class="detail-value">{{getExpirationValue(subscription)}}</span>
                   </div>
                 </div>
                 
@@ -1049,9 +1046,10 @@ export class ProfileComponent implements OnInit {
             const tabId = this.getTabIdFromPlanId(planId);
             const isBasicPlan = tabId === 'basic';
             
-            console.log('🚨 [PROFILE] Creando suscripción con fechas DIRECTAS:');
-            console.log(`  - created_at: ${sub.created_at} (original: ${sub.created_at})`);
-            console.log(`  - expires_at: ${sub.end_date} (original: ${sub.end_date})`);
+            console.log('🚨 [PROFILE] Creando suscripción con fechas CORRECTAS:');
+            console.log(`  - start_date (contratación): ${sub.start_date} (original: ${sub.start_date})`);
+            console.log(`  - end_date (caducidad): ${sub.end_date} (original: ${sub.end_date})`);
+            console.log(`  - created_at (registro): ${sub.created_at} (original: ${sub.created_at})`);
             
             return {
               id: sub.id,
@@ -1059,8 +1057,8 @@ export class ProfileComponent implements OnInit {
               plan_name: this.getPlanDisplayName(planId),
               status: sub.status,
               status_display: this.getStatusDisplayName(sub.status),
-              created_at: sub.created_at,  // ✅ CORREGIDO: usar created_at directamente
-              expires_at: sub.end_date,    // ✅ CORREGIDO: usar end_date directamente  
+              created_at: sub.start_date,  // ✅ CORREGIDO: usar start_date como fecha de contratación
+              expires_at: sub.end_date,    // ✅ CORREGIDO: usar end_date como fecha de caducidad
               price: this.getPlanPrice(planId),
               is_basic_plan: isBasicPlan,
               predictions_used: isBasicPlan ? [] : undefined
@@ -1707,10 +1705,12 @@ export class ProfileComponent implements OnInit {
     
     const tabId = this.getTabIdFromPlanId(subscription.plan_id);
     
+    // Para plan básico, solo mostrar texto sin fecha
     if (tabId === 'basic') {
       return 'Ilimitada (por cantidad de pronósticos)';
     }
     
+    // Para planes temporales (monthly/pro), mostrar fecha formateada
     if (subscription.expires_at) {
       const date = new Date(subscription.expires_at);
       console.log('🔍 [PROFILE] Convirtiendo fecha:', {
@@ -1719,10 +1719,13 @@ export class ProfileComponent implements OnInit {
         isValidDate: !isNaN(date.getTime()),
         formattedDate: date.toLocaleDateString('es-ES')
       });
-      return date.toLocaleDateString('es-ES');
+      
+      if (!isNaN(date.getTime())) {
+        return date.toLocaleDateString('es-ES');
+      }
     }
     
-    console.log('⚠️ [PROFILE] expires_at está vacío o es falsy');
+    console.log('⚠️ [PROFILE] expires_at está vacío o es inválido');
     return 'No disponible';
   }
 
