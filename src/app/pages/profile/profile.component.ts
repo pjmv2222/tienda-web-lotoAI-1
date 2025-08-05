@@ -1037,21 +1037,21 @@ export class ProfileComponent implements OnInit {
           subscriptions.forEach((sub: any, index) => {
             console.log(`🚨 [PROFILE] Suscripción ${index}:`);
             console.log(`  - sub.id: "${sub.id}" (${typeof sub.id})`);
-            console.log(`  - sub.planId: "${sub.planId}" (${typeof sub.planId})`);
-            console.log(`  - sub.startDate: "${sub.startDate}" (${typeof sub.startDate})`);
-            console.log(`  - sub.endDate: "${sub.endDate}" (${typeof sub.endDate})`);
-            console.log(`  - sub.createdAt: "${sub.createdAt}" (${typeof sub.createdAt})`);
+            console.log(`  - sub.plan_id: "${sub.plan_id}" (${typeof sub.plan_id})`);
+            console.log(`  - sub.start_date: "${sub.start_date}" (${typeof sub.start_date})`);
+            console.log(`  - sub.end_date: "${sub.end_date}" (${typeof sub.end_date})`);
+            console.log(`  - sub.created_at: "${sub.created_at}" (${typeof sub.created_at})`);
           });
           
           // SIMPLIFICACIÓN RADICAL: Mapear directamente sin conversiones
           this.activeSubscriptions = subscriptions.map((sub: any) => {
-            const planId = sub.id;
+            const planId = sub.plan_id;  // ✅ CORREGIDO: usar plan_id
             const tabId = this.getTabIdFromPlanId(planId);
             const isBasicPlan = tabId === 'basic';
             
             console.log('🚨 [PROFILE] Creando suscripción con fechas DIRECTAS:');
-            console.log(`  - created_at: ${sub.startDate} (original: ${sub.startDate})`);
-            console.log(`  - expires_at: ${sub.endDate} (original: ${sub.endDate})`);
+            console.log(`  - created_at: ${sub.created_at} (original: ${sub.created_at})`);
+            console.log(`  - expires_at: ${sub.end_date} (original: ${sub.end_date})`);
             
             return {
               id: sub.id,
@@ -1059,8 +1059,8 @@ export class ProfileComponent implements OnInit {
               plan_name: this.getPlanDisplayName(planId),
               status: sub.status,
               status_display: this.getStatusDisplayName(sub.status),
-              created_at: sub.startDate, // SIN CONVERSIÓN - USAR DIRECTAMENTE
-              expires_at: sub.endDate,   // SIN CONVERSIÓN - USAR DIRECTAMENTE
+              created_at: sub.created_at,  // ✅ CORREGIDO: usar created_at directamente
+              expires_at: sub.end_date,    // ✅ CORREGIDO: usar end_date directamente  
               price: this.getPlanPrice(planId),
               is_basic_plan: isBasicPlan,
               predictions_used: isBasicPlan ? [] : undefined
