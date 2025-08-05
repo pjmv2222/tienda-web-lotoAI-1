@@ -280,15 +280,15 @@ export function app(): express.Express {
         // Mapear los resultados al formato esperado por el frontend
         const subscriptions = result.rows.map(sub => {
           const mapped = {
-            id: sub.plan_id, // IMPORTANTE: Usar plan_id como id para que el frontend funcione correctamente
-            planId: sub.plan_id,
+            id: sub.id,              // ✅ CORREGIDO: Usar ID real de la BD
+            plan_id: sub.plan_id,    // ✅ CORREGIDO: snake_case como espera frontend
             status: sub.status,
-            startDate: sub.start_date, // CRÍTICO: Asegurar mapeo directo
-            endDate: sub.end_date,     // CRÍTICO: Asegurar mapeo directo
+            start_date: sub.start_date, // ✅ CORREGIDO: snake_case como espera frontend
+            end_date: sub.end_date,     // ✅ CORREGIDO: snake_case como espera frontend
             amount: sub.amount,
             currency: sub.currency,
-            createdAt: sub.created_at,
-            planType: sub.plan_type || sub.plan_id
+            created_at: sub.created_at, // ✅ CORREGIDO: snake_case como espera frontend
+            plan_type: sub.plan_type || sub.plan_id
           };
           
           console.log('� [SERVER] MAPPED subscription:', JSON.stringify(mapped, null, 2));
