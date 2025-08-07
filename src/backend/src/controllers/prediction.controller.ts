@@ -371,6 +371,21 @@ export const getPrediction = async (req: Request, res: Response) => {
       efficiency: isPermanentServer ? 'permanent_server' : 'start_stop_on_demand'
     };
     
+    // REGISTRAR LA PREDICCIÓN EN LA BASE DE DATOS
+    try {
+      const userId = (req as any).user?.id;
+      if (userId) {
+        console.log(`💾 [DEBUG] Registrando predicción en BD para userId: ${userId}, game: ${mappedGame}`);
+        await PredictionModel.create(userId, mappedGame, finalResponse.prediction);
+        console.log(`✅ [DEBUG] Predicción registrada exitosamente en la base de datos`);
+      } else {
+        console.warn(`⚠️ [WARNING] No se pudo obtener userId del token JWT - predicción no registrada`);
+      }
+    } catch (dbError: any) {
+      console.error(`❌ [ERROR] Error registrando predicción en BD:`, dbError);
+      // No fallar la respuesta por error de BD, solo loggear
+    }
+    
     console.log(`🎉 [DEBUG] Enviando respuesta final al frontend:`, finalResponse);
     return res.status(200).json(finalResponse);
 
@@ -639,12 +654,19 @@ export const PredictionController = {
         return res.status(401).json({ error: 'Usuario no autenticado' });
       }
 
+      console.log(`[DEBUG] getAllPredictionCounts - UserId: ${userId}`);
+
       // Obtener el plan actual del usuario
       const userPlan = await getUserCurrentPlan(userId);
       const limits = getPredictionLimitsByPlan(userPlan);
       
+      console.log(`[DEBUG] getAllPredictionCounts - Plan del usuario: ${userPlan}`);
+      console.log(`[DEBUG] getAllPredictionCounts - Límites por plan:`, limits);
+      
       // Obtener conteos actuales
       const counts = await PredictionModel.getAllUserPredictionCounts(userId);
+      
+      console.log(`[DEBUG] getAllPredictionCounts - Conteos obtenidos:`, counts);
       
       // Mapeo de nombres de juegos para mostrar en el frontend
       const gameNames: { [key: string]: string } = {
@@ -664,6 +686,8 @@ export const PredictionController = {
         const used = gameUsage ? parseInt(gameUsage.count) : 0;
         const maxAllowed = limits[gameType] || 3;
         
+        console.log(`[DEBUG] getAllPredictionCounts - Juego: ${gameType}, Usado: ${used}, Máximo: ${maxAllowed}`);
+        
         return {
           game_id: gameType,
           game_name: gameNames[gameType] || gameType,
@@ -672,6 +696,8 @@ export const PredictionController = {
           remaining: Math.max(0, maxAllowed - used)
         };
       });
+
+      console.log(`[DEBUG] getAllPredictionCounts - Datos finales de juegos:`, gamesData);
 
       res.json({
         success: true,
