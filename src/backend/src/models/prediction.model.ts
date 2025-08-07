@@ -86,6 +86,8 @@ export const PredictionModel = {
    * Obtener conteos de todas las predicciones del usuario calculados dinámicamente
    */
   async getAllUserPredictionCounts(userId: number) {
+    console.log(`[DEBUG] getAllUserPredictionCounts - Consultando predicciones para userId: ${userId}`);
+    
     // Calcular dinámicamente desde user_predictions
     const result = await pgPool.query(
       `SELECT 
@@ -96,6 +98,10 @@ export const PredictionModel = {
        GROUP BY game_type`,
       [userId]
     );
+    
+    console.log(`[DEBUG] getAllUserPredictionCounts - Resultado de consulta:`, result.rows);
+    console.log(`[DEBUG] getAllUserPredictionCounts - Número de filas encontradas: ${result.rows.length}`);
+    
     return result.rows;
   },
 
