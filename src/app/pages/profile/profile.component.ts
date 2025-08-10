@@ -1,5 +1,5 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, ChangeDetectorRef, Inject, PLATFORM_ID } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { SubscriptionService, Subscription } from '../../services/subscription.service';
@@ -888,7 +888,8 @@ export class ProfileComponent implements OnInit {
     private fb: FormBuilder,
     private subscriptionService: SubscriptionService,
     private userPredictionService: UserPredictionService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    @Inject(PLATFORM_ID) private platformId: Object
   ) {
     this.editForm = this.fb.group({
       nombre: ['', Validators.required],
@@ -906,8 +907,12 @@ export class ProfileComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.loadUserProfile();
-    this.loadUserSubscriptions();
+    // ✅ SOLUCIÓN: Solo cargar datos del usuario en el navegador, no durante SSR
+    // Esto evita errores de autenticación durante el renderizado del lado servidor
+    if (isPlatformBrowser(this.platformId)) {
+      this.loadUserProfile();
+      this.loadUserSubscriptions();
+    }
   }
 
   private loadUserProfile() {
@@ -1127,6 +1132,12 @@ export class ProfileComponent implements OnInit {
   private loadBasicPlanData() {
     console.log('🔍 [PROFILE] Cargando datos del Plan Básico...');
     
+    // ✅ Solo cargar datos en el navegador para evitar errores de SSR
+    if (!isPlatformBrowser(this.platformId)) {
+      console.log('🔍 [PROFILE] Ejecución en servidor - omitiendo carga de datos');
+      return;
+    }
+    
     this.loadingSubscriptions = true;
     
     this.userPredictionService.getProfilePredictionSummary().subscribe({
@@ -1214,6 +1225,12 @@ export class ProfileComponent implements OnInit {
    */
   private loadBasicPlanDataAndMerge(): void {
     console.log('🔄 [PROFILE] Cargando datos del Plan Básico para combinar con planes premium...');
+    
+    // ✅ Solo cargar datos en el navegador para evitar errores de SSR
+    if (!isPlatformBrowser(this.platformId)) {
+      console.log('🔄 [PROFILE] Ejecución en servidor - omitiendo carga de datos');
+      return;
+    }
     
     // CORRECCIÓN: Hacer ambas consultas en paralelo - predicciones Y suscripción básica de la BD
     const currentUser = this.authService.currentUserValue;

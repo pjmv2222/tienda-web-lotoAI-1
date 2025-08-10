@@ -146,6 +146,44 @@ export function app(): express.Express {
     }
   });
 
+  // PROXY: Redirigir todas las llamadas POST de predicciones al backend en puerto 3000
+  server.post('/api/predictions/*', async (req: any, res: any) => {
+    try {
+      const backendUrl = `http://localhost:3000${req.originalUrl}`;
+      console.log(`🔄 [PROXY] Redirigiendo POST de predicción: ${req.originalUrl} -> ${backendUrl}`);
+      
+      // Reenviar headers de autenticación
+      const headers: any = {
+        'Content-Type': 'application/json'
+      };
+      
+      if (req.headers.authorization) {
+        headers.Authorization = req.headers.authorization;
+      }
+      
+      // Hacer la petición al backend
+      const axios = require('axios');
+      const response = await axios.post(backendUrl, req.body, { headers, timeout: 60000 });
+      
+      console.log(`✅ [PROXY] Respuesta del backend para ${req.originalUrl}:`, response.status);
+      return res.status(response.status).json(response.data);
+      
+    } catch (error: any) {
+      console.error(`❌ [PROXY] Error redirigiendo predicción:`, {
+        url: req.originalUrl,
+        error: error.message,
+        status: error.response?.status,
+        data: error.response?.data
+      });
+      
+      return res.status(error.response?.status || 500).json({
+        success: false,
+        error: 'Error en el proxy de predicciones',
+        details: error.message
+      });
+    }
+  });
+
   // Endpoint para obtener resumen de predicciones (con autenticación)
   server.get('/api/predictions/summary', authenticateToken, async (req: any, res: any) => {
     try {
