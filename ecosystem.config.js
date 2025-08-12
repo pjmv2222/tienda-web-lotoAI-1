@@ -31,6 +31,8 @@ module.exports = {
       name: 'frontend',
       script: '/var/www/tienda-web-lotoAI-1/dist/tienda-web-loto-ai/server/server.mjs',
       cwd: '/var/www/tienda-web-lotoAI-1',
+      interpreter: 'node',
+      interpreter_args: '--experimental-modules --es-module-specifier-resolution=node',
       instances: 1,
       exec_mode: 'fork',
       autorestart: true,
