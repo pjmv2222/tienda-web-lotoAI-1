@@ -52,7 +52,7 @@ export class LoteriaNacionalComponent extends LotteryBaseComponent implements On
   }
 
   loadUltimosResultados(): void {
-    this.http.get<LotteryData>('https://www.loto-ia.com/api/lottery-data').subscribe({
+    this.http.get<LotteryData>('/api/lottery-data').subscribe({
       next: (response) => {
         const loteriaNacionalData = response.resultados.find(r => r.game === 'loterianacional');
         if (loteriaNacionalData) {

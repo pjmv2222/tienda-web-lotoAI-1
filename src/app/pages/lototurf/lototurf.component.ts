@@ -52,7 +52,7 @@ export class LototurfComponent extends LotteryBaseComponent implements OnInit, O
   }
 
   loadUltimosResultados(): void {
-    this.http.get<LotteryData>('https://www.loto-ia.com/api/lottery-data').subscribe({
+    this.http.get<LotteryData>('/api/lottery-data').subscribe({
       next: (response) => {
         const lototurfData = response.resultados.find(r => r.game === 'lototurf');
         if (lototurfData) {
