@@ -8,6 +8,7 @@ import paymentRoutes from './routes/payment.routes';
 import predictionRoutes from './routes/prediction.routes';
 import userPredictionRoutes from './routes/userPrediction.routes';
 import subscriptionRoutes from './routes/subscription.routes';
+import lotteryResultsRoutes from './routes/lottery-results.routes';
 import { pgPool, initializeTables } from './config/database';
 
 // Cargar variables de entorno desde múltiples archivos
@@ -118,6 +119,17 @@ app.use('/api/predictions', predictionRoutes);
 // Montar rutas de predicciones de usuario (contiene /summary)
 console.log('Montando rutas de predicciones de usuario en /api/predictions/user');
 app.use('/api/predictions/user', userPredictionRoutes);
+
+// Montar rutas de resultados de lotería
+console.log('Montando rutas de resultados de lotería en /api/lottery-results');
+app.use('/api/lottery-results', lotteryResultsRoutes);
+
+// Endpoint alias para compatibilidad (lottery-data -> lottery-results/latest)
+app.get('/api/lottery-data', (req, res) => {
+  // Redireccionar a lottery-results/latest
+  req.url = '/api/lottery-results/latest';
+  app._router.handle(req, res);
+});
 
 // Manejador de rutas no encontradas
 app.use((req, res) => {
