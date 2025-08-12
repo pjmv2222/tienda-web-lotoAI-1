@@ -58,7 +58,7 @@ export class GordoPrimitivaComponent extends LotteryBaseComponent implements OnI
   }
 
   loadUltimosResultados(): void {
-    this.http.get<LotteryData>('https://www.loto-ia.com/api/lottery-data').subscribe({
+    this.http.get<LotteryData>('/api/lottery-data').subscribe({
       next: (response) => {
         const gordoData = response.resultados.find(r => r.game === 'elgordo');
         if (gordoData) {

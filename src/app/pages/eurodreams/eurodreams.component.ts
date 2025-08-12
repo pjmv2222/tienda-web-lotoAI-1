@@ -52,7 +52,7 @@ export class EurodreamsComponent extends LotteryBaseComponent implements OnInit,
   }
 
   loadUltimosResultados(): void {
-    this.http.get<LotteryData>('https://www.loto-ia.com/api/lottery-data').subscribe({
+    this.http.get<LotteryData>('/api/lottery-data').subscribe({
       next: (response) => {
         const eurodreamsData = response.resultados.find(r => r.game === 'eurodreams');
         if (eurodreamsData) {
