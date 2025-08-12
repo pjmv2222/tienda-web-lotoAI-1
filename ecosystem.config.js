@@ -29,7 +29,7 @@ module.exports = {
     },
     {
       name: 'frontend',
-      script: 'dist/tienda-web-loto-ai/server/server.mjs',
+      script: '/var/www/tienda-web-lotoAI-1/dist/tienda-web-loto-ai/server/server.mjs',
       cwd: '/var/www/tienda-web-lotoAI-1',
       instances: 1,
       exec_mode: 'fork',
