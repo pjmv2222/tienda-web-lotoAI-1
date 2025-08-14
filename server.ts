@@ -63,7 +63,8 @@ export function app(): express.Express {
       }
 
       // Verificar el token JWT
-      const decoded = jwt.verify(token, process.env['JWT_SECRET'] || 'default_secret_key');
+  // Usar el mismo valor por defecto que el backend para evitar desajustes
+  const decoded = jwt.verify(token, process.env['JWT_SECRET'] || 'your-secret-key');
       req.user = decoded;
       next();
     } catch (error) {
