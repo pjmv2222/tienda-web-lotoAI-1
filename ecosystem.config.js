@@ -18,23 +18,40 @@ module.exports = {
     },
     {
       name: 'frontend',
-      script: '/var/www/tienda-web-lotoAI-1/dist/tienda-web-loto-ai/server/server.mjs',
+  // Ejecuta el SSR de Angular (archivo generado por build)
+  // Nota: Angular 18 genera main.server.mjs por defecto
+  script: 'dist/tienda-web-loto-ai/server/main.server.mjs',
       cwd: '/var/www/tienda-web-lotoAI-1',
-      interpreter: 'node',
-      interpreter_args: '--experimental-modules --es-module-specifier-resolution=node',
+  interpreter: 'node',
+  // Habilita source maps para mejores trazas en producción
+  node_args: '--enable-source-maps',
       instances: 1,
       exec_mode: 'fork',
       autorestart: true,
+  watch: false,
       max_memory_restart: '1G',
       kill_timeout: 5000,
+  // Evita bucles de reinicio si el arranque falla
+  min_uptime: '10s',
+  max_restarts: 5,
+  exp_backoff_restart_delay: 5000,
+  restart_delay: 5000,
+  // Logs dedicados para diagnosticar reinicios
+  out_file: 'logs/frontend.out.log',
+  error_file: 'logs/frontend.err.log',
+  merge_logs: true,
+  time: true,
       env_file: '.env',            
       env: {
         NODE_ENV: 'development',
-        PORT: 4000
+  PORT: 4000,
+  // Forzar Node sin flags experimentales problemáticos
+  NODE_OPTIONS: '--enable-source-maps'
       },
       env_production: {
         NODE_ENV: 'production',
-        PORT: 4000
+  PORT: 4000,
+  NODE_OPTIONS: '--enable-source-maps'
       },
     },
     {
