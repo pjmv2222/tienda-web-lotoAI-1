@@ -8,6 +8,7 @@ import cors from 'cors';
 import { Pool } from 'pg';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
+import axios from 'axios';
 
 // Cargar variables de entorno
 dotenv.config();
@@ -146,6 +147,58 @@ export function app(): express.Express {
     }
   });
 
+  // PROXY: Autenticación (login, register, refresh, etc.) hacia backend en :3000
+  // Nota: Excluimos el GET de /api/auth/profile (ya implementado arriba) y solo proxificamos el resto
+  server.all('/api/auth/*', async (req: any, res: any, next: any) => {
+    try {
+      // Dejar pasar el GET de /api/auth/profile a la ruta previa
+      if (req.method === 'GET' && req.path === '/api/auth/profile') {
+        return next();
+      }
+
+  const targetUrl = `http://localhost:3000${req.originalUrl}`;
+
+      // Construir cabeceras a reenviar
+      const headers: any = {
+        'Content-Type': req.headers['content-type'] || 'application/json'
+      };
+      if (req.headers.authorization) headers['Authorization'] = req.headers.authorization;
+      if (req.headers.cookie) headers['Cookie'] = req.headers.cookie;
+
+      // Seleccionar método y datos
+      const method = req.method.toUpperCase();
+      const config = { headers, validateStatus: () => true, timeout: 60000 };
+
+      let backendResponse;
+      if (method === 'GET' || method === 'DELETE') {
+        backendResponse = await axios({ url: targetUrl, method, headers, validateStatus: () => true, timeout: 60000 });
+      } else {
+        backendResponse = await axios({ url: targetUrl, method, data: req.body, headers, validateStatus: () => true, timeout: 60000 });
+      }
+
+      // Propagar Set-Cookie si existe
+      const setCookie = backendResponse.headers?.['set-cookie'];
+      if (setCookie) {
+        res.setHeader('set-cookie', setCookie);
+      }
+
+      return res.status(backendResponse.status).send(backendResponse.data);
+    } catch (error: any) {
+      console.error('❌ [PROXY AUTH] Error:', {
+        method: req.method,
+        url: req.originalUrl,
+        message: error.message,
+        status: error.response?.status,
+        data: error.response?.data
+      });
+      return res.status(error.response?.status || 500).json({
+        success: false,
+        error: 'Error en el proxy de autenticación',
+        details: error.message
+      });
+    }
+  });
+
   // PROXY: Redirigir todas las llamadas POST de predicciones al backend en puerto 3000
   server.post('/api/predictions/*', async (req: any, res: any) => {
     try {
@@ -162,8 +215,7 @@ export function app(): express.Express {
       }
       
       // Hacer la petición al backend
-      const axios = require('axios');
-      const response = await axios.post(backendUrl, req.body, { headers, timeout: 60000 });
+  const response = await axios.post(backendUrl, req.body, { headers, timeout: 60000 });
       
       console.log(`✅ [PROXY] Respuesta del backend para ${req.originalUrl}:`, response.status);
       return res.status(response.status).json(response.data);
