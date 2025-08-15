@@ -1,64 +1,109 @@
 {
-  "timestamp": "2025-07-19T17:05:23.078Z",
   "botes": {
-    "euromillones": "122 MILLONES",
-    "primitiva": "35 MILLONES",
-    "gordo": "7,5 MILLONES",
+    "euromillones": "234 MILLONES",
+    "primitiva": "53,5 MILLONES",
+    "bonoloto": "500.000€",
+    "gordo": "9,8 MILLONES",
     "eurodreams": "20.000€ Al mes durante 30 años",
-    "loterianacional": "300.000€ Primer Premio",
-    "lototurf": "1,47 MILLONES"
+    "loterianacional": "600.000€ Primer Premio",
+    "lototurf": "1.475.000 €"
   },
   "resultados": [
     {
       "game": "euromillones",
-      "numbers": [13, 19, 25, 42, 45],
-      "stars": [2, 9],
-      "date": "18/07/2025"
+      "numbers": [
+        18,
+        28,
+        42,
+        46,
+        48
+      ],
+      "date": "martes - mar - 12/08/2025",
+      "stars": [
+        3,
+        9
+      ]
     },
     {
       "game": "primitiva",
-      "numbers": [12, 16, 30, 32, 41, 47],
-      "joker": "4603257",
-      "date": "17/07/2025"
+      "numbers": [
+        7,
+        11,
+        12,
+        16,
+        36,
+        43
+      ],
+      "date": "jueves - jue -  14/08/2025",
+      "joker": "8891458"
     },
     {
       "game": "bonoloto",
-      "numbers": [4, 20, 30, 32, 45, 47],
-      "date": "18/07/2025"
+      "numbers": [
+        3,
+        4,
+        6,
+        14,
+        33,
+        41
+      ],
+      "date": "jueves - jue - 14/08/2025"
     },
     {
       "game": "elgordo",
-      "numbers": [6, 7, 8, 11, 40],
-      "clave": 7,
-      "date": "13/07/2025"
+      "numbers": [
+        6,
+        25,
+        28,
+        34,
+        51
+      ],
+      "date": "domingo - dom - 10/08/2025",
+      "clave": 9
     },
     {
       "game": "eurodreams",
-      "numbers": [4, 10, 12, 26, 28, 29],
-      "date": "17/07/2025"
+      "numbers": [
+        14,
+        15,
+        21,
+        22,
+        32,
+        38
+      ],
+      "date": "jueves - jue - 14/08/2025"
     },
     {
       "game": "lototurf",
-      "numbers": [6, 7, 12, 13, 14, 26],
-      "date": "17/07/2025"
+      "numbers": [
+        1,
+        8,
+        9,
+        14,
+        15,
+        25
+      ],
+      "date": "Jornada 51ª - domingo - dom - 10/08/2025"
     },
     {
       "game": "loterianacional",
       "sorteos": [
         {
-          "dia": "jueves",
-          "fecha": "17/07/2025",
-          "premios": ["39601", "03508"],
-          "reintegros": ["0", "1", "9"]
-        },
-        {
-          "dia": "sábado", 
-          "fecha": "19/07/2025",
-          "premios": ["99775", "46590"],
-          "reintegros": ["2", "5", "6"]
+          "dia": "jueves -",
+          "fecha": "14/08/2025",
+          "premios": [
+            "25044",
+            "42795"
+          ],
+          "reintegros": [
+            "2",
+            "4",
+            "8"
+          ]
         }
       ],
-      "date": "19/07/2025"
+      "date": ""
     }
-  ]
-} 
+  ],
+  "timestamp": "2025-08-15T17:23:33.274Z"
+}

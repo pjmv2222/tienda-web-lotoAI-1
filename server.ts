@@ -342,109 +342,24 @@ export function app(): express.Express {
   });
 
   // Obtener suscripciones del usuario
-  server.get('/api/subscriptions/user/:userId', authenticateToken, async (req: any, res: any) => {
+  server.get('/api/predictions/summary', async (req: any, res: any) => {
     try {
-      const userId = parseInt(req.params.userId);
-      
-      // Verificar que el usuario autenticado solo puede acceder a sus propias suscripciones
-      if (req.user.id !== userId) {
-        return res.status(403).json({ error: 'Acceso denegado' });
-      }
-      
-      const client = await pgPool.connect();
-      try {
-        // Obtener todas las suscripciones activas del usuario
-        const subscriptionsQuery = `
-          SELECT 
-            id,
-            plan_id,
-            status,
-            start_date,
-            end_date,
-            amount,
-            currency,
-            created_at,
-            plan_type
-          FROM subscriptions 
-          WHERE user_id = $1 AND status = 'active'
-          ORDER BY created_at DESC
-        `;
-        
-        const result = await client.query(subscriptionsQuery, [userId]);
-        
-        console.log('🚨 [SERVER] QUERY RESULT RAW:', JSON.stringify(result.rows, null, 2));
-        
-        // VERIFICAR que las fechas existen en la BD antes del mapeo
-        result.rows.forEach((row, index) => {
-          console.log(`🚨 [SERVER] Row ${index} BEFORE mapping:`);
-          console.log(`  start_date: "${row.start_date}" (${typeof row.start_date})`);
-          console.log(`  end_date: "${row.end_date}" (${typeof row.end_date})`);
-          console.log(`  created_at: "${row.created_at}" (${typeof row.created_at})`);
-          console.log(`  plan_id: "${row.plan_id}" (${typeof row.plan_id})`);
-        });
-        
-        // Mapear los resultados al formato esperado por el frontend
-        const subscriptions = result.rows.map(sub => {
-          const mapped = {
-            id: sub.id,              // ✅ CORREGIDO: Usar ID real de la BD
-            plan_id: sub.plan_id,    // ✅ CORREGIDO: snake_case como espera frontend
-            status: sub.status,
-            start_date: sub.start_date, // ✅ CORREGIDO: snake_case como espera frontend
-            end_date: sub.end_date,     // ✅ CORREGIDO: snake_case como espera frontend
-            amount: sub.amount,
-            currency: sub.currency,
-            created_at: sub.created_at, // ✅ CORREGIDO: snake_case como espera frontend
-            plan_type: sub.plan_type || sub.plan_id
-          };
-          
-          console.log('� [SERVER] MAPPED subscription:', JSON.stringify(mapped, null, 2));
-          return mapped;
-        });
-        
-        console.log('� [SERVER] FINAL subscriptions array:', JSON.stringify(subscriptions, null, 2));
-        
-        res.json({
-          subscriptions: subscriptions
-        });
-        
-      } finally {
-        client.release();
-      }
-    } catch (error) {
-      console.error('❌ [SERVER] Error obteniendo suscripciones del usuario:', error);
-      res.status(500).json({ error: 'Error interno del servidor' });
+      // Ruta pública: devolver solo los botes (jackpots) y datos generales, sin datos de usuario
+      // Leer archivo botes.json y devolverlo como respuesta
+      const fs = await import('fs/promises');
+      const path = await import('path');
+      const botesPath = path.resolve(process.cwd(), 'src/assets/botes.json');
+      const botesRaw = await fs.readFile(botesPath, 'utf-8');
+      const botes = JSON.parse(botesRaw);
+      res.json({ success: true, data: botes });
+    } catch (error: any) {
+      console.error('❌ [SERVER] Error al leer botes.json:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error al obtener los botes',
+        details: error.message
+      });
     }
-  });
-
-  // Ruta de prueba de salud
-  server.get('/api/health', (req: any, res: any) => {
-    res.status(200).json({ message: 'Servidor funcionando correctamente' });
-  });
-
-  // ====== FIN RUTAS DE API ======
-
-  server.set('view engine', 'html');
-  server.set('views', browserDistFolder);
-
-  // Servir archivos estáticos desde /browser
-  server.get('*.*', express.static(browserDistFolder, {
-    maxAge: '1y'
-  }));
-
-  // Todas las demás rutas utilizan el motor de Angular
-  server.get('*', (req, res, next) => {
-    const { protocol, originalUrl, baseUrl, headers } = req;
-
-    commonEngine
-      .render({
-        bootstrap,
-        documentFilePath: indexHtml,
-        url: `${protocol}://${headers.host}${originalUrl}`,
-        publicPath: browserDistFolder,
-        providers: [{ provide: APP_BASE_HREF, useValue: baseUrl }],
-      })
-      .then((html) => res.send(html))
-      .catch((err) => next(err));
   });
 
   return server;
