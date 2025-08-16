@@ -137,41 +137,22 @@ export class SubscriptionService {
 
     console.log(`hasActivePlan: Verificando plan '${planId}' para usuario ${currentUser.id}`);
 
-    // CORRECCIÓN ESPECIAL: El plan básico está disponible para todos los usuarios autenticados
-    if (planId === 'basic') {
-      console.log('hasActivePlan: Plan básico solicitado - disponible para usuarios autenticados');
-      return of(true);
-    }
-
-    // Para planes premium, verificar suscripciones reales en la base de datos
+    // Ahora, para cualquier plan (incluido el básico), solo se considera activo si existe en la base de datos
     return this.getUserSubscriptions().pipe(
       map(subscriptions => {
         console.log('hasActivePlan: Todas las suscripciones del usuario:', subscriptions);
-        
         if (!subscriptions || subscriptions.length === 0) {
-          console.log('hasActivePlan: No se encontraron suscripciones premium');
+          console.log('hasActivePlan: No se encontraron suscripciones activas');
           return false;
         }
-
         // Buscar si alguna suscripción activa coincide con el plan solicitado
         const hasMatchingPlan = subscriptions.some((subscription: any) => {
           const isActive = subscription.status === 'active';
           const hasMatchingPlanId = subscription.planId === planId;
           const hasMatchingPlanType = subscription.plan_type === planId;
           const planMatches = hasMatchingPlanId || hasMatchingPlanType;
-          
-          console.log(`hasActivePlan: Suscripción ${subscription.id}:`, {
-            planId: subscription.planId,
-            plan_type: subscription.plan_type,
-            status: subscription.status,
-            isActive,
-            planMatches,
-            buscando: planId
-          });
-          
           return isActive && planMatches;
         });
-
         console.log(`hasActivePlan: ¿Usuario tiene plan '${planId}' activo? ${hasMatchingPlan}`);
         return hasMatchingPlan;
       }),
