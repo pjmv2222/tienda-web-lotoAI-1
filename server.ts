@@ -244,31 +244,24 @@ export function app(): express.Express {
       console.log(`Obteniendo resumen de predicciones para usuario: ${userId}`);
       const client = await pgPool.connect();
       try {
-        // Buscar cualquier suscripción activa del usuario
+        // Obtener todas las suscripciones del usuario, ordenadas por fecha de inicio
         const subscriptionQuery = `
-          SELECT plan_type, status, start_date, plan_id 
+          SELECT plan_type, status, start_date, end_date, plan_id 
           FROM subscriptions 
-          WHERE user_id = $1 AND status = 'active'
-          ORDER BY created_at DESC 
-          LIMIT 1
+          WHERE user_id = $1
+          ORDER BY start_date ASC
         `;
         const subscriptionResult = await client.query(subscriptionQuery, [userId]);
-        const subscription = subscriptionResult.rows[0];
-        if (!subscription) {
-          // No hay ninguna suscripción activa
-          return res.json({
-            success: true,
-            hasActiveSubscription: false,
-            plan: null,
-            games: []
-          });
+        const subscriptions = subscriptionResult.rows;
+        if (!subscriptions || subscriptions.length === 0) {
+          return res.json({ success: true, plans: [] });
         }
-        // Hay suscripción activa
-        const planType = subscription.plan_type;
-        const planStartDate = subscription.start_date;
-        // Definir límites por tipo de plan (puedes ampliar según tus planes)
-        const limits: any = { basic: 3, mensual: 999, pro: 999 };
-        const totalAllowed = limits[planType] || 3;
+        // Definir límites y duración por plan
+        const planConfig: any = {
+          basic: { limit: 3, duration: null },
+          mensual: { limit: 999, duration: 30 },
+          pro: { limit: 999, duration: 365 }
+        };
         const games = [
           { id: 'primitiva', name: 'La Primitiva' },
           { id: 'bonoloto', name: 'Bonoloto' },
@@ -278,32 +271,69 @@ export function app(): express.Express {
           { id: 'eurodreams', name: 'EuroDreams' },
           { id: 'loterianacional', name: 'Lotería Nacional' }
         ];
-        // Obtener conteo de predicciones SOLO desde la fecha de inicio del plan actual
-        const usageQuery = `
-          SELECT game_type as game_id, COUNT(*) as used_count
-          FROM user_predictions 
-          WHERE user_id = $1 
-          AND created_at >= $2
-          GROUP BY game_type
-        `;
-        const usageResult = await client.query(usageQuery, [userId, planStartDate]);
-        const usageByGame = usageResult.rows.reduce((acc: any, row: any) => {
-          acc[row.game_id] = parseInt(row.used_count);
-          return acc;
-        }, {});
-        const gamePredictionUsage = games.map(game => ({
-          game_id: game.id,
-          game_name: game.name,
-          total_allowed: totalAllowed,
-          used: usageByGame[game.id] || 0,
-          remaining: totalAllowed - (usageByGame[game.id] || 0)
-        }));
-        res.json({
-          success: true,
-          hasActiveSubscription: true,
-          plan: planType,
-          games: gamePredictionUsage
-        });
+        // Para cada suscripción, calcular uso y vigencia
+        const planSummaries: Array<{
+          plan: string;
+          status: string;
+          start_date: string;
+          end_date: string | null;
+          expires_at: string | null;
+          vigente: boolean;
+          games: Array<{
+            game_id: string;
+            game_name: string;
+            total_allowed: number;
+            used: number;
+            remaining: number;
+          }>;
+        }> = [];
+        for (const sub of subscriptions) {
+          const planType = sub.plan_type;
+          const planStart = sub.start_date;
+          const planEnd = sub.end_date;
+          const config = planConfig[planType] || { limit: 3, duration: null };
+          // Calcular fecha de expiración para mensual/pro
+          let expiresAt: string | null = null;
+          let vigente = true;
+          if (config.duration) {
+            const start = new Date(planStart);
+            const expiresDate = new Date(start.getTime() + config.duration * 24 * 60 * 60 * 1000);
+            expiresAt = expiresDate.toISOString();
+            vigente = new Date() < expiresDate;
+          }
+          // Obtener conteo de predicciones para este plan
+          const usageQuery = `
+            SELECT game_type as game_id, COUNT(*) as used_count
+            FROM user_predictions 
+            WHERE user_id = $1 
+              AND created_at >= $2
+              ${planEnd ? 'AND created_at < $3' : ''}
+            GROUP BY game_type
+          `;
+          const usageParams = planEnd ? [userId, planStart, planEnd] : [userId, planStart];
+          const usageResult = await client.query(usageQuery, usageParams);
+          const usageByGame = usageResult.rows.reduce((acc: any, row: any) => {
+            acc[row.game_id] = parseInt(row.used_count);
+            return acc;
+          }, {});
+          const gamePredictionUsage = games.map(game => ({
+            game_id: game.id,
+            game_name: game.name,
+            total_allowed: config.limit,
+            used: usageByGame[game.id] || 0,
+            remaining: config.limit - (usageByGame[game.id] || 0)
+          }));
+          planSummaries.push({
+            plan: planType,
+            status: sub.status,
+            start_date: planStart,
+            end_date: planEnd,
+            expires_at: expiresAt,
+            vigente,
+            games: gamePredictionUsage
+          });
+        }
+        res.json({ success: true, plans: planSummaries });
       } finally {
         client.release();
       }
