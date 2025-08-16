@@ -117,7 +117,7 @@ interface GamePredictionUsage {
                 </div>
                 
                 <!-- Información específica para Plan Básico -->
-                <div *ngIf="subscription.is_basic_plan && subscription.predictions_used" class="basic-plan-details">
+                <div *ngIf="subscription.is_basic_plan" class="basic-plan-details">
                   <h5 class="predictions-header">Pronósticos disponibles por juego:</h5>
                   <div class="predictions-grid">
                     <div *ngFor="let game of subscription.predictions_used" class="prediction-card">
