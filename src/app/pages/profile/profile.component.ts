@@ -1187,70 +1187,17 @@ export class ProfileComponent implements OnInit {
   /**
    * Carga datos del Plan Básico y los combina con suscripciones premium existentes
    */
+  // Eliminada: la lógica de combinación de planes ahora es responsabilidad exclusiva del backend
   private loadBasicPlanDataAndMerge(): void {
-    console.log('🔄 [PROFILE] Cargando datos del Plan Básico para combinar con planes premium...');
-    
-    // ✅ Solo cargar datos en el navegador para evitar errores de SSR
-    if (!isPlatformBrowser(this.platformId)) {
-      console.log('🔄 [PROFILE] Ejecución en servidor - omitiendo carga de datos');
-      return;
-    }
-    
-    // CORRECCIÓN: Hacer ambas consultas en paralelo - predicciones Y suscripción básica de la BD
-    const currentUser = this.authService.currentUserValue;
-    if (!currentUser) {
-      console.error('❌ [PROFILE] No hay usuario autenticado');
-      return;
-    }
-
-    const predictionSummary$ = this.userPredictionService.getProfilePredictionSummary();
-    const basicSubscription$ = this.subscriptionService.getUserSubscriptions().pipe(
-      map((subs: any[]) => subs.find(sub => sub.id === 'basic' || sub.planId === 'basic'))
-    );
-
-    forkJoin({
-      predictions: predictionSummary$,
-      basicSub: basicSubscription$
-    }).subscribe({
-      next: (result) => {
-        console.log('📊 [PROFILE] Respuesta combinada:', result);
-        
-  // Eliminada la lógica de combinación de plan básico por defecto
-  // Si no hay plan básico real, no se agrega nada
-  this.updateAvailableTabs();
-  this.cdr.markForCheck();
-  this.cdr.detectChanges();
-      },
-      error: (error) => {
-        console.error('❌ [PROFILE] Error cargando predicciones para combinar:', error);
-        
-        // Agregar Plan Básico por defecto en caso de error
-        const basicPlanData = this.createDefaultBasicPlan();
-        this.activeSubscriptions.push(basicPlanData);
-        
-        console.log('✅ [PROFILE] Plan Básico por defecto agregado tras error:', this.activeSubscriptions);
-        
-        // Actualizar pestañas disponibles
-        this.updateAvailableTabs();
-        
-        // Forzar detección de cambios
-        this.cdr.markForCheck();
-        this.cdr.detectChanges();
-      }
-    });
+    // No hacer nada, la UI solo debe usar la respuesta de getProfilePredictionSummary()
   }
 
   /**
    * Carga datos de predicciones específicamente para el plan básico
    */
+  // Eliminada: la lógica de predicciones por plan ahora es responsabilidad exclusiva del backend
   private loadBasicPlanPredictions(): void {
-    console.log('🔄 [PROFILE] Cargando predicciones del Plan Básico...');
-    
-  // Esta función ya no es necesaria con el nuevo backend, pero si se usa, dejará las suscripciones vacías
-  this.activeSubscriptions = [];
-  this.updateAvailableTabs();
-  this.cdr.markForCheck();
-  this.cdr.detectChanges();
+    // No hacer nada
   }
 
   private getPlanDisplayName(planId: string | number): string {
