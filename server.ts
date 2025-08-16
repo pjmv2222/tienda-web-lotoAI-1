@@ -241,50 +241,34 @@ export function app(): express.Express {
   server.get('/api/predictions/summary', authenticateToken, async (req: any, res: any) => {
     try {
       const userId = req.user.id;
-      
       console.log(`Obteniendo resumen de predicciones para usuario: ${userId}`);
-      
       const client = await pgPool.connect();
       try {
-        // Obtener información de la suscripción básica ACTUAL del usuario
+        // Buscar cualquier suscripción activa del usuario
         const subscriptionQuery = `
           SELECT plan_type, status, start_date, plan_id 
           FROM subscriptions 
-          WHERE user_id = $1 AND status = 'active' AND plan_id = 'basic'
+          WHERE user_id = $1 AND status = 'active'
           ORDER BY created_at DESC 
           LIMIT 1
         `;
-        
         const subscriptionResult = await client.query(subscriptionQuery, [userId]);
         const subscription = subscriptionResult.rows[0];
-        
-        console.log('📊 [SERVER] Suscripción básica actual:', subscription);
-        
-        // Si no hay plan básico activo, devolver datos por defecto
         if (!subscription) {
-          console.log('⚠️ [SERVER] No hay plan básico activo para usuario', userId);
-          const defaultGames = [
-            { game_id: 'primitiva', game_name: 'La Primitiva', total_allowed: 3, used: 0, remaining: 3 },
-            { game_id: 'bonoloto', game_name: 'Bonoloto', total_allowed: 3, used: 0, remaining: 3 },
-            { game_id: 'euromillon', game_name: 'EuroMillones', total_allowed: 3, used: 0, remaining: 3 },
-            { game_id: 'elgordo', game_name: 'El Gordo', total_allowed: 3, used: 0, remaining: 3 },
-            { game_id: 'lototurf', game_name: 'Lototurf', total_allowed: 3, used: 0, remaining: 3 },
-            { game_id: 'eurodreams', game_name: 'EuroDreams', total_allowed: 3, used: 0, remaining: 3 },
-            { game_id: 'loterianacional', game_name: 'Lotería Nacional', total_allowed: 3, used: 0, remaining: 3 }
-          ];
-          
+          // No hay ninguna suscripción activa
           return res.json({
             success: true,
-            data: { games: defaultGames }
+            hasActiveSubscription: false,
+            plan: null,
+            games: []
           });
         }
-        
+        // Hay suscripción activa
+        const planType = subscription.plan_type;
         const planStartDate = subscription.start_date;
-        
-        // Para Plan Básico, el límite es 3 predicciones por juego
-        const totalAllowed = 3;
-        
-        // Lista de juegos disponibles con IDs corregidos según la tabla user_predictions
+        // Definir límites por tipo de plan (puedes ampliar según tus planes)
+        const limits: any = { basic: 3, mensual: 999, pro: 999 };
+        const totalAllowed = limits[planType] || 3;
         const games = [
           { id: 'primitiva', name: 'La Primitiva' },
           { id: 'bonoloto', name: 'Bonoloto' },
@@ -294,8 +278,7 @@ export function app(): express.Express {
           { id: 'eurodreams', name: 'EuroDreams' },
           { id: 'loterianacional', name: 'Lotería Nacional' }
         ];
-        
-        // CORRECCIÓN CLAVE: Obtener conteo de predicciones SOLO desde la fecha de inicio del plan básico actual
+        // Obtener conteo de predicciones SOLO desde la fecha de inicio del plan actual
         const usageQuery = `
           SELECT game_type as game_id, COUNT(*) as used_count
           FROM user_predictions 
@@ -303,18 +286,11 @@ export function app(): express.Express {
           AND created_at >= $2
           GROUP BY game_type
         `;
-        
-        console.log('📊 [SERVER] Consultando predicciones desde:', planStartDate, 'para usuario:', userId);
-        
         const usageResult = await client.query(usageQuery, [userId, planStartDate]);
         const usageByGame = usageResult.rows.reduce((acc: any, row: any) => {
           acc[row.game_id] = parseInt(row.used_count);
           return acc;
         }, {});
-        
-        console.log('📊 [SERVER] Uso por juego desde plan actual:', usageByGame);
-        
-        // Crear respuesta con datos de cada juego
         const gamePredictionUsage = games.map(game => ({
           game_id: game.id,
           game_name: game.name,
@@ -322,16 +298,12 @@ export function app(): express.Express {
           used: usageByGame[game.id] || 0,
           remaining: totalAllowed - (usageByGame[game.id] || 0)
         }));
-        
-        console.log('📊 [SERVER] Respuesta final:', { games: gamePredictionUsage });
-        
         res.json({
           success: true,
-          data: {
-            games: gamePredictionUsage
-          }
+          hasActiveSubscription: true,
+          plan: planType,
+          games: gamePredictionUsage
         });
-        
       } finally {
         client.release();
       }
