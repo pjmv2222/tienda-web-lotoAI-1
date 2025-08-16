@@ -1148,19 +1148,38 @@ export class ProfileComponent implements OnInit {
         console.log('📊 [PROFILE] Respuesta del servidor:', response);
         if (response.success && Array.isArray(response.plans)) {
           // Asignar todos los planes históricos (básico, mensual, pro) a activeSubscriptions
-          this.activeSubscriptions = response.plans.map((plan, idx) => ({
-            id: idx, // Siempre un número
-            ...plan,
-            predictions_used: plan.predictions_used,
-            is_basic_plan: plan.is_basic_plan,
-            plan_id: plan.plan_id,
-            plan_name: plan.plan_name,
-            status: plan.status,
-            status_display: plan.status_display,
-            created_at: plan.created_at,
-            expires_at: plan.expires_at,
-            price: plan.price
-          }));
+          const juegosDefault = [
+            { game_id: 'euromillon', game_name: 'Euromillones', total_allowed: 3, used: 0, remaining: 3 },
+            { game_id: 'primitiva', game_name: 'La Primitiva', total_allowed: 3, used: 0, remaining: 3 },
+            { game_id: 'bonoloto', game_name: 'Bonoloto', total_allowed: 3, used: 0, remaining: 3 },
+            { game_id: 'elgordo', game_name: 'El Gordo', total_allowed: 3, used: 0, remaining: 3 },
+            { game_id: 'eurodreams', game_name: 'EuroDreams', total_allowed: 3, used: 0, remaining: 3 },
+            { game_id: 'lototurf', game_name: 'Lototurf', total_allowed: 3, used: 0, remaining: 3 },
+            { game_id: 'loterianacional', game_name: 'Lotería Nacional', total_allowed: 3, used: 0, remaining: 3 }
+          ];
+          this.activeSubscriptions = response.plans.map((plan, idx) => {
+            // Usar plan.games como predictions_used para el plan básico
+            let predictions_used = plan.games || plan.predictions_used || [];
+            if (plan.is_basic_plan) {
+              predictions_used = juegosDefault.map(juego => {
+                const found = (plan.games || []).find((g: any) => g.game_id === juego.game_id);
+                return found ? found : juego;
+              });
+            }
+            return {
+              id: idx,
+              ...plan,
+              predictions_used,
+              is_basic_plan: plan.is_basic_plan,
+              plan_id: plan.plan_id,
+              plan_name: plan.plan_name,
+              status: plan.status,
+              status_display: plan.status_display,
+              created_at: plan.created_at,
+              expires_at: plan.expires_at,
+              price: plan.price
+            };
+          });
         } else {
           this.activeSubscriptions = [];
         }
