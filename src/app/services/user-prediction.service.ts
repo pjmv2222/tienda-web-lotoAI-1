@@ -43,6 +43,13 @@ export interface PlanSummary {
     used: number;
     remaining: number;
   }[];
+  games?: {
+    game_id: string;
+    game_name: string;
+    total_allowed: number;
+    used: number;
+    remaining: number;
+  }[];
 }
 
 export interface ProfilePredictionSummaryResponse {
