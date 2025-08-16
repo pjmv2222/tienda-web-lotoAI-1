@@ -26,15 +26,28 @@ export interface UserPredictionSummary {
   totalPredictionsToday: number;
 }
 
-// Nueva interfaz específica para el componente de perfil
-export interface ProfilePredictionSummary {
-  games: {
+// Nueva interfaz para el resumen de planes históricos
+export interface PlanSummary {
+  plan_id: string;
+  plan_name: string;
+  is_basic_plan: boolean;
+  status: string;
+  status_display: string;
+  created_at: string | null;
+  expires_at: string | null;
+  price: string;
+  predictions_used: {
     game_id: string;
     game_name: string;
     total_allowed: number;
     used: number;
     remaining: number;
   }[];
+}
+
+export interface ProfilePredictionSummaryResponse {
+  success: boolean;
+  plans: PlanSummary[];
 }
 
 // Interfaces para el historial de predicciones
@@ -94,8 +107,8 @@ export class UserPredictionService {
   /**
    * Obtener resumen de predicciones específico para el componente de perfil
    */
-  getProfilePredictionSummary(): Observable<{success: boolean, data: ProfilePredictionSummary}> {
-    return this.http.get<{success: boolean, data: ProfilePredictionSummary}>(
+  getProfilePredictionSummary(): Observable<ProfilePredictionSummaryResponse> {
+    return this.http.get<ProfilePredictionSummaryResponse>(
       `${environment.apiUrl}/predictions/summary`,
       { headers: this.getAuthHeaders() }
     );
