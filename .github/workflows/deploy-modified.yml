@@ -26,7 +26,9 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             echo "=== INICIO: DESPLIEGUE EN DOS FASES ==="
-            
+            # Backup del archivo deploy-modified.yml antes de modificarlo
+            cp .github/workflows/deploy-modified.yml .github/workflows/deploy-modified.yml.backup
+            echo "✅ Backup de deploy-modified.yml creado en .github/workflows/deploy-modified.yml.backup"
             # 1. Navegar al directorio del proyecto
             cd /var/www/tienda-web-lotoAI-1 || exit 1
             
@@ -122,23 +124,7 @@ jobs:
             else
               echo "❌ No se pudo restaurar lottery-data.json (src) - archivo de respaldo no encontrado"
             fi
-            if [ -f ".deploy-backups/botes.json.backup" ]; then
-              # Crear directorio si no existe
-              mkdir -p dist/tienda-web-loto-ai/browser/assets/
-              cp .deploy-backups/botes.json.backup dist/tienda-web-loto-ai/browser/assets/botes.json
-              rm .deploy-backups/botes.json.backup
-              echo "✅ Archivo botes.json (dist) restaurado con datos actualizados del scraper"
-            else
-              echo "❌ No se pudo restaurar botes.json (dist) - archivo de respaldo no encontrado"
-            fi
-            if [ -f ".deploy-backups/lottery-data.json.backup" ]; then
-              mkdir -p dist/tienda-web-loto-ai/browser/assets/
-              cp .deploy-backups/lottery-data.json.backup dist/tienda-web-loto-ai/browser/assets/lottery-data.json
-              rm .deploy-backups/lottery-data.json.backup
-              echo "✅ Archivo lottery-data.json (dist) restaurado con datos actualizados del scraper"
-            else
-              echo "❌ No se pudo restaurar lottery-data.json (dist) - archivo de respaldo no encontrado"
-            fi
+            # Restauración de archivos JSON en dist se mueve después del build (ver más abajo)
             
             # Restaurar configuraciones específicas del servidor IA
             # IMPORTANTE: NO restaurar server-ia-unificado.py porque debe actualizarse desde el repositorio
@@ -208,15 +194,32 @@ jobs:
             sudo swapoff /swapfile || true
             sudo rm /swapfile || true
             
+            # 7.4. Restaurar archivos JSON en dist después del build
+            echo "--- Fase 7.4: Restaurando archivos JSON en dist después del build ---"
+            if [ -f ".deploy-backups/botes.json.backup" ]; then
+              mkdir -p dist/tienda-web-loto-ai/browser/assets/
+              cp .deploy-backups/botes.json.backup dist/tienda-web-loto-ai/browser/assets/botes.json
+              echo "✅ Archivo botes.json (dist) restaurado después del build"
+            else
+              echo "❌ No se pudo restaurar botes.json (dist) - archivo de respaldo no encontrado"
+            fi
+            if [ -f ".deploy-backups/lottery-data.json.backup" ]; then
+              mkdir -p dist/tienda-web-loto-ai/browser/assets/
+              cp .deploy-backups/lottery-data.json.backup dist/tienda-web-loto-ai/browser/assets/lottery-data.json
+              echo "✅ Archivo lottery-data.json (dist) restaurado después del build"
+            else
+              echo "❌ No se pudo restaurar lottery-data.json (dist) - archivo de respaldo no encontrado"
+            fi
+
             # 7.5. Verificar que archivos JSON están en dist después del build
             echo "--- Fase 7.5: Verificando archivos JSON en dist ---"
             if [ -f "dist/tienda-web-loto-ai/browser/assets/botes.json" ]; then
-              echo "✅ Archivo botes.json encontrado en dist (copiado automáticamente por Angular)"
+              echo "✅ Archivo botes.json encontrado en dist (copiado/restaurado correctamente)"
             else
               echo "⚠️  Archivo botes.json NO encontrado en dist"
             fi
             if [ -f "dist/tienda-web-loto-ai/browser/assets/lottery-data.json" ]; then
-              echo "✅ Archivo lottery-data.json encontrado en dist (copiado automáticamente por Angular)"
+              echo "✅ Archivo lottery-data.json encontrado en dist (copiado/restaurado correctamente)"
             else
               echo "⚠️  Archivo lottery-data.json NO encontrado en dist"
             fi
