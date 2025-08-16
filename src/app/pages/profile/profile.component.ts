@@ -1146,16 +1146,22 @@ export class ProfileComponent implements OnInit {
     this.userPredictionService.getProfilePredictionSummary().subscribe({
       next: (response) => {
         console.log('📊 [PROFILE] Respuesta del servidor:', response);
-        console.log('📊 [PROFILE] response.success:', response.success);
-        console.log('📊 [PROFILE] response.data:', response.data);
-        console.log('📊 [PROFILE] response.data.games:', response.data?.games);
-        console.log('📊 [PROFILE] Es Array?:', Array.isArray(response.data?.games));
-        
-        if (response.success && response.data && response.data.games && Array.isArray(response.data.games)) {
-          // Si el backend devuelve datos, pero no hay suscripción real, no crear plan básico por defecto
-          this.activeSubscriptions = [];
+        if (response.success && Array.isArray(response.plans)) {
+          // Asignar todos los planes históricos (básico, mensual, pro) a activeSubscriptions
+          this.activeSubscriptions = response.plans.map((plan, idx) => ({
+            id: idx, // Siempre un número
+            ...plan,
+            predictions_used: plan.predictions_used,
+            is_basic_plan: plan.is_basic_plan,
+            plan_id: plan.plan_id,
+            plan_name: plan.plan_name,
+            status: plan.status,
+            status_display: plan.status_display,
+            created_at: plan.created_at,
+            expires_at: plan.expires_at,
+            price: plan.price
+          }));
         } else {
-          // Respuesta inválida, dejar sin suscripciones
           this.activeSubscriptions = [];
         }
         this.loadingSubscriptions = false;
@@ -1165,16 +1171,10 @@ export class ProfileComponent implements OnInit {
       },
       error: (error) => {
         console.error('❌ [PROFILE] Error cargando predicciones:', error);
-        console.error('❌ [PROFILE] Error detallado:', {
-          message: error.message,
-          status: error.status,
-          url: error.url
-        });
-        this.activeSubscriptions = [this.createDefaultBasicPlan()];
+        this.activeSubscriptions = [];
         this.loadingSubscriptions = false;
         this.cdr.markForCheck();
         this.cdr.detectChanges();
-        console.log('📋 [PROFILE] Plan básico por defecto tras error:', this.activeSubscriptions[0]);
       }
     });
   }
@@ -1246,86 +1246,11 @@ export class ProfileComponent implements OnInit {
   private loadBasicPlanPredictions(): void {
     console.log('🔄 [PROFILE] Cargando predicciones del Plan Básico...');
     
-    this.userPredictionService.getProfilePredictionSummary().subscribe({
-      next: (response) => {
-        console.log('📊 [PROFILE] Respuesta del servidor para Plan Básico:', response);
-        
-        if (response.success && response.data && response.data.games && Array.isArray(response.data.games)) {
-          console.log('✅ [PROFILE] Datos válidos recibidos para Plan Básico, games:', response.data.games);
-          
-          // CORRECCIÓN: Buscar la suscripción básica existente y actualizar sus datos
-          const basicSubscriptionIndex = this.activeSubscriptions.findIndex(sub => sub.is_basic_plan);
-          
-          if (basicSubscriptionIndex !== -1) {
-            // Actualizar la suscripción básica existente con los datos de predicciones
-            this.activeSubscriptions[basicSubscriptionIndex].predictions_used = response.data.games;
-            console.log('✅ [PROFILE] Datos de predicciones actualizados para plan básico existente');
-          } else {
-            // Si no existe plan básico en las suscripciones, agregarlo
-            const basicPlanData: UserSubscriptionInfo = {
-              id: 0,
-              plan_id: 'basic',
-              plan_name: 'Plan Básico',
-              status: 'active',
-              status_display: 'Activo',
-              created_at: new Date().toISOString(),
-              expires_at: '',
-              price: '1,22€',
-              is_basic_plan: true,
-              predictions_used: response.data.games
-            };
-            
-            this.activeSubscriptions.push(basicPlanData);
-            console.log('✅ [PROFILE] Plan Básico agregado a suscripciones existentes');
-          }
-          
-        } else {
-          console.warn('⚠️ [PROFILE] Respuesta inválida para Plan Básico, usando datos por defecto');
-          
-          // Buscar plan básico y actualizar con datos por defecto
-          const basicSubscriptionIndex = this.activeSubscriptions.findIndex(sub => sub.is_basic_plan);
-          
-          if (basicSubscriptionIndex !== -1) {
-            this.activeSubscriptions[basicSubscriptionIndex].predictions_used = this.getDefaultPredictionData();
-          } else {
-            const basicPlanData = this.createDefaultBasicPlan();
-            this.activeSubscriptions.push(basicPlanData);
-          }
-        }
-        
-        console.log('📊 [PROFILE] Suscripciones activas finales (con Plan Básico):', this.activeSubscriptions.length);
-        console.log('📊 [PROFILE] Detalles:', this.activeSubscriptions.map(sub => ({ plan_id: sub.plan_id, plan_name: sub.plan_name })));
-        
-        // Actualizar pestañas disponibles después de agregar el plan básico
-        this.updateAvailableTabs();
-        
-        // Forzar detección de cambios
-        this.cdr.markForCheck();
-        this.cdr.detectChanges();
-      },
-      error: (error) => {
-        console.error('❌ [PROFILE] Error cargando predicciones del Plan Básico:', error);
-        
-        // En caso de error, agregar Plan Básico por defecto si no existe
-        const basicSubscriptionIndex = this.activeSubscriptions.findIndex(sub => sub.is_basic_plan);
-        
-        if (basicSubscriptionIndex !== -1) {
-          this.activeSubscriptions[basicSubscriptionIndex].predictions_used = this.getDefaultPredictionData();
-        } else {
-          const basicPlanData = this.createDefaultBasicPlan();
-          this.activeSubscriptions.push(basicPlanData);
-        }
-        
-        console.log('✅ [PROFILE] Plan Básico por defecto agregado tras error');
-        
-        // Actualizar pestañas disponibles
-        this.updateAvailableTabs();
-        
-        // Forzar detección de cambios
-        this.cdr.markForCheck();
-        this.cdr.detectChanges();
-      }
-    });
+  // Esta función ya no es necesaria con el nuevo backend, pero si se usa, dejará las suscripciones vacías
+  this.activeSubscriptions = [];
+  this.updateAvailableTabs();
+  this.cdr.markForCheck();
+  this.cdr.detectChanges();
   }
 
   private getPlanDisplayName(planId: string | number): string {
