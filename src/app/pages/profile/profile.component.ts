@@ -1161,9 +1161,12 @@ export class ProfileComponent implements OnInit {
             // Usar plan.games como predictions_used para el plan básico
             let predictions_used = plan.games || plan.predictions_used || [];
             if (plan.is_basic_plan) {
+              // Siempre devolver los 7 juegos, aunque todos sean 0
+              // Fusionar datos reales del backend con los juegos por defecto
+              const juegosBackend = (plan.games || []);
               predictions_used = juegosDefault.map(juego => {
-                const found = (plan.games || []).find((g: any) => g.game_id === juego.game_id);
-                return found ? found : juego;
+                const found = juegosBackend.find((g: any) => g.game_id === juego.game_id);
+                return found ? { ...juego, ...found } : juego;
               });
             }
             return {
