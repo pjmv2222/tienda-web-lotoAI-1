@@ -343,26 +343,7 @@ export function app(): express.Express {
     }
   });
 
-  // Obtener suscripciones del usuario
-  server.get('/api/predictions/summary', async (req: any, res: any) => {
-    try {
-      // Ruta pública: devolver solo los botes (jackpots) y datos generales, sin datos de usuario
-      // Leer archivo botes.json y devolverlo como respuesta
-      const fs = await import('fs/promises');
-      const path = await import('path');
-      const botesPath = path.resolve(process.cwd(), 'src/assets/botes.json');
-      const botesRaw = await fs.readFile(botesPath, 'utf-8');
-      const botes = JSON.parse(botesRaw);
-      res.json({ success: true, data: botes });
-    } catch (error: any) {
-      console.error('❌ [SERVER] Error al leer botes.json:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Error al obtener los botes',
-        details: error.message
-      });
-    }
-  });
+  // ...
 
   return server;
 }
