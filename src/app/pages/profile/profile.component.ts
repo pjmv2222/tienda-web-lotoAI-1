@@ -1509,9 +1509,12 @@ export class ProfileComponent implements OnInit {
     if (this.availableTabs.includes(tabId)) {
       this.activeTab = tabId;
       console.log('📋 [PROFILE] Pestaña activa cambiada a:', this.activeTab);
+      if (tabId === 'plan_basico') {
+        console.log('🟦 [PROFILE] Pestaña Plan Básico seleccionada, forzando recarga de datos y tabla de juegos...');
+        this.loadBasicPlanData();
+      }
     }
   }
-
   /**
    * Obtiene el nombre de display para una pestaña
    */
