@@ -974,7 +974,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
   private setupNavigationListener(): void {
     this.routerSubscription = this.router.events
       .pipe(
-        filter(event => event instanceof NavigationEnd),
+        filter((event): event is NavigationEnd => event instanceof NavigationEnd),
         filter((event: NavigationEnd) => event.url.includes('/profile'))
       )
       .subscribe(() => {
