@@ -1183,6 +1183,16 @@ export class ProfileComponent implements OnInit {
               price: plan.price
             };
           });
+          // Log detallado para depuración
+          console.log('🟢 [PROFILE] activeSubscriptions después del mapeo:');
+          this.activeSubscriptions.forEach((sub, i) => {
+            console.log(`  Plan #${i}:`, {
+              plan_id: sub.plan_id,
+              plan_name: sub.plan_name,
+              is_basic_plan: sub.is_basic_plan,
+              predictions_used: sub.predictions_used
+            });
+          });
         } else {
           this.activeSubscriptions = [];
         }
