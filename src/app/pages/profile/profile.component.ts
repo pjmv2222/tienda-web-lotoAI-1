@@ -1161,11 +1161,15 @@ export class ProfileComponent implements OnInit {
             // Siempre devolver los 7 juegos para el plan básico, aunque todos sean 0
             let predictions_used;
             if (plan.is_basic_plan) {
-              const juegosBackend = (plan.games || []);
+              const juegosBackend = (plan.games || plan.predictions_used || []);
               predictions_used = juegosDefault.map(juego => {
                 const found = juegosBackend.find((g: any) => g.game_id === juego.game_id);
                 return found ? { ...juego, ...found } : juego;
               });
+              // Si por alguna razón predictions_used queda vacío, forzar los 7 juegos default
+              if (!predictions_used || predictions_used.length === 0) {
+                predictions_used = [...juegosDefault];
+              }
             } else {
               predictions_used = plan.games || plan.predictions_used || [];
             }
