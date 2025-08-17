@@ -1097,10 +1097,13 @@ export class ProfileComponent implements OnInit {
           
           console.log('🚨 [PROFILE] activeSubscriptions FINAL:', this.activeSubscriptions);
           
-          // CORRECCIÓN CRÍTICA: SIEMPRE cargar los datos de predicciones del plan básico
-          // porque el método loadBasicPlanData() maneja tanto las suscripciones existentes como los datos por defecto
-          console.log('🔄 [PROFILE] Cargando datos completos del plan básico con predicciones...');
-          this.loadBasicPlanData();
+          // CORRECCIÓN CRÍTICA: Solo cargar datos de predicciones para el plan básico existente
+          // sin sobrescribir las demás suscripciones
+          const basicPlan = this.activeSubscriptions.find(sub => sub.is_basic_plan);
+          if (basicPlan) {
+            console.log('🔄 [PROFILE] Plan básico encontrado, cargando solo datos de predicciones...');
+            this.loadBasicPlanPredictionsOnly();
+          }
           
           console.log('📊 [PROFILE] activeSubscriptions final:', this.activeSubscriptions);
           
@@ -1229,6 +1232,73 @@ export class ProfileComponent implements OnInit {
   // Eliminada: la lógica de predicciones por plan ahora es responsabilidad exclusiva del backend
   private loadBasicPlanPredictions(): void {
     // No hacer nada
+  }
+
+  /**
+   * Carga solo los datos de predicciones para el plan básico existente
+   * sin sobrescribir las demás suscripciones
+   */
+  private loadBasicPlanPredictionsOnly(): void {
+    console.log('🔍 [PROFILE] Cargando solo datos de predicciones para plan básico existente...');
+    
+    if (!isPlatformBrowser(this.platformId)) {
+      console.log('🔍 [PROFILE] Ejecución en servidor - omitiendo carga de datos');
+      return;
+    }
+    
+    this.userPredictionService.getProfilePredictionSummary().subscribe({
+      next: (response) => {
+        console.log('📊 [PROFILE] Respuesta del servidor para predicciones:', response);
+        if (response.success && Array.isArray(response.plans)) {
+          const juegosDefault = [
+            { game_id: 'euromillon', game_name: 'Euromillones', total_allowed: 3, used: 0, remaining: 3 },
+            { game_id: 'primitiva', game_name: 'La Primitiva', total_allowed: 3, used: 0, remaining: 3 },
+            { game_id: 'bonoloto', game_name: 'Bonoloto', total_allowed: 3, used: 0, remaining: 3 },
+            { game_id: 'elgordo', game_name: 'El Gordo', total_allowed: 3, used: 0, remaining: 3 },
+            { game_id: 'eurodreams', game_name: 'EuroDreams', total_allowed: 3, used: 0, remaining: 3 },
+            { game_id: 'lototurf', game_name: 'Lototurf', total_allowed: 3, used: 0, remaining: 3 },
+            { game_id: 'loterianacional', game_name: 'Lotería Nacional', total_allowed: 3, used: 0, remaining: 3 }
+          ];
+          
+          // Buscar datos del plan básico en la respuesta
+          const basicPlanData = response.plans.find((plan: any) => plan.is_basic_plan);
+          if (basicPlanData) {
+            // Encontrar el plan básico en activeSubscriptions y actualizar solo sus predicciones
+            const basicPlanIndex = this.activeSubscriptions.findIndex(sub => sub.is_basic_plan);
+            if (basicPlanIndex !== -1) {
+              const juegosBackend = (basicPlanData.games || basicPlanData.predictions_used || []);
+              const predictions_used = juegosDefault.map(juego => {
+                const found = juegosBackend.find((g: any) => g.game_id === juego.game_id);
+                return found ? { ...juego, ...found } : juego;
+              });
+              
+              // Actualizar solo las predicciones del plan básico existente
+              this.activeSubscriptions[basicPlanIndex] = {
+                ...this.activeSubscriptions[basicPlanIndex],
+                predictions_used: predictions_used
+              };
+              
+              console.log('✅ [PROFILE] Datos de predicciones actualizados para plan básico');
+            }
+          }
+        }
+        this.cdr.markForCheck();
+        this.cdr.detectChanges();
+      },
+      error: (error) => {
+        console.error('❌ [PROFILE] Error cargando predicciones para plan básico:', error);
+        // En caso de error, usar juegos por defecto
+        const basicPlanIndex = this.activeSubscriptions.findIndex(sub => sub.is_basic_plan);
+        if (basicPlanIndex !== -1) {
+          this.activeSubscriptions[basicPlanIndex] = {
+            ...this.activeSubscriptions[basicPlanIndex],
+            predictions_used: this.getDefaultGames()
+          };
+          this.cdr.markForCheck();
+          this.cdr.detectChanges();
+        }
+      }
+    });
   }
 
   private getPlanDisplayName(planId: string | number): string {
