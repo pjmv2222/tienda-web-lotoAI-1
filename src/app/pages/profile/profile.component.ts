@@ -1158,16 +1158,16 @@ export class ProfileComponent implements OnInit {
             { game_id: 'loterianacional', game_name: 'Lotería Nacional', total_allowed: 3, used: 0, remaining: 3 }
           ];
           this.activeSubscriptions = response.plans.map((plan, idx) => {
-            // Usar plan.games como predictions_used para el plan básico
-            let predictions_used = plan.games || plan.predictions_used || [];
+            // Siempre devolver los 7 juegos para el plan básico, aunque todos sean 0
+            let predictions_used;
             if (plan.is_basic_plan) {
-              // Siempre devolver los 7 juegos, aunque todos sean 0
-              // Fusionar datos reales del backend con los juegos por defecto
               const juegosBackend = (plan.games || []);
               predictions_used = juegosDefault.map(juego => {
                 const found = juegosBackend.find((g: any) => g.game_id === juego.game_id);
                 return found ? { ...juego, ...found } : juego;
               });
+            } else {
+              predictions_used = plan.games || plan.predictions_used || [];
             }
             return {
               id: idx,
