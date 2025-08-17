@@ -2,11 +2,11 @@ import { Component, OnInit, ChangeDetectorRef, Inject, PLATFORM_ID, OnDestroy } 
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { Router, RouterLink, NavigationEnd } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
-import { SubscriptionService, Subscription } from '../../services/subscription.service';
+import { SubscriptionService, Subscription as UserSubscription } from '../../services/subscription.service';
 import { UserPredictionService } from '../../services/user-prediction.service';
 import { UserProfile } from '../../models/user.model';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, ValidationErrors } from '@angular/forms';
-import { forkJoin, map, filter, Subscription as RxSubscription } from 'rxjs';
+import { forkJoin, map, filter, Subscription } from 'rxjs';
 
 // Interfaz para mostrar información de suscripciones
 interface UserSubscriptionInfo {
@@ -923,7 +923,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
   availableTabs: string[] = [];
   
   // Suscripción para detectar navegación
-  private routerSubscription: RxSubscription = new RxSubscription();
+  private routerSubscription: Subscription = new Subscription();
 
   constructor(
     private authService: AuthService,
@@ -1121,7 +1121,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
     this.loadingSubscriptions = true;
     
     this.subscriptionService.getUserSubscriptions().subscribe({
-      next: (subscriptions: Subscription[]) => {
+      next: (subscriptions: UserSubscription[]) => {
         console.log('📨 [PROFILE] Respuesta de getUserSubscriptions:', subscriptions);
         console.log('📨 [PROFILE] subscriptions.length:', subscriptions?.length);
         console.log('📨 [PROFILE] Es array?:', Array.isArray(subscriptions));
