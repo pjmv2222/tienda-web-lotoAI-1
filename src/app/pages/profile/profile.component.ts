@@ -120,7 +120,8 @@ interface GamePredictionUsage {
                 <div *ngIf="subscription.is_basic_plan" class="basic-plan-details">
                   <h5 class="predictions-header">Pronósticos disponibles por juego:</h5>
                   <div class="predictions-grid">
-                    <div *ngFor="let game of subscription.predictions_used" class="prediction-card">
+                    <!-- FORZADO: Siempre mostrar tabla de juegos para plan básico -->
+                    <div *ngFor="let game of (subscription.predictions_used && subscription.predictions_used.length > 0 ? subscription.predictions_used : getDefaultGames())" class="prediction-card">
                       <div class="game-info">
                         <span class="game-name">{{game.game_name}}</span>
                         <div class="usage-stats">
@@ -1096,16 +1097,10 @@ export class ProfileComponent implements OnInit {
           
           console.log('🚨 [PROFILE] activeSubscriptions FINAL:', this.activeSubscriptions);
           
-          // CORRECCIÓN CRÍTICA: Si hay un plan básico, cargar los datos de predicciones
-          // Si NO hay plan básico en las suscripciones de la BD, pero debería haberlo, agregarlo
-          const basicPlan = this.activeSubscriptions.find(sub => sub.is_basic_plan);
-          if (basicPlan) {
-            console.log('🔄 [PROFILE] Plan básico encontrado en BD, cargando datos de predicciones...');
-            this.loadBasicPlanPredictions();
-          } else {
-            console.log('🔄 [PROFILE] No hay plan básico en BD, cargando plan básico por defecto...');
-            this.loadBasicPlanDataAndMerge();
-          }
+          // CORRECCIÓN CRÍTICA: SIEMPRE cargar los datos de predicciones del plan básico
+          // porque el método loadBasicPlanData() maneja tanto las suscripciones existentes como los datos por defecto
+          console.log('🔄 [PROFILE] Cargando datos completos del plan básico con predicciones...');
+          this.loadBasicPlanData();
           
           console.log('📊 [PROFILE] activeSubscriptions final:', this.activeSubscriptions);
           
@@ -1441,6 +1436,21 @@ export class ProfileComponent implements OnInit {
   isProPlan(subscription: UserSubscriptionInfo): boolean {
     const tabId = this.getTabIdFromPlanId(subscription.plan_id);
     return tabId === 'pro';
+  }
+
+  /**
+   * Obtiene los juegos por defecto para el plan básico
+   */
+  getDefaultGames(): GamePredictionUsage[] {
+    return [
+      { game_id: 'euromillon', game_name: 'Euromillones', total_allowed: 3, used: 0, remaining: 3 },
+      { game_id: 'primitiva', game_name: 'La Primitiva', total_allowed: 3, used: 0, remaining: 3 },
+      { game_id: 'bonoloto', game_name: 'Bonoloto', total_allowed: 3, used: 0, remaining: 3 },
+      { game_id: 'elgordo', game_name: 'El Gordo', total_allowed: 3, used: 0, remaining: 3 },
+      { game_id: 'eurodreams', game_name: 'EuroDreams', total_allowed: 3, used: 0, remaining: 3 },
+      { game_id: 'lototurf', game_name: 'Lototurf', total_allowed: 3, used: 0, remaining: 3 },
+      { game_id: 'loterianacional', game_name: 'Lotería Nacional', total_allowed: 3, used: 0, remaining: 3 }
+    ];
   }
 
   /**
