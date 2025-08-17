@@ -1,12 +1,12 @@
-import { Component, OnInit, ChangeDetectorRef, Inject, PLATFORM_ID } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, Inject, PLATFORM_ID, OnDestroy } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
-import { Router, RouterLink } from '@angular/router';
+import { Router, RouterLink, NavigationEnd } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { SubscriptionService, Subscription } from '../../services/subscription.service';
 import { UserPredictionService } from '../../services/user-prediction.service';
 import { UserProfile } from '../../models/user.model';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, ValidationErrors } from '@angular/forms';
-import { forkJoin, map } from 'rxjs';
+import { forkJoin, map, filter, Subscription as RxSubscription } from 'rxjs';
 
 // Interfaz para mostrar información de suscripciones
 interface UserSubscriptionInfo {
@@ -118,7 +118,13 @@ interface GamePredictionUsage {
                 
                 <!-- Información específica para Plan Básico -->
                 <div *ngIf="subscription.is_basic_plan" class="basic-plan-details">
-                  <h5 class="predictions-header">Pronósticos disponibles por juego:</h5>
+                  <div class="predictions-header-container">
+                    <h5 class="predictions-header">Pronósticos disponibles por juego:</h5>
+                    <button class="btn-refresh" (click)="refreshPredictionData()" [disabled]="loadingSubscriptions" title="Actualizar datos de predicciones">
+                      <span *ngIf="!loadingSubscriptions">🔄 Actualizar</span>
+                      <span *ngIf="loadingSubscriptions">Cargando...</span>
+                    </button>
+                  </div>
                   <div class="predictions-grid">
                     <!-- FORZADO: Siempre mostrar tabla de juegos para plan básico -->
                     <div *ngFor="let game of (subscription.predictions_used && subscription.predictions_used.length > 0 ? subscription.predictions_used : getDefaultGames())" class="prediction-card">
@@ -708,11 +714,44 @@ interface GamePredictionUsage {
       margin-top: 1rem;
     }
 
+    .predictions-header-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 1rem 0 0.75rem 0;
+    }
+
     .predictions-header {
       color: #333;
-      margin: 1rem 0 0.75rem 0;
+      margin: 0;
       font-size: 1.1rem;
       font-weight: 600;
+    }
+
+    .btn-refresh {
+      background: linear-gradient(135deg, #007bff, #0056b3);
+      color: white;
+      border: none;
+      padding: 0.4rem 0.8rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 4px rgba(0, 123, 255, 0.2);
+    }
+
+    .btn-refresh:hover:not(:disabled) {
+      background: linear-gradient(135deg, #0056b3, #004085);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
+    }
+
+    .btn-refresh:disabled {
+      background: #6c757d;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
     }
 
     .predictions-grid {
@@ -869,7 +908,7 @@ interface GamePredictionUsage {
     }
   `]
 })
-export class ProfileComponent implements OnInit {
+export class ProfileComponent implements OnInit, OnDestroy {
   userProfile: UserProfile | null = null;
   isEditing = false;
   isChangingPassword = false;
@@ -882,6 +921,9 @@ export class ProfileComponent implements OnInit {
   // Variables para el sistema de pestañas
   activeTab: string = 'overview';
   availableTabs: string[] = [];
+  
+  // Suscripción para detectar navegación
+  private routerSubscription: RxSubscription = new RxSubscription();
 
   constructor(
     private authService: AuthService,
@@ -913,6 +955,43 @@ export class ProfileComponent implements OnInit {
     if (isPlatformBrowser(this.platformId)) {
       this.loadUserProfile();
       this.loadUserSubscriptions();
+      
+      // ✅ NUEVA FUNCIONALIDAD: Detectar navegación al perfil para recargar datos
+      this.setupNavigationListener();
+    }
+  }
+
+  ngOnDestroy() {
+    if (this.routerSubscription) {
+      this.routerSubscription.unsubscribe();
+    }
+  }
+
+  /**
+   * Configura un listener para detectar cuando el usuario navega al perfil
+   * y recargar automáticamente los datos de predicciones actualizados
+   */
+  private setupNavigationListener(): void {
+    this.routerSubscription = this.router.events
+      .pipe(
+        filter(event => event instanceof NavigationEnd),
+        filter((event: NavigationEnd) => event.url.includes('/profile'))
+      )
+      .subscribe(() => {
+        console.log('🔄 [PROFILE] Navegación detectada al perfil, recargando datos...');
+        this.refreshPredictionData();
+      });
+  }
+
+  /**
+   * Recarga específicamente los datos de predicciones sin recargar todo el perfil
+   */
+  refreshPredictionData(): void {
+    console.log('🔄 [PROFILE] Recargando datos de predicciones...');
+    
+    // Solo recargar las predicciones del plan básico sin afectar las otras suscripciones
+    if (this.activeSubscriptions && this.activeSubscriptions.length > 0) {
+      this.loadBasicPlanPredictionsOnly();
     }
   }
 
@@ -1593,9 +1672,9 @@ export class ProfileComponent implements OnInit {
     if (this.availableTabs.includes(tabId)) {
       this.activeTab = tabId;
       console.log('📋 [PROFILE] Pestaña activa cambiada a:', this.activeTab);
-      if (tabId === 'plan_basico') {
-        console.log('🟦 [PROFILE] Pestaña Plan Básico seleccionada, forzando recarga de datos y tabla de juegos...');
-        this.loadBasicPlanData();
+      if (tabId === 'basic') {
+        console.log('🟦 [PROFILE] Pestaña Plan Básico seleccionada, forzando recarga de datos actualizados...');
+        this.refreshPredictionData();
       }
     }
   }
