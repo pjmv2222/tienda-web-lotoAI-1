@@ -4,7 +4,7 @@ import { AuthService } from '../../services/auth.service';
 import { User } from '../../models/user.model';
 import { RouterModule, Router } from '@angular/router';
 import { Subscription, Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { takeUntil, distinctUntilChanged } from 'rxjs/operators';
 import { CarouselModule } from 'ngx-bootstrap/carousel';
 import { environment } from '../../../environments/environment';
 import { SubscriptionService } from '../../services/subscription.service';
@@ -114,9 +114,17 @@ export class HomeComponent implements OnInit, OnDestroy {
 
     // Verificar si el servicio de autenticación está disponible
     if (this.authService && this.authService.currentUser) {
-      // Suscribirse al usuario actual
+      // Suscribirse al usuario actual con protección contra bucles
       this.authSubscription = this.authService.currentUser
-        .pipe(takeUntil(this.destroy$))
+        .pipe(
+          takeUntil(this.destroy$),
+          distinctUntilChanged((prev, curr) => {
+            // Solo ejecutar si realmente cambió el usuario
+            const prevId = prev?.id;
+            const currId = curr?.id;
+            return prevId === currId;
+          })
+        )
         .subscribe({
           next: (user) => {
             this.currentUser = user;
