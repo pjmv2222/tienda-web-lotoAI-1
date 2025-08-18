@@ -1,6 +1,6 @@
 import express from 'express';
 import { authenticateToken } from '../middlewares/auth.middleware';
-import { getPrediction, getServerStatus } from '../controllers/prediction.controller';
+import { getPrediction, getServerStatus, getAllPredictionCounts } from '../controllers/prediction.controller';
 
 const router = express.Router();
 
@@ -8,6 +8,9 @@ const router = express.Router();
 router.get('/test', (req, res) => {
   res.json({ message: 'API de predicciones funcionando correctamente' });
 });
+
+// Ruta para obtener el resumen de predicciones del usuario (profile-summary)
+router.get('/profile-summary', authenticateToken, getAllPredictionCounts);
 
 // Ruta para obtener el estado de los servidores Python
 router.get('/servers/status', authenticateToken, getServerStatus);

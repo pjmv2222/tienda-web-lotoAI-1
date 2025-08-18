@@ -787,6 +787,9 @@ export const PredictionController = {
   }
 };
 
+// Exportaciones directas para compatibilidad con las rutas
+export const getAllPredictionCounts = PredictionController.getAllPredictionCounts;
+
 /**
  * Función auxiliar para obtener el plan actual del usuario
  */
