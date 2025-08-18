@@ -656,11 +656,22 @@ export const PredictionController = {
 
       console.log(`[DEBUG] getAllPredictionCounts - UserId: ${userId}`);
 
-      // Obtener el plan actual del usuario
-      const userPlan = await getUserCurrentPlan(userId);
-      const limits = getPredictionLimitsByPlan(userPlan);
+      // Verificar si se especifica un plan específico en los query params
+      const requestedPlan = req.query.plan as string;
       
-      console.log(`[DEBUG] getAllPredictionCounts - Plan del usuario: ${userPlan}`);
+      // Obtener el plan a usar: el solicitado o el plan actual del usuario
+      let planToUse: string;
+      if (requestedPlan && ['basic', 'monthly', 'pro'].includes(requestedPlan)) {
+        planToUse = requestedPlan;
+        console.log(`[DEBUG] getAllPredictionCounts - Usando plan solicitado: ${planToUse}`);
+      } else {
+        planToUse = await getUserCurrentPlan(userId);
+        console.log(`[DEBUG] getAllPredictionCounts - Usando plan actual del usuario: ${planToUse}`);
+      }
+      
+      const limits = getPredictionLimitsByPlan(planToUse);
+      
+      console.log(`[DEBUG] getAllPredictionCounts - Plan a usar: ${planToUse}`);
       console.log(`[DEBUG] getAllPredictionCounts - Límites por plan:`, limits);
       
       // Obtener conteos actuales

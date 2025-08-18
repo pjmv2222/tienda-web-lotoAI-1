@@ -1,6 +1,6 @@
 export const environment = {
   production: false,
-  apiUrl: '/api',
+  apiUrl: 'http://localhost:3000/api',
   frontendUrl: 'http://localhost:4000',
   iaApiUrl: 'http://localhost:5000',
   useMockData: false,
