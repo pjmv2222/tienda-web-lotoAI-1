@@ -125,6 +125,87 @@ router.get('/summary', authenticateToken, async (req, res) => {
   }
 });
 
+// Endpoint específico para el perfil - formato compatible con el frontend del perfil
+router.get('/profile-summary', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    
+    console.log(`🔍 [PROFILE-SUMMARY] Obteniendo resumen de perfil para usuario ${userId}`);
+
+    // Consultar todas las predicciones del usuario
+    const query = `
+      SELECT 
+        game_type,
+        COUNT(*) as used_count
+      FROM user_predictions 
+      WHERE user_id = $1 
+      GROUP BY game_type
+    `;
+    
+    const result = await pool.query(query, [userId]);
+    
+    // Juegos disponibles del Plan Básico
+    const availableGames = [
+      'euromillon', 'primitiva', 'bonoloto', 'elgordo', 
+      'eurodreams', 'lototurf', 'loterianacional'
+    ];
+    
+    const gameNames = {
+      'euromillon': 'Euromillones',
+      'primitiva': 'La Primitiva',
+      'bonoloto': 'Bonoloto',
+      'elgordo': 'El Gordo',
+      'eurodreams': 'EuroDreams',
+      'lototurf': 'Lototurf',
+      'loterianacional': 'Lotería Nacional'
+    };
+    
+    // Mapear resultados con límites del plan básico
+    const gamesData = availableGames.map(gameType => {
+      const gameUsage = result.rows.find(row => row.game_type === gameType);
+      const used = gameUsage ? parseInt(gameUsage.used_count) : 0;
+      const maxAllowed = 3;
+      
+      return {
+        game_id: gameType,
+        game_name: gameNames[gameType] || gameType,
+        total_allowed: maxAllowed,
+        used: used,
+        remaining: maxAllowed - used
+      };
+    });
+    
+    console.log('📊 [PROFILE-SUMMARY] Datos de predicciones preparados:', gamesData);
+
+    // Respuesta en el formato esperado por el frontend del perfil
+    res.json({
+      success: true,
+      plans: [
+        {
+          plan_id: 'basic',
+          plan_name: 'Plan Básico',
+          is_basic_plan: true,
+          status: 'active',
+          status_display: 'Activo',
+          created_at: null,
+          expires_at: null,
+          price: '1,22€',
+          predictions_used: gamesData,
+          games: gamesData // Compatibilidad con ambos formatos
+        }
+      ]
+    });
+    
+  } catch (error) {
+    console.error('❌ [PROFILE-SUMMARY] Error al obtener resumen de perfil:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Error interno del servidor',
+      message: error.message 
+    });
+  }
+});
+
 // Endpoint proxy para predicciones - redirige al servidor IA
 router.post('/:juego', authenticateToken, async (req, res) => {
   try {
