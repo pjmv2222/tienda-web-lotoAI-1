@@ -32,6 +32,10 @@ export class SubscriptionService {
   private cacheTimestamp: number = 0;
   private readonly CACHE_DURATION = 30000; // 30 segundos
   private currentUserId: string | null = null;
+  
+  // Cache específico para hasActivePlan
+  private planCache: Map<string, { result: boolean, timestamp: number }> = new Map();
+  private readonly PLAN_CACHE_DURATION = 10000; // 10 segundos
 
   constructor(
     private http: HttpClient,
@@ -132,7 +136,7 @@ export class SubscriptionService {
 
   /**
    * Verifica si el usuario tiene una suscripción activa de un plan específico
-   * CORREGIDO: Ahora maneja múltiples suscripciones por usuario
+   * MEJORADO: Con caché para evitar múltiples llamadas
    */
   hasActivePlan(planId: string): Observable<boolean> {
     const currentUser = this.authService.currentUserValue;
@@ -141,7 +145,18 @@ export class SubscriptionService {
       return of(false);
     }
 
-    console.log(`hasActivePlan: Verificando plan '${planId}' para usuario ${currentUser.id}`);
+    // Crear clave de caché única para usuario y plan
+    const cacheKey = `${currentUser.id}-${planId}`;
+    const now = Date.now();
+    
+    // Verificar si hay resultado en caché válido
+    const cached = this.planCache.get(cacheKey);
+    if (cached && (now - cached.timestamp) < this.PLAN_CACHE_DURATION) {
+      console.log(`✅ [SUBSCRIPTION-SERVICE] hasActivePlan('${planId}') - usando caché: ${cached.result}`);
+      return of(cached.result);
+    }
+
+    console.log(`🔍 [SUBSCRIPTION-SERVICE] hasActivePlan('${planId}') - consultando servidor...`);
 
     // Ahora, para cualquier plan (incluido el básico), solo se considera activo si existe en la base de datos
     return this.getUserSubscriptions().pipe(
@@ -159,6 +174,10 @@ export class SubscriptionService {
           const planMatches = hasMatchingPlanId || hasMatchingPlanType;
           return isActive && planMatches;
         });
+        
+        // Guardar en caché
+        this.planCache.set(cacheKey, { result: hasMatchingPlan, timestamp: now });
+        
         console.log(`hasActivePlan: ¿Usuario tiene plan '${planId}' activo? ${hasMatchingPlan}`);
         return hasMatchingPlan;
       }),
@@ -166,6 +185,8 @@ export class SubscriptionService {
         console.error('hasActivePlan: Error al verificar plan específico:', error);
         console.error('hasActivePlan: Status:', error.status);
         console.error('hasActivePlan: Message:', error.message);
+        // En caso de error, guardar false en caché por un tiempo muy corto
+        this.planCache.set(cacheKey, { result: false, timestamp: now });
         return of(false);
       })
     );
@@ -230,11 +251,12 @@ export class SubscriptionService {
   }
 
   /**
-   * Limpia el caché de suscripciones
+   * Limpia todos los cachés de suscripciones y planes
    */
   public clearSubscriptionsCache(): void {
-    console.log('🧹 [SUBSCRIPTION-SERVICE] Limpiando caché de suscripciones');
+    console.log('🧹 [SUBSCRIPTION-SERVICE] Limpiando todos los cachés');
     this.subscriptionsCache$ = null;
+    this.planCache.clear();
     this.cacheTimestamp = 0;
     this.currentUserId = null;
   }
