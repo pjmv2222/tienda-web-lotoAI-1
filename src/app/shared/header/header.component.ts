@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 import { HttpClientModule } from '@angular/common/http';
@@ -6,6 +6,8 @@ import { RouterLink, Router } from '@angular/router';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
 import { User } from '../../models/user.model';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
 @Component({
   selector: 'app-header',
@@ -14,10 +16,11 @@ import { User } from '../../models/user.model';
   templateUrl: './header.component.html',
   styleUrls: ['./header.component.css']
 })
-export class HeaderComponent implements OnInit {
+export class HeaderComponent implements OnInit, OnDestroy {
   private http = inject(HttpClient);
   private router = inject(Router);
   private authService = inject(AuthService);
+  private destroy$ = new Subject<void>();
 
   botes: { [key: string]: string } = {};
   loading = true;
@@ -38,18 +41,25 @@ export class HeaderComponent implements OnInit {
     this.cargarBotes();
     
     // Suscribirse al estado del usuario con debugging
-    this.authService.currentUser.subscribe(user => {
-      console.log('Header - Estado del usuario actualizado:', {
-        user: user ? {
-          id: user.id,
-          email: user.email,
-          nombre: user.nombre,
-          name: user.name
-        } : null,
-        hasUser: !!user
+    this.authService.currentUser
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(user => {
+        console.log('Header - Estado del usuario actualizado:', {
+          user: user ? {
+            id: user.id,
+            email: user.email,
+            nombre: user.nombre,
+            name: user.name
+          } : null,
+          hasUser: !!user
+        });
+        this.currentUser = user;
       });
-      this.currentUser = user;
-    });
+  }
+
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   async cargarBotes() {

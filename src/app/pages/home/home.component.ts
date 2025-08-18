@@ -3,7 +3,8 @@ import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
 import { User } from '../../models/user.model';
 import { RouterModule, Router } from '@angular/router';
-import { Subscription } from 'rxjs';
+import { Subscription, Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 import { CarouselModule } from 'ngx-bootstrap/carousel';
 import { environment } from '../../../environments/environment';
 import { SubscriptionService } from '../../services/subscription.service';
@@ -21,6 +22,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   hasSubscriptions: boolean = false;
   activePlanType: string = '';
   private authSubscription: Subscription | null = null;
+  private destroy$ = new Subject<void>();
   isBrowser: boolean;
   isProduction: boolean = environment.production; // Variable para controlar el modo de producción
   userId: string | null = null;
@@ -75,27 +77,35 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.loadUserSubscriptions();
 
     // Verificar suscripción activa usando el servicio
-    this.subscriptionService.hasActiveSubscription().subscribe({
-      next: (hasActive) => {
-        console.log('¿Tiene suscripción activa?', hasActive);
+    this.subscriptionService.hasActiveSubscription()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (hasActive) => {
+          console.log('¿Tiene suscripción activa?', hasActive);
 
-        // Verificar planes específicos
-        this.subscriptionService.hasActivePlan('basic').subscribe(hasBasic => {
-          console.log('¿Tiene plan básico activo?', hasBasic);
-        });
+          // Verificar planes específicos
+          this.subscriptionService.hasActivePlan('basic')
+            .pipe(takeUntil(this.destroy$))
+            .subscribe(hasBasic => {
+              console.log('¿Tiene plan básico activo?', hasBasic);
+            });
 
-        this.subscriptionService.hasActivePlan('monthly').subscribe(hasMonthly => {
-          console.log('¿Tiene plan mensual activo?', hasMonthly);
-        });
+          this.subscriptionService.hasActivePlan('monthly')
+            .pipe(takeUntil(this.destroy$))
+            .subscribe(hasMonthly => {
+              console.log('¿Tiene plan mensual activo?', hasMonthly);
+            });
 
-        this.subscriptionService.hasActivePlan('pro').subscribe(hasPro => {
-          console.log('¿Tiene plan pro activo?', hasPro);
-        });
-      },
-      error: (error) => {
-        console.error('Error al verificar suscripción:', error);
-      }
-    });
+          this.subscriptionService.hasActivePlan('pro')
+            .pipe(takeUntil(this.destroy$))
+            .subscribe(hasPro => {
+              console.log('¿Tiene plan pro activo?', hasPro);
+            });
+        },
+        error: (error) => {
+          console.error('Error al verificar suscripción:', error);
+        }
+      });
   }
 
   ngOnInit(): void {
@@ -105,14 +115,16 @@ export class HomeComponent implements OnInit, OnDestroy {
     // Verificar si el servicio de autenticación está disponible
     if (this.authService && this.authService.currentUser) {
       // Suscribirse al usuario actual
-      this.authSubscription = this.authService.currentUser.subscribe({
-        next: (user) => {
-          this.currentUser = user;
-          
-          if (this.currentUser) {
-            this.userId = this.currentUser.id;
+      this.authSubscription = this.authService.currentUser
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: (user) => {
+            this.currentUser = user;
             
-            // Obtener información completa del usuario desde el backend
+            if (this.currentUser) {
+              this.userId = this.currentUser.id;
+              
+              // Obtener información completa del usuario desde el backend
             this.loadUserProfile();
             
             // Verificar suscripciones usando SubscriptionService
@@ -133,7 +145,10 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    // Cancelar la suscripción para evitar memory leaks
+    // Cancelar todas las suscripciones para evitar memory leaks
+    this.destroy$.next();
+    this.destroy$.complete();
+    
     if (this.authSubscription) {
       this.authSubscription.unsubscribe();
     }
@@ -208,21 +223,23 @@ export class HomeComponent implements OnInit, OnDestroy {
   private loadUserProfile(): void {
     if (!this.currentUser) return;
 
-    this.authService.getCurrentUser().subscribe({
-      next: (response) => {
-        if (response.user) {
-          // Actualizar la información del usuario
-          this.currentUser = {
-            ...this.currentUser,
-            ...response.user
-          };
-          console.log('Información del usuario actualizada:', this.currentUser);
+    this.authService.getCurrentUser()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          if (response.user) {
+            // Actualizar la información del usuario
+            this.currentUser = {
+              ...this.currentUser,
+              ...response.user
+            };
+            console.log('Información del usuario actualizada:', this.currentUser);
+          }
+        },
+        error: (error) => {
+          console.error('Error al cargar el perfil del usuario:', error);
         }
-      },
-      error: (error) => {
-        console.error('Error al cargar el perfil del usuario:', error);
-      }
-    });
+      });
   }
 
   /**
@@ -232,54 +249,60 @@ export class HomeComponent implements OnInit, OnDestroy {
     if (!this.currentUser) return;
 
     // Verificar cada tipo de plan para determinar cuál tiene activo
-    this.subscriptionService.hasActivePlan('basic').subscribe({
-      next: (hasBasic) => {
-        if (hasBasic) {
-          this.hasSubscriptions = true;
-          this.activePlanType = 'Plan Básico';
-          return;
-        }
-        
-        // Si no tiene básico, verificar mensual
-        this.subscriptionService.hasActivePlan('monthly').subscribe({
-          next: (hasMonthly) => {
-            if (hasMonthly) {
-              this.hasSubscriptions = true;
-              this.activePlanType = 'Plan Mensual';
-              return;
-            }
-            
-            // Si no tiene mensual, verificar pro
-            this.subscriptionService.hasActivePlan('pro').subscribe({
-              next: (hasPro) => {
-                if (hasPro) {
+    this.subscriptionService.hasActivePlan('basic')
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (hasBasic) => {
+          if (hasBasic) {
+            this.hasSubscriptions = true;
+            this.activePlanType = 'Plan Básico';
+            return;
+          }
+          
+          // Si no tiene básico, verificar mensual
+          this.subscriptionService.hasActivePlan('monthly')
+            .pipe(takeUntil(this.destroy$))
+            .subscribe({
+              next: (hasMonthly) => {
+                if (hasMonthly) {
                   this.hasSubscriptions = true;
-                  this.activePlanType = 'Plan Pro';
-                } else {
-                  // No tiene ningún plan activo
-                  this.hasSubscriptions = false;
-                  this.activePlanType = '';
+                  this.activePlanType = 'Plan Mensual';
+                  return;
                 }
+                
+                // Si no tiene mensual, verificar pro
+                this.subscriptionService.hasActivePlan('pro')
+                  .pipe(takeUntil(this.destroy$))
+                  .subscribe({
+                    next: (hasPro) => {
+                      if (hasPro) {
+                        this.hasSubscriptions = true;
+                        this.activePlanType = 'Plan Pro';
+                      } else {
+                        // No tiene ningún plan activo
+                        this.hasSubscriptions = false;
+                        this.activePlanType = '';
+                      }
+                    },
+                    error: (error) => {
+                      console.error('Error al verificar plan pro:', error);
+                      this.hasSubscriptions = false;
+                      this.activePlanType = '';
+                    }
+                  });
               },
               error: (error) => {
-                console.error('Error al verificar plan pro:', error);
+                console.error('Error al verificar plan mensual:', error);
                 this.hasSubscriptions = false;
                 this.activePlanType = '';
               }
             });
-          },
-          error: (error) => {
-            console.error('Error al verificar plan mensual:', error);
-            this.hasSubscriptions = false;
-            this.activePlanType = '';
-          }
-        });
-      },
-      error: (error) => {
-        console.error('Error al verificar plan básico:', error);
-        this.hasSubscriptions = false;
-        this.activePlanType = '';
-      }
-    });
+        },
+        error: (error) => {
+          console.error('Error al verificar plan básico:', error);
+          this.hasSubscriptions = false;
+          this.activePlanType = '';
+        }
+      });
   }
 }
