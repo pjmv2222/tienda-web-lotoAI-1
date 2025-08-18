@@ -1337,6 +1337,11 @@ export class ProfileComponent implements OnInit, OnDestroy {
     this.userPredictionService.getProfilePredictionSummary().subscribe({
       next: (response) => {
         console.log('📊 [PROFILE] Respuesta completa del servidor para predicciones:', JSON.stringify(response, null, 2));
+        console.log('📊 [PROFILE] Tipo de response:', typeof response);
+        console.log('📊 [PROFILE] response.success:', response.success);
+        console.log('📊 [PROFILE] response.plans:', response.plans);
+        console.log('📊 [PROFILE] Array.isArray(response.plans):', Array.isArray(response.plans));
+        
         this.loadingSubscriptions = false;
         if (response.success && Array.isArray(response.plans)) {
           const juegosDefault = [
