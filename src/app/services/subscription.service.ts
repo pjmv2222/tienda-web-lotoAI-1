@@ -1,6 +1,6 @@
 import { Injectable, Inject, PLATFORM_ID } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable, of, map, catchError, switchMap } from 'rxjs';
+import { Observable, of, map, catchError, switchMap, tap, shareReplay } from 'rxjs';
 import { isPlatformBrowser } from '@angular/common';
 import { environment } from '../../environments/environment';
 import { AuthService } from './auth.service';
@@ -26,6 +26,12 @@ export interface Payment {
 })
 export class SubscriptionService {
   private apiUrl = environment.apiUrl;
+  
+  // Cache para evitar múltiples llamadas API
+  private subscriptionsCache$: Observable<Subscription[]> | null = null;
+  private cacheTimestamp: number = 0;
+  private readonly CACHE_DURATION = 30000; // 30 segundos
+  private currentUserId: string | null = null;
 
   constructor(
     private http: HttpClient,
@@ -177,10 +183,27 @@ export class SubscriptionService {
       return of([]);
     }
 
+    // Verificar si el usuario cambió o si el caché expiró
+    const now = Date.now();
+    const cacheExpired = (now - this.cacheTimestamp) > this.CACHE_DURATION;
+    const userChanged = this.currentUserId !== currentUser.id;
+
+    if (this.subscriptionsCache$ && !cacheExpired && !userChanged) {
+      console.log('🎯 [SUBSCRIPTION-SERVICE] Usando caché de suscripciones');
+      return this.subscriptionsCache$;
+    }
+
+    // Limpiar caché si el usuario cambió
+    if (userChanged) {
+      console.log('👤 [SUBSCRIPTION-SERVICE] Usuario cambió, limpiando caché');
+      this.subscriptionsCache$ = null;
+      this.currentUserId = currentUser.id;
+    }
+
     const url = `${this.apiUrl}/subscriptions/user/${currentUser.id}`;
     console.log('🔍 [SUBSCRIPTION-SERVICE] Llamando a URL:', url);
 
-    return this.http.get<any>(url, {
+    this.subscriptionsCache$ = this.http.get<any>(url, {
       headers: this.getAuthHeaders()
     }).pipe(
       map(response => {
@@ -188,13 +211,32 @@ export class SubscriptionService {
         console.log('📨 [SUBSCRIPTION-SERVICE] response.subscriptions:', response.subscriptions);
         return response.subscriptions || [];
       }),
+      tap(() => {
+        this.cacheTimestamp = now;
+        console.log('✅ [SUBSCRIPTION-SERVICE] Caché actualizado');
+      }),
+      shareReplay(1), // Compartir la misma respuesta entre múltiples suscriptores
       catchError(error => {
         console.error('❌ [SUBSCRIPTION-SERVICE] Error al obtener suscripciones:', error);
         console.error('❌ [SUBSCRIPTION-SERVICE] Error status:', error.status);
         console.error('❌ [SUBSCRIPTION-SERVICE] Error message:', error.message);
+        // Limpiar caché en caso de error
+        this.subscriptionsCache$ = null;
         return of([]);
       })
     );
+
+    return this.subscriptionsCache$;
+  }
+
+  /**
+   * Limpia el caché de suscripciones
+   */
+  public clearSubscriptionsCache(): void {
+    console.log('🧹 [SUBSCRIPTION-SERVICE] Limpiando caché de suscripciones');
+    this.subscriptionsCache$ = null;
+    this.cacheTimestamp = 0;
+    this.currentUserId = null;
   }
 
   /**
