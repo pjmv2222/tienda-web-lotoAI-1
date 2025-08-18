@@ -972,13 +972,14 @@ export class ProfileComponent implements OnInit, OnDestroy {
    * y recargar automáticamente los datos de predicciones actualizados
    */
   private setupNavigationListener(): void {
+    console.log('🔄 [PROFILE] Configurando listener de navegación...');
     this.routerSubscription = this.router.events
       .pipe(
         filter((event): event is NavigationEnd => event instanceof NavigationEnd),
         filter((event: NavigationEnd) => event.url.includes('/profile'))
       )
-      .subscribe(() => {
-        console.log('🔄 [PROFILE] Navegación detectada al perfil, recargando datos...');
+      .subscribe((event) => {
+        console.log('🔄 [PROFILE] Navegación detectada al perfil, URL:', event.url);
         this.refreshPredictionData();
       });
   }
@@ -988,10 +989,15 @@ export class ProfileComponent implements OnInit, OnDestroy {
    */
   refreshPredictionData(): void {
     console.log('🔄 [PROFILE] Recargando datos de predicciones...');
+    console.log('🔄 [PROFILE] activeSubscriptions.length:', this.activeSubscriptions?.length);
+    console.log('🔄 [PROFILE] activeSubscriptions:', this.activeSubscriptions);
     
     // Solo recargar las predicciones del plan básico sin afectar las otras suscripciones
     if (this.activeSubscriptions && this.activeSubscriptions.length > 0) {
+      console.log('🔄 [PROFILE] Llamando a loadBasicPlanPredictionsOnly...');
       this.loadBasicPlanPredictionsOnly();
+    } else {
+      console.log('⚠️ [PROFILE] No hay suscripciones activas para recargar');
     }
   }
 
@@ -1325,9 +1331,13 @@ export class ProfileComponent implements OnInit, OnDestroy {
       return;
     }
     
+    this.loadingSubscriptions = true;
+    console.log('🔍 [PROFILE] Marcando loading como true...');
+    
     this.userPredictionService.getProfilePredictionSummary().subscribe({
       next: (response) => {
-        console.log('📊 [PROFILE] Respuesta del servidor para predicciones:', response);
+        console.log('📊 [PROFILE] Respuesta completa del servidor para predicciones:', JSON.stringify(response, null, 2));
+        this.loadingSubscriptions = false;
         if (response.success && Array.isArray(response.plans)) {
           const juegosDefault = [
             { game_id: 'euromillon', game_name: 'Euromillones', total_allowed: 3, used: 0, remaining: 3 },
@@ -1341,15 +1351,23 @@ export class ProfileComponent implements OnInit, OnDestroy {
           
           // Buscar datos del plan básico en la respuesta
           const basicPlanData = response.plans.find((plan: any) => plan.is_basic_plan);
+          console.log('🔍 [PROFILE] Plan básico encontrado en respuesta:', basicPlanData);
+          
           if (basicPlanData) {
             // Encontrar el plan básico en activeSubscriptions y actualizar solo sus predicciones
             const basicPlanIndex = this.activeSubscriptions.findIndex(sub => sub.is_basic_plan);
+            console.log('🔍 [PROFILE] Índice del plan básico en activeSubscriptions:', basicPlanIndex);
+            
             if (basicPlanIndex !== -1) {
               const juegosBackend = (basicPlanData.games || basicPlanData.predictions_used || []);
+              console.log('🔍 [PROFILE] Juegos del backend:', juegosBackend);
+              
               const predictions_used = juegosDefault.map(juego => {
                 const found = juegosBackend.find((g: any) => g.game_id === juego.game_id);
                 return found ? { ...juego, ...found } : juego;
               });
+              
+              console.log('🔍 [PROFILE] Predicciones procesadas:', predictions_used);
               
               // Actualizar solo las predicciones del plan básico existente
               this.activeSubscriptions[basicPlanIndex] = {
@@ -1358,7 +1376,12 @@ export class ProfileComponent implements OnInit, OnDestroy {
               };
               
               console.log('✅ [PROFILE] Datos de predicciones actualizados para plan básico');
+              console.log('✅ [PROFILE] Plan básico actualizado:', this.activeSubscriptions[basicPlanIndex]);
+            } else {
+              console.log('⚠️ [PROFILE] No se encontró plan básico en activeSubscriptions');
             }
+          } else {
+            console.log('⚠️ [PROFILE] No se encontró plan básico en la respuesta del servidor');
           }
         }
         this.cdr.markForCheck();
@@ -1366,6 +1389,8 @@ export class ProfileComponent implements OnInit, OnDestroy {
       },
       error: (error) => {
         console.error('❌ [PROFILE] Error cargando predicciones para plan básico:', error);
+        console.error('❌ [PROFILE] Detalles del error:', JSON.stringify(error, null, 2));
+        this.loadingSubscriptions = false;
         // En caso de error, usar juegos por defecto
         const basicPlanIndex = this.activeSubscriptions.findIndex(sub => sub.is_basic_plan);
         if (basicPlanIndex !== -1) {
