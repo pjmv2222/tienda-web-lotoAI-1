@@ -1339,11 +1339,12 @@ export class ProfileComponent implements OnInit, OnDestroy {
         console.log('📊 [PROFILE] Respuesta completa del servidor para predicciones:', JSON.stringify(response, null, 2));
         console.log('📊 [PROFILE] Tipo de response:', typeof response);
         console.log('📊 [PROFILE] response.success:', response.success);
-        console.log('📊 [PROFILE] response.plans:', response.plans);
-        console.log('📊 [PROFILE] Array.isArray(response.plans):', Array.isArray(response.plans));
+        console.log('📊 [PROFILE] response.data:', response.data);
+        console.log('📊 [PROFILE] response.data.games:', response.data?.games);
+        console.log('📊 [PROFILE] Array.isArray(response.data?.games):', Array.isArray(response.data?.games));
         
         this.loadingSubscriptions = false;
-        if (response.success && Array.isArray(response.plans)) {
+        if (response.success && response.data && Array.isArray(response.data.games)) {
           const juegosDefault = [
             { game_id: 'euromillon', game_name: 'Euromillones', total_allowed: 3, used: 0, remaining: 3 },
             { game_id: 'primitiva', game_name: 'La Primitiva', total_allowed: 3, used: 0, remaining: 3 },
@@ -1354,21 +1355,20 @@ export class ProfileComponent implements OnInit, OnDestroy {
             { game_id: 'loterianacional', game_name: 'Lotería Nacional', total_allowed: 3, used: 0, remaining: 3 }
           ];
           
-          // Buscar datos del plan básico en la respuesta
-          const basicPlanData = response.plans.find((plan: any) => plan.is_basic_plan);
-          console.log('🔍 [PROFILE] Plan básico encontrado en respuesta:', basicPlanData);
+          // Los datos del backend están en response.data.games
+          const gamesFromBackend = response.data.games;
+          console.log('🔍 [PROFILE] Juegos del backend:', gamesFromBackend);
           
-          if (basicPlanData) {
+          if (gamesFromBackend && gamesFromBackend.length > 0) {
             // Encontrar el plan básico en activeSubscriptions y actualizar solo sus predicciones
             const basicPlanIndex = this.activeSubscriptions.findIndex(sub => sub.is_basic_plan);
             console.log('🔍 [PROFILE] Índice del plan básico en activeSubscriptions:', basicPlanIndex);
             
             if (basicPlanIndex !== -1) {
-              const juegosBackend = (basicPlanData.games || basicPlanData.predictions_used || []);
-              console.log('🔍 [PROFILE] Juegos del backend:', juegosBackend);
+              console.log('🔍 [PROFILE] Procesando datos de juegos del backend...');
               
               const predictions_used = juegosDefault.map(juego => {
-                const found = juegosBackend.find((g: any) => g.game_id === juego.game_id);
+                const found = gamesFromBackend.find((g: any) => g.game_id === juego.game_id);
                 return found ? { ...juego, ...found } : juego;
               });
               
