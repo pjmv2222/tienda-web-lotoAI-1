@@ -54,7 +54,16 @@ export interface PlanSummary {
 
 export interface ProfilePredictionSummaryResponse {
   success: boolean;
-  plans: PlanSummary[];
+  plans?: PlanSummary[];  // Formato anterior (opcional para compatibilidad)
+  data?: {               // Formato nuevo del backend
+    games: {
+      game_id: string;
+      game_name: string;
+      total_allowed: number;
+      used: number;
+      remaining: number;
+    }[];
+  };
 }
 
 // Interfaces para el historial de predicciones
