@@ -1334,7 +1334,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
     this.loadingSubscriptions = true;
     console.log('🔍 [PROFILE] Marcando loading como true...');
     
-    this.userPredictionService.getProfilePredictionSummary().subscribe({
+    this.userPredictionService.getProfilePredictionSummary('basic').subscribe({
       next: (response) => {
         console.log('📊 [PROFILE] Respuesta completa del servidor para predicciones:', JSON.stringify(response, null, 2));
         console.log('📊 [PROFILE] Tipo de response:', typeof response);

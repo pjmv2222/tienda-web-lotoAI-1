@@ -351,6 +351,76 @@ export function app(): express.Express {
     }
   });
 
+  // Endpoint para obtener resumen de predicciones del usuario para el perfil
+  server.get('/api/predictions/profile-summary', authenticateToken, async (req: any, res: any) => {
+    try {
+      const userId = req.user.id;
+      
+      console.log(`📊 [PROFILE-SUMMARY] Obteniendo resumen para usuario ${userId}`);
+      
+      // Obtener contadores de predicciones por juego para el plan básico
+      const client = await pgPool.connect();
+      try {
+        const query = `
+          SELECT 
+            g.name as game_name,
+            g.name as game_id,
+            COUNT(up.id) as predictions_used,
+            3 as predictions_limit,
+            (3 - COUNT(up.id)) as predictions_remaining
+          FROM (
+            SELECT 'primitiva' as name UNION ALL
+            SELECT 'euromillon' UNION ALL
+            SELECT 'bonoloto' UNION ALL
+            SELECT 'elgordo' UNION ALL
+            SELECT 'loterianacional' UNION ALL
+            SELECT 'lototurf' UNION ALL
+            SELECT 'eurodreams'
+          ) g
+          LEFT JOIN user_predictions up ON g.name = up.game_type 
+            AND up.user_id = $1
+          GROUP BY g.name
+          ORDER BY g.name ASC
+        `;
+        
+        const result = await client.query(query, [userId]);
+        const games = result.rows;
+        
+        console.log(`📊 [PROFILE-SUMMARY] Juegos encontrados: ${games.length}`);
+        console.log(`📊 [PROFILE-SUMMARY] Datos de juegos:`, games);
+        
+        // Formatear respuesta en el formato esperado por el frontend
+        const response = {
+          success: true,
+          plans: [{
+            is_basic_plan: true,
+            plan_id: 'basic',
+            predictions_used: games.map(game => ({
+              game_id: game.game_id,
+              game_name: game.game_name,
+              predictions_used: parseInt(game.predictions_used) || 0,
+              predictions_limit: 3,
+              predictions_remaining: Math.max(0, 3 - (parseInt(game.predictions_used) || 0))
+            }))
+          }]
+        };
+        
+        console.log(`✅ [PROFILE-SUMMARY] Respuesta enviada:`, JSON.stringify(response, null, 2));
+        res.json(response);
+
+      } finally {
+        client.release();
+      }
+    } catch (error) {
+      console.error('❌ [PROFILE-SUMMARY] Error al obtener resumen:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Error al obtener resumen de predicciones',
+        message: error.message
+      });
+    }
+  });
+
   // ...
 
   return server;

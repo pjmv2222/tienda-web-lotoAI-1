@@ -123,9 +123,13 @@ export class UserPredictionService {
   /**
    * Obtener resumen de predicciones específico para el componente de perfil
    */
-  getProfilePredictionSummary(): Observable<ProfilePredictionSummaryResponse> {
+  getProfilePredictionSummary(plan?: string): Observable<ProfilePredictionSummaryResponse> {
+    let url = `${environment.apiUrl}/predictions/profile-summary`;
+    if (plan) {
+      url += `?plan=${plan}`;
+    }
     return this.http.get<ProfilePredictionSummaryResponse>(
-      `${environment.apiUrl}/predictions/profile-summary`,
+      url,
       { headers: this.getAuthHeaders() }
     );
   }
