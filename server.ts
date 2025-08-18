@@ -416,7 +416,7 @@ export function app(): express.Express {
       res.status(500).json({
         success: false,
         error: 'Error al obtener resumen de predicciones',
-        message: error.message
+        message: error instanceof Error ? error.message : 'Error desconocido'
       });
     }
   });
