@@ -260,8 +260,8 @@ router.get('/profile-summary', authenticateToken, async (req, res) => {
         SELECT 'primitiva' as name UNION ALL
         SELECT 'euromillon' UNION ALL
         SELECT 'bonoloto' UNION ALL
-        SELECT 'gordo-primitiva' UNION ALL
-        SELECT 'loteria-nacional' UNION ALL
+        SELECT 'elgordo' UNION ALL
+        SELECT 'loterianacional' UNION ALL
         SELECT 'lototurf' UNION ALL
         SELECT 'eurodreams'
       ) g
@@ -275,6 +275,7 @@ router.get('/profile-summary', authenticateToken, async (req, res) => {
     const games = result.rows;
     
     console.log(`📊 [PROFILE-SUMMARY] Juegos encontrados: ${games.length}`);
+    console.log(`📊 [PROFILE-SUMMARY] Datos de juegos:`, games);
     
     // Formatear respuesta en el formato esperado por el frontend
     const response = {
