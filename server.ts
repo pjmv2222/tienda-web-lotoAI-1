@@ -9,9 +9,13 @@ import { Pool } from 'pg';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 import axios from 'axios';
+import { createRequire } from 'module';
 
 // Cargar variables de entorno
 dotenv.config();
+
+// Para importar módulos CommonJS desde ES modules
+const require = createRequire(import.meta.url);
 
 // La aplicación Express se exporta para que la utilice nuestro archivo de servidor principal de Node.
 export function app(): express.Express {
@@ -89,6 +93,10 @@ export function app(): express.Express {
   server.use(express.json());
 
   // ====== RUTAS DE API ======
+  
+  // Importar y configurar rutas de predicciones
+  const predictionsRoutes = require('./server/routes/predictions');
+  server.use('/api/predictions', predictionsRoutes);
   
   // Endpoint para obtener perfil de usuario (con autenticación)
   server.get('/api/auth/profile', authenticateToken, async (req: any, res: any) => {
