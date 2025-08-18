@@ -7,7 +7,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
 import { User } from '../../models/user.model';
 import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { takeUntil, distinctUntilChanged } from 'rxjs/operators';
 
 @Component({
   selector: 'app-header',
@@ -40,9 +40,17 @@ export class HeaderComponent implements OnInit, OnDestroy {
   ngOnInit() {
     this.cargarBotes();
     
-    // Suscribirse al estado del usuario con debugging
+    // Suscribirse al estado del usuario con protección contra bucles
     this.authService.currentUser
-      .pipe(takeUntil(this.destroy$))
+      .pipe(
+        takeUntil(this.destroy$),
+        distinctUntilChanged((prev, curr) => {
+          // Solo ejecutar si realmente cambió el usuario
+          const prevId = prev?.id;
+          const currId = curr?.id;
+          return prevId === currId;
+        })
+      )
       .subscribe(user => {
         console.log('Header - Estado del usuario actualizado:', {
           user: user ? {

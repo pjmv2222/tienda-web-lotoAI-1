@@ -124,6 +124,8 @@ export class AuthService {
     
     const finalToken = tokenFromUser || tokenFromCookie || tokenFromDocument;
     
+    // TEMPORALMENTE COMENTADO PARA DEBUGGING DEL BUCLE
+    /*
     console.log('AuthHeaders Debug:', {
       tokenFromUser: tokenFromUser ? 'EXISTS' : 'NULL',
       tokenFromCookie: tokenFromCookie ? 'EXISTS' : 'NULL', 
@@ -131,6 +133,7 @@ export class AuthService {
       finalToken: finalToken ? 'EXISTS' : 'NULL',
       cookieServiceResult: this.cookieService.getCookie(this.tokenCookieKey)
     });
+    */
     
     return new HttpHeaders({
       'Content-Type': 'application/json',
