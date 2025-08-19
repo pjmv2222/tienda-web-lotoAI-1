@@ -427,7 +427,8 @@ export class EuromillonPrediccionComponent implements OnInit, OnDestroy {
       const response = await this.predictionService.generatePrediction('euromillones', this.userPlan).toPromise();
       
       if (response && response.success && response.prediction) {
-        // La predicción ya se guarda automáticamente en el backend, no duplicar aquí
+        // Guardar la predicción en el backend con el plan específico
+        await this.userPredictionService.createPrediction('euromillon', response.prediction, this.userPlan).toPromise();
         
         // Actualizar la interfaz
         this.predictionResults.push({
