@@ -90,7 +90,23 @@ export class LoterianacionalPrediccionComponent implements OnInit, OnDestroy {
     this.userPredictionService.getPredictionStatus('loterianacional').subscribe({
       next: (response) => {
         if (response.success) {
-          this.predictionResults = response.data.predictions.map(p => p.data);
+          // Transformar las predicciones cargadas para asegurar formato correcto
+          this.predictionResults = response.data.predictions.map(p => {
+            const predictionData = p.data;
+            let numerosTransformados = predictionData.numeros || [];
+            
+            // Si viene un número completo, convertir a dígitos individuales
+            if (numerosTransformados.length === 1 && numerosTransformados[0] >= 10) {
+              const numeroCompleto = numerosTransformados[0];
+              const numeroStr = numeroCompleto.toString().padStart(5, '0');
+              numerosTransformados = numeroStr.split('').map((d: string) => parseInt(d, 10));
+            }
+            
+            return {
+              ...predictionData,
+              numeros: numerosTransformados
+            };
+          });
           this.maxPredictions = response.data.maxAllowed;
           this.userPlan = response.data.userPlan;
           this.updatePredictionDisplay();
@@ -166,8 +182,19 @@ export class LoterianacionalPrediccionComponent implements OnInit, OnDestroy {
       const response = await this.predictionService.generatePrediction('loterianacional').toPromise();
       if (response && response.success && response.prediction) {
         await this.userPredictionService.createPrediction('loterianacional', response.prediction).toPromise();
+        
+        // Transformar números para Lotería Nacional - asegurar que siempre sean dígitos individuales
+        let numerosTransformados = response.prediction.numeros || [];
+        
+        // Si viene un número completo (ej: [45789]), convertir a dígitos individuales [4,5,7,8,9]
+        if (numerosTransformados.length === 1 && numerosTransformados[0] >= 10) {
+          const numeroCompleto = numerosTransformados[0];
+          const numeroStr = numeroCompleto.toString().padStart(5, '0');
+          numerosTransformados = numeroStr.split('').map((d: string) => parseInt(d, 10));
+        }
+        
         this.predictionResults.push({
-          numeros: response.prediction.numeros || [],
+          numeros: numerosTransformados,
           reintegro: response.prediction.reintegro || null
         });
         this.updatePredictionDisplay();
