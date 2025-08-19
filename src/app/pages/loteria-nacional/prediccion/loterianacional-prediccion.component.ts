@@ -164,25 +164,13 @@ export class LoterianacionalPrediccionComponent implements OnInit, OnDestroy {
       this.showEmptyBalls = false;
       const response = await this.predictionService.generatePrediction('loterianacional').toPromise();
       
-      // 🔍 DEBUG: Log completo de la respuesta
-      console.log('🔍 [LOTERIA-NACIONAL] Respuesta completa de la IA:', response);
-      console.log('🔍 [LOTERIA-NACIONAL] Prediction data:', response?.prediction);
-      console.log('🔍 [LOTERIA-NACIONAL] Números recibidos:', response?.prediction?.numeros);
-      console.log('🔍 [LOTERIA-NACIONAL] Reintegro recibido:', response?.prediction?.reintegro);
-      
       if (response && response.success && response.prediction) {
         await this.userPredictionService.createPrediction('loterianacional', response.prediction).toPromise();
         
-        // 🔍 DEBUG: Log de los datos que se van a mostrar
-        const newPrediction = {
+        this.predictionResults.push({
           numeros: response.prediction.numeros || [],
           reintegro: response.prediction.reintegro || null
-        };
-        console.log('🔍 [LOTERIA-NACIONAL] Datos a mostrar:', newPrediction);
-        console.log('🔍 [LOTERIA-NACIONAL] Tipo de numeros:', typeof newPrediction.numeros);
-        console.log('🔍 [LOTERIA-NACIONAL] Array.isArray(numeros):', Array.isArray(newPrediction.numeros));
-        
-        this.predictionResults.push(newPrediction);
+        });
         this.updatePredictionDisplay();
       } else {
         this.predictionError = response?.error || 'Error al generar predicción';

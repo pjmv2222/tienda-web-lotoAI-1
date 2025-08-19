@@ -101,7 +101,7 @@ JUEGOS_CONFIG = {
         'escalador': 'MinMaxScaler',
         'num_principales': 5,
         'num_especiales': 0,
-        'rango_principales': (0, 99999),
+        'rango_principales': (0, 9),
         'rango_especiales': None
     },
     'lototurf': {
