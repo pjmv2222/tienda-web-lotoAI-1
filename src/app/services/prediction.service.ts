@@ -173,7 +173,7 @@ export class PredictionService {
             prediction = {
               success: true,
               prediction: {
-                numero: numeroLoteria.split('').map(n => parseInt(n, 10))
+                numeros: numeroLoteria.split('').map(n => parseInt(n, 10))
               }
             };
             break;

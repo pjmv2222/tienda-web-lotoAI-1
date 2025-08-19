@@ -461,21 +461,6 @@ def predict_eurodreams():
 def predict_loterianacional():
     try:
         prediccion = generar_prediccion_ia('loterianacional')
-        
-        # Transformar números completos a dígitos individuales para visualización
-        if 'numeros' in prediccion and isinstance(prediccion['numeros'], list):
-            # Tomar el primer número completo (ej: 45789) y separar en dígitos
-            numero_completo = prediccion['numeros'][0] if prediccion['numeros'] else 12345
-            
-            # Convertir a string con padding de 5 dígitos y luego a lista de enteros
-            numero_str = f"{numero_completo:05d}"  # Asegurar 5 dígitos: 01234
-            digitos_individuales = [int(d) for d in numero_str]
-            
-            # Reemplazar la lista de números por los dígitos individuales
-            prediccion['numeros'] = digitos_individuales
-            
-            logging.info(f"Lotería Nacional: Transformado {numero_completo} -> {digitos_individuales}")
-        
         return jsonify({
             'success': True,
             'juego': 'loterianacional',
