@@ -147,10 +147,17 @@ export class UserPredictionService {
   /**
    * Crear nueva predicción
    */
-  createPrediction(gameType: string, predictionData: any): Observable<any> {
+  createPrediction(gameType: string, predictionData: any, subscriptionPlan?: string): Observable<any> {
+    const body: any = { gameType, predictionData };
+    
+    // Agregar el plan si se especifica
+    if (subscriptionPlan) {
+      body.subscriptionPlan = subscriptionPlan;
+    }
+    
     return this.http.post(
       this.apiUrl,
-      { gameType, predictionData },
+      body,
       { headers: this.getAuthHeaders() }
     );
   }

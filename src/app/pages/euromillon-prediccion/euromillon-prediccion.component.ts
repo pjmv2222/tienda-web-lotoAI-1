@@ -57,6 +57,28 @@ export class EuromillonPrediccionComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+    // Leer el parámetro del plan desde la URL
+    this.route.queryParams.subscribe(params => {
+      const planFromUrl = params['plan'];
+      if (planFromUrl && ['basic', 'monthly', 'pro'].includes(planFromUrl)) {
+        this.userPlan = planFromUrl;
+        console.log('Plan especificado desde URL:', this.userPlan);
+        
+        // Ajustar el máximo de predicciones según el plan
+        switch (this.userPlan) {
+          case 'basic':
+            this.maxPredictions = 3;
+            break;
+          case 'monthly':
+            this.maxPredictions = 10;
+            break;
+          case 'pro':
+            this.maxPredictions = 20;
+            break;
+        }
+      }
+    });
+
     // Cargar estado de predicciones desde el backend
     this.loadPredictionStatus();
     this.loadLotteryInfo();
@@ -401,12 +423,12 @@ export class EuromillonPrediccionComponent implements OnInit, OnDestroy {
       this.predictionError = null;
       this.showEmptyBalls = false;
 
-      // Generar predicción usando el servicio existente
-      const response = await this.predictionService.generatePrediction('euromillones').toPromise();
+      // Generar predicción usando el servicio existente con el plan específico
+      const response = await this.predictionService.generatePrediction('euromillones', this.userPlan).toPromise();
       
       if (response && response.success && response.prediction) {
-        // Guardar en el backend
-        await this.userPredictionService.createPrediction('euromillon', response.prediction).toPromise();
+        // Guardar en el backend con el plan específico
+        await this.userPredictionService.createPrediction('euromillon', response.prediction, this.userPlan).toPromise();
         
         // Actualizar la interfaz
         this.predictionResults.push({
