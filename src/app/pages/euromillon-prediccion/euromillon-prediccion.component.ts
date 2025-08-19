@@ -186,7 +186,8 @@ export class EuromillonPrediccionComponent implements OnInit, OnDestroy {
           
           this.predictionResults = response.data.predictions.map(p => p.data);
           this.maxPredictions = response.data.maxAllowed;
-          this.userPlan = response.data.userPlan;
+          // NO sobrescribir userPlan si ya viene especificado desde URL
+          // this.userPlan = response.data.userPlan; // ❌ COMENTADO: No sobrescribir plan específico de URL
           
           console.log('✅ [DEBUG] Estado actualizado:', {
             predictionResultsLength: this.predictionResults.length,
