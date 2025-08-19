@@ -7,6 +7,7 @@ export interface UserPrediction {
   prediction_data: any; // JSON con números y estrellas
   created_at: Date;
   prediction_date: string; // Fecha del día (YYYY-MM-DD) para límites diarios
+  subscription_plan?: string; // 'basic', 'monthly', 'pro'
 }
 
 export interface PredictionCount {
@@ -28,15 +29,15 @@ export const PredictionModel = {
   /**
    * Crear nueva predicción
    */
-  async create(userId: number, gameType: string, predictionData: any) {
+  async create(userId: number, gameType: string, predictionData: any, subscriptionPlan?: string) {
     const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
     
     // Crear la predicción visible para el usuario
     const result = await pgPool.query(
-      `INSERT INTO user_predictions (user_id, game_type, prediction_data, prediction_date)
-       VALUES ($1, $2, $3, $4)
+      `INSERT INTO user_predictions (user_id, game_type, prediction_data, prediction_date, subscription_plan)
+       VALUES ($1, $2, $3, $4, $5)
        RETURNING *`,
-      [userId, gameType, JSON.stringify(predictionData), today]
+      [userId, gameType, JSON.stringify(predictionData), today, subscriptionPlan]
     );
     
     return result.rows[0];
@@ -101,6 +102,27 @@ export const PredictionModel = {
     
     console.log(`[DEBUG] getAllUserPredictionCounts - Resultado de consulta:`, result.rows);
     console.log(`[DEBUG] getAllUserPredictionCounts - Número de filas encontradas: ${result.rows.length}`);
+    
+    return result.rows;
+  },
+
+  /**
+   * Obtener conteos de predicciones por plan específico
+   */
+  async getPredictionCountsByPlan(userId: number, subscriptionPlan: string) {
+    console.log(`[DEBUG] getPredictionCountsByPlan - Consultando predicciones para userId: ${userId}, plan: ${subscriptionPlan}`);
+    
+    const result = await pgPool.query(
+      `SELECT 
+        game_type, 
+        COUNT(*) as count 
+       FROM user_predictions 
+       WHERE user_id = $1 AND subscription_plan = $2
+       GROUP BY game_type`,
+      [userId, subscriptionPlan]
+    );
+    
+    console.log(`[DEBUG] getPredictionCountsByPlan - Resultado de consulta:`, result.rows);
     
     return result.rows;
   },

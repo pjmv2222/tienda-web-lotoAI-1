@@ -223,7 +223,8 @@ export const getPrediction = async (req: Request, res: Response) => {
   
   try {
     const { game } = req.params;
-    console.log(`🎯 Solicitud de predicción para juego: ${game}`);
+    const subscriptionPlan = req.query.plan as string; // Obtener el plan desde query params
+    console.log(`🎯 Solicitud de predicción para juego: ${game}, plan: ${subscriptionPlan}`);
     console.log(`📁 Script IA ubicado en: ${IA_SERVER_SCRIPT}`);
     console.log(`📁 Script existe: ${fs.existsSync(IA_SERVER_SCRIPT)}`);
 
@@ -375,8 +376,8 @@ export const getPrediction = async (req: Request, res: Response) => {
     try {
       const userId = (req as any).user?.id;
       if (userId) {
-        console.log(`💾 [DEBUG] Registrando predicción en BD para userId: ${userId}, game: ${mappedGame}`);
-        await PredictionModel.create(userId, mappedGame, finalResponse.prediction);
+        console.log(`💾 [DEBUG] Registrando predicción en BD para userId: ${userId}, game: ${mappedGame}, plan: ${subscriptionPlan}`);
+        await PredictionModel.create(userId, mappedGame, finalResponse.prediction, subscriptionPlan);
         console.log(`✅ [DEBUG] Predicción registrada exitosamente en la base de datos`);
       } else {
         console.warn(`⚠️ [WARNING] No se pudo obtener userId del token JWT - predicción no registrada`);
@@ -558,15 +559,16 @@ export const PredictionController = {
         return res.status(401).json({ error: 'Usuario no autenticado' });
       }
 
-      const { gameType, predictionData } = req.body;
+      const { gameType, predictionData, subscriptionPlan } = req.body;
 
       // Validar datos
       if (!gameType || !predictionData) {
         return res.status(400).json({ error: 'gameType y predictionData son requeridos' });
       }
 
-      // Obtener el plan actual del usuario
-      const userPlan = await getUserCurrentPlan(userId);
+      // Usar el plan proporcionado o obtener el plan actual del usuario
+      const userPlan = subscriptionPlan || await getUserCurrentPlan(userId);
+      console.log(`💾 [DEBUG] Creando predicción con plan: ${userPlan}`);
       const limits = getPredictionLimitsByPlan(userPlan);
       
       // Verificar límite
@@ -583,7 +585,7 @@ export const PredictionController = {
       }
 
       // Crear la predicción
-      const newPrediction = await PredictionModel.create(userId, gameType, predictionData);
+      const newPrediction = await PredictionModel.create(userId, gameType, predictionData, userPlan);
       
       res.json({
         success: true,
@@ -674,10 +676,17 @@ export const PredictionController = {
       console.log(`[DEBUG] getAllPredictionCounts - Plan a usar: ${planToUse}`);
       console.log(`[DEBUG] getAllPredictionCounts - Límites por plan:`, limits);
       
-      // Obtener conteos actuales
-      const counts = await PredictionModel.getAllUserPredictionCounts(userId);
-      
-      console.log(`[DEBUG] getAllPredictionCounts - Conteos obtenidos:`, counts);
+      // Obtener conteos actuales según el plan especificado
+      let counts;
+      if (requestedPlan && ['basic', 'monthly', 'pro'].includes(requestedPlan)) {
+        // Si se especifica un plan, obtener solo las predicciones de ese plan
+        counts = await PredictionModel.getPredictionCountsByPlan(userId, requestedPlan);
+        console.log(`[DEBUG] getAllPredictionCounts - Conteos por plan ${requestedPlan}:`, counts);
+      } else {
+        // Si no se especifica plan, obtener todas las predicciones (comportamiento anterior)
+        counts = await PredictionModel.getAllUserPredictionCounts(userId);
+        console.log(`[DEBUG] getAllPredictionCounts - Conteos generales:`, counts);
+      }
       
       // Mapeo de nombres de juegos para mostrar en el frontend
       const gameNames: { [key: string]: string } = {
