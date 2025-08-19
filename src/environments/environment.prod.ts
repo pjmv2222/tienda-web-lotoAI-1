@@ -1,6 +1,6 @@
 export const environment = {
   production: true,
-  apiUrl: 'https://loto-ia.com:3000/api', // Apuntar directamente al backend independiente
+  apiUrl: 'http://loto-ia.com:3000/api', // Apuntar directamente al backend independiente
   frontendUrl: 'https://loto-ia.com',
   wsUrl: 'wss://loto-ia.com',
   iaApiUrl: '/api', // Cambiar para usar backend Node.js como proxy
