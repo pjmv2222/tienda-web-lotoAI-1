@@ -36,9 +36,10 @@ export class PredictionService {
   /**
    * Genera una predicción para un juego específico
    * @param gameId Identificador del juego (euromillones, primitiva, bonoloto, etc.)
+   * @param subscriptionPlan Plan de suscripción específico (opcional: basic, monthly, pro)
    * @returns Observable con la respuesta de la predicción
    */
-  generatePrediction(gameId: string): Observable<PredictionResponse> {
+  generatePrediction(gameId: string, subscriptionPlan?: string): Observable<PredictionResponse> {
     // Usar el sistema de IA real para todos los juegos
 
     const headers = this.authService.getAuthHeaders();
@@ -67,6 +68,12 @@ export class PredictionService {
     } else {
       // Usar el endpoint del backend que actúa como proxy hacia los servidores Python
       url = `${this.apiUrl}/predictions/${normalizedGameId}`;
+      
+      // Agregar el parámetro de plan si se especifica
+      if (subscriptionPlan) {
+        url += `?plan=${subscriptionPlan}`;
+        console.log(`Generando predicción para plan específico: ${subscriptionPlan}`);
+      }
     }
 
     console.log(`Solicitando predicción a: ${url}`);
