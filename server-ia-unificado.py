@@ -150,12 +150,25 @@ def cargar_modelos():
                 
                 # Preparar escaladores usando las columnas específicas de entrenamiento
                 if juego == 'loterianacional':
-                    # Lotería Nacional: X de entrada, Y de salida
-                    X = datos_historicos[juego][config['columnas_entrada']].copy()
-                    # Convertir fecha a timestamp si es necesario
-                    if 'Fecha' in X.columns:
-                        X['Fecha'] = pd.to_datetime(X['Fecha'], format='%d/%m/%Y').astype('int64') // 10**9
-                    X = X.astype(float)
+                    # Lotería Nacional: crear escaladores separados para entrada y salida
+                    # Escalador para entrada (3 columnas: Fecha, Sorteo, Euros)
+                    X_entrada = datos_historicos[juego][config['columnas_entrada']].copy()
+                    if 'Fecha' in X_entrada.columns:
+                        X_entrada['Fecha'] = pd.to_datetime(X_entrada['Fecha'], format='%d/%m/%Y').astype('int64') // 10**9
+                    X_entrada = X_entrada.astype(float)
+                    
+                    escalador_entrada = MinMaxScaler()
+                    escalador_entrada.fit(X_entrada)
+                    
+                    # Escalador para salida (1 columna: Numero)
+                    X_salida = datos_historicos[juego][config['columnas_salida']].copy()
+                    X_salida = X_salida.astype(float)
+                    
+                    escalador_salida = MinMaxScaler()
+                    escalador_salida.fit(X_salida)
+                    
+                    # Guardar ambos escaladores
+                    escaladores[juego] = {'entrada': escalador_entrada, 'salida': escalador_salida}
                 elif juego == 'eurodreams':
                     # EuroDreams: crear DaysSince si no existe
                     datos_temp = datos_historicos[juego].copy()
@@ -164,17 +177,25 @@ def cargar_modelos():
                         reference_date = pd.Timestamp('2000-01-01')
                         datos_temp['DaysSince'] = (datos_temp['Date'] - reference_date).dt.days
                     X = datos_temp[config['columnas_entrada']].astype(float)
+                    
+                    # Usar el escalador especificado en configuración
+                    if config['escalador'] == 'StandardScaler':
+                        escaladores[juego] = StandardScaler()
+                    else:
+                        escaladores[juego] = MinMaxScaler()
+                    
+                    escaladores[juego].fit(X)
                 else:
                     # Otros juegos: usar columnas de entrada directamente
                     X = datos_historicos[juego][config['columnas_entrada']].astype(float)
-                
-                # Usar el escalador especificado en configuración
-                if config['escalador'] == 'StandardScaler':
-                    escaladores[juego] = StandardScaler()
-                else:
-                    escaladores[juego] = MinMaxScaler()
-                
-                escaladores[juego].fit(X)
+                    
+                    # Usar el escalador especificado en configuración
+                    if config['escalador'] == 'StandardScaler':
+                        escaladores[juego] = StandardScaler()
+                    else:
+                        escaladores[juego] = MinMaxScaler()
+                    
+                    escaladores[juego].fit(X)
                 
                 logging.info(f"✅ Dataset {juego} cargado: {len(datos_historicos[juego])} registros")
             else:
@@ -235,6 +256,10 @@ def generar_prediccion_ia(juego):
             if 'Fecha' in datos_temp.columns:
                 datos_temp['Fecha'] = pd.to_datetime(datos_temp['Fecha'], format='%d/%m/%Y').astype('int64') // 10**9
             entrada_base = datos_temp.iloc[-1:].values.astype(float)
+            
+            # Para Lotería Nacional, usar escalador de entrada
+            scaler_entrada = scaler['entrada']
+            scaler_salida = scaler['salida']
         elif juego == 'eurodreams':
             # EuroDreams: crear DaysSince si no existe
             datos_temp = datos_recientes.copy()
@@ -243,12 +268,16 @@ def generar_prediccion_ia(juego):
                 reference_date = pd.Timestamp('2000-01-01')
                 datos_temp['DaysSince'] = (datos_temp['Date'] - reference_date).dt.days
             entrada_base = datos_temp[config['columnas_entrada']].iloc[-1:].values.astype(float)
+            scaler_entrada = scaler
+            scaler_salida = scaler
         else:
             # Otros juegos: usar columnas de entrada directamente
             entrada_base = datos_recientes[config['columnas_entrada']].iloc[-1:].values.astype(float)
+            scaler_entrada = scaler
+            scaler_salida = scaler
         
         # Normalizar entrada
-        entrada_normalizada = scaler.transform(entrada_base)
+        entrada_normalizada = scaler_entrada.transform(entrada_base)
         
         # Reformatear para LSTM
         entrada_reshaped = entrada_normalizada.reshape(
@@ -260,8 +289,8 @@ def generar_prediccion_ia(juego):
         # Generar predicción
         prediccion_raw = modelo.predict(entrada_reshaped, verbose=0)
         
-        # Desnormalizar
-        prediccion_desnormalizada = scaler.inverse_transform(prediccion_raw)
+        # Desnormalizar usando el escalador de salida
+        prediccion_desnormalizada = scaler_salida.inverse_transform(prediccion_raw)
         
         # Ajustar predicción a rangos válidos
         prediccion_ajustada = ajustar_prediccion(prediccion_desnormalizada[0], config)
