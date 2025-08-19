@@ -99,14 +99,11 @@
               <span class="prediction-type">Optimizada</span>
             </div>
             <div class="prediction-numbers">
-              <div class="lottery-numbers-container">
-                <div *ngFor="let number of prediction.numeros || []" class="lottery-number">
-                  <span class="number-display">{{ number }}</span>
+              <div class="lottery-balls-container">
+                <div *ngFor="let number of prediction.numeros || []" class="ball-wrapper">
+                  <app-euromillones-ball [number]="number" [size]="60" [staticRendering]="true" [customColor]="'#0066CC'"></app-euromillones-ball>
                 </div>
-                <div *ngIf="prediction.reintegro !== null && prediction.reintegro !== undefined" class="reintegro-container">
-                  <span class="reintegro-label">Reintegro:</span>
-                  <span class="reintegro-number">{{ prediction.reintegro }}</span>
-                </div>
+                <!-- No mostrar reintegro para Lotería Nacional -->
               </div>
             </div>
             <div class="prediction-stats">
