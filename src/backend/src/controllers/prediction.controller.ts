@@ -33,51 +33,6 @@ const gameMapping: { [key: string]: string } = {
 };
 
 /**
- * Determina el plan más apropiado para generar predicciones
- * Prioriza el plan básico si el usuario tiene múltiples planes
- */
-async function getUserPreferredPlan(userId: number): Promise<string> {
-  try {
-    const result = await pgPool.query(
-      `SELECT DISTINCT plan_id 
-       FROM user_subscriptions 
-       WHERE user_id = $1 AND status = 'active'
-       ORDER BY 
-         CASE 
-           WHEN plan_id = 'basic' THEN 1
-           WHEN plan_id = 'monthly' THEN 2
-           WHEN plan_id = 'pro' THEN 3
-           ELSE 4
-         END`,
-      [userId]
-    );
-    
-    const plans = result.rows.map(row => row.plan_id);
-    console.log(`🔍 [PLAN-DETECTION] Planes activos para usuario ${userId}:`, plans);
-    
-    // Si tiene plan básico, usarlo por defecto
-    if (plans.includes('basic')) {
-      console.log(`✅ [PLAN-DETECTION] Usando plan básico (prioritario)`);
-      return 'basic';
-    }
-    
-    // Si no tiene básico, usar el primero disponible
-    if (plans.length > 0) {
-      console.log(`✅ [PLAN-DETECTION] Usando plan: ${plans[0]}`);
-      return plans[0];
-    }
-    
-    // Fallback: basic
-    console.log(`⚠️ [PLAN-DETECTION] No se encontraron planes activos, usando 'basic' por defecto`);
-    return 'basic';
-    
-  } catch (error) {
-    console.error(`❌ [PLAN-DETECTION] Error detectando plan preferido:`, error);
-    return 'basic';
-  }
-}
-
-/**
  * Inicia el servidor IA unificado si no está corriendo
  */
 async function startIAServer(): Promise<void> {
@@ -268,24 +223,7 @@ export const getPrediction = async (req: Request, res: Response) => {
   
   try {
     const { game } = req.params;
-    let subscriptionPlan = req.query.plan as string; // Obtener el plan desde query params
-    
-    // Si no se especifica plan, detectar automáticamente el plan preferido del usuario
-    if (!subscriptionPlan) {
-      const userId = (req as any).user?.id;
-      if (userId) {
-        try {
-          subscriptionPlan = await getUserPreferredPlan(userId);
-          console.log(`🔍 [AUTO-DETECT] Plan preferido detectado para usuario ${userId}: ${subscriptionPlan}`);
-        } catch (error) {
-          console.warn(`⚠️ [AUTO-DETECT] Error detectando plan del usuario, usando 'basic' por defecto:`, error);
-          subscriptionPlan = 'basic';
-        }
-      } else {
-        console.warn(`⚠️ [AUTO-DETECT] Usuario no autenticado, usando 'basic' por defecto`);
-        subscriptionPlan = 'basic';
-      }
-    }
+    const subscriptionPlan = req.query.plan as string || 'basic'; // Plan desde query params, por defecto 'basic'
     
     console.log(`🎯 Solicitud de predicción para juego: ${game}, plan: ${subscriptionPlan}`);
     console.log(`📁 Script IA ubicado en: ${IA_SERVER_SCRIPT}`);
@@ -629,14 +567,10 @@ export const PredictionController = {
         return res.status(400).json({ error: 'gameType y predictionData son requeridos' });
       }
 
-      // Usar el plan proporcionado o detectar el plan preferido del usuario
-      let userPlan = subscriptionPlan;
-      if (!userPlan) {
-        userPlan = await getUserPreferredPlan(userId);
-        console.log(`💾 [DEBUG] Plan preferido detectado: ${userPlan}`);
-      } else {
-        console.log(`💾 [DEBUG] Usando plan proporcionado: ${userPlan}`);
-      }
+      // Usar el plan proporcionado o 'basic' por defecto
+      const userPlan = subscriptionPlan || 'basic';
+      console.log(`💾 [DEBUG] Usando plan: ${userPlan}`);
+      
       const limits = getPredictionLimitsByPlan(userPlan);
       
       // Verificar límite
