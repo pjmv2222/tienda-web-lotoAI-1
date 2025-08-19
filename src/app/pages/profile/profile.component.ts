@@ -924,6 +924,9 @@ export class ProfileComponent implements OnInit, OnDestroy {
   
   // Suscripción para detectar navegación
   private routerSubscription: Subscription = new Subscription();
+  
+  // Cache para evitar llamadas repetitivas a getExpirationValue
+  private expirationValueCache: Map<string, string> = new Map();
 
   constructor(
     private authService: AuthService,
@@ -1180,6 +1183,8 @@ export class ProfileComponent implements OnInit, OnDestroy {
             };
           });
           
+          // Limpiar cache cuando se actualicen las suscripciones
+          this.expirationValueCache.clear();
           console.log('🚨 [PROFILE] activeSubscriptions FINAL:', this.activeSubscriptions);
           
           // CORRECCIÓN CRÍTICA: Solo cargar datos de predicciones para el plan básico existente
@@ -1762,36 +1767,42 @@ export class ProfileComponent implements OnInit, OnDestroy {
    * Obtiene el valor de expiración formateado según el tipo de plan
    */
   getExpirationValue(subscription: UserSubscriptionInfo): string {
-    console.log('🔍 [PROFILE] getExpirationValue llamado con:', {
+    // Crear clave única para el cache
+    const cacheKey = `${subscription.plan_id}_${subscription.expires_at}`;
+    
+    // Verificar si ya está en cache
+    if (this.expirationValueCache.has(cacheKey)) {
+      return this.expirationValueCache.get(cacheKey)!;
+    }
+    
+    // Solo hacer log la primera vez
+    console.log('🔍 [PROFILE] getExpirationValue calculando para:', {
       plan_id: subscription.plan_id,
-      expires_at: subscription.expires_at,
-      expires_at_type: typeof subscription.expires_at
+      expires_at: subscription.expires_at
     });
     
     const tabId = this.getTabIdFromPlanId(subscription.plan_id);
+    let result: string;
     
     // Para plan básico, solo mostrar texto sin fecha
     if (tabId === 'basic') {
-      return 'Ilimitada (por cantidad de pronósticos)';
+      result = 'Ilimitada (por cantidad de pronósticos)';
     }
-    
     // Para planes temporales (monthly/pro), mostrar fecha formateada
-    if (subscription.expires_at) {
+    else if (subscription.expires_at) {
       const date = new Date(subscription.expires_at);
-      console.log('🔍 [PROFILE] Convirtiendo fecha:', {
-        originalValue: subscription.expires_at,
-        convertedDate: date,
-        isValidDate: !isNaN(date.getTime()),
-        formattedDate: date.toLocaleDateString('es-ES')
-      });
-      
       if (!isNaN(date.getTime())) {
-        return date.toLocaleDateString('es-ES');
+        result = date.toLocaleDateString('es-ES');
+      } else {
+        result = 'Fecha inválida';
       }
+    } else {
+      result = 'No disponible';
     }
     
-    console.log('⚠️ [PROFILE] expires_at está vacío o es inválido');
-    return 'No disponible';
+    // Guardar en cache
+    this.expirationValueCache.set(cacheKey, result);
+    return result;
   }
 
   private passwordMatchValidator(group: FormGroup): ValidationErrors | null {
