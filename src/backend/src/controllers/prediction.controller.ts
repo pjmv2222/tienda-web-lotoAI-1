@@ -373,20 +373,7 @@ export const getPrediction = async (req: Request, res: Response) => {
       efficiency: isPermanentServer ? 'permanent_server' : 'start_stop_on_demand'
     };
     
-    // REGISTRAR LA PREDICCIÓN EN LA BASE DE DATOS
-    try {
-      const userId = (req as any).user?.id;
-      if (userId) {
-        console.log(`💾 [DEBUG] Registrando predicción en BD para userId: ${userId}, game: ${mappedGame}, plan: ${subscriptionPlan}`);
-        await PredictionModel.create(userId, mappedGame, finalResponse.prediction, subscriptionPlan);
-        console.log(`✅ [DEBUG] Predicción registrada exitosamente en la base de datos`);
-      } else {
-        console.warn(`⚠️ [WARNING] No se pudo obtener userId del token JWT - predicción no registrada`);
-      }
-    } catch (dbError: any) {
-      console.error(`❌ [ERROR] Error registrando predicción en BD:`, dbError);
-      // No fallar la respuesta por error de BD, solo loggear
-    }
+    console.log(`✅ [DEBUG] Predicción generada exitosamente - NO guardada automáticamente`);
     
     console.log(`🎉 [DEBUG] Enviando respuesta final al frontend:`, finalResponse);
     return res.status(200).json(finalResponse);
