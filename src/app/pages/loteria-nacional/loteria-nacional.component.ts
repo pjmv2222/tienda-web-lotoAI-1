@@ -52,11 +52,20 @@ export class LoteriaNacionalComponent extends LotteryBaseComponent implements On
   }
 
   loadUltimosResultados(): void {
-    this.http.get<LotteryData>('/api/lottery-data').subscribe({
-      next: (response) => {
-        // Validar que response y resultados existan
-        if (response && response.resultados && Array.isArray(response.resultados)) {
-          const loteriaNacionalData = response.resultados.find(r => r.game === 'loterianacional');
+    this.http.get<any>('/api/lottery-data').subscribe({
+      next: (response: any) => {
+        // Validar que response exista y tenga datos
+        if (response && response.data && Array.isArray(response.data)) {
+          const loteriaNacionalData = response.data.find((r: any) => r.game === 'loterianacional');
+          if (loteriaNacionalData) {
+            this.ultimosResultados = {
+              fecha: loteriaNacionalData.date,
+              numeros: loteriaNacionalData.numbers
+            };
+          }
+        } else if (response && response.resultados && Array.isArray(response.resultados)) {
+          // Mantener compatibilidad con estructura antigua
+          const loteriaNacionalData = response.resultados.find((r: any) => r.game === 'loterianacional');
           if (loteriaNacionalData) {
             this.ultimosResultados = {
               fecha: loteriaNacionalData.date,
@@ -64,7 +73,7 @@ export class LoteriaNacionalComponent extends LotteryBaseComponent implements On
             };
           }
         } else {
-          console.warn('Respuesta de API no válida o sin resultados:', response);
+          console.log('Estructura de respuesta diferente, datos disponibles:', Object.keys(response || {}));
         }
       },
       error: (error) => {

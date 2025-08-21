@@ -256,13 +256,22 @@ def generar_prediccion_ia(juego):
             if 'Fecha' in datos_temp.columns:
                 datos_temp['Fecha'] = pd.to_datetime(datos_temp['Fecha'], format='%d/%m/%Y').astype('int64') // 10**9
             
-            # AGREGAR VARIABILIDAD: usar una fila aleatoria de los últimos 10 registros
-            fila_aleatoria = np.random.randint(0, len(datos_temp))
-            entrada_base = datos_temp.iloc[fila_aleatoria:fila_aleatoria+1].values.astype(float)
+            # AGREGAR VARIABILIDAD: usar múltiples filas aleatorias de los últimos 50 registros
+            datos_temp_extendidos = datos_historicos[juego][config['columnas_entrada']].tail(50).copy()
+            if 'Fecha' in datos_temp_extendidos.columns:
+                datos_temp_extendidos['Fecha'] = pd.to_datetime(datos_temp_extendidos['Fecha'], format='%d/%m/%Y').astype('int64') // 10**9
             
-            # Agregar pequeña variación aleatoria para mayor diversidad
-            variacion = np.random.normal(0, 0.01, entrada_base.shape)  # 1% de variación
+            fila_aleatoria = np.random.randint(0, len(datos_temp_extendidos))
+            entrada_base = datos_temp_extendidos.iloc[fila_aleatoria:fila_aleatoria+1].values.astype(float)
+            
+            # Agregar variación aleatoria más significativa para mayor diversidad
+            variacion = np.random.normal(0, 0.05, entrada_base.shape)  # 5% de variación
             entrada_base = entrada_base + variacion
+            
+            # Añadir ruido temporal basado en la hora actual
+            import time
+            ruido_temporal = (time.time() % 1000) * np.random.random(entrada_base.shape) * 0.001
+            entrada_base = entrada_base + ruido_temporal
             
             # Para Lotería Nacional, usar escalador de entrada y salida por separado
             scaler_entrada = scaler['entrada']
