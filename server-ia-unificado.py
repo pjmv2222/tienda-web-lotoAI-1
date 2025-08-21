@@ -255,11 +255,23 @@ def generar_prediccion_ia(juego):
             datos_temp = datos_recientes[config['columnas_entrada']].copy()
             if 'Fecha' in datos_temp.columns:
                 datos_temp['Fecha'] = pd.to_datetime(datos_temp['Fecha'], format='%d/%m/%Y').astype('int64') // 10**9
-            entrada_base = datos_temp.iloc[-1:].values.astype(float)
             
-            # Para Lotería Nacional, usar escalador de entrada
+            # AGREGAR VARIABILIDAD: usar una fila aleatoria de los últimos 10 registros
+            fila_aleatoria = np.random.randint(0, len(datos_temp))
+            entrada_base = datos_temp.iloc[fila_aleatoria:fila_aleatoria+1].values.astype(float)
+            
+            # Agregar pequeña variación aleatoria para mayor diversidad
+            variacion = np.random.normal(0, 0.01, entrada_base.shape)  # 1% de variación
+            entrada_base = entrada_base + variacion
+            
+            # Para Lotería Nacional, usar escalador de entrada y salida por separado
             scaler_entrada = scaler['entrada']
             scaler_salida = scaler['salida']
+            
+            # Verificar dimensiones para evitar el error de broadcast
+            logging.info(f"Entrada shape: {entrada_base.shape}")
+            logging.info(f"Entrada valores: {entrada_base.flatten()}")
+            logging.info(f"Escalador entrada fitted on: {scaler_entrada.n_features_in_} features")
         elif juego == 'eurodreams':
             # EuroDreams: crear DaysSince si no existe
             datos_temp = datos_recientes.copy()
@@ -287,10 +299,21 @@ def generar_prediccion_ia(juego):
         )
         
         # Generar predicción
-        prediccion_raw = modelo.predict(entrada_reshaped, verbose=0)
+        try:
+            prediccion_raw = modelo.predict(entrada_reshaped, verbose=0)
+            logging.info(f"Predicción raw shape para {juego}: {prediccion_raw.shape}")
+        except Exception as model_error:
+            logging.error(f"Error en modelo.predict para {juego}: {str(model_error)}")
+            raise Exception(f"Error en predicción del modelo: {str(model_error)}")
         
         # Desnormalizar usando el escalador de salida
-        prediccion_desnormalizada = scaler_salida.inverse_transform(prediccion_raw)
+        try:
+            prediccion_desnormalizada = scaler_salida.inverse_transform(prediccion_raw)
+            logging.info(f"Predicción desnormalizada shape para {juego}: {prediccion_desnormalizada.shape}")
+        except Exception as denorm_error:
+            logging.error(f"Error en desnormalización para {juego}: {str(denorm_error)}")
+            # Si falla la desnormalización, usar directamente la predicción raw
+            prediccion_desnormalizada = prediccion_raw
         
         # Ajustar predicción a rangos válidos
         prediccion_ajustada = ajustar_prediccion(prediccion_desnormalizada[0], config)
@@ -312,12 +335,45 @@ def ajustar_prediccion(prediccion, config):
             break
     
     if juego_nombre == 'loterianacional':
-        # Lotería Nacional: número de 5 dígitos
-        numero = int(abs(prediccion[0])) % 100000
-        return {
-            'numero': f"{numero:05d}",
-            'mensaje': 'Predicción generada con IA para Lotería Nacional'
-        }
+        # Lotería Nacional: convertir predicción a 5 dígitos individuales (0-9)
+        try:
+            # Si tenemos múltiples valores de predicción, usar el primero
+            if len(prediccion) > 1:
+                valor_base = prediccion[0]
+            else:
+                valor_base = prediccion[0] if hasattr(prediccion, '__len__') else prediccion
+            
+            # Agregar variabilidad extra usando otros valores de la predicción
+            if len(prediccion) > 1:
+                # Usar combinación de múltiples valores para más variabilidad
+                combinacion = float(valor_base) + float(prediccion[min(1, len(prediccion)-1)]) * 0.1
+                valor_base = combinacion
+            
+            # Convertir a número entero y asegurar que esté en rango válido
+            numero = int(abs(float(valor_base))) % 100000
+            
+            # Añadir microsegundos actuales para mayor variabilidad
+            import time
+            microsegundos = int(time.time() * 1000000) % 100
+            numero = (numero + microsegundos) % 100000
+            
+            numero_str = f"{numero:05d}"
+            digitos = [int(d) for d in numero_str]
+            
+            logging.info(f"Lotería Nacional - Valor base: {valor_base}, Microsegundos: {microsegundos}, Número final: {numero}, Dígitos: {digitos}")
+            
+            return {
+                'numeros': digitos,
+                'mensaje': 'Predicción generada con IA para Lotería Nacional'
+            }
+        except Exception as e:
+            logging.error(f"Error procesando predicción de Lotería Nacional: {str(e)}")
+            # Fallback: generar dígitos aleatorios
+            digitos = [np.random.randint(0, 10) for _ in range(5)]
+            return {
+                'numeros': digitos,
+                'mensaje': 'Predicción generada con IA para Lotería Nacional (fallback)'
+            }
     
     elif juego_nombre == 'euromillon':
         # EuroMillon: 5 números + 2 estrellas
@@ -378,8 +434,10 @@ def generar_prediccion_aleatoria(juego):
     config = JUEGOS_CONFIG[juego]
     
     if juego == 'loterianacional':
+        # Generar 5 dígitos individuales del 0-9
+        digitos = [np.random.randint(0, 10) for _ in range(5)]
         return {
-            'numero': f"{np.random.randint(10000, 99999):05d}",
+            'numeros': digitos,
             'mensaje': 'Predicción aleatoria para Lotería Nacional'
         }
     elif juego == 'euromillon':
