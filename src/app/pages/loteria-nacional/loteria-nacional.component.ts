@@ -54,12 +54,17 @@ export class LoteriaNacionalComponent extends LotteryBaseComponent implements On
   loadUltimosResultados(): void {
     this.http.get<LotteryData>('/api/lottery-data').subscribe({
       next: (response) => {
-        const loteriaNacionalData = response.resultados.find(r => r.game === 'loterianacional');
-        if (loteriaNacionalData) {
-          this.ultimosResultados = {
-            fecha: loteriaNacionalData.date,
-            numeros: loteriaNacionalData.numbers
-          };
+        // Validar que response y resultados existan
+        if (response && response.resultados && Array.isArray(response.resultados)) {
+          const loteriaNacionalData = response.resultados.find(r => r.game === 'loterianacional');
+          if (loteriaNacionalData) {
+            this.ultimosResultados = {
+              fecha: loteriaNacionalData.date,
+              numeros: loteriaNacionalData.numbers
+            };
+          }
+        } else {
+          console.warn('Respuesta de API no válida o sin resultados:', response);
         }
       },
       error: (error) => {
