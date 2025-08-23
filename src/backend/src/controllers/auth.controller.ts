@@ -25,17 +25,24 @@ export class AuthController {
 
   async register(req: Request, res: Response) {
     try {
-      console.log('[Auth Route] Recibida petición de registro:', req.body);
+      console.log('[DEBUG-REGISTRO] Datos recibidos:', req.body);
       const { nombre, apellido, email, password, telefono } = req.body;
       
-      // Combinar nombre y apellido en el campo name
+      console.log('[DEBUG-REGISTRO] Campos extraídos:', { email, nombre, apellido });
+      
+      // Combinar nombre y apellido en el campo name para compatibilidad
       const fullName = `${nombre} ${apellido}`.trim();
       const hashedPassword = await bcrypt.hash(password, 10);
       
+      console.log('[DEBUG-REGISTRO] Query a ejecutar con nombre y apellido individuales');
+      console.log('[DEBUG-REGISTRO] Parámetros:', [fullName, email, '[HIDDEN]', nombre, apellido]);
+      
       const newUser = await pgPool.query(
-        'INSERT INTO users (name, email, password_hash) VALUES ($1, $2, $3) RETURNING *',
-        [fullName, email, hashedPassword]
+        'INSERT INTO users (name, email, password_hash, nombre, apellido) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+        [fullName, email, hashedPassword, nombre, apellido]
       );
+      
+      console.log('[DEBUG-REGISTRO] Usuario creado:', newUser.rows[0]);
 
       const user = newUser.rows[0];
 
