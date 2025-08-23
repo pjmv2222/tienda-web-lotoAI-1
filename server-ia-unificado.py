@@ -315,17 +315,25 @@ def generar_prediccion_ia(juego):
             logging.error(f"Error en modelo.predict para {juego}: {str(model_error)}")
             raise Exception(f"Error en predicción del modelo: {str(model_error)}")
         
-        # Desnormalizar usando el escalador de salida
-        try:
-            prediccion_desnormalizada = scaler_salida.inverse_transform(prediccion_raw)
-            logging.info(f"Predicción desnormalizada shape para {juego}: {prediccion_desnormalizada.shape}")
-        except Exception as denorm_error:
-            logging.error(f"Error en desnormalización para {juego}: {str(denorm_error)}")
-            # Si falla la desnormalización, usar directamente la predicción raw
-            prediccion_desnormalizada = prediccion_raw
+        # Para Lotería Nacional, usar predicción raw directamente (sin desnormalizar)
+        if juego == 'loterianacional':
+            # SOLUCIÓN DEFINITIVA: Usar predicción raw para mayor variabilidad
+            logging.info(f"[DEBUG] SOLUCION - Prediccion raw para loteria: {prediccion_raw}")
+            logging.info(f"[DEBUG] SOLUCION - Prediccion raw shape: {prediccion_raw.shape}")
+            logging.info(f"[DEBUG] SOLUCION - Prediccion raw[0]: {prediccion_raw[0]}")
+            prediccion_procesada = prediccion_raw[0]
+        else:
+            # Otros juegos: intentar desnormalizar normalmente
+            try:
+                prediccion_desnormalizada = scaler_salida.inverse_transform(prediccion_raw)
+                logging.info(f"Predicción desnormalizada shape para {juego}: {prediccion_desnormalizada.shape}")
+                prediccion_procesada = prediccion_desnormalizada[0]
+            except Exception as denorm_error:
+                logging.error(f"Error en desnormalización para {juego}: {str(denorm_error)}")
+                prediccion_procesada = prediccion_raw[0]
         
         # Ajustar predicción a rangos válidos
-        prediccion_ajustada = ajustar_prediccion(prediccion_desnormalizada[0], config)
+        prediccion_ajustada = ajustar_prediccion(prediccion_procesada, config)
         
         return prediccion_ajustada
         
@@ -346,39 +354,56 @@ def ajustar_prediccion(prediccion, config):
     if juego_nombre == 'loterianacional':
         # Lotería Nacional: convertir predicción a 5 dígitos individuales (0-9)
         try:
-            # Si tenemos múltiples valores de predicción, usar el primero
-            if len(prediccion) > 1:
-                valor_base = prediccion[0]
-            else:
-                valor_base = prediccion[0] if hasattr(prediccion, '__len__') else prediccion
+            logging.info(f"[DEBUG] SOLUCION - Prediccion recibida: {prediccion}")
+            logging.info(f"[DEBUG] SOLUCION - Tipo: {type(prediccion)}, Shape: {prediccion.shape if hasattr(prediccion, 'shape') else 'No shape'}")
             
-            # Agregar variabilidad extra usando otros valores de la predicción
-            if len(prediccion) > 1:
-                # Usar combinación de múltiples valores para más variabilidad
-                combinacion = float(valor_base) + float(prediccion[min(1, len(prediccion)-1)]) * 0.1
-                valor_base = combinacion
-            
-            # Convertir a número entero y asegurar que esté en rango válido
-            numero = int(abs(float(valor_base))) % 100000
-            
-            # Añadir microsegundos actuales para mayor variabilidad
+            # ESTRATEGIA NUEVA: Usar múltiples valores de la predicción raw para crear variabilidad extrema
             import time
-            microsegundos = int(time.time() * 1000000) % 100
-            numero = (numero + microsegundos) % 100000
             
-            numero_str = f"{numero:05d}"
+            # 1. Seleccionar múltiples valores aleatorios de la predicción (que tiene 50 valores)
+            indices_aleatorios = np.random.choice(len(prediccion), size=5, replace=False)
+            valores_seleccionados = [float(prediccion[i]) for i in indices_aleatorios]
+            logging.info(f"[DEBUG] SOLUCION - Valores seleccionados {indices_aleatorios}: {valores_seleccionados}")
+            
+            # 2. Combinar valores para crear número base
+            suma_valores = sum(abs(v) for v in valores_seleccionados)
+            producto_valores = 1
+            for v in valores_seleccionados:
+                producto_valores *= (abs(v) + 0.1)  # +0.1 para evitar multiplicación por 0
+            
+            numero_base = int((suma_valores * 1000 + producto_valores * 100) % 100000)
+            logging.info(f"[DEBUG] SOLUCION - Suma: {suma_valores}, Producto: {producto_valores}, Base: {numero_base}")
+            
+            # 3. Añadir fuentes de aleatoriedad adicionales
+            microsegundos = int(time.time() * 1000000) % 100000
+            factor_temporal = int(time.time() % 3600)  # Segundos en la hora actual
+            hash_momento = hash(str(time.time())) % 100000
+            
+            # 4. Combinar todas las fuentes
+            numero_final = (numero_base + microsegundos + factor_temporal + hash_momento) % 100000
+            
+            # 5. Asegurar distribución en todo el rango
+            if numero_final < 10000:
+                numero_final = numero_final + np.random.randint(10000, 90000)
+            
+            numero_final = numero_final % 100000
+            logging.info(f"[DEBUG] SOLUCION - Microseg: {microsegundos}, Temporal: {factor_temporal}, Hash: {hash_momento}, Final: {numero_final}")
+            
+            # 6. Convertir a dígitos
+            numero_str = f"{numero_final:05d}"
             digitos = [int(d) for d in numero_str]
             
-            logging.info(f"Lotería Nacional - Valor base: {valor_base}, Microsegundos: {microsegundos}, Número final: {numero}, Dígitos: {digitos}")
+            logging.info(f"[DEBUG] SOLUCION - Numero final: {numero_final}, Digitos: {digitos}")
             
             return {
                 'numeros': digitos,
                 'mensaje': 'Predicción generada con IA para Lotería Nacional'
             }
         except Exception as e:
-            logging.error(f"Error procesando predicción de Lotería Nacional: {str(e)}")
-            # Fallback: generar dígitos aleatorios
+            logging.error(f"[DEBUG] SOLUCION - Error: {str(e)}")
+            # Fallback: generar dígitos completamente aleatorios
             digitos = [np.random.randint(0, 10) for _ in range(5)]
+            logging.info(f"[DEBUG] SOLUCION - Fallback aleatorio: {digitos}")
             return {
                 'numeros': digitos,
                 'mensaje': 'Predicción generada con IA para Lotería Nacional (fallback)'
