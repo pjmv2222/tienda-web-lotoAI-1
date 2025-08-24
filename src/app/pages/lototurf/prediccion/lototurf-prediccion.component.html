@@ -123,13 +123,7 @@
           </div>
         </div>
 
-        <!-- Botón para generar más predicciones -->
-        <div class="generate-more-section" *ngIf="predictionResults.length < maxPredictions">
-          <button class="btn-primary" (click)="generatePrediction()" [disabled]="isGeneratingPrediction">
-            <span *ngIf="!isGeneratingPrediction">Generar nueva predicción</span>
-            <span *ngIf="isGeneratingPrediction">Generando...</span>
-          </button>
-        </div>
+        <!-- Comentario: Botón duplicado eliminado - se mantiene solo en action-buttons -->
       </div>
 
       <!-- Botones de acción -->
