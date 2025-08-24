@@ -457,23 +457,22 @@ export class EuromillonPrediccionComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Limpiar predicciones usando el servicio
+   * Limpiar predicciones SOLO de la visualización (mantener historial)
    */
   clearPredictions() {
-    this.userPredictionService.clearPredictions('euromillon').subscribe({
-      next: (response) => {
-        if (response.success) {
-          this.predictionResults = [];
-          this.updatePredictionDisplay();
-        }
-      },
-      error: (error) => {
-        console.error('Error limpiando predicciones:', error);
-        // Fallback al comportamiento local
-        this.predictionResults = [];
-        this.updatePredictionDisplay();
-      }
-    });
+    // Solo limpiar la visualización local, NO el historial de la base de datos
+    this.predictionResults = [];
+    this.numberFrequency.clear();
+    this.showEmptyBalls = true;
+    
+    // Limpiar solo el localStorage local para la visualización
+    if (isPlatformBrowser(this.platformId)) {
+      localStorage.removeItem('euromillon_predictions');
+    }
+    
+    // NO llamamos al backend para mantener el historial y contadores intactos
+    console.log('🧹 Predicciones limpiadas de la visualización (historial mantenido)');
+    this.updatePredictionDisplay();
   }
 
   /**

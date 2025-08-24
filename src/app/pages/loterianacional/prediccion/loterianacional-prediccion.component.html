@@ -129,15 +129,20 @@
         </div>
       </div>
 
-      <!-- Botones de acción siempre visibles -->
-      <div class="action-buttons" *ngIf="!isLoadingSubscriptionStatus">
+      <!-- Botones de acción -->
+      <div class="action-buttons">
         <button class="btn-primary" 
                 (click)="generatePrediction()" 
-                [disabled]="isGeneratingPrediction || predictionResults.length >= maxPredictions || predictionError">
-          <span *ngIf="!isGeneratingPrediction && predictionResults.length < maxPredictions && !predictionError">Generar nueva predicción</span>
+                [disabled]="isGeneratingPrediction || predictionResults.length >= maxPredictions">
+          <span *ngIf="!isGeneratingPrediction && predictionResults.length < maxPredictions">Generar nueva predicción</span>
           <span *ngIf="isGeneratingPrediction">Generando...</span>
           <span *ngIf="predictionResults.length >= maxPredictions">Límite de {{ maxPredictions }} predicciones alcanzado</span>
-          <span *ngIf="predictionError && !isGeneratingPrediction && predictionResults.length < maxPredictions">Generar predicción</span>
+        </button>
+        <button class="btn-secondary" 
+                (click)="clearPredictions()" 
+                *ngIf="predictionResults.length > 0"
+                [disabled]="isGeneratingPrediction">
+          Limpiar predicciones
         </button>
         <button class="btn-secondary" routerLink="/loteria-nacional">Volver a Lotería Nacional</button>
       </div>
