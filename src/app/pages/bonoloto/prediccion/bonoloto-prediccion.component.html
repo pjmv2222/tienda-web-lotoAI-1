@@ -115,11 +115,20 @@
         </div>
       </div>
 
+      <!-- Botones de acción -->
       <div class="action-buttons">
-        <button class="btn-primary" (click)="generatePrediction()" [disabled]="isGeneratingPrediction || predictionResults.length >= maxPredictions">
+        <button class="btn-primary" 
+                (click)="generatePrediction()" 
+                [disabled]="isGeneratingPrediction || predictionResults.length >= maxPredictions">
           <span *ngIf="!isGeneratingPrediction && predictionResults.length < maxPredictions">Generar nueva predicción</span>
           <span *ngIf="isGeneratingPrediction">Generando...</span>
           <span *ngIf="predictionResults.length >= maxPredictions">Límite de {{ maxPredictions }} predicciones alcanzado</span>
+        </button>
+        <button class="btn-secondary" 
+                (click)="clearPredictions()" 
+                *ngIf="predictionResults.length > 0"
+                [disabled]="isGeneratingPrediction">
+          Limpiar predicciones
         </button>
         <button class="btn-secondary" routerLink="/bonoloto">Volver a Bonoloto</button>
       </div>

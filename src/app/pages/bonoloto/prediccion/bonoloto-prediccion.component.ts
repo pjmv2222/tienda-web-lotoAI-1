@@ -245,6 +245,21 @@ export class BonolotoPrediccionComponent implements OnInit, OnDestroy {
     this.updatePredictionDisplay();
   }
 
+  clearPredictions() {
+    // Solo limpiar la visualización local, NO el historial de la base de datos
+    this.predictionResults = [];
+    this.numberFrequency.clear();
+    this.showEmptyBalls = true;
+    
+    // Limpiar solo el localStorage local para la visualización
+    if (isPlatformBrowser(this.platformId)) {
+      localStorage.removeItem('bonoloto_predictions');
+    }
+    
+    // NO llamamos al backend para mantener el historial y contadores intactos
+    console.log('🧹 Predicciones limpiadas de la visualización (historial mantenido)');
+  }
+
   ngOnDestroy(): void {
     this.subscriptions.forEach(sub => sub.unsubscribe());
   }
