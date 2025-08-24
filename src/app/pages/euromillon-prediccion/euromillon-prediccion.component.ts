@@ -122,9 +122,8 @@ export class EuromillonPrediccionComponent implements OnInit, OnDestroy {
       });
       this.subscriptions.push(proSub);
 
-      // Verificar si hay predicciones guardadas
-      this.loadSavedPredictions();
-
+      // ✅ Removido: loadSavedPredictions() - ahora solo usa loadPredictionStatus() como las demás páginas
+      
       // La generación automática se manejará en checkAllVerificationsCompleted()
       // cuando se completen todas las verificaciones de suscripción
     } else {
@@ -155,8 +154,7 @@ export class EuromillonPrediccionComponent implements OnInit, OnDestroy {
         return;
       }
       
-      // Cargar predicciones guardadas si existen
-      this.loadSavedPredictions();
+      // ✅ Removido: loadSavedPredictions() - ya se maneja en loadPredictionStatus()
       
       // Si no hay predicciones guardadas, mostrar las bolas vacías
       if (this.predictionResults.length === 0) {
@@ -186,8 +184,7 @@ export class EuromillonPrediccionComponent implements OnInit, OnDestroy {
           
           this.predictionResults = response.data.predictions.map(p => p.data);
           this.maxPredictions = response.data.maxAllowed;
-          // NO sobrescribir userPlan si ya viene especificado desde URL
-          // this.userPlan = response.data.userPlan; // ❌ COMENTADO: No sobrescribir plan específico de URL
+          this.userPlan = response.data.userPlan; // ✅ Restaurado: usar plan real del backend
           
           console.log('✅ [DEBUG] Estado actualizado:', {
             predictionResultsLength: this.predictionResults.length,
@@ -210,9 +207,10 @@ export class EuromillonPrediccionComponent implements OnInit, OnDestroy {
           message: error.message
         });
         
-        // Fallback al comportamiento anterior si falla
-        console.log('🔄 [DEBUG] Usando fallback localStorage...');
-        this.loadPredictionsFromStorage();
+        // Fallback: mostrar bolas vacías si falla la carga desde backend
+        console.log('🔄 [DEBUG] Error en backend, mostrando interfaz vacía...');
+        this.predictionResults = [];
+        this.showEmptyBalls = true;
       }
     });
   }
