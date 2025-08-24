@@ -123,6 +123,65 @@ modelos = {}
 escaladores = {}
 datos_historicos = {}
 
+# 🆕 SISTEMA ANTI-DUPLICADOS
+# Cache de predicciones recientes por sesión/usuario para evitar duplicados
+predicciones_recientes = {}
+contador_predicciones = 0
+
+def generar_clave_prediccion(prediccion_dict):
+    """Genera una clave única para una predicción para detectar duplicados"""
+    if 'numeros' in prediccion_dict and 'estrellas' in prediccion_dict:
+        # EuroMillon: numeros + estrellas
+        return f"{sorted(prediccion_dict['numeros'])}-{sorted(prediccion_dict['estrellas'])}"
+    elif 'numeros' in prediccion_dict and len(prediccion_dict['numeros']) == 5 and all(isinstance(x, int) and 0 <= x <= 9 for x in prediccion_dict['numeros']):
+        # Lotería Nacional: 5 dígitos
+        return f"LN-{prediccion_dict['numeros']}"
+    elif 'numeros' in prediccion_dict:
+        # Otros juegos: solo números
+        numeros = sorted(prediccion_dict['numeros'])
+        especiales = []
+        for key in ['complementario', 'reintegro', 'clave', 'dream', 'caballo']:
+            if key in prediccion_dict and prediccion_dict[key] is not None:
+                especiales.append(prediccion_dict[key])
+        return f"{numeros}-{especiales}"
+    return str(prediccion_dict)
+
+def limpiar_cache_predicciones():
+    """Limpia predicciones antiguas del cache (más de 1 hora)"""
+    global predicciones_recientes
+    import time
+    tiempo_actual = time.time()
+    tiempo_limite = tiempo_actual - 3600  # 1 hora
+    
+    # Filtrar predicciones recientes
+    predicciones_filtradas = {}
+    for clave, datos in predicciones_recientes.items():
+        if datos['timestamp'] > tiempo_limite:
+            predicciones_filtradas[clave] = datos
+    
+    predicciones_recientes = predicciones_filtradas
+
+def es_prediccion_duplicada(prediccion_dict, juego):
+    """Verifica si una predicción es duplicada comparando con las recientes"""
+    clave = generar_clave_prediccion(prediccion_dict)
+    
+    # Limpiar cache antes de verificar
+    limpiar_cache_predicciones()
+    
+    # Verificar si existe en el cache
+    if clave in predicciones_recientes:
+        return True
+    
+    # Registrar nueva predicción
+    import time
+    predicciones_recientes[clave] = {
+        'timestamp': time.time(),
+        'juego': juego,
+        'prediccion': prediccion_dict
+    }
+    
+    return False
+
 # Función para cargar modelos y datos
 def cargar_modelos():
     """Carga todos los modelos de IA y sus datos históricos"""
@@ -236,111 +295,148 @@ def token_required(f):
         return f(*args, **kwargs)
     return decorated
 
-# Función para generar predicción con IA
+# Función para generar predicción con IA - CON SISTEMA ANTI-DUPLICADOS
 def generar_prediccion_ia(juego):
-    """Genera predicción usando el modelo de IA entrenado"""
-    try:
-        if juego not in modelos or juego not in escaladores:
-            raise Exception(f"Modelo para {juego} no disponible")
-        
-        config = JUEGOS_CONFIG[juego]
-        modelo = modelos[juego]
-        scaler = escaladores[juego]
-        
-        # Generar entrada base usando datos históricos recientes
-        datos_recientes = datos_historicos[juego].tail(10)
-        
-        if juego == 'loterianacional':
-            # Lotería Nacional: usar estructura específica con Fecha, Sorteo, Euros
-            datos_temp = datos_recientes[config['columnas_entrada']].copy()
-            if 'Fecha' in datos_temp.columns:
-                datos_temp['Fecha'] = pd.to_datetime(datos_temp['Fecha'], format='%d/%m/%Y').astype('int64') // 10**9
-            
-            # AGREGAR VARIABILIDAD: usar múltiples filas aleatorias de los últimos 50 registros
-            datos_temp_extendidos = datos_historicos[juego][config['columnas_entrada']].tail(50).copy()
-            if 'Fecha' in datos_temp_extendidos.columns:
-                datos_temp_extendidos['Fecha'] = pd.to_datetime(datos_temp_extendidos['Fecha'], format='%d/%m/%Y').astype('int64') // 10**9
-            
-            fila_aleatoria = np.random.randint(0, len(datos_temp_extendidos))
-            entrada_base = datos_temp_extendidos.iloc[fila_aleatoria:fila_aleatoria+1].values.astype(float)
-            
-            # Agregar variación aleatoria más significativa para mayor diversidad
-            variacion = np.random.normal(0, 0.05, entrada_base.shape)  # 5% de variación
-            entrada_base = entrada_base + variacion
-            
-            # Añadir ruido temporal basado en la hora actual
-            import time
-            ruido_temporal = (time.time() % 1000) * np.random.random(entrada_base.shape) * 0.001
-            entrada_base = entrada_base + ruido_temporal
-            
-            # Para Lotería Nacional, usar escalador de entrada y salida por separado
-            scaler_entrada = scaler['entrada']
-            scaler_salida = scaler['salida']
-            
-            # Verificar dimensiones para evitar el error de broadcast
-            logging.info(f"Entrada shape: {entrada_base.shape}")
-            logging.info(f"Entrada valores: {entrada_base.flatten()}")
-            logging.info(f"Escalador entrada fitted on: {scaler_entrada.n_features_in_} features")
-        elif juego == 'eurodreams':
-            # EuroDreams: crear DaysSince si no existe
-            datos_temp = datos_recientes.copy()
-            if 'DaysSince' not in datos_temp.columns and 'Date' in datos_temp.columns:
-                datos_temp['Date'] = pd.to_datetime(datos_temp['Date'])
-                reference_date = pd.Timestamp('2000-01-01')
-                datos_temp['DaysSince'] = (datos_temp['Date'] - reference_date).dt.days
-            entrada_base = datos_temp[config['columnas_entrada']].iloc[-1:].values.astype(float)
-            scaler_entrada = scaler
-            scaler_salida = scaler
-        else:
-            # Otros juegos: usar columnas de entrada directamente
-            entrada_base = datos_recientes[config['columnas_entrada']].iloc[-1:].values.astype(float)
-            scaler_entrada = scaler
-            scaler_salida = scaler
-        
-        # Normalizar entrada
-        entrada_normalizada = scaler_entrada.transform(entrada_base)
-        
-        # Reformatear para LSTM
-        entrada_reshaped = entrada_normalizada.reshape(
-            entrada_normalizada.shape[0], 
-            entrada_normalizada.shape[1], 
-            1
-        )
-        
-        # Generar predicción
+    """Genera predicción usando el modelo de IA entrenado con validación anti-duplicados"""
+    global contador_predicciones
+    
+    max_intentos = 10  # Máximo de intentos para evitar duplicados
+    
+    for intento in range(max_intentos):
         try:
-            prediccion_raw = modelo.predict(entrada_reshaped, verbose=0)
-            logging.info(f"Predicción raw shape para {juego}: {prediccion_raw.shape}")
-        except Exception as model_error:
-            logging.error(f"Error en modelo.predict para {juego}: {str(model_error)}")
-            raise Exception(f"Error en predicción del modelo: {str(model_error)}")
-        
-        # Para Lotería Nacional, usar predicción raw directamente (sin desnormalizar)
-        if juego == 'loterianacional':
-            # SOLUCIÓN DEFINITIVA: Usar predicción raw para mayor variabilidad
-            logging.info(f"[DEBUG] SOLUCION - Prediccion raw para loteria: {prediccion_raw}")
-            logging.info(f"[DEBUG] SOLUCION - Prediccion raw shape: {prediccion_raw.shape}")
-            logging.info(f"[DEBUG] SOLUCION - Prediccion raw[0]: {prediccion_raw[0]}")
-            prediccion_procesada = prediccion_raw[0]
-        else:
-            # Otros juegos: intentar desnormalizar normalmente
+            if juego not in modelos or juego not in escaladores:
+                raise Exception(f"Modelo para {juego} no disponible")
+            
+            config = JUEGOS_CONFIG[juego]
+            modelo = modelos[juego]
+            scaler = escaladores[juego]
+            
+            # 🆕 INCREMENTAR VARIABILIDAD EN CADA INTENTO
+            contador_predicciones += 1
+            variabilidad_extra = 0.02 * intento  # 2% más de variación por intento
+            
+            # Generar entrada base usando datos históricos recientes CON MÁS VARIABILIDAD
+            datos_recientes = datos_historicos[juego].tail(50)  # 🆕 Usar más datos (50 en lugar de 10)
+            
+            if juego == 'loterianacional':
+                # Lotería Nacional: usar estructura específica con más aleatoriedad
+                datos_temp = datos_recientes[config['columnas_entrada']].copy()
+                if 'Fecha' in datos_temp.columns:
+                    datos_temp['Fecha'] = pd.to_datetime(datos_temp['Fecha'], format='%d/%m/%Y').astype('int64') // 10**9
+                
+                # 🆕 MAYOR VARIABILIDAD: usar rango más amplio de datos históricos
+                datos_temp_extendidos = datos_historicos[juego][config['columnas_entrada']].tail(100).copy()
+                if 'Fecha' in datos_temp_extendidos.columns:
+                    datos_temp_extendidos['Fecha'] = pd.to_datetime(datos_temp_extendidos['Fecha'], format='%d/%m/%Y').astype('int64') // 10**9
+                
+                # 🆕 Usar semilla basada en tiempo + contador + intento para mayor diversidad
+                import time
+                semilla_unica = int((time.time() * 1000000) % 1000000) + contador_predicciones * 1000 + intento * 100
+                np.random.seed(semilla_unica)
+                
+                fila_aleatoria = np.random.randint(0, len(datos_temp_extendidos))
+                entrada_base = datos_temp_extendidos.iloc[fila_aleatoria:fila_aleatoria+1].values.astype(float)
+                
+                # 🆕 MAYOR variación aleatoria para predicciones únicas
+                variacion_base = 0.15 + variabilidad_extra  # 15% base + extra por intento
+                variacion = np.random.normal(0, variacion_base, entrada_base.shape)
+                entrada_base = entrada_base + variacion
+                
+                # 🆕 Añadir ruido temporal + contador + microsegundos para unicidad
+                microsegundos = int((time.time() * 1000000) % 1000000)
+                ruido_temporal = (microsegundos % 1000) * np.random.random(entrada_base.shape) * 0.01
+                ruido_contador = contador_predicciones * np.random.random(entrada_base.shape) * 0.005
+                entrada_base = entrada_base + ruido_temporal + ruido_contador
+                
+                # Para Lotería Nacional, usar escalador de entrada y salida por separado
+                scaler_entrada = scaler['entrada']
+                scaler_salida = scaler['salida']
+                
+            elif juego == 'eurodreams':
+                # EuroDreams: crear DaysSince si no existe
+                datos_temp = datos_recientes.copy()
+                if 'DaysSince' not in datos_temp.columns and 'Date' in datos_temp.columns:
+                    datos_temp['Date'] = pd.to_datetime(datos_temp['Date'])
+                    reference_date = pd.Timestamp('2000-01-01')
+                    datos_temp['DaysSince'] = (datos_temp['Date'] - reference_date).dt.days
+                
+                # 🆕 Usar fila aleatoria en lugar de siempre la última
+                fila_aleatoria = np.random.randint(max(0, len(datos_temp) - 20), len(datos_temp))
+                entrada_base = datos_temp[config['columnas_entrada']].iloc[fila_aleatoria:fila_aleatoria+1].values.astype(float)
+                
+                # 🆕 Añadir variación
+                variacion = np.random.normal(0, 0.10 + variabilidad_extra, entrada_base.shape)
+                entrada_base = entrada_base + variacion
+                
+                scaler_entrada = scaler
+                scaler_salida = scaler
+            else:
+                # 🆕 Otros juegos: usar datos aleatorios de los últimos registros
+                fila_aleatoria = np.random.randint(max(0, len(datos_recientes) - 10), len(datos_recientes))
+                entrada_base = datos_recientes[config['columnas_entrada']].iloc[fila_aleatoria:fila_aleatoria+1].values.astype(float)
+                
+                # 🆕 Añadir variación más significativa
+                variacion = np.random.normal(0, 0.08 + variabilidad_extra, entrada_base.shape)
+                entrada_base = entrada_base + variacion
+                
+                scaler_entrada = scaler
+                scaler_salida = scaler
+            
+            # Normalizar entrada
+            entrada_normalizada = scaler_entrada.transform(entrada_base)
+            
+            # Reformatear para LSTM
+            entrada_reshaped = entrada_normalizada.reshape(
+                entrada_normalizada.shape[0], 
+                entrada_normalizada.shape[1], 
+                1
+            )
+            
+            # Generar predicción
             try:
-                prediccion_desnormalizada = scaler_salida.inverse_transform(prediccion_raw)
-                logging.info(f"Predicción desnormalizada shape para {juego}: {prediccion_desnormalizada.shape}")
-                prediccion_procesada = prediccion_desnormalizada[0]
-            except Exception as denorm_error:
-                logging.error(f"Error en desnormalización para {juego}: {str(denorm_error)}")
+                prediccion_raw = modelo.predict(entrada_reshaped, verbose=0)
+                logging.info(f"Predicción raw shape para {juego}: {prediccion_raw.shape}")
+            except Exception as model_error:
+                logging.error(f"Error en modelo.predict para {juego}: {str(model_error)}")
+                raise Exception(f"Error en predicción del modelo: {str(model_error)}")
+            
+            # Para Lotería Nacional, usar predicción raw directamente
+            if juego == 'loterianacional':
                 prediccion_procesada = prediccion_raw[0]
-        
-        # Ajustar predicción a rangos válidos
-        prediccion_ajustada = ajustar_prediccion(prediccion_procesada, config)
-        
-        return prediccion_ajustada
-        
-    except Exception as e:
-        logging.error(f"Error generando predicción IA para {juego}: {str(e)}")
-        # Fallback a predicción aleatoria
-        return generar_prediccion_aleatoria(juego)
+            else:
+                # Otros juegos: intentar desnormalizar normalmente
+                try:
+                    prediccion_desnormalizada = scaler_salida.inverse_transform(prediccion_raw)
+                    prediccion_procesada = prediccion_desnormalizada[0]
+                except Exception as denorm_error:
+                    logging.error(f"Error en desnormalización para {juego}: {str(denorm_error)}")
+                    prediccion_procesada = prediccion_raw[0]
+            
+            # 🆕 Añadir variación adicional a la predicción procesada para mayor unicidad
+            if intento > 0:  # Solo añadir variación extra en reintentos
+                variacion_prediccion = np.random.normal(0, 0.05 * intento, prediccion_procesada.shape)
+                prediccion_procesada = prediccion_procesada + variacion_prediccion
+            
+            # Ajustar predicción a rangos válidos
+            prediccion_ajustada = ajustar_prediccion(prediccion_procesada, config)
+            
+            # 🆕 VERIFICAR SI ES DUPLICADA
+            if not es_prediccion_duplicada(prediccion_ajustada, juego):
+                logging.info(f"✅ Predicción única generada para {juego} en intento {intento + 1}")
+                return prediccion_ajustada
+            else:
+                logging.warning(f"⚠️ Predicción duplicada para {juego} en intento {intento + 1}, reintentando...")
+                continue
+                
+        except Exception as e:
+            logging.error(f"Error generando predicción IA para {juego} en intento {intento + 1}: {str(e)}")
+            if intento == max_intentos - 1:  # Último intento
+                return generar_prediccion_aleatoria(juego)
+            continue
+    
+    # Si llegamos aquí, no pudimos generar una predicción única
+    logging.warning(f"⚠️ No se pudo generar predicción única para {juego} después de {max_intentos} intentos, usando aleatoria")
+    return generar_prediccion_aleatoria(juego)
 
 # Función para ajustar predicción a rangos válidos
 def ajustar_prediccion(prediccion, config):
@@ -464,42 +560,148 @@ def ajustar_prediccion(prediccion, config):
 
 # Función fallback para predicción aleatoria
 def generar_prediccion_aleatoria(juego):
-    """Genera predicción aleatoria como fallback"""
+    """Genera predicción aleatoria como fallback - CON SISTEMA ANTI-DUPLICADOS"""
+    global contador_predicciones
     config = JUEGOS_CONFIG[juego]
     
-    if juego == 'loterianacional':
-        # Generar 5 dígitos individuales del 0-9
-        digitos = [np.random.randint(0, 10) for _ in range(5)]
-        return {
-            'numeros': digitos,
-            'mensaje': 'Predicción aleatoria para Lotería Nacional'
-        }
-    elif juego == 'euromillon':
-        numeros = sorted(np.random.choice(range(1, 51), 5, replace=False))
-        estrellas = sorted(np.random.choice(range(1, 13), 2, replace=False))
-        return {
-            'numeros': numeros.tolist(),
-            'estrellas': estrellas.tolist(),
-            'mensaje': 'Predicción aleatoria para EuroMillon'
-        }
-    else:
-        rango_min, rango_max = config['rango_principales']
-        numeros = sorted(np.random.choice(
-            range(rango_min, rango_max + 1), 
-            config['num_principales'], 
-            replace=False
-        ))
-        
-        resultado = {
-            'numeros': numeros.tolist(),
-            'mensaje': f'Predicción aleatoria para {juego.title()}'
-        }
-        
-        if config['num_especiales'] > 0 and config['rango_especiales']:
-            esp_min, esp_max = config['rango_especiales']
-            resultado['especial'] = np.random.randint(esp_min, esp_max + 1)
-        
-        return resultado
+    max_intentos = 15  # Más intentos para aleatorias porque son más fáciles de duplicar
+    
+    for intento in range(max_intentos):
+        try:
+            # 🆕 Semilla única para cada intento
+            import time
+            semilla_unica = int((time.time() * 1000000) % 1000000) + contador_predicciones * 1337 + intento * 42
+            np.random.seed(semilla_unica)
+            contador_predicciones += 1
+            
+            if juego == 'loterianacional':
+                # 🆕 Generar 5 dígitos con mayor variabilidad
+                digitos = []
+                for i in range(5):
+                    # Usar tiempo + posición + contador para mayor variabilidad
+                    base = (int(time.time() * 1000) + i * 123 + contador_predicciones * 7) % 10
+                    digito = (base + np.random.randint(0, 10)) % 10
+                    digitos.append(digito)
+                
+                resultado = {
+                    'numeros': digitos,
+                    'mensaje': 'Predicción aleatoria para Lotería Nacional'
+                }
+                
+            elif juego == 'euromillon':
+                # 🆕 EuroMillon con mayor variabilidad
+                # Usar diferentes rangos de inicio para cada intento
+                rango_inicio = (intento * 7) % 20 + 1  # Empezar desde diferentes puntos
+                numeros_posibles = list(range(rango_inicio, 51)) + list(range(1, rango_inicio))
+                numeros = sorted(np.random.choice(numeros_posibles[:45], 5, replace=False))
+                
+                estrellas_inicio = (intento * 3) % 6 + 1
+                estrellas_posibles = list(range(estrellas_inicio, 13)) + list(range(1, estrellas_inicio))
+                estrellas = sorted(np.random.choice(estrellas_posibles[:10], 2, replace=False))
+                
+                resultado = {
+                    'numeros': numeros.tolist(),
+                    'estrellas': estrellas.tolist(),
+                    'mensaje': 'Predicción aleatoria para EuroMillon'
+                }
+                
+            else:
+                # 🆕 Otros juegos con variabilidad mejorada
+                rango_min, rango_max = config['rango_principales']
+                rango_total = rango_max - rango_min + 1
+                
+                # Usar offset basado en intento para mayor variabilidad
+                offset = (intento * 11) % min(20, rango_total // 2)
+                inicio_rango = rango_min + offset
+                fin_rango = min(rango_max, inicio_rango + rango_total - 1)
+                
+                # Crear lista de números disponibles con rotación
+                if fin_rango <= rango_max:
+                    numeros_posibles = list(range(inicio_rango, fin_rango + 1))
+                else:
+                    numeros_posibles = list(range(inicio_rango, rango_max + 1)) + list(range(rango_min, inicio_rango))
+                
+                # Seleccionar números
+                if len(numeros_posibles) >= config['num_principales']:
+                    numeros = sorted(np.random.choice(
+                        numeros_posibles, 
+                        config['num_principales'], 
+                        replace=False
+                    ))
+                else:
+                    # Fallback si no hay suficientes números
+                    numeros = sorted(np.random.choice(
+                        range(rango_min, rango_max + 1), 
+                        config['num_principales'], 
+                        replace=False
+                    ))
+                
+                resultado = {
+                    'numeros': numeros.tolist(),
+                    'mensaje': f'Predicción aleatoria para {juego.title()}'
+                }
+                
+                # Añadir número especial si es necesario
+                if config['num_especiales'] > 0 and config['rango_especiales']:
+                    esp_min, esp_max = config['rango_especiales']
+                    especial = (np.random.randint(esp_min, esp_max + 1) + intento) % (esp_max - esp_min + 1) + esp_min
+                    
+                    # Asignar a la clave correcta según el juego
+                    if juego == 'bonoloto' or juego == 'primitiva':
+                        resultado['reintegro'] = especial
+                    elif juego == 'elgordo':
+                        resultado['clave'] = especial
+                    elif juego == 'eurodreams':
+                        resultado['dream'] = especial
+                    elif juego == 'lototurf':
+                        resultado['caballo'] = especial
+                    else:
+                        resultado['especial'] = especial
+            
+            # 🆕 VERIFICAR SI ES DUPLICADA
+            if not es_prediccion_duplicada(resultado, juego):
+                logging.info(f"✅ Predicción aleatoria única generada para {juego} en intento {intento + 1}")
+                return resultado
+            else:
+                logging.warning(f"⚠️ Predicción aleatoria duplicada para {juego} en intento {intento + 1}, reintentando...")
+                continue
+                
+        except Exception as e:
+            logging.error(f"Error generando predicción aleatoria para {juego} en intento {intento + 1}: {str(e)}")
+            if intento == max_intentos - 1:
+                # Último recurso: generar con timestamp como garantía de unicidad
+                import time
+                timestamp_ms = int(time.time() * 1000) % 100000
+                
+                if juego == 'loterianacional':
+                    # Usar timestamp para generar dígitos únicos
+                    timestamp_str = f"{timestamp_ms:05d}"
+                    return {
+                        'numeros': [int(d) for d in timestamp_str],
+                        'mensaje': 'Predicción única garantizada para Lotería Nacional'
+                    }
+                else:
+                    # Para otros juegos, usar timestamp como base para números únicos
+                    rango_min, rango_max = config['rango_principales']
+                    base_numeros = []
+                    for i in range(config['num_principales']):
+                        num = ((timestamp_ms + i * 1234) % (rango_max - rango_min + 1)) + rango_min
+                        while num in base_numeros:
+                            num = (num % (rango_max - rango_min + 1)) + rango_min
+                        base_numeros.append(num)
+                    
+                    return {
+                        'numeros': sorted(base_numeros),
+                        'mensaje': f'Predicción única garantizada para {juego.title()}'
+                    }
+            continue
+    
+    # Si llegamos aquí, algo está muy mal, devolver última opción
+    logging.error(f"❌ No se pudo generar predicción aleatoria única para {juego} después de {max_intentos} intentos")
+    return {
+        'numeros': [1, 2, 3, 4, 5],  # Números por defecto
+        'mensaje': f'Predicción de emergencia para {juego.title()}'
+    }
 
 # Rutas específicas para cada juego
 @app.route('/euromillon/predict', methods=['POST'])
