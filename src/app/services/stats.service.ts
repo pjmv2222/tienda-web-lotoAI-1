@@ -1,8 +1,9 @@
-import { Injectable } from '@angular/core';
+import { Injectable, Inject, PLATFORM_ID } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, BehaviorSubject, interval } from 'rxjs';
+import { Observable, BehaviorSubject, interval, of } from 'rxjs';
 import { switchMap, tap, catchError } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
+import { isPlatformBrowser } from '@angular/common';
 
 export interface PublicStats {
   totalVisitors: number;
@@ -31,20 +32,34 @@ export class StatsService {
 
   public stats$ = this.statsSubject.asObservable();
 
-  constructor(private http: HttpClient) {
-    // Cargar estadísticas al inicializar el servicio
-    this.loadStats();
-    
-    // Actualizar estadísticas cada 5 minutos
-    interval(5 * 60 * 1000).pipe(
-      switchMap(() => this.getPublicStats())
-    ).subscribe();
+  constructor(
+    private http: HttpClient,
+    @Inject(PLATFORM_ID) private platformId: Object
+  ) {
+    // Solo ejecutar en el navegador, no en SSR
+    if (isPlatformBrowser(this.platformId)) {
+      // Cargar estadísticas al inicializar el servicio
+      this.loadStats();
+      
+      // Actualizar estadísticas cada 5 minutos
+      interval(5 * 60 * 1000).pipe(
+        switchMap(() => this.getPublicStats())
+      ).subscribe();
+    }
   }
 
   /**
    * Obtener estadísticas públicas desde el servidor
    */
   getPublicStats(): Observable<StatsResponse> {
+    // No hacer llamadas durante SSR
+    if (!isPlatformBrowser(this.platformId)) {
+      return of({
+        success: true,
+        data: this.statsSubject.value
+      });
+    }
+    
     return this.http.get<StatsResponse>(`${this.apiUrl}/public`).pipe(
       tap(response => {
         if (response.success) {
@@ -62,6 +77,11 @@ export class StatsService {
    * Registrar visita del usuario actual
    */
   trackVisitor(): Observable<any> {
+    // No hacer tracking durante SSR
+    if (!isPlatformBrowser(this.platformId)) {
+      return of({ success: true, message: 'Skipped during SSR' });
+    }
+    
     return this.http.post<any>(`${this.apiUrl}/track-visitor`, {}).pipe(
       tap((response: any) => {
         // Actualizar estadísticas después de registrar visita
@@ -81,6 +101,11 @@ export class StatsService {
    * Obtener estadísticas detalladas (requiere autenticación)
    */
   getDetailedStats(): Observable<any> {
+    // No hacer llamadas durante SSR
+    if (!isPlatformBrowser(this.platformId)) {
+      return of({ success: true, data: {} });
+    }
+    
     return this.http.get(`${this.apiUrl}/detailed`);
   }
 
@@ -88,7 +113,10 @@ export class StatsService {
    * Cargar estadísticas inmediatamente
    */
   private loadStats(): void {
-    this.getPublicStats().subscribe();
+    // Solo cargar si estamos en el navegador
+    if (isPlatformBrowser(this.platformId)) {
+      this.getPublicStats().subscribe();
+    }
   }
 
   /**
