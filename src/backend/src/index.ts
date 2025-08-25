@@ -19,8 +19,8 @@ dotenv.config({ path: '.env.production' });
 
 // Verificar que las variables de entorno se han cargado correctamente
 console.log('Variables de entorno cargadas:');
-console.log('NODE_ENV:', process.env.NODE_ENV);
-console.log('STRIPE_SECRET_KEY:', process.env.STRIPE_SECRET_KEY ? 'Definida' : 'No definida');
+console.log('NODE_ENV:', process.env['NODE_ENV']);
+console.log('STRIPE_SECRET_KEY:', process.env['STRIPE_SECRET_KEY'] ? 'Definida' : 'No definida');
 
 const app = express();
 
@@ -33,8 +33,8 @@ app.use('/api/webhooks/stripe', express.raw({ type: 'application/json' }));
 app.use(express.json());
 
 // Configuración CORS
-const NODE_ENV = process.env.NODE_ENV || 'development';
-const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:4000';
+const NODE_ENV = process.env['NODE_ENV'] || 'development';
+const FRONTEND_URL = process.env['FRONTEND_URL'] || 'http://localhost:4000';
 
 // Definir orígenes permitidos según el entorno
 let allowedOrigins: string[] = [];
@@ -153,7 +153,7 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
   });
 });
 
-const PORT = parseInt(process.env.PORT || '3001', 10);
+const PORT = parseInt(process.env['PORT'] || '3001', 10);
 
 // NOTA: Este servidor se ha desactivado porque ahora se integra en server.ts
 // Las rutas se exportan para ser montadas en el servidor SSR principal

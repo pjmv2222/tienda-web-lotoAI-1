@@ -9,11 +9,12 @@ import { CarouselModule } from 'ngx-bootstrap/carousel';
 import { environment } from '../../../environments/environment';
 import { SubscriptionService } from '../../services/subscription.service';
 import { HttpClient } from '@angular/common/http';
+import { StatsCountersComponent } from '../../components/stats-counters/stats-counters.component';
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, RouterModule, CarouselModule],
+  imports: [CommonModule, RouterModule, CarouselModule, StatsCountersComponent],
   templateUrl: './home.component.html',
   styleUrl: './home.component.css'
 })
