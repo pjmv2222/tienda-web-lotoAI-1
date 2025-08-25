@@ -1,0 +1,67 @@
+<div class="stats-counters-container">
+  <div class="stats-counters">
+    <!-- Loading state -->
+    <div *ngIf="isLoading" class="stats-loading">
+      <div class="loading-counter">
+        <div class="loading-icon">
+          <i class="fas fa-spinner fa-spin"></i>
+        </div>
+        <div class="loading-text">Cargando estadísticas...</div>
+      </div>
+    </div>
+
+    <!-- Stats counters -->
+    <div *ngIf="!isLoading" class="stats-grid">
+      <!-- Visitantes totales -->
+      <div class="stat-card visitors">
+        <div class="stat-icon">
+          <i class="fas fa-eye"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number">{{ formatNumber(animatedVisitors) }}</div>
+          <div class="stat-label">Visitantes</div>
+          <div class="stat-description">Total de visitas únicas</div>
+        </div>
+      </div>
+
+      <!-- Usuarios registrados -->
+      <div class="stat-card users">
+        <div class="stat-icon">
+          <i class="fas fa-users"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number">{{ formatNumber(animatedUsers) }}</div>
+          <div class="stat-label">Usuarios</div>
+          <div class="stat-description">Cuentas registradas</div>
+        </div>
+      </div>
+
+      <!-- Usuarios con suscripciones -->
+      <div class="stat-card subscribers">
+        <div class="stat-icon">
+          <i class="fas fa-crown"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number">{{ formatNumber(animatedSubscribers) }}</div>
+          <div class="stat-label">Suscriptores</div>
+          <div class="stat-description">Usuarios premium</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Refresh button -->
+    <div class="stats-footer">
+      <button 
+        class="refresh-btn" 
+        (click)="refreshStats()" 
+        [disabled]="isLoading"
+        title="Actualizar estadísticas">
+        <i class="fas fa-sync-alt" [class.fa-spin]="isLoading"></i>
+        Actualizar
+      </button>
+      <div class="last-updated" *ngIf="stats.lastUpdated">
+        Actualizado: {{ stats.lastUpdated | date:'short':'es-ES' }}
+      </div>
+    </div>
+  </div>
+</div>

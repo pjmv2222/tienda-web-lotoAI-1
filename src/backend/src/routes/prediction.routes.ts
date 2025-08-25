@@ -17,42 +17,42 @@ router.get('/servers/status', authenticateToken, getServerStatus);
 
 // Rutas específicas para cada juego de IA - usar el controlador completo
 router.post('/euromillon', authenticateToken, (req, res) => {
-  req.params.game = 'euromillon';
+  req.params['game'] = 'euromillon';
   getPrediction(req, res);
 });
 
 router.post('/primitiva', authenticateToken, (req, res) => {
-  req.params.game = 'primitiva';
+  req.params['game'] = 'primitiva';
   getPrediction(req, res);
 });
 
 router.post('/bonoloto', authenticateToken, (req, res) => {
-  req.params.game = 'bonoloto';
+  req.params['game'] = 'bonoloto';
   getPrediction(req, res);
 });
 
 router.post('/gordo', authenticateToken, (req, res) => {
-  req.params.game = 'gordo';
+  req.params['game'] = 'gordo';
   getPrediction(req, res);
 });
 
 router.post('/elgordo', authenticateToken, (req, res) => {
-  req.params.game = 'gordo';
+  req.params['game'] = 'gordo';
   getPrediction(req, res);
 });
 
 router.post('/eurodreams', authenticateToken, (req, res) => {
-  req.params.game = 'eurodreams';
+  req.params['game'] = 'eurodreams';
   getPrediction(req, res);
 });
 
 router.post('/loterianacional', authenticateToken, (req, res) => {
-  req.params.game = 'loterianacional';
+  req.params['game'] = 'loterianacional';
   getPrediction(req, res);
 });
 
 router.post('/lototurf', authenticateToken, (req, res) => {
-  req.params.game = 'lototurf';
+  req.params['game'] = 'lototurf';
   getPrediction(req, res);
 });
 
