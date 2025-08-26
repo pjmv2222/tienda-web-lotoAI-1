@@ -14,7 +14,7 @@ export class StatsModel {
       // Obtener total de usuarios con suscripciones activas
       const subscribersResult = await pgPool.query(`
         SELECT COUNT(DISTINCT user_id) as total 
-        FROM user_subscriptions 
+        FROM subscriptions 
         WHERE status = 'active' 
         AND (end_date IS NULL OR end_date > NOW())
       `);
