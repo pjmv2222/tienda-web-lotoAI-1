@@ -33,16 +33,18 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 30
 # Configuración de juegos y sus archivos DataFrame específicos
 JUEGOS_CONFIG = {
     'euromillon': {
-        'modelo': '/var/www/tienda-web-lotoAI-1/IAs-Loto/EuroMillon-CSV/modelo_euromillon.h5',
-        'dataset': '/var/www/tienda-web-lotoAI-1/IAs-Loto/EuroMillon-CSV/DataFrame_Euromillones_2024.csv',
-        'separador': ';',
-        'columnas_entrada': ['Num_1', 'Num_2', 'Num_3', 'Num_4', 'Num_5', 'Start_1', 'Star_2'],
-        'columnas_salida': ['Num_1', 'Num_2', 'Num_3', 'Num_4', 'Num_5', 'Start_1', 'Star_2'],
+        'modelo': '/var/www/tienda-web-lotoAI-1/IAs-Loto/EuroMillon-CSV/euromillon_transformer.h5',
+        'dataset': '/var/www/tienda-web-lotoAI-1/IAs-Loto/EuroMillon-CSV/DataFrame_Euromillones.csv',
+        'predictions_file': '/var/www/tienda-web-lotoAI-1/IAs-Loto/EuroMillon-CSV/predictions_ultra.json',
+        'separador': ',',
+        'columnas_entrada': ['Numero_1', 'Numero_2', 'Numero_3', 'Numero_4', 'Numero_5', 'Estrella_1', 'Estrella_2'],
+        'columnas_salida': ['Numero_1', 'Numero_2', 'Numero_3', 'Numero_4', 'Numero_5', 'Estrella_1', 'Estrella_2'],
         'escalador': 'MinMaxScaler',
         'num_principales': 5,
         'num_especiales': 2,
         'rango_principales': (1, 50),
-        'rango_especiales': (1, 12)
+        'rango_especiales': (1, 12),
+        'ultra_avanzado': True
     },
     'bonoloto': {
         'modelo': '/var/www/tienda-web-lotoAI-1/archivos-para-servidor/modelos/modelo_bonoloto.h5',
@@ -294,6 +296,46 @@ def token_required(f):
         
         return f(*args, **kwargs)
     return decorated
+
+# 🚀 FUNCIÓN ULTRA-AVANZADA PARA EUROMILLÓN
+def generar_prediccion_ultra_avanzada(juego):
+    """Genera predicción usando el sistema ultra-avanzado con modelos pre-entrenados"""
+    try:
+        if juego != 'euromillon':
+            raise Exception("Sistema ultra-avanzado solo disponible para Euromillón")
+        
+        config = JUEGOS_CONFIG[juego]
+        predictions_file = config.get('predictions_file')
+        
+        if not predictions_file or not os.path.exists(predictions_file):
+            raise Exception("Archivo de predicciones ultra-avanzadas no encontrado")
+        
+        # Leer las predicciones ultra-avanzadas
+        with open(predictions_file, 'r', encoding='utf-8') as f:
+            predictions_data = json.load(f)
+        
+        if not predictions_data or len(predictions_data) == 0:
+            raise Exception("No hay predicciones ultra-avanzadas disponibles")
+        
+        # Seleccionar una predicción aleatoria de las top 10
+        import random
+        selected_prediction = random.choice(predictions_data[:min(10, len(predictions_data))])
+        
+        # Formatear la respuesta según el formato esperado
+        prediccion = {
+            'numeros': selected_prediction.get('numeros', []),
+            'estrellas': selected_prediction.get('estrellas', []),
+            'strategy': selected_prediction.get('estrategia', 'ultra-avanzado'),
+            'confidence': selected_prediction.get('confianza', 95.0),
+            'score': selected_prediction.get('score_patron', 0.0)
+        }
+        
+        logging.info(f"🔮 Predicción ultra-avanzada generada: {prediccion}")
+        return prediccion
+        
+    except Exception as e:
+        logging.error(f"❌ Error en predicción ultra-avanzada: {str(e)}")
+        raise e
 
 # Función para generar predicción con IA - CON SISTEMA ANTI-DUPLICADOS
 def generar_prediccion_ia(juego):
@@ -708,16 +750,30 @@ def generar_prediccion_aleatoria(juego):
 @token_required
 def predict_euromillon():
     try:
-        prediccion = generar_prediccion_ia('euromillon')
+        # 🚀 USAR SISTEMA ULTRA-AVANZADO PARA EUROMILLÓN
+        prediccion = generar_prediccion_ultra_avanzada('euromillon')
         return jsonify({
             'success': True,
             'juego': 'euromillon',
             'prediccion': prediccion,
-            'timestamp': datetime.now().isoformat()
+            'timestamp': datetime.now().isoformat(),
+            'strategy': 'ultra-avanzado'
         })
     except Exception as e:
-        logging.error(f"Error en predicción EuroMillon: {str(e)}")
-        return jsonify({'success': False, 'error': str(e)}), 500
+        logging.error(f"Error en predicción EuroMillon Ultra-Avanzado: {str(e)}")
+        # Fallback al sistema tradicional si falla
+        try:
+            prediccion = generar_prediccion_ia('euromillon')
+            return jsonify({
+                'success': True,
+                'juego': 'euromillon',
+                'prediccion': prediccion,
+                'timestamp': datetime.now().isoformat(),
+                'strategy': 'tradicional-fallback'
+            })
+        except Exception as fallback_error:
+            logging.error(f"Error en fallback EuroMillon: {str(fallback_error)}")
+            return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/bonoloto/predict', methods=['POST'])
 @token_required
