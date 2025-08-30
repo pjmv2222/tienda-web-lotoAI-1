@@ -327,7 +327,9 @@ def generar_prediccion_ultra_avanzada(juego):
             'estrellas': selected_prediction.get('estrellas', []),
             'strategy': selected_prediction.get('estrategia', 'ultra-avanzado'),
             'confidence': selected_prediction.get('confianza', 95.0),
-            'score': selected_prediction.get('score_patron', 0.0)
+            'score': selected_prediction.get('score_patron', 0.0),
+            'ultra_model_id': f"ULTRA-V4-{datetime.now().strftime('%Y%m%d_%H%M%S')}",
+            'source': 'ensemble_transformer_13075_features'
         }
         
         logging.info(f"🔮 Predicción ultra-avanzada generada: {prediccion}")
@@ -750,19 +752,23 @@ def generar_prediccion_aleatoria(juego):
 @token_required
 def predict_euromillon():
     try:
+        logging.info("🚀 [ULTRA-AVANZADO] Iniciando predicción con sistema ultra-avanzado para Euromillón")
         # 🚀 USAR SISTEMA ULTRA-AVANZADO PARA EUROMILLÓN
         prediccion = generar_prediccion_ultra_avanzada('euromillon')
+        logging.info(f"🚀 [ULTRA-AVANZADO] Predicción generada exitosamente: {prediccion.get('ultra_model_id', 'N/A')}")
         return jsonify({
             'success': True,
             'juego': 'euromillon',
             'prediccion': prediccion,
             'timestamp': datetime.now().isoformat(),
-            'strategy': 'ultra-avanzado'
+            'strategy': 'ultra-avanzado',
+            'model_version': 'v4.0-enhanced'
         })
     except Exception as e:
-        logging.error(f"Error en predicción EuroMillon Ultra-Avanzado: {str(e)}")
+        logging.error(f"❌ [ULTRA-AVANZADO] Error en predicción EuroMillon Ultra-Avanzado: {str(e)}")
         # Fallback al sistema tradicional si falla
         try:
+            logging.info("🔄 [FALLBACK] Usando sistema tradicional como respaldo")
             prediccion = generar_prediccion_ia('euromillon')
             return jsonify({
                 'success': True,
