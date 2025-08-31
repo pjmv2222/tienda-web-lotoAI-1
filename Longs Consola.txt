@@ -1,0 +1,16 @@
+main-FHKX43MM.js:1 🔧 [APP_INITIALIZER] Verificando versión de cache...
+main-FHKX43MM.js:1 ✅ [APP_INITIALIZER] Versión de cache actual, no se requiere limpieza
+main-FHKX43MM.js:1 🔧 [AppComponent] Funciones de debugging disponibles:
+main-FHKX43MM.js:1    debugCookies() - Muestra el estado actual de las cookies
+main-FHKX43MM.js:1    resetCookies() - Resetea todas las preferencias de cookies
+main-FHKX43MM.js:1 Header - Estado del usuario actualizado: Object
+main-FHKX43MM.js:1 CookieBannerComponent inicializado
+chunk-FBC4XLLV.js:1 🍪 [CookieService] Verificando banner: Object
+main-FHKX43MM.js:1 ¿Debe mostrarse el banner de cookies?: false
+main-FHKX43MM.js:1 Consentimiento actual: Object
+chunk-AVINECY3.js:1 El usuario no está autenticado
+api/stats/public:1  Failed to load resource: the server responded with a status of 500 ()
+chunk-AVINECY3.js:1 Error obteniendo estadísticas: Yt
+(anonymous) @ chunk-AVINECY3.js:1
+chunk-RYXN76YN.js:7 ERROR Yt
+handleError @ chunk-RYXN76YN.js:7
