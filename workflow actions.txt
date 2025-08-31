@@ -1,0 +1,196 @@
+
+Started 2m 55s ago
+Search logs
+1s
+Current runner version: '2.328.0'
+Runner Image Provisioner
+Operating System
+Runner Image
+GITHUB_TOKEN Permissions
+Secret source: Actions
+Prepare workflow directory
+Prepare all required actions
+Getting action download info
+Download action repository 'actions/checkout@v4' (SHA:08eba0b27e820071cde6df949e0beb9ba4906955)
+Download action repository 'appleboy/ssh-action@master' (SHA:3ca8a7c5359ac6ad91aa47f1946ece1c3b025004)
+Complete job name: build-and-deploy
+14s
+Run actions/checkout@v4
+Syncing repository: pjmv2222/tienda-web-lotoAI-1
+Getting Git version info
+Temporarily overriding HOME='/home/runner/work/_temp/8f760959-5f6d-409b-b62a-120d79bc4360' before making global git config changes
+Adding repository directory to the temporary git global config as a safe directory
+/usr/bin/git config --global --add safe.directory /home/runner/work/tienda-web-lotoAI-1/tienda-web-lotoAI-1
+Deleting the contents of '/home/runner/work/tienda-web-lotoAI-1/tienda-web-lotoAI-1'
+Initializing the repository
+Disabling automatic garbage collection
+Setting up auth
+Fetching the repository
+Determining the checkout info
+/usr/bin/git sparse-checkout disable
+/usr/bin/git config --local --unset-all extensions.worktreeConfig
+Checking out the ref
+/usr/bin/git log -1 --format=%H
+594cd44dabd60bb42299c1e2e957cec15cb060ae
+2m 39s
+Run appleboy/ssh-action@master
+Run echo "$GITHUB_ACTION_PATH" >> $GITHUB_PATH
+Run entrypoint.sh
+Downloading drone-ssh-1.8.1-linux-amd64 from https://github.com/appleboy/drone-ssh/releases/download/v1.8.1
+======= CLI Version Information =======
+Drone SSH version 1.8.1
+=======================================
+=== INICIO: DESPLIEGUE EN DOS FASES ===
+cp: cannot stat '.github/workflows/deploy-modified.yml': No such file or directory
+✅ Backup de deploy-modified.yml creado en .github/workflows/deploy-modified.yml.backup
+--- Fase 1.5: Respaldando archivos de configuración del servidor ---
+✅ Archivo .env respaldado
+✅ Archivo botes.json (src) respaldado
+✅ Archivo lottery-data.json (src) respaldado
+✅ Archivo botes.json (dist) respaldado en .deploy-backups/
+✅ Archivo lottery-data.json (dist) respaldado en .deploy-backups/
+✅ Archivo server-ia-unificado.py (archivos-para-servidor) respaldado
+✅ Archivo server-ia-unificado.py (raíz) respaldado
+--- Fase 2: Actualizando código fuente ---
+From https://github.com/pjmv2222/tienda-web-lotoAI-1
+ * branch            main       -> FETCH_HEAD
+   2772548..594cd44  main       -> origin/main
+HEAD is now at 594cd44 Feat: Implementar sistema de estadísticas con contadores animados para homepage - visitantes/usuarios/suscriptores
+From https://github.com/pjmv2222/tienda-web-lotoAI-1
+ * branch            main       -> FETCH_HEAD
+Already up to date.
+--- Fase 2.5: Restaurando archivos de configuración del servidor ---
+✅ Archivo .env restaurado
+✅ Archivo botes.json (src) restaurado con datos actualizados del scraper
+✅ Archivo lottery-data.json (src) restaurado con datos actualizados del scraper
+--- NOTA: server-ia-unificado.py NO se restaura - debe usar versión actualizada del repositorio ---
+✅ Backup obsoleto de server-ia-unificado.py eliminado - usando versión del repositorio
+✅ Backup obsoleto de server-ia-unificado.py (raíz) eliminado - usando versión del repositorio
+--- Fase 3: Verificando variables de entorno ---
+✅ Archivo .env del servidor encontrado
+✅ STRIPE_SECRET_KEY encontrada en .env
+--- Fase 4: Instalando dependencias ---
+npm WARN config production Use `--omit=dev` instead.
+up to date, audited 1093 packages in 4s
+159 packages are looking for funding
+  run `npm fund` for details
+19 vulnerabilities (9 low, 9 moderate, 1 critical)
+To address issues that do not require attention, run:
+  npm audit fix
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+Run `npm audit` for details.
+--- Fase 5: Limpiando artefactos ---
+--- Fase 6: Compilando Backend ---
+> backend@1.0.0 postinstall
+> npm run build
+> backend@1.0.0 build
+> tsc
+up to date, audited 251 packages in 7s
+26 packages are looking for funding
+  run `npm fund` for details
+1 critical severity vulnerability
+To address all issues, run:
+  npm audit fix
+Run `npm audit` for details.
+> backend@1.0.0 build
+> tsc
+✅ Backend compilado correctamente en src/backend/dist/index.js
+--- Fase 7: Compilando Frontend ---
+Setting up swapspace version 1, size = 2 GiB (2147479552 bytes)
+no label, UUID=c5515d0b-3f83-472f-b7f6-b73b3744996d
+❯ Building...
+🔧 [APP_INITIALIZER] Saltando en SSR - solo se ejecuta en browser
+Header - Estado del usuario actualizado: { user: null, hasUser: false }
+CookieBannerComponent inicializado
+¿Debe mostrarse el banner de cookies?: false
+Consentimiento actual: {
+  necessary: true,
+  functional: false,
+  analytics: false,
+  marketing: false,
+  preferences: false
+}
+El usuario no está autenticado
+TypeError: Failed to parse URL from /api/stats/public
+    at new Request (node:internal/deps/undici/undici:5057:19)
+    at fetch2 (node:internal/deps/undici/undici:9183:25)
+    ... 5 lines matching cause stack trace ...
+    at e.fetchImpl (file:///var/www/tienda-web-lotoAI-1/.angular/prerender-root/4e64d1e9-0ce9-4083-b329-173c85773b56/chunk-M2RUZHW7.mjs:35:11048)
+    at file:///var/www/tienda-web-lotoAI-1/.angular/prerender-root/4e64d1e9-0ce9-4083-b329-173c85773b56/chunk-M2RUZHW7.mjs:35:11354
+    at a.invoke (file:///var/www/tienda-web-lotoAI-1/.angular/prerender-root/4e64d1e9-0ce9-4083-b329-173c85773b56/polyfills.server.mjs:3:6715) {
+  [cause]: TypeError [ERR_INVALID_URL]: Invalid URL
+      at new NodeError (node:internal/errors:405:5)
+      at new URL (node:internal/url:676:13)
+      at new Request (node:internal/deps/undici/undici:5055:25)
+      at fetch2 (node:internal/deps/undici/undici:9183:25)
+      at Object.fetch (node:internal/deps/undici/undici:11358:18)
+      at fetch (node:internal/process/pre_execution:281:25)
+      at patchedFetch (/var/www/tienda-web-lotoAI-1/node_modules/@angular/build/src/utils/server-rendering/fetch-patch.js:41:20)
+      at file:///var/www/tienda-web-lotoAI-1/.angular/prerender-root/4e64d1e9-0ce9-4083-b329-173c85773b56/polyfills.server.mjs:4:3274
+      at l.<computed> (file:///var/www/tienda-web-lotoAI-1/.angular/prerender-root/4e64d1e9-0ce9-4083-b329-173c85773b56/polyfills.server.mjs:3:13136)
+      at e.fetchImpl (file:///var/www/tienda-web-lotoAI-1/.angular/prerender-root/4e64d1e9-0ce9-4083-b329-173c85773b56/chunk-M2RUZHW7.mjs:35:11048) {
+    input: '/api/stats/public',
+    code: 'ERR_INVALID_URL'
+  }
+}
+Error obteniendo estadísticas: Jt {
+  headers: e {
+    normalizedNames: Map(0) {},
+    lazyUpdate: null,
+    headers: Map(0) {}
+  },
+  status: 0,
+  statusText: 'Unknown Error',
+  url: '/api/stats/public',
+  ok: false,
+  name: 'HttpErrorResponse',
+  message: 'Http failure response for /api/stats/public: 0 undefined',
+  error: TypeError: Failed to parse URL from /api/stats/public
+      at Object.fetch (node:internal/deps/undici/undici:11360:11) {
+    [cause]: TypeError [ERR_INVALID_URL]: Invalid URL
+        at new NodeError (node:internal/errors:405:5)
+        at new URL (node:internal/url:676:13)
+        at new Request (node:internal/deps/undici/undici:5055:25)
+        at fetch2 (node:internal/deps/undici/undici:9183:25)
+        at Object.fetch (node:internal/deps/undici/undici:11358:18)
+        at fetch (node:internal/process/pre_execution:281:25)
+        at patchedFetch (/var/www/tienda-web-lotoAI-1/node_modules/@angular/build/src/utils/server-rendering/fetch-patch.js:41:20)
+        at file:///var/www/tienda-web-lotoAI-1/.angular/prerender-root/4e64d1e9-0ce9-4083-b329-173c85773b56/polyfills.server.mjs:4:3274
+        at l.<computed> (file:///var/www/tienda-web-lotoAI-1/.angular/prerender-root/4e64d1e9-0ce9-4083-b329-173c85773b56/polyfills.server.mjs:3:13136)
+        at e.fetchImpl (file:///var/www/tienda-web-lotoAI-1/.angular/prerender-root/4e64d1e9-0ce9-4083-b329-173c85773b56/chunk-M2RUZHW7.mjs:35:11048) {
+      input: '/api/stats/public',
+      code: 'ERR_INVALID_URL'
+    }
+  }
+}
+ERROR Jt {
+  headers: e {
+    normalizedNames: Map(0) {},
+    lazyUpdate: null,
+    headers: Map(0) {}
+  },
+  status: 0,
+  statusText: 'Unknown Error',
+  url: '/api/stats/public',
+  ok: false,
+  name: 'HttpErrorResponse',
+  message: 'Http failure response for /api/stats/public: 0 undefined',
+  error: TypeError: Failed to parse URL from /api/stats/public
+      at Object.fetch (node:internal/deps/undici/undici:11360:11) {
+    [cause]: TypeError [ERR_INVALID_URL]: Invalid URL
+        at new NodeError (node:internal/errors:405:5)
+        at new URL (node:internal/url:676:13)
+        at new Request (node:internal/deps/undici/undici:5055:25)
+        at fetch2 (node:internal/deps/undici/undici:9183:25)
+        at Object.fetch (node:internal/deps/undici/undici:11358:18)
+        at fetch (node:internal/process/pre_execution:281:25)
+        at patchedFetch (/var/www/tienda-web-lotoAI-1/node_modules/@angular/build/src/utils/server-rendering/fetch-patch.js:41:20)
+        at file:///var/www/tienda-web-lotoAI-1/.angular/prerender-root/4e64d1e9-0ce9-4083-b329-173c85773b56/polyfills.server.mjs:4:3274
+        at l.<computed> (file:///var/www/tienda-web-lotoAI-1/.angular/prerender-root/4e64d1e9-0ce9-4083-b329-173c85773b56/polyfills.server.mjs:3:13136)
+        at e.fetchImpl (file:///var/www/tienda-web-lotoAI-1/.angular/prerender-root/4e64d1e9-0ce9-4083-b329-173c85773b56/chunk-M2RUZHW7.mjs:35:11048) {
+      input: '/api/stats/public',
+      code: 'ERR_INVALID_URL'
+    }
+  }
+}
