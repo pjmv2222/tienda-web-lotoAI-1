@@ -1,36 +1,55 @@
 name: Deploy LotoIA with IAs to VPS
 
 on:
-  push:
-    branches: [ main ]
-    paths:
-      - 'IAs-Loto/**'
-      - 'ias/**'
   workflow_dispatch:
+    inputs:
+      confirm_deployment:
+        description: 'Confirmar despliegue de IAs (escribir "SI" para confirmar)'
+        required: true
+        default: 'NO'
+        type: string
 
 jobs:
   deploy-ias:
     runs-on: ubuntu-latest
 
     steps:
+    - name: Verificar confirmación de despliegue
+      run: |
+        if [ "${{ github.event.inputs.confirm_deployment }}" != "SI" ]; then
+          echo "❌ Despliegue cancelado. Debe escribir 'SI' para confirmar."
+          exit 1
+        fi
+        echo "✅ Despliegue confirmado. Procediendo..."
+
     - name: Checkout repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Deploy IAs to VPS
-      uses: appleboy/ssh-action@master
+      uses: appleboy/ssh-action@v0.1.7
       with:
         host: 212.227.230.103
         username: root
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         script: |
-          echo "=== DESPLIEGUE DE IAs ==="
+          echo "=== DESPLIEGUE DE IAs (SIN MODELOS GRANDES) ==="
           cd /var/www/tienda-web-lotoAI-1
 
-          echo "Actualizando IAs desde GitHub..."
+          echo "Actualizando IAs desde GitHub (excluyendo modelos grandes)..."
           git fetch origin
           
           # Hacer backup de archivos críticos antes del reset
           echo "--- Respaldando archivos críticos ---"
+          
+          # Respaldar MODELOS de IA (archivos grandes que no están en GitHub)
+          echo "--- Respaldando modelos de IA (archivos grandes) ---"
+          mkdir -p .backup-models
+          cp *.pkl .backup-models/ 2>/dev/null || echo "⚠️ No hay archivos .pkl para respaldar"
+          cp *.h5 .backup-models/ 2>/dev/null || echo "⚠️ No hay archivos .h5 para respaldar"
+          cp *.joblib .backup-models/ 2>/dev/null || echo "⚠️ No hay archivos .joblib para respaldar"
+          cp euromillon_ultra_models.pkl .backup-models/ 2>/dev/null || echo "⚠️ euromillon_ultra_models.pkl no encontrado"
+          cp euromillon_transformer.h5 .backup-models/ 2>/dev/null || echo "⚠️ euromillon_transformer.h5 no encontrado"
+          ls -la .backup-models/ || echo "Directorio backup vacío"
           
           # Respaldar archivos de configuración
           cp .env .env.backup 2>/dev/null || echo "⚠️ .env no encontrado para backup"
@@ -52,6 +71,15 @@ jobs:
           git reset --hard origin/main
           
           echo "--- Restaurando archivos críticos ---"
+          
+          # Restaurar MODELOS de IA (archivos grandes)
+          echo "--- Restaurando modelos de IA (archivos grandes) ---"
+          cp .backup-models/*.pkl . 2>/dev/null || echo "⚠️ No hay archivos .pkl para restaurar"
+          cp .backup-models/*.h5 . 2>/dev/null || echo "⚠️ No hay archivos .h5 para restaurar"
+          cp .backup-models/*.joblib . 2>/dev/null || echo "⚠️ No hay archivos .joblib para restaurar"
+          ls -la *.pkl *.h5 *.joblib 2>/dev/null || echo "⚠️ No se encontraron modelos restaurados"
+          rm -rf .backup-models
+          
           # Restaurar archivos de configuración
           [ -f .env.backup ] && cp .env.backup .env && rm .env.backup && echo "✅ .env restaurado"
           [ -f .env.production.backup ] && cp .env.production.backup .env.production && rm .env.production.backup && echo "✅ .env.production restaurado"
@@ -68,6 +96,12 @@ jobs:
           # Restaurar archivos del scraper
           [ -f src/assets/botes.json.backup ] && cp src/assets/botes.json.backup src/assets/botes.json && rm src/assets/botes.json.backup && echo "✅ botes.json (src) restaurado"
           [ -f dist/tienda-web-loto-ai/browser/assets/botes.json.backup ] && mkdir -p dist/tienda-web-loto-ai/browser/assets/ && cp dist/tienda-web-loto-ai/browser/assets/botes.json.backup dist/tienda-web-loto-ai/browser/assets/botes.json && rm dist/tienda-web-loto-ai/browser/assets/botes.json.backup && echo "✅ botes.json (dist) restaurado"
+
+          echo "--- Reiniciando servidor IA específicamente ---"
+          # Reiniciar solo el proceso ia-server para aplicar cambios de IA
+          pm2 restart ia-server || echo "⚠️ No se pudo reiniciar ia-server con PM2"
+          sleep 3
+          pm2 status | grep ia-server || echo "⚠️ ia-server no está en PM2"
 
           echo "✅ IAs actualizadas correctamente con archivos críticos protegidos"
 
