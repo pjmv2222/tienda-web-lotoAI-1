@@ -71,9 +71,9 @@ export class StatsModel {
 
         // Actualizar contador general de visitantes
         await pgPool.query(`
-          INSERT INTO site_stats (total_visitors, updated_at)
-          VALUES (1, NOW())
-          ON CONFLICT ((true))
+          INSERT INTO site_stats (id, total_visitors, updated_at)
+          VALUES (1, 1, NOW())
+          ON CONFLICT (id)
           DO UPDATE SET 
             total_visitors = site_stats.total_visitors + 1,
             updated_at = NOW()
@@ -169,10 +169,11 @@ export class StatsModel {
       
       // Actualizar tabla de estadísticas
       await pgPool.query(`
-        INSERT INTO site_stats (total_visitors, total_users, total_subscribers, updated_at)
-        VALUES ($1, $2, $3, NOW())
-        ON CONFLICT ((true))
+        INSERT INTO site_stats (id, total_visitors, total_users, total_subscribers, updated_at)
+        VALUES (1, $1, $2, $3, NOW())
+        ON CONFLICT (id)
         DO UPDATE SET 
+          total_visitors = $1,
           total_users = $2,
           total_subscribers = $3,
           updated_at = NOW()
