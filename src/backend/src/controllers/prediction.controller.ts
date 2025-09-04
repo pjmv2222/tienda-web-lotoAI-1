@@ -673,8 +673,8 @@ export const PredictionController = {
       
       const limits = getPredictionLimitsByPlan(userPlan);
       
-      // Verificar límite
-      const currentCount = await PredictionModel.countUserPredictions(userId, gameType);
+      // Verificar límite - USAR EL MISMO FILTRO POR PLAN
+      const currentCount = await PredictionModel.countUserPredictions(userId, gameType, userPlan);
       const maxAllowed = limits[gameType] || 3;
       
       if (currentCount >= maxAllowed) {

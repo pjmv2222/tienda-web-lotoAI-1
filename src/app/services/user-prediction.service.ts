@@ -162,7 +162,7 @@ export class UserPredictionService {
     }
     
     return this.http.post(
-      `${this.apiUrl}/`,
+      this.apiUrl,
       body,
       { headers: this.getAuthHeaders() }
     );
