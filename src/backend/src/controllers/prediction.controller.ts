@@ -256,30 +256,44 @@ export const getPrediction = async (req: Request, res: Response) => {
     console.log(`🔄 Juego mapeado: ${game} -> ${mappedGame}`);
     
     // 🆕 VERIFICAR LÍMITES ANTES DE GENERAR PREDICCIÓN
-    const limits = getPredictionLimitsByPlan(planToUse);
-    const currentCount = await PredictionModel.getPredictionCountsByPlan(userId, planToUse);
-    const gameLimit = limits[mappedGame] || 3;
-    const currentGameCount = currentCount.find(c => c.game_type === mappedGame)?.count || 0;
+    let currentGameCount = 0;
+    let gameLimit = 3;
     
-    console.log(`🎯 [DEBUG] Verificación de límites:`, {
-      plan: planToUse,
-      game: mappedGame,
-      currentCount: currentGameCount,
-      limit: gameLimit,
-      canGenerate: currentGameCount < gameLimit
-    });
-    
-    if (currentGameCount >= gameLimit) {
-      return res.status(400).json({
-        success: false,
-        error: `Has alcanzado el límite de ${gameLimit} predicciones para ${mappedGame} con el plan ${planToUse}`,
-        code: 'LIMIT_EXCEEDED',
-        details: {
-          current: currentGameCount,
-          limit: gameLimit,
-          plan: planToUse
-        }
+    try {
+      const limits = getPredictionLimitsByPlan(planToUse);
+      console.log(`🎯 [DEBUG] Límites obtenidos para plan ${planToUse}:`, limits);
+      
+      const currentCount = await PredictionModel.getPredictionCountsByPlan(userId, planToUse);
+      console.log(`🎯 [DEBUG] Conteos actuales:`, currentCount);
+      
+      gameLimit = limits[mappedGame] || 3;
+      currentGameCount = currentCount.find(c => c.game_type === mappedGame)?.count || 0;
+      
+      console.log(`🎯 [DEBUG] Verificación de límites:`, {
+        plan: planToUse,
+        game: mappedGame,
+        currentCount: currentGameCount,
+        limit: gameLimit,
+        canGenerate: currentGameCount < gameLimit
       });
+      
+      if (currentGameCount >= gameLimit) {
+        return res.status(400).json({
+          success: false,
+          error: `Has alcanzado el límite de ${gameLimit} predicciones para ${mappedGame} con el plan ${planToUse}`,
+          code: 'LIMIT_EXCEEDED',
+          details: {
+            current: currentGameCount,
+            limit: gameLimit,
+            plan: planToUse
+          }
+        });
+      }
+    } catch (limitError) {
+      console.error('❌ [ERROR] Error verificando límites:', limitError);
+      // Continuar sin verificar límites en caso de error, usar valores por defecto
+      currentGameCount = 0;
+      gameLimit = 3;
     }
 
     // Verificar si hay un servidor IA permanente ya corriendo
