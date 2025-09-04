@@ -223,15 +223,64 @@ export const getPrediction = async (req: Request, res: Response) => {
   
   try {
     const { game } = req.params;
-    const subscriptionPlan = req.query.plan as string || 'basic'; // Plan desde query params, por defecto 'basic'
+    const userId = (req as any).user?.id; // 🆕 Obtener userId de la auth
+    const requestedPlan = req.query.plan as string; // 🆕 Plan específico desde query params
     
-    console.log(`🎯 Solicitud de predicción para juego: ${game}, plan: ${subscriptionPlan}`);
+    console.log(`🎯 [DEBUG] Solicitud de predicción:`, {
+      game,
+      userId,
+      requestedPlan
+    });
+    
+    // 🆕 VERIFICAR AUTENTICACIÓN
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        error: 'Usuario no autenticado'
+      });
+    }
+    
+    // 🆕 DETECTAR EL PLAN ESPECÍFICO DEL USUARIO
+    let planToUse = requestedPlan;
+    if (!planToUse) {
+      planToUse = await getUserCurrentPlan(userId);
+    }
+    
+    console.log(`🎯 [DEBUG] Plan detectado: ${planToUse}`);
+    
     console.log(`📁 Script IA ubicado en: ${IA_SERVER_SCRIPT}`);
     console.log(`📁 Script existe: ${fs.existsSync(IA_SERVER_SCRIPT)}`);
 
     // Mapear el nombre del juego
     const mappedGame = gameMapping[game] || game;
     console.log(`🔄 Juego mapeado: ${game} -> ${mappedGame}`);
+    
+    // 🆕 VERIFICAR LÍMITES ANTES DE GENERAR PREDICCIÓN
+    const limits = getPredictionLimitsByPlan(planToUse);
+    const currentCount = await PredictionModel.getPredictionCountsByPlan(userId, planToUse);
+    const gameLimit = limits[mappedGame] || 3;
+    const currentGameCount = currentCount.find(c => c.game_type === mappedGame)?.count || 0;
+    
+    console.log(`🎯 [DEBUG] Verificación de límites:`, {
+      plan: planToUse,
+      game: mappedGame,
+      currentCount: currentGameCount,
+      limit: gameLimit,
+      canGenerate: currentGameCount < gameLimit
+    });
+    
+    if (currentGameCount >= gameLimit) {
+      return res.status(400).json({
+        success: false,
+        error: `Has alcanzado el límite de ${gameLimit} predicciones para ${mappedGame} con el plan ${planToUse}`,
+        code: 'LIMIT_EXCEEDED',
+        details: {
+          current: currentGameCount,
+          limit: gameLimit,
+          plan: planToUse
+        }
+      });
+    }
 
     // Verificar si hay un servidor IA permanente ya corriendo
     let serverReady = false;
@@ -362,18 +411,59 @@ export const getPrediction = async (req: Request, res: Response) => {
       console.log(`🏠 [DEBUG] Usando servidor IA permanente - NO se detiene`);
     }
 
-    // Devolver la respuesta al frontend (adaptando el formato del servidor IA)
+    // 🆕 PROCESAR RESPUESTA Y SINCRONIZAR CON BASE DE DATOS
     const iaResponse = response.data;
+    const predictionData = iaResponse.prediccion || iaResponse.prediction || iaResponse;
+    
+    console.log(`🎯 [DEBUG] Datos de predicción del servidor IA:`, predictionData);
+    
+    // 🆕 GUARDAR EN BASE DE DATOS SEGÚN EL PLAN UTILIZADO
+    try {
+      const savedPrediction = await PredictionModel.create(
+        userId,
+        mappedGame,
+        predictionData,
+        planToUse
+      );
+      
+      console.log(`✅ [DEBUG] Predicción guardada en BD:`, {
+        id: savedPrediction.id,
+        plan: planToUse,
+        game: mappedGame,
+        isUltra: mappedGame === 'euromillon' && predictionData.source?.includes('ensemble')
+      });
+      
+      // 🆕 SINCRONIZAR CON ARCHIVO predictions_ultra.json SI ES EUROMILLON ULTRA
+      if (mappedGame === 'euromillon' && predictionData.source?.includes('ensemble')) {
+        try {
+          await syncUltraPredictionWithJSON(userId, predictionData, planToUse);
+          console.log(`✅ [DEBUG] Predicción ultra sincronizada con JSON`);
+        } catch (syncError) {
+          console.error(`⚠️ [DEBUG] Error sincronizando con JSON ultra:`, syncError);
+          // No es crítico, continuar
+        }
+      }
+      
+    } catch (dbError) {
+      console.error(`❌ [DEBUG] Error guardando predicción en BD:`, dbError);
+      // No detener el proceso, continuar enviando respuesta
+    }
+    
+    // Preparar respuesta final
     const finalResponse = {
       success: true,
-      prediction: iaResponse.prediccion || iaResponse.prediction || iaResponse,
+      prediction: predictionData,
       game: mappedGame,
+      plan: planToUse,
       timestamp: new Date().toISOString(),
       source: 'ia_server',
-      efficiency: isPermanentServer ? 'permanent_server' : 'start_stop_on_demand'
+      efficiency: isPermanentServer ? 'permanent_server' : 'start_stop_on_demand',
+      limits: {
+        current: currentGameCount + 1, // +1 porque acabamos de crear una
+        max: gameLimit,
+        remaining: Math.max(0, gameLimit - (currentGameCount + 1))
+      }
     };
-    
-    console.log(`✅ [DEBUG] Predicción generada exitosamente - NO guardada automáticamente`);
     
     console.log(`🎉 [DEBUG] Enviando respuesta final al frontend:`, finalResponse);
     return res.status(200).json(finalResponse);
@@ -822,5 +912,55 @@ async function getUserCurrentPlan(userId: number): Promise<string> {
   } catch (error) {
     console.error('Error obteniendo plan del usuario:', error);
     return 'basic'; // Plan por defecto
+  }
+}
+
+/**
+ * Función auxiliar para sincronizar predicciones ultra con el archivo JSON
+ */
+async function syncUltraPredictionWithJSON(userId: number, predictionData: any, planToUse: string): Promise<void> {
+  try {
+    const predictionsJsonPath = '/var/www/tienda-web-lotoAI-1/IAs-Loto/EuroMillon-CSV/predictions_ultra.json';
+    
+    // Leer el archivo JSON actual
+    if (!fs.existsSync(predictionsJsonPath)) {
+      console.log(`⚠️ [DEBUG] Archivo predictions_ultra.json no encontrado en: ${predictionsJsonPath}`);
+      return;
+    }
+    
+    const jsonData = JSON.parse(fs.readFileSync(predictionsJsonPath, 'utf8'));
+    
+    // Agregar metadatos de la predicción utilizada
+    const predictionEntry = {
+      timestamp: new Date().toISOString(),
+      user_id: userId,
+      subscription_plan: planToUse,
+      prediction_used: predictionData,
+      source: 'database_sync'
+    };
+    
+    // Si el JSON tiene un formato específico, mantenerlo y agregar tracking
+    if (jsonData.predictions && Array.isArray(jsonData.predictions)) {
+      // Crear sección de tracking si no existe
+      if (!jsonData.usage_tracking) {
+        jsonData.usage_tracking = [];
+      }
+      
+      jsonData.usage_tracking.push(predictionEntry);
+      
+      // Mantener solo los últimos 100 registros de tracking
+      if (jsonData.usage_tracking.length > 100) {
+        jsonData.usage_tracking = jsonData.usage_tracking.slice(-100);
+      }
+    }
+    
+    // Escribir de vuelta al archivo
+    fs.writeFileSync(predictionsJsonPath, JSON.stringify(jsonData, null, 2));
+    
+    console.log(`✅ [DEBUG] Predicción ultra sincronizada en JSON - Usuario: ${userId}, Plan: ${planToUse}`);
+    
+  } catch (error) {
+    console.error(`❌ [DEBUG] Error en syncUltraPredictionWithJSON:`, error);
+    throw error;
   }
 }

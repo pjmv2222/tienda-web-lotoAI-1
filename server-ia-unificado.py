@@ -276,6 +276,29 @@ def verify_token(token):
     except jwt.PyJWTError:
         return None
 
+def convert_numpy_to_python(obj):
+    """Convierte recursivamente objetos numpy a tipos Python nativos"""
+    if hasattr(obj, 'item'):  # numpy scalar
+        return obj.item()
+    elif hasattr(obj, 'tolist'):  # numpy array
+        return obj.tolist()
+    elif isinstance(obj, dict):
+        return {key: convert_numpy_to_python(value) for key, value in obj.items()}
+    elif isinstance(obj, list):
+        return [convert_numpy_to_python(item) for item in obj]
+    return obj
+
+def jsonify_safe(data):
+    """Jsonify con conversión segura de tipos numpy"""
+    try:
+        converted_data = convert_numpy_to_python(data)
+        return jsonify(converted_data)
+    except Exception as e:
+        logging.error(f"Error en jsonify_safe: {e}")
+        # Fallback: convertir todo a string si hay problemas
+        safe_data = json.loads(json.dumps(data, default=str))
+        return jsonify(safe_data)
+
 # Decorador para proteger rutas
 def token_required(f):
     @wraps(f)
@@ -756,7 +779,7 @@ def predict_euromillon():
         # 🚀 USAR SISTEMA ULTRA-AVANZADO PARA EUROMILLÓN
         prediccion = generar_prediccion_ultra_avanzada('euromillon')
         logging.info(f"🚀 [ULTRA-AVANZADO] Predicción generada exitosamente: {prediccion.get('ultra_model_id', 'N/A')}")
-        return jsonify({
+        return jsonify_safe({
             'success': True,
             'juego': 'euromillon',
             'prediccion': prediccion,
@@ -770,7 +793,7 @@ def predict_euromillon():
         try:
             logging.info("🔄 [FALLBACK] Usando sistema tradicional como respaldo")
             prediccion = generar_prediccion_ia('euromillon')
-            return jsonify({
+            return jsonify_safe({
                 'success': True,
                 'juego': 'euromillon',
                 'prediccion': prediccion,
