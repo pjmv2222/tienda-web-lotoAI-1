@@ -595,29 +595,38 @@ export const PredictionController = {
       }
 
       const { gameType } = req.params;
+      // 🆕 Leer el plan desde query params (ej: ?plan=basic)
+      const requestedPlan = req.query.plan as string;
       
-      console.log('🚨 [BACKEND] getPredictionStatus called for:', { userId, gameType });
+      console.log('🚨 [BACKEND] getPredictionStatus called for:', { userId, gameType, requestedPlan });
       
-      // Obtener el plan actual del usuario
-      const userPlan = await getUserCurrentPlan(userId);
-      console.log('🚨 [BACKEND] Plan del usuario detectado:', userPlan);
+      // Usar el plan solicitado o detectar automáticamente el plan actual del usuario
+      let userPlan: string;
+      if (requestedPlan && ['basic', 'monthly', 'pro'].includes(requestedPlan)) {
+        userPlan = requestedPlan;
+        console.log('🚨 [BACKEND] Usando plan especificado en query:', userPlan);
+      } else {
+        userPlan = await getUserCurrentPlan(userId);
+        console.log('🚨 [BACKEND] Plan del usuario detectado automáticamente:', userPlan);
+      }
       
       const limits = getPredictionLimitsByPlan(userPlan);
       console.log('🚨 [BACKEND] Límites por plan:', limits);
       
-      // Contar predicciones actuales
-      const currentCount = await PredictionModel.countUserPredictions(userId, gameType);
+      // 🆕 Contar predicciones actuales filtrando por plan
+      const currentCount = await PredictionModel.countUserPredictions(userId, gameType, userPlan);
       const maxAllowed = limits[gameType] || 3;
       
       console.log('🚨 [BACKEND] Estado de predicciones:', {
         currentCount,
         maxAllowed,
         remaining: Math.max(0, maxAllowed - currentCount),
-        canGenerate: currentCount < maxAllowed
+        canGenerate: currentCount < maxAllowed,
+        filteringByPlan: userPlan
       });
       
-      // Obtener predicciones existentes
-      const predictions = await PredictionModel.getUserPredictions(userId, gameType);
+      // 🆕 Obtener predicciones existentes filtrando por plan
+      const predictions = await PredictionModel.getUserPredictions(userId, gameType, userPlan);
       
       res.json({
         success: true,

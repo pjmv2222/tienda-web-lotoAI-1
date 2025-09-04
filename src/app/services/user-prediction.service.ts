@@ -102,10 +102,16 @@ export class UserPredictionService {
 
   /**
    * Obtener el estado de predicciones para un juego específico
+   * @param gameType Tipo de juego
+   * @param plan Plan de suscripción específico (opcional)
    */
-  getPredictionStatus(gameType: string): Observable<{success: boolean, data: UserPredictionStatus}> {
+  getPredictionStatus(gameType: string, plan?: string): Observable<{success: boolean, data: UserPredictionStatus}> {
+    let url = `${this.apiUrl}/status/${gameType}`;
+    if (plan) {
+      url += `?plan=${plan}`;
+    }
     return this.http.get<{success: boolean, data: UserPredictionStatus}>(
-      `${this.apiUrl}/status/${gameType}`,
+      url,
       { headers: this.getAuthHeaders() }
     );
   }
@@ -174,10 +180,12 @@ export class UserPredictionService {
 
   /**
    * Verificar si el usuario puede generar más predicciones
+   * @param gameType Tipo de juego
+   * @param plan Plan de suscripción específico (opcional)
    */
-  canGeneratePrediction(gameType: string): Observable<boolean> {
+  canGeneratePrediction(gameType: string, plan?: string): Observable<boolean> {
     return new Observable(observer => {
-      this.getPredictionStatus(gameType).subscribe({
+      this.getPredictionStatus(gameType, plan).subscribe({
         next: (response) => {
           observer.next(response.data.canGenerate);
           observer.complete();

@@ -169,9 +169,10 @@ export class EuromillonPrediccionComponent implements OnInit, OnDestroy {
    * Cargar estado de predicciones desde el backend
    */
   private loadPredictionStatus() {
-    console.log('🔍 [DEBUG] Cargando estado de predicciones...');
+    console.log('🔍 [DEBUG] Cargando estado de predicciones para plan:', this.userPlan);
     
-    this.userPredictionService.getPredictionStatus('euromillon').subscribe({
+    // 🆕 Pasar el plan específico al servicio
+    this.userPredictionService.getPredictionStatus('euromillon', this.userPlan).subscribe({
       next: (response) => {
         console.log('✅ [DEBUG] Respuesta del backend:', response);
         
@@ -189,7 +190,8 @@ export class EuromillonPrediccionComponent implements OnInit, OnDestroy {
           console.log('✅ [DEBUG] Estado actualizado:', {
             predictionResultsLength: this.predictionResults.length,
             maxPredictions: this.maxPredictions,
-            userPlan: this.userPlan
+            userPlan: this.userPlan,
+            planFromUrl: this.userPlan
           });
           
           // Actualizar la interfaz
@@ -409,12 +411,12 @@ export class EuromillonPrediccionComponent implements OnInit, OnDestroy {
   async generatePrediction() {
     if (this.isGeneratingPrediction) return;
 
-    // Verificar límite usando el servicio
+    // Verificar límite usando el servicio con el plan específico
     try {
-      const canGenerate = await this.userPredictionService.canGeneratePrediction('euromillon').toPromise();
+      const canGenerate = await this.userPredictionService.canGeneratePrediction('euromillon', this.userPlan).toPromise();
       
       if (!canGenerate) {
-        this.predictionError = `Ya has generado el máximo de ${this.maxPredictions} predicciones. Adquiere una nueva suscripción para seguir generando pronósticos afortunados.`;
+        this.predictionError = `Ya has generado el máximo de ${this.maxPredictions} predicciones para el plan ${this.userPlan}. Adquiere una nueva suscripción para seguir generando pronósticos afortunados.`;
         return;
       }
 
@@ -435,6 +437,9 @@ export class EuromillonPrediccionComponent implements OnInit, OnDestroy {
           estrellas: response.prediction.estrellas || []
         });
         this.updatePredictionDisplay();
+        
+        // ✅ Recargar el estado para actualizar los contadores
+        this.loadPredictionStatus();
       } else {
         this.predictionError = response?.error || 'Error al generar predicción';
       }

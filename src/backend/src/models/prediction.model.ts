@@ -45,14 +45,24 @@ export const PredictionModel = {
 
   /**
    * Obtener predicciones del usuario para un juego específico
+   * @param userId ID del usuario
+   * @param gameType Tipo de juego
+   * @param subscriptionPlan Plan de suscripción (opcional, si se especifica filtra por plan)
    */
-  async getUserPredictions(userId: number, gameType: string) {
-    const result = await pgPool.query(
-      `SELECT * FROM user_predictions 
-       WHERE user_id = $1 AND game_type = $2
-       ORDER BY created_at DESC`,
-      [userId, gameType]
-    );
+  async getUserPredictions(userId: number, gameType: string, subscriptionPlan?: string) {
+    let query = `SELECT * FROM user_predictions 
+                 WHERE user_id = $1 AND game_type = $2`;
+    let params = [userId, gameType];
+    
+    // Si se especifica un plan, filtrar por él
+    if (subscriptionPlan) {
+      query += ` AND subscription_plan = $3`;
+      params.push(subscriptionPlan);
+    }
+    
+    query += ` ORDER BY created_at DESC`;
+    
+    const result = await pgPool.query(query, params);
     return result.rows;
   },
 
@@ -71,15 +81,23 @@ export const PredictionModel = {
 
   /**
    * Contar predicciones del usuario para un juego específico calculado dinámicamente
+   * @param userId ID del usuario
+   * @param gameType Tipo de juego
+   * @param subscriptionPlan Plan de suscripción (opcional, si se especifica filtra por plan)
    */
-  async countUserPredictions(userId: number, gameType: string) {
-    // Calcular dinámicamente desde user_predictions
-    const result = await pgPool.query(
-      `SELECT COUNT(*) as count 
-       FROM user_predictions 
-       WHERE user_id = $1 AND game_type = $2`,
-      [userId, gameType]
-    );
+  async countUserPredictions(userId: number, gameType: string, subscriptionPlan?: string) {
+    let query = `SELECT COUNT(*) as count 
+                 FROM user_predictions 
+                 WHERE user_id = $1 AND game_type = $2`;
+    let params = [userId, gameType];
+    
+    // Si se especifica un plan, filtrar por él
+    if (subscriptionPlan) {
+      query += ` AND subscription_plan = $3`;
+      params.push(subscriptionPlan);
+    }
+    
+    const result = await pgPool.query(query, params);
     return parseInt(result.rows[0]?.count || '0');
   },
 
