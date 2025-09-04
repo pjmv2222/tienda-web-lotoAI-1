@@ -15,7 +15,48 @@ router.get('/profile-summary', authenticateToken, getAllPredictionCounts);
 // Ruta para obtener el estado de los servidores Python
 router.get('/servers/status', authenticateToken, getServerStatus);
 
-// Rutas específicas para cada juego de IA - usar el controlador completo
+// 🆕 RUTAS GET para compatibilidad con frontend (aceptar query params ?plan=basic)
+router.get('/euromillon', authenticateToken, (req, res) => {
+  req.params['game'] = 'euromillon';
+  getPrediction(req, res);
+});
+
+router.get('/primitiva', authenticateToken, (req, res) => {
+  req.params['game'] = 'primitiva';
+  getPrediction(req, res);
+});
+
+router.get('/bonoloto', authenticateToken, (req, res) => {
+  req.params['game'] = 'bonoloto';
+  getPrediction(req, res);
+});
+
+router.get('/gordo', authenticateToken, (req, res) => {
+  req.params['game'] = 'gordo';
+  getPrediction(req, res);
+});
+
+router.get('/elgordo', authenticateToken, (req, res) => {
+  req.params['game'] = 'gordo';
+  getPrediction(req, res);
+});
+
+router.get('/eurodreams', authenticateToken, (req, res) => {
+  req.params['game'] = 'eurodreams';
+  getPrediction(req, res);
+});
+
+router.get('/loterianacional', authenticateToken, (req, res) => {
+  req.params['game'] = 'loterianacional';
+  getPrediction(req, res);
+});
+
+router.get('/lototurf', authenticateToken, (req, res) => {
+  req.params['game'] = 'lototurf';
+  getPrediction(req, res);
+});
+
+// Rutas POST (mantener para compatibilidad futura)
 router.post('/euromillon', authenticateToken, (req, res) => {
   req.params['game'] = 'euromillon';
   getPrediction(req, res);
