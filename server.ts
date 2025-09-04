@@ -355,10 +355,11 @@ export function app(): express.Express {
   server.get('/api/predictions/profile-summary', authenticateToken, async (req: any, res: any) => {
     try {
       const userId = req.user.id;
+      const requestedPlan = req.query.plan as string || 'basic'; // ✅ Obtener el plan del query parameter
       
-      console.log(`📊 [PROFILE-SUMMARY] Obteniendo resumen para usuario ${userId}`);
+      console.log(`📊 [PROFILE-SUMMARY] Obteniendo resumen para usuario ${userId}, plan: ${requestedPlan}`);
       
-      // Obtener contadores de predicciones por juego para el plan básico
+      // Obtener contadores de predicciones por juego para el plan específico
       const client = await pgPool.connect();
       try {
         const query = `
@@ -378,23 +379,24 @@ export function app(): express.Express {
             SELECT 'eurodreams'
           ) g
           LEFT JOIN user_predictions up ON g.name = up.game_type 
-            AND up.user_id = $1
+            AND up.user_id = $1 
+            AND up.subscription_plan = $2
           GROUP BY g.name
           ORDER BY g.name ASC
         `;
         
-        const result = await client.query(query, [userId]);
+        const result = await client.query(query, [userId, requestedPlan]);
         const games = result.rows;
         
-        console.log(`📊 [PROFILE-SUMMARY] Juegos encontrados: ${games.length}`);
+        console.log(`📊 [PROFILE-SUMMARY] Juegos encontrados para plan ${requestedPlan}: ${games.length}`);
         console.log(`📊 [PROFILE-SUMMARY] Datos de juegos:`, games);
         
         // Formatear respuesta en el formato esperado por el frontend
         const response = {
           success: true,
           plans: [{
-            is_basic_plan: true,
-            plan_id: 'basic',
+            is_basic_plan: requestedPlan === 'basic',
+            plan_id: requestedPlan,
             predictions_used: games.map(game => ({
               game_id: game.game_id,
               game_name: game.game_name,
@@ -405,7 +407,7 @@ export function app(): express.Express {
           }]
         };
         
-        console.log(`✅ [PROFILE-SUMMARY] Respuesta enviada:`, JSON.stringify(response, null, 2));
+        console.log(`✅ [PROFILE-SUMMARY] Respuesta enviada para plan ${requestedPlan}:`, JSON.stringify(response, null, 2));
         res.json(response);
 
       } finally {

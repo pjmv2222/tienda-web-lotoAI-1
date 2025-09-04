@@ -1231,7 +1231,8 @@ export class ProfileComponent implements OnInit, OnDestroy {
     
     this.loadingSubscriptions = true;
     
-    this.userPredictionService.getProfilePredictionSummary().subscribe({
+    // ✅ PASAR EL PARÁMETRO 'basic' para filtrar por plan básico
+    this.userPredictionService.getProfilePredictionSummary('basic').subscribe({
       next: (response) => {
         console.log('📊 [PROFILE] Respuesta del servidor:', response);
         if (response.success && Array.isArray(response.plans)) {
