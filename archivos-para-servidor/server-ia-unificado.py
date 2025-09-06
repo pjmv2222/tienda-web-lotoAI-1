@@ -384,16 +384,40 @@ def generar_prediccion_ultra(modelo_ultra, config):
         logging.info(f"⚡ Ensemble prediction time: {pred_time:.4f}s")
         logging.info(f"📊 Predicciones por algoritmo: {predicciones_por_algoritmo}")
         
-        # CONVERTIR PREDICCIONES ENSEMBLE A NÚMEROS VÁLIDOS
+        # CONVERTIR PREDICCIONES ENSEMBLE A NÚMEROS VÁLIDOS CON MAYOR VARIABILIDAD
         
-        # Números principales (posiciones 0-4)
+        # Agregar factor de aleatoriedad temporal único
+        timestamp_seed = int(time.time() * 1000000) % 10000
+        np.random.seed(timestamp_seed)
+        
+        # Números principales (posiciones 0-4) - MEJORADO CON MÁS VARIABILIDAD
         numeros_principales = []
         for i in range(5):
             if i < len(predicciones_ensemble):
-                num = int(np.clip(predicciones_ensemble[i], 1, 50))
-                # Evitar duplicados
-                while num in numeros_principales:
-                    num = (num % 50) + 1
+                # Usar la predicción base pero agregar más variación
+                base_pred = predicciones_ensemble[i]
+                
+                # Agregar ruido aleatorio basado en el timestamp
+                noise_factor = np.random.normal(0, 3)  # Desviación estándar de 3
+                adjusted_pred = base_pred + noise_factor
+                
+                # Convertir a entero con más variabilidad
+                num = int(np.clip(adjusted_pred, 1, 50))
+                
+                # Si el número ya existe, usar estrategia de variación inteligente
+                attempts = 0
+                while num in numeros_principales and attempts < 10:
+                    # Estrategia: aleatorizar en un rango más amplio
+                    variation = np.random.randint(-5, 6)  # Variación de ±5
+                    num = int(np.clip(base_pred + variation, 1, 50))
+                    attempts += 1
+                
+                # Si aún hay duplicados, usar método completamente aleatorio
+                if num in numeros_principales:
+                    num = np.random.randint(1, 51)
+                    while num in numeros_principales:
+                        num = np.random.randint(1, 51)
+                
                 numeros_principales.append(num)
         
         # Completar números principales si faltan
@@ -402,13 +426,31 @@ def generar_prediccion_ultra(modelo_ultra, config):
             if num not in numeros_principales:
                 numeros_principales.append(num)
         
-        # Estrellas (posiciones 5-6)
+        # Estrellas (posiciones 5-6) - MEJORADO CON MÁS VARIABILIDAD  
         estrellas = []
         for i in range(5, min(7, len(predicciones_ensemble))):
-            est = int(np.clip(predicciones_ensemble[i], 1, 12))
-            # Evitar duplicados
-            while est in estrellas:
-                est = (est % 12) + 1
+            # Usar la predicción base pero agregar variación
+            base_pred = predicciones_ensemble[i]
+            
+            # Agregar ruido aleatorio
+            noise_factor = np.random.normal(0, 1.5)  # Desviación para estrellas
+            adjusted_pred = base_pred + noise_factor
+            
+            est = int(np.clip(adjusted_pred, 1, 12))
+            
+            # Evitar duplicados con más variabilidad
+            attempts = 0
+            while est in estrellas and attempts < 8:
+                variation = np.random.randint(-2, 3)  # Variación de ±2
+                est = int(np.clip(base_pred + variation, 1, 12))
+                attempts += 1
+            
+            # Si hay duplicados, usar método aleatorio
+            if est in estrellas:
+                est = np.random.randint(1, 13)
+                while est in estrellas:
+                    est = np.random.randint(1, 13)
+            
             estrellas.append(est)
         
         # Completar estrellas si faltan

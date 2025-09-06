@@ -45,6 +45,22 @@ export class SafeLocalStorageService {
       localStorage.setItem(key, value);
       return true;
     } catch (error) {
+      // Si el error es QuotaExceededError, intentar limpiar cache viejo
+      if (error instanceof DOMException && error.name === 'QuotaExceededError') {
+        console.warn(`[SafeLocalStorage] Quota excedida al guardar ${key}. Limpiando cache...`);
+        this.cleanupOldCache();
+        
+        // Intentar guardar nuevamente después de limpiar
+        try {
+          localStorage.setItem(key, value);
+          console.log(`[SafeLocalStorage] Guardado exitoso después de limpiar cache: ${key}`);
+          return true;
+        } catch (secondError) {
+          console.warn(`[SafeLocalStorage] Error persistente después de limpiar cache para ${key}:`, secondError);
+          return false;
+        }
+      }
+      
       console.warn(`Error al guardar localStorage[${key}]:`, error);
       return false;
     }
@@ -128,5 +144,99 @@ export class SafeLocalStorageService {
    */
   isAvailable(): boolean {
     return isPlatformBrowser(this.platformId);
+  }
+
+  /**
+   * Limpia cache viejo de imágenes de bolas para liberar espacio
+   * @private
+   */
+  private cleanupOldCache(): void {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+
+    try {
+      const keys = Object.keys(localStorage);
+      const ballCacheKeys = keys.filter(key => 
+        key.startsWith('euromillones_ball_') || 
+        key.startsWith('ball-') ||
+        key.includes('_ball_')
+      );
+
+      // Ordenar por fecha de acceso (los más viejos primero)
+      const keysByAge = ballCacheKeys.sort((a, b) => {
+        const aTimestamp = this.getCacheTimestamp(a);
+        const bTimestamp = this.getCacheTimestamp(b);
+        return aTimestamp - bTimestamp;
+      });
+
+      // Eliminar hasta el 30% de las entradas más viejas
+      const toDelete = Math.ceil(keysByAge.length * 0.3);
+      let deleted = 0;
+
+      for (const key of keysByAge) {
+        if (deleted >= toDelete) break;
+        
+        localStorage.removeItem(key);
+        deleted++;
+      }
+
+      console.log(`[SafeLocalStorage] Cache limpiado: ${deleted} entradas eliminadas de ${ballCacheKeys.length} total`);
+    } catch (error) {
+      console.warn('[SafeLocalStorage] Error al limpiar cache:', error);
+    }
+  }
+
+  /**
+   * Obtiene el timestamp de cache de una clave (usado para ordenar por antigüedad)
+   * @private
+   */
+  private getCacheTimestamp(key: string): number {
+    try {
+      const timestampKey = `${key}_timestamp`;
+      const timestamp = localStorage.getItem(timestampKey);
+      return timestamp ? parseInt(timestamp, 10) : 0;
+    } catch {
+      return 0;
+    }
+  }
+
+  /**
+   * Actualiza el timestamp de acceso de una clave de cache
+   * @private
+   */
+  private updateCacheTimestamp(key: string): void {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+
+    try {
+      const timestampKey = `${key}_timestamp`;
+      localStorage.setItem(timestampKey, Date.now().toString());
+    } catch (error) {
+      // Ignorar errores de timestamp, no es crítico
+    }
+  }
+
+  /**
+   * Versión mejorada de setItem para cache de imágenes que incluye timestamp
+   */
+  setImageCache(key: string, value: string): boolean {
+    const success = this.setItem(key, value);
+    if (success) {
+      this.updateCacheTimestamp(key);
+    }
+    return success;
+  }
+
+  /**
+   * Versión mejorada de getItem para cache de imágenes que actualiza timestamp
+   */
+  getImageCache(key: string): string | null {
+    const value = this.getItem(key);
+    if (value) {
+      this.updateCacheTimestamp(key);
+    }
+    return value;
   }
 } 

@@ -8,6 +8,7 @@ import { SubscriptionService } from '../../services/subscription.service';
 import { PredictionService, PredictionResponse } from '../../services/prediction.service';
 import { EuromillonesBallComponent } from '../../components/euromillones-ball/euromillones-ball.component';
 import { UserPredictionService } from '../../services/user-prediction.service';
+import { SafeLocalStorageService } from '../../services/safe-local-storage.service';
 
 @Component({
   selector: 'app-euromillon-prediccion',
@@ -53,6 +54,7 @@ export class EuromillonPrediccionComponent implements OnInit, OnDestroy {
     private predictionService: PredictionService,
     private http: HttpClient,
     private userPredictionService: UserPredictionService,
+    private safeLocalStorage: SafeLocalStorageService,
     @Inject(PLATFORM_ID) private platformId: Object
   ) {}
 
@@ -329,13 +331,13 @@ export class EuromillonPrediccionComponent implements OnInit, OnDestroy {
       return;
     }
     
-    try {
-      localStorage.setItem('euromillon_predictions', JSON.stringify({
-        timestamp: new Date().toISOString(),
-        predictions: this.predictionResults
-      }));
-    } catch (e) {
-      console.warn('No se pudo guardar las predicciones en localStorage:', e);
+    const success = this.safeLocalStorage.setObject('euromillon_predictions', {
+      timestamp: new Date().toISOString(),
+      predictions: this.predictionResults
+    });
+    
+    if (!success) {
+      console.warn('No se pudo guardar las predicciones en localStorage');
     }
   }
 
@@ -347,54 +349,44 @@ export class EuromillonPrediccionComponent implements OnInit, OnDestroy {
       return;
     }
     
-    try {
-      const savedJson = localStorage.getItem('euromillon_predictions');
-      if (savedJson) {
-        const savedData = JSON.parse(savedJson);
+    const savedData = this.safeLocalStorage.getObject<{timestamp: string, predictions: any}>('euromillon_predictions');
+    
+    if (savedData && savedData.predictions) {
+      // Verificar si las predicciones son recientes (menos de 24 horas)
+      const savedTime = new Date(savedData.timestamp).getTime();
+      const currentTime = new Date().getTime();
+      const hoursDiff = (currentTime - savedTime) / (1000 * 60 * 60);
 
-        // Verificar si las predicciones son recientes (menos de 24 horas)
-        const savedTime = new Date(savedData.timestamp).getTime();
-        const currentTime = new Date().getTime();
-        const hoursDiff = (currentTime - savedTime) / (1000 * 60 * 60);
+      if (hoursDiff < 24) {
+        console.log('Cargando predicciones guardadas (generadas hace', Math.round(hoursDiff), 'horas)');
 
-        if (hoursDiff < 24) {
-          console.log('Cargando predicciones guardadas (generadas hace', Math.round(hoursDiff), 'horas)');
+        // Verificar que las predicciones tengan el formato correcto
+        if (Array.isArray(savedData.predictions)) {
+          this.predictionResults = savedData.predictions.map((pred: any) => ({
+            numeros: Array.isArray(pred.numeros) ? pred.numeros : [],
+            estrellas: Array.isArray(pred.estrellas) ? pred.estrellas : [],
+            complementario: typeof pred.complementario === 'number' ? pred.complementario : undefined,
+            reintegro: typeof pred.reintegro === 'number' ? pred.reintegro : undefined,
+            clave: typeof pred.clave === 'number' ? pred.clave : undefined,
+            dream: typeof pred.dream === 'number' ? pred.dream : undefined,
+            caballo: typeof pred.caballo === 'number' ? pred.caballo : undefined,
+            numero: Array.isArray(pred.numero) ? pred.numero : undefined
+          }));
 
-          // Verificar que las predicciones tengan el formato correcto
-          if (Array.isArray(savedData.predictions)) {
-            this.predictionResults = savedData.predictions.map((pred: any) => ({
-              numeros: Array.isArray(pred.numeros) ? pred.numeros : [],
-              estrellas: Array.isArray(pred.estrellas) ? pred.estrellas : [],
-              complementario: typeof pred.complementario === 'number' ? pred.complementario : undefined,
-              reintegro: typeof pred.reintegro === 'number' ? pred.reintegro : undefined,
-              clave: typeof pred.clave === 'number' ? pred.clave : undefined,
-              dream: typeof pred.dream === 'number' ? pred.dream : undefined,
-              caballo: typeof pred.caballo === 'number' ? pred.caballo : undefined,
-              numero: Array.isArray(pred.numero) ? pred.numero : undefined
-            }));
-
-            // Actualizar la frecuencia de los números
-            this.updateNumberFrequency();
-          } else {
-            console.warn('El formato de las predicciones guardadas no es válido');
-            this.predictionResults = [];
-          }
+          // Actualizar la frecuencia de los números
+          this.updateNumberFrequency();
         } else {
-          console.log('Las predicciones guardadas son demasiado antiguas (', Math.round(hoursDiff), 'horas)');
-          if (isPlatformBrowser(this.platformId)) {
-            localStorage.removeItem('euromillon_predictions');
-          }
+          console.warn('El formato de las predicciones guardadas no es válido');
+          this.predictionResults = [];
         }
+      } else {
+        console.log('Las predicciones guardadas son demasiado antiguas (', Math.round(hoursDiff), 'horas)');
+        this.safeLocalStorage.removeItem('euromillon_predictions');
+        this.predictionResults = [];
       }
-    } catch (e) {
-      console.warn('Error al cargar predicciones guardadas:', e);
-      try {
-        if (isPlatformBrowser(this.platformId)) {
-          localStorage.removeItem('euromillon_predictions');
-        }
-      } catch (e) {
-        // Ignorar errores al limpiar
-      }
+    } else {
+      // No hay predicciones guardadas
+      this.predictionResults = [];
     }
   }
 
@@ -469,23 +461,24 @@ export class EuromillonPrediccionComponent implements OnInit, OnDestroy {
     this.showEmptyBalls = true;
     
     // Limpiar solo el localStorage local para la visualización
-    if (isPlatformBrowser(this.platformId)) {
-      localStorage.removeItem('euromillon_predictions');
-    }
+    this.safeLocalStorage.removeItem('euromillon_predictions');
     
     // NO llamamos al backend para mantener el historial y contadores intactos
     console.log('🧹 Predicciones limpiadas de la visualización (historial mantenido)');
-    this.updatePredictionDisplay();
   }
 
   /**
    * Fallback para localStorage (compatibilidad)
    */
   private loadPredictionsFromStorage() {
-    const saved = localStorage.getItem('euromillonPredictions');
+    const saved = this.safeLocalStorage.getItem('euromillonPredictions');
     if (saved) {
-      this.predictionResults = JSON.parse(saved);
+      try {
+        this.predictionResults = JSON.parse(saved);
+      } catch (error) {
+        console.warn('Error parsing saved predictions:', error);
+        this.predictionResults = [];
+      }
     }
-    this.updatePredictionDisplay();
   }
 }

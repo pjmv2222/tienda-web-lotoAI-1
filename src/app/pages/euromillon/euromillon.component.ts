@@ -337,97 +337,9 @@ export class EuromillonComponent extends LotteryBaseComponent implements OnInit,
     }
   }
 
-  generateBasicPrediction(): void {
-    // Verificar si el usuario tiene un plan activo
-    if (!this.hasBasicPlan && !this.hasMonthlyPlan && !this.hasProPlan) {
-      console.log('El usuario no tiene un plan activo');
-      this.predictionError = 'Necesitas una suscripción activa para generar predicciones';
-      return;
-    }
+  // generateBasicPrediction method removed - prediction generation now handled by dedicated prediction pages
 
-    // Indicar que se está generando la predicción
-    this.isGeneratingPrediction = true;
-    this.predictionResult = null;
-    this.predictionError = null;
-
-    console.log('Generando predicción básica para Euromillón...');
-
-    // Verificar nuevamente el estado de la suscripción antes de generar la predicción
-    this.subscriptionService.hasActiveSubscription().subscribe({
-      next: (hasActive) => {
-        console.log('Verificación de suscripción activa antes de generar predicción:', hasActive);
-
-        if (!hasActive) {
-          console.warn('La verificación de suscripción indica que el usuario no tiene una suscripción activa');
-          this.isGeneratingPrediction = false;
-          this.predictionError = 'No se detectó una suscripción activa. Por favor, actualiza la página o contacta con soporte.';
-          return;
-        }
-
-        // Proceder con la generación de la predicción
-        this.callPredictionService();
-      },
-      error: (error) => {
-        console.error('Error al verificar suscripción antes de generar predicción:', error);
-        this.isGeneratingPrediction = false;
-        this.predictionError = 'Error al verificar tu suscripción. Por favor, inténtalo de nuevo.';
-      }
-    });
-  }
-
-  /**
-   * Método auxiliar para llamar al servicio de predicciones
-   * Se separa para mejorar la legibilidad y mantenibilidad
-   */
-  private callPredictionService(): void {
-    if (!this.predictionService) {
-      console.error('El servicio de predicciones no está disponible');
-      this.isGeneratingPrediction = false;
-      this.predictionError = 'El servicio de predicciones no está disponible';
-      return;
-    }
-
-    // Llamar al servicio de predicciones
-    this.predictionService.generatePrediction('euromillon').subscribe({
-      next: (response: PredictionResponse) => {
-        console.log('Predicción generada:', response);
-        this.isGeneratingPrediction = false;
-
-        if (response.success) {
-          this.predictionResult = response.prediction;
-
-          // Guardar la predicción en el almacenamiento local para recuperarla si se recarga la página (solo en browser)
-          if (isPlatformBrowser(this.platformId)) {
-            try {
-              localStorage.setItem('euromillon_last_prediction', JSON.stringify({
-                timestamp: new Date().toISOString(),
-                prediction: this.predictionResult
-              }));
-            } catch (e) {
-              console.warn('No se pudo guardar la predicción en localStorage:', e);
-            }
-          }
-        } else {
-          this.predictionError = response.error || 'Error al generar la predicción';
-        }
-      },
-      error: (error: any) => {
-        console.error('Error al generar la predicción:', error);
-        this.isGeneratingPrediction = false;
-
-        // Proporcionar un mensaje de error más descriptivo según el tipo de error
-        if (error.status === 401) {
-          this.predictionError = 'No tienes autorización para acceder a este servicio. Por favor, verifica tu suscripción.';
-        } else if (error.status === 403) {
-          this.predictionError = 'Tu suscripción no permite acceder a este servicio.';
-        } else if (error.status === 0) {
-          this.predictionError = 'No se pudo conectar con el servidor. Verifica tu conexión a internet.';
-        } else {
-          this.predictionError = 'Error al comunicarse con el servidor de predicciones. Por favor, inténtalo de nuevo más tarde.';
-        }
-      }
-    });
-  }
+  // callPredictionService method removed - prediction generation now handled by dedicated prediction pages
 
   showSubscriptionOptions(): void {
     // Lógica para mostrar las opciones de suscripción
