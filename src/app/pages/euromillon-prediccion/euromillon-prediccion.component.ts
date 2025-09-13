@@ -424,12 +424,18 @@ export class EuromillonPrediccionComponent implements OnInit, OnDestroy {
         await this.userPredictionService.createPrediction('euromillon', response.prediction, this.userPlan).toPromise();
         
         // Actualizar la interfaz
-        this.predictionResults.push({
+        const newPrediction = {
           numeros: response.prediction.numeros || [],
           estrellas: response.prediction.estrellas || [],
           timestamp: response.timestamp || new Date(),
           id: this.predictionResults.length + 1
-        });
+        };
+        
+        console.log('🔍 New prediction to push:', newPrediction);
+        console.log('🔍 Timestamp type:', typeof newPrediction.timestamp);
+        console.log('🔍 Timestamp value:', newPrediction.timestamp);
+        
+        this.predictionResults.push(newPrediction);
         this.updatePredictionDisplay();
         
         // ✅ Recargar el estado para actualizar los contadores
@@ -489,10 +495,14 @@ export class EuromillonPrediccionComponent implements OnInit, OnDestroy {
    * Formato de timestamp para mostrar tiempo relativo
    */
   formatTimestamp(timestamp: string | Date | undefined): string {
+    console.log('🔍 formatTimestamp called with:', timestamp, 'Type:', typeof timestamp);
+    
     if (!timestamp) return '';
     
     try {
       const date = timestamp instanceof Date ? timestamp : new Date(timestamp);
+      console.log('🔍 Converted date:', date, 'Valid:', !isNaN(date.getTime()));
+      
       const now = new Date();
       const diffInHours = Math.abs(now.getTime() - date.getTime()) / (1000 * 60 * 60);
       
