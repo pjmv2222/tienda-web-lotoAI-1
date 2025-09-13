@@ -274,10 +274,18 @@ export class ElgordoPrediccionComponent implements OnInit, OnDestroy {
    * Formatea la fecha de timestamp para mostrar hace cuánto tiempo se generó
    */
   formatTimestamp(timestamp: string | Date | undefined): string {
-    if (!timestamp) return '';
+    console.log('formatTimestamp called with:', timestamp, 'Type:', typeof timestamp);
+    
+    if (!timestamp) {
+      console.log('formatTimestamp returning fallback for undefined timestamp');
+      return 'Generada recientemente';
+    }
     
     const date = timestamp instanceof Date ? timestamp : new Date(timestamp);
-    if (isNaN(date.getTime())) return '';
+    if (isNaN(date.getTime())) {
+      console.log('formatTimestamp returning fallback for invalid date');
+      return 'Generada recientemente';
+    }
     
     const now = new Date();
     const diff = now.getTime() - date.getTime();

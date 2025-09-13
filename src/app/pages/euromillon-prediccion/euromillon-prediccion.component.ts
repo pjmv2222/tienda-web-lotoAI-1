@@ -424,16 +424,18 @@ export class EuromillonPrediccionComponent implements OnInit, OnDestroy {
         await this.userPredictionService.createPrediction('euromillon', response.prediction, this.userPlan).toPromise();
         
         // Actualizar la interfaz
+        const currentTimestamp = new Date();
         const newPrediction = {
           numeros: response.prediction.numeros || [],
           estrellas: response.prediction.estrellas || [],
-          timestamp: response.timestamp || new Date(),
+          timestamp: response.timestamp || currentTimestamp,
           id: this.predictionResults.length + 1
         };
         
         console.log('🔍 New prediction to push:', newPrediction);
         console.log('🔍 Timestamp type:', typeof newPrediction.timestamp);
         console.log('🔍 Timestamp value:', newPrediction.timestamp);
+        console.log('🔍 Using current timestamp:', currentTimestamp);
         
         this.predictionResults.push(newPrediction);
         this.updatePredictionDisplay();
@@ -497,11 +499,19 @@ export class EuromillonPrediccionComponent implements OnInit, OnDestroy {
   formatTimestamp(timestamp: string | Date | undefined): string {
     console.log('🔍 formatTimestamp called with:', timestamp, 'Type:', typeof timestamp);
     
-    if (!timestamp) return '';
+    if (!timestamp) {
+      console.log('⚠️ No timestamp provided, returning default message');
+      return 'Generada recientemente';
+    }
     
     try {
       const date = timestamp instanceof Date ? timestamp : new Date(timestamp);
       console.log('🔍 Converted date:', date, 'Valid:', !isNaN(date.getTime()));
+      
+      if (isNaN(date.getTime())) {
+        console.log('⚠️ Invalid date, returning default message');
+        return 'Generada recientemente';
+      }
       
       const now = new Date();
       const diffInHours = Math.abs(now.getTime() - date.getTime()) / (1000 * 60 * 60);
@@ -530,7 +540,7 @@ export class EuromillonPrediccionComponent implements OnInit, OnDestroy {
       return date.toLocaleDateString('es-ES', options);
     } catch (error) {
       console.error('Error formatting timestamp:', error);
-      return '';
+      return 'Generada recientemente';
     }
   }  /**
    * Copiar predicción al portapapeles

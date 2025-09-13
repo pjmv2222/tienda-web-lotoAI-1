@@ -458,10 +458,15 @@ export class PrimitivaPrediccionComponent implements OnInit, OnDestroy {
    * Formatea la fecha de timestamp para mostrar hace cuánto tiempo se generó
    */
   formatTimestamp(timestamp: string | Date | undefined): string {
-    if (!timestamp) return '';
+    if (!timestamp) {
+      return 'Generada recientemente';
+    }
     
     const date = timestamp instanceof Date ? timestamp : new Date(timestamp);
-    if (isNaN(date.getTime())) return '';
+    if (isNaN(date.getTime())) {
+      return 'Generada recientemente';
+    }
+    
     const now = new Date();
     const diff = now.getTime() - date.getTime();
     const minutes = Math.floor(diff / 60000);
