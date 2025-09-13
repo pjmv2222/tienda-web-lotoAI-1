@@ -185,9 +185,31 @@ export class EuromillonPrediccionComponent implements OnInit, OnDestroy {
             userPlan: response.data.userPlan
           });
           
+          // 🔍 Debug: Examinar cada predicción antes del mapeo
+          response.data.predictions.forEach((pred: any, index: number) => {
+            console.log(`🔍 [DEBUG] Predicción ${index}:`, {
+              fullPrediction: pred,
+              data: pred.data,
+              timestamp: pred.data?.timestamp,
+              timestampType: typeof pred.data?.timestamp,
+              created_at: pred.created_at,
+              updated_at: pred.updated_at
+            });
+          });
+          
           this.predictionResults = response.data.predictions.map(p => p.data);
           this.maxPredictions = response.data.maxAllowed;
           this.userPlan = response.data.userPlan; // ✅ Restaurado: usar plan real del backend
+          
+          // 🔍 Debug: Examinar predictionResults después del mapeo
+          console.log('🔍 [DEBUG] predictionResults después del mapeo:', this.predictionResults);
+          this.predictionResults.forEach((pred: any, index: number) => {
+            console.log(`🔍 [DEBUG] predictionResults[${index}]:`, {
+              prediction: pred,
+              timestamp: pred.timestamp,
+              timestampType: typeof pred.timestamp
+            });
+          });
           
           console.log('✅ [DEBUG] Estado actualizado:', {
             predictionResultsLength: this.predictionResults.length,
