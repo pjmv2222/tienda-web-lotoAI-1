@@ -426,7 +426,9 @@ export class EuromillonPrediccionComponent implements OnInit, OnDestroy {
         // Actualizar la interfaz
         this.predictionResults.push({
           numeros: response.prediction.numeros || [],
-          estrellas: response.prediction.estrellas || []
+          estrellas: response.prediction.estrellas || [],
+          timestamp: response.timestamp || new Date().toISOString(),
+          id: this.predictionResults.length + 1
         });
         this.updatePredictionDisplay();
         
@@ -467,18 +469,142 @@ export class EuromillonPrediccionComponent implements OnInit, OnDestroy {
     console.log('🧹 Predicciones limpiadas de la visualización (historial mantenido)');
   }
 
-  /**
+    /**
    * Fallback para localStorage (compatibilidad)
    */
   private loadPredictionsFromStorage() {
-    const saved = this.safeLocalStorage.getItem('euromillonPredictions');
-    if (saved) {
-      try {
-        this.predictionResults = JSON.parse(saved);
-      } catch (error) {
-        console.warn('Error parsing saved predictions:', error);
-        this.predictionResults = [];
+    if (isPlatformBrowser(this.platformId)) {
+      const storedPredictions = localStorage.getItem('euromillon_predictions');
+      if (storedPredictions) {
+        try {
+          this.predictionResults = JSON.parse(storedPredictions);
+        } catch (error) {
+          console.error('Error parsing stored predictions:', error);
+        }
       }
+    }
+  }
+
+  /**
+   * Formatear timestamp para mostrar fecha y hora
+   */
+  formatTimestamp(timestamp: string): string {
+    if (!timestamp) return '';
+    
+    try {
+      const date = new Date(timestamp);
+      const now = new Date();
+      const diffInHours = Math.abs(now.getTime() - date.getTime()) / (1000 * 60 * 60);
+      
+      // Si fue hace menos de 24 horas, mostrar formato relativo
+      if (diffInHours < 24) {
+        const diffInMinutes = Math.floor(diffInHours * 60);
+        if (diffInMinutes < 60) {
+          return `Hace ${diffInMinutes} minuto${diffInMinutes !== 1 ? 's' : ''}`;
+        } else {
+          const hours = Math.floor(diffInHours);
+          return `Hace ${hours} hora${hours !== 1 ? 's' : ''}`;
+        }
+      }
+      
+      // Si es de otro día, mostrar fecha completa
+      const options: Intl.DateTimeFormatOptions = {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+      };
+      
+      return date.toLocaleDateString('es-ES', options);
+    } catch (error) {
+      console.error('Error formatting timestamp:', error);
+      return '';
+    }
+  }
+
+  /**
+   * Copiar predicción al portapapeles
+   */
+  async copyPredictionToClipboard(prediction: any): Promise<void> {
+    if (!prediction) return;
+    
+    try {
+      const numeros = prediction.numeros ? prediction.numeros.sort((a: number, b: number) => a - b) : [];
+      const estrellas = prediction.estrellas ? prediction.estrellas.sort((a: number, b: number) => a - b) : [];
+      
+      let textToCopy = '';
+      
+      // Agregar números principales
+      if (numeros.length > 0) {
+        textToCopy += `Números: ${numeros.join(', ')}`;
+      }
+      
+      // Agregar estrellas
+      if (estrellas.length > 0) {
+        textToCopy += `${textToCopy ? ' | ' : ''}Estrellas: ${estrellas.join(', ')}`;
+      }
+      
+      // Agregar timestamp
+      if (prediction.timestamp) {
+        textToCopy += `${textToCopy ? ' | ' : ''}Generado: ${this.formatTimestamp(prediction.timestamp)}`;
+      }
+      
+      if (textToCopy) {
+        if (navigator.clipboard && window.isSecureContext) {
+          await navigator.clipboard.writeText(textToCopy);
+        } else {
+          // Fallback para navegadores más antiguos
+          const textArea = document.createElement('textarea');
+          textArea.value = textToCopy;
+          textArea.style.position = 'fixed';
+          textArea.style.left = '-999999px';
+          textArea.style.top = '-999999px';
+          document.body.appendChild(textArea);
+          textArea.focus();
+          textArea.select();
+          document.execCommand('copy');
+          textArea.remove();
+        }
+        
+        // Mostrar feedback visual (opcional)
+        this.showCopyFeedback();
+      }
+    } catch (error) {
+      console.error('Error copying to clipboard:', error);
+    }
+  }
+
+  /**
+   * Mostrar feedback visual cuando se copia
+   */
+  private showCopyFeedback(): void {
+    // Crear elemento temporal para mostrar feedback
+    if (isPlatformBrowser(this.platformId)) {
+      const feedback = document.createElement('div');
+      feedback.textContent = '¡Combinación copiada!';
+      feedback.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #4CAF50;
+        color: white;
+        padding: 10px 20px;
+        border-radius: 4px;
+        z-index: 10000;
+        font-family: Arial, sans-serif;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      `;
+      
+      document.body.appendChild(feedback);
+      
+      // Remover después de 2 segundos
+      setTimeout(() => {
+        if (document.body.contains(feedback)) {
+          document.body.removeChild(feedback);
+        }
+      }, 2000);
     }
   }
 }

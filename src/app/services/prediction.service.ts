@@ -18,6 +18,7 @@ export interface PredictionResponse {
     caballo?: number;
     numero?: number[];
   };
+  timestamp?: Date;
   error?: string;
 }
 
@@ -94,6 +95,10 @@ export class PredictionService {
             error: 'Respuesta del servidor inválida'
           };
         }
+        
+        // Añadir timestamp a la respuesta
+        response.timestamp = new Date();
+        
         return response;
       }),
       catchError(error => {
@@ -127,7 +132,8 @@ export class PredictionService {
               prediction: {
                 numeros: this.generateRandomNumbers(5, 1, 50),
                 estrellas: this.generateRandomNumbers(2, 1, 12)
-              }
+              },
+              timestamp: new Date()
             };
             break;
           case 'primitiva':
@@ -136,7 +142,8 @@ export class PredictionService {
               prediction: {
                 numeros: this.generateRandomNumbers(6, 1, 49),
                 complementario: this.generateRandomNumber(1, 49)
-              }
+              },
+              timestamp: new Date()
             };
             break;
           case 'bonoloto':
@@ -146,7 +153,8 @@ export class PredictionService {
                 numeros: this.generateRandomNumbers(6, 1, 49),
                 complementario: this.generateRandomNumber(1, 49),
                 reintegro: this.generateRandomNumber(0, 9)
-              }
+              },
+              timestamp: new Date()
             };
             break;
           case 'gordo':
@@ -155,7 +163,8 @@ export class PredictionService {
               prediction: {
                 numeros: this.generateRandomNumbers(5, 1, 54),
                 clave: this.generateRandomNumber(0, 9)
-              }
+              },
+              timestamp: new Date()
             };
             break;
           case 'eurodreams':
@@ -164,7 +173,8 @@ export class PredictionService {
               prediction: {
                 numeros: this.generateRandomNumbers(6, 1, 40),
                 dream: this.generateRandomNumber(1, 5)
-              }
+              },
+              timestamp: new Date()
             };
             break;
           case 'loterianacional':
@@ -174,7 +184,8 @@ export class PredictionService {
               success: true,
               prediction: {
                 numeros: numeroLoteria.split('').map(n => parseInt(n, 10))
-              }
+              },
+              timestamp: new Date()
             };
             break;
           case 'lototurf':
@@ -183,7 +194,8 @@ export class PredictionService {
               prediction: {
                 numeros: this.generateRandomNumbers(6, 1, 31),
                 caballo: this.generateRandomNumber(1, 12)
-              }
+              },
+              timestamp: new Date()
             };
             break;
           default:

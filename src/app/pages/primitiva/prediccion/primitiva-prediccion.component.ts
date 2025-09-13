@@ -300,8 +300,10 @@ export class PrimitivaPrediccionComponent implements OnInit, OnDestroy {
         
         // Actualizar la interfaz
         this.predictionResults.push({
+          id: Date.now(),
           numeros: response.prediction.numeros || [],
-          complementario: response.prediction.complementario || null
+          complementario: response.prediction.complementario || null,
+          timestamp: new Date()
         });
         this.updatePredictionDisplay();
       } else {
@@ -450,5 +452,100 @@ export class PrimitivaPrediccionComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     // Cancelar todas las suscripciones para evitar memory leaks
     this.subscriptions.forEach(sub => sub.unsubscribe());
+  }
+
+  /**
+   * Formatea la fecha de timestamp para mostrar hace cuánto tiempo se generó
+   */
+  formatTimestamp(timestamp: Date): string {
+    const now = new Date();
+    const diff = now.getTime() - timestamp.getTime();
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+
+    if (days > 0) {
+      return `${timestamp.toLocaleDateString()} a las ${timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+    } else if (hours > 0) {
+      return `Hace ${hours} hora${hours > 1 ? 's' : ''}`;
+    } else if (minutes > 0) {
+      return `Hace ${minutes} minuto${minutes > 1 ? 's' : ''}`;
+    } else {
+      return 'Hace unos momentos';
+    }
+  }
+
+  /**
+   * Copia la predicción al portapapeles
+   */
+  copyPredictionToClipboard(prediction: any): void {
+    let textToCopy = `Predicción La Primitiva - ${this.formatTimestamp(prediction.timestamp)}\n`;
+    textToCopy += `Números: ${prediction.numeros.join(', ')}`;
+    
+    if (prediction.complementario) {
+      textToCopy += `\nComplementario: ${prediction.complementario}`;
+    }
+    
+    textToCopy += `\n\nGenerado por IA en loto-ai.com`;
+
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(textToCopy).then(() => {
+        this.showCopySuccess();
+      }).catch(() => {
+        this.fallbackCopyToClipboard(textToCopy);
+      });
+    } else {
+      this.fallbackCopyToClipboard(textToCopy);
+    }
+  }
+
+  /**
+   * Método alternativo para copiar en navegadores sin soporte de clipboard API
+   */
+  private fallbackCopyToClipboard(text: string): void {
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    
+    try {
+      document.execCommand('copy');
+      this.showCopySuccess();
+    } catch (error) {
+      console.error('Error copiando al portapapeles:', error);
+    }
+    
+    document.body.removeChild(textArea);
+  }
+
+  /**
+   * Muestra mensaje de éxito al copiar
+   */
+  private showCopySuccess(): void {
+    // Crear elemento temporal para mostrar mensaje
+    const message = document.createElement('div');
+    message.textContent = '✅ Predicción copiada al portapapeles';
+    message.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #4CAF50;
+      color: white;
+      padding: 10px 15px;
+      border-radius: 5px;
+      z-index: 10000;
+      font-size: 14px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    `;
+    
+    document.body.appendChild(message);
+    
+    // Remover después de 3 segundos
+    setTimeout(() => {
+      if (document.body.contains(message)) {
+        document.body.removeChild(message);
+      }
+    }, 3000);
   }
 } 

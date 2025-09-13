@@ -211,6 +211,20 @@
   border-radius: 12px;
 }
 
+.prediction-timestamp {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 15px;
+  font-size: 13px;
+  color: #666;
+  gap: 5px;
+}
+
+.prediction-timestamp i {
+  color: #0072ff;
+}
+
 .prediction-numbers {
   display: flex;
   justify-content: center;
@@ -233,6 +247,45 @@
   font-size: 24px;
   font-weight: bold;
   color: #666;
+}
+
+.prediction-actions {
+  display: flex;
+  justify-content: center;
+  margin: 15px 0;
+}
+
+.copy-prediction-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(45deg, #0072ff, #00a8ff);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 114, 255, 0.2);
+}
+
+.copy-prediction-btn:hover {
+  background: linear-gradient(45deg, #0056cc, #0088cc);
+  box-shadow: 0 4px 8px rgba(0, 114, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+.copy-prediction-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.copy-prediction-btn i {
+  font-size: 12px;
 }
 
 .prediction-stats {

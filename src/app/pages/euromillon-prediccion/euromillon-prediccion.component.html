@@ -98,6 +98,13 @@
               <h3>Combinación {{ i + 1 }}</h3>
               <span class="prediction-type">Optimizada</span>
             </div>
+            
+            <!-- Fecha y hora de generación -->
+            <div class="prediction-timestamp">
+              <i class="fas fa-clock"></i>
+              <span>{{ formatTimestamp(prediction.timestamp) }}</span>
+            </div>
+            
             <div class="prediction-numbers">
               <div class="lottery-balls-container">
                 <div *ngFor="let number of prediction.numeros || []" class="ball-wrapper">
@@ -109,6 +116,16 @@
                 </div>
               </div>
             </div>
+            
+            <!-- Botón de copiar -->
+            <div class="prediction-actions">
+              <button class="copy-prediction-btn" (click)="copyPredictionToClipboard(prediction)" 
+                      [disabled]="isGeneratingPrediction" title="Copiar combinación">
+                <i class="fas fa-copy"></i>
+                <span>Copiar números</span>
+              </button>
+            </div>
+            
             <div class="prediction-stats">
               <div class="stat-item">
                 <span class="stat-label">🍀 TU COMBINACIÓN DE LA SUERTE</span>

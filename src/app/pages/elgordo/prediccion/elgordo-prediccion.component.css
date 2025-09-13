@@ -21,4 +21,51 @@ button {
   background: #f6f6f6;
   padding: 1rem;
   border-radius: 6px;
+}
+
+/* Estilos para timestamp de predicción */
+.prediction-timestamp {
+  font-size: 12px;
+  color: #666;
+  margin: 5px 0 15px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+
+.prediction-timestamp i {
+  opacity: 0.7;
+}
+
+/* Estilos para acciones de predicción */
+.prediction-actions {
+  display: flex;
+  justify-content: center;
+  margin: 15px 0 10px 0;
+}
+
+.copy-prediction-btn {
+  background: #007bff;
+  color: white;
+  border: none;
+  padding: 8px 16px !important;
+  border-radius: 20px;
+  font-size: 12px !important;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 !important;
+}
+
+.copy-prediction-btn:hover {
+  background: #0056b3;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
+}
+
+.copy-prediction-btn i {
+  font-size: 11px;
 } 

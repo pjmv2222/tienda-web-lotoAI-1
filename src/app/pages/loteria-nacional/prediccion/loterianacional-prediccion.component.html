@@ -98,6 +98,10 @@
               <h3>Combinación {{ i + 1 }}</h3>
               <span class="prediction-type">Optimizada</span>
             </div>
+            <div class="prediction-timestamp">
+              <i class="fas fa-clock"></i>
+              {{ formatTimestamp(prediction.timestamp) }}
+            </div>
             <div class="prediction-numbers">
               <div class="lottery-balls-container">
                 <div *ngFor="let number of prediction.numeros || []" class="ball-wrapper">
@@ -105,6 +109,11 @@
                 </div>
                 <!-- No mostrar reintegro para Lotería Nacional -->
               </div>
+            </div>
+            <div class="prediction-actions">
+              <button class="copy-prediction-btn" (click)="copyPredictionToClipboard(prediction)" title="Copiar predicción">
+                <i class="fas fa-copy"></i> Copiar
+              </button>
             </div>
             <div class="prediction-stats">
               <div class="stat-item">
