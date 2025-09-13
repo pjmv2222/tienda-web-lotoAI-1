@@ -231,7 +231,7 @@ export class ElgordoPrediccionComponent implements OnInit, OnDestroy {
   private savePredictionsToStorage(): void {
     try {
       const dataToSave = {
-        timestamp: new Date().toISOString(),
+        timestamp: new Date(),
         predictions: this.predictionResults
       };
       localStorage.setItem('elgordo_predictions', JSON.stringify(dataToSave));
@@ -273,15 +273,20 @@ export class ElgordoPrediccionComponent implements OnInit, OnDestroy {
   /**
    * Formatea la fecha de timestamp para mostrar hace cuánto tiempo se generó
    */
-  formatTimestamp(timestamp: Date): string {
+  formatTimestamp(timestamp: string | Date | undefined): string {
+    if (!timestamp) return '';
+    
+    const date = timestamp instanceof Date ? timestamp : new Date(timestamp);
+    if (isNaN(date.getTime())) return '';
+    
     const now = new Date();
-    const diff = now.getTime() - timestamp.getTime();
+    const diff = now.getTime() - date.getTime();
     const minutes = Math.floor(diff / 60000);
     const hours = Math.floor(minutes / 60);
     const days = Math.floor(hours / 24);
 
     if (days > 0) {
-      return `${timestamp.toLocaleDateString()} a las ${timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+      return `${date.toLocaleDateString()} a las ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
     } else if (hours > 0) {
       return `Hace ${hours} hora${hours > 1 ? 's' : ''}`;
     } else if (minutes > 0) {
@@ -295,8 +300,17 @@ export class ElgordoPrediccionComponent implements OnInit, OnDestroy {
    * Copia la predicción al portapapeles
    */
   copyPredictionToClipboard(prediction: any): void {
-    let textToCopy = `Predicción El Gordo de la Primitiva - ${this.formatTimestamp(prediction.timestamp)}\n`;
-    textToCopy += `Números: ${prediction.numeros.join(', ')}`;
+    let textToCopy = `Predicción El Gordo de la Primitiva`;
+    
+    // Agregar timestamp
+    if (prediction.timestamp) {
+      const timestampString = this.formatTimestamp(prediction.timestamp);
+      if (timestampString) {
+        textToCopy += ` - ${timestampString}`;
+      }
+    }
+    
+    textToCopy += `\nNúmeros: ${prediction.numeros.join(', ')}`;
     
     if (prediction.clave !== null) {
       textToCopy += `\nClave: ${prediction.clave}`;

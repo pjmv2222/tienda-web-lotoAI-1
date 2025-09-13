@@ -427,7 +427,7 @@ export class EuromillonPrediccionComponent implements OnInit, OnDestroy {
         this.predictionResults.push({
           numeros: response.prediction.numeros || [],
           estrellas: response.prediction.estrellas || [],
-          timestamp: response.timestamp || new Date().toISOString(),
+          timestamp: response.timestamp || new Date(),
           id: this.predictionResults.length + 1
         });
         this.updatePredictionDisplay();
@@ -486,13 +486,13 @@ export class EuromillonPrediccionComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Formatear timestamp para mostrar fecha y hora
+   * Formato de timestamp para mostrar tiempo relativo
    */
-  formatTimestamp(timestamp: string): string {
+  formatTimestamp(timestamp: string | Date | undefined): string {
     if (!timestamp) return '';
     
     try {
-      const date = new Date(timestamp);
+      const date = timestamp instanceof Date ? timestamp : new Date(timestamp);
       const now = new Date();
       const diffInHours = Math.abs(now.getTime() - date.getTime()) / (1000 * 60 * 60);
       
@@ -522,9 +522,7 @@ export class EuromillonPrediccionComponent implements OnInit, OnDestroy {
       console.error('Error formatting timestamp:', error);
       return '';
     }
-  }
-
-  /**
+  }  /**
    * Copiar predicción al portapapeles
    */
   async copyPredictionToClipboard(prediction: any): Promise<void> {
@@ -548,7 +546,10 @@ export class EuromillonPrediccionComponent implements OnInit, OnDestroy {
       
       // Agregar timestamp
       if (prediction.timestamp) {
-        textToCopy += `${textToCopy ? ' | ' : ''}Generado: ${this.formatTimestamp(prediction.timestamp)}`;
+        const timestampString = this.formatTimestamp(prediction.timestamp);
+        if (timestampString) {
+          textToCopy += `${textToCopy ? ' | ' : ''}Generado: ${timestampString}`;
+        }
       }
       
       if (textToCopy) {
