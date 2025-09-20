@@ -1,0 +1,5 @@
+# En lugar de:
+0 3 * * * root cd /var/www/tienda-web-lotoAI-1/scripts && python3 update_lottery_dataframes.py
+
+# Usar:
+0 3 * * * root cd /var/www/tienda-web-lotoAI-1/scripts && /var/www/tienda-web-lotoAI-1/venv/bin/python update_lottery_dataframes.py

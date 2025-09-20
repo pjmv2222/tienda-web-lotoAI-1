@@ -35,12 +35,12 @@ import os
 import pickle
 from typing import List, Dict, Tuple, Optional, Any
 
-# Configuración de logging avanzado
+# Configuración de logging avanzado - corregir encoding para Windows
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler('euromillon_v3.log'),
+        logging.FileHandler('euromillon_v3.log', encoding='utf-8'),
         logging.StreamHandler()
     ]
 )
@@ -49,7 +49,7 @@ logger = logging.getLogger(__name__)
 class EuroMillonUltraAdvancedV3:
     """Sistema Ultra Avanzado v3.0 con todas las mejoras implementadas"""
     
-    def __init__(self, historical_file='euromillon_historical.csv'):
+    def __init__(self, historical_file='DataFrame_Euromillones.csv'):
         self.historical_file = historical_file
         self.data = None
         self.models = {}
@@ -59,10 +59,15 @@ class EuroMillonUltraAdvancedV3:
         self.co_occurrence_matrix = None
         self.sector_patterns = {}
         self.temperature_history = {}
+        self.temperature_trends = {}  # Inicializar aquí
+        self.cycles = {}  # Inicializar aquí
         self.meta_model = None
         self.optimal_params = {}
         self.performance_history = []
         self.anomaly_detector = None
+        self.companion_numbers = defaultdict(list)  # Inicializar aquí
+        self.high_correlation_pairs = []  # Inicializar aquí
+        self.model_scores = {}  # Inicializar aquí
         
         # Configuración mejorada
         self.config = {
@@ -70,12 +75,12 @@ class EuroMillonUltraAdvancedV3:
             'max_star': 12,
             'numbers_to_select': 5,
             'stars_to_select': 2,
-            'sector_size': 10,  # Para análisis sectorial
-            'temperature_windows': [10, 20, 50],  # Ventanas para análisis caliente/frío
-            'correlation_threshold': 0.3,  # Umbral para correlaciones significativas
-            'anomaly_contamination': 0.05,  # Para detección de anomalías
-            'optimization_trials': 100,  # Trials para optimización Bayesiana
-            'ensemble_weights': {  # Pesos iniciales (se optimizarán)
+            'sector_size': 10,
+            'temperature_windows': [10, 20, 50],
+            'correlation_threshold': 0.3,
+            'anomaly_contamination': 0.05,
+            'optimization_trials': 100,
+            'ensemble_weights': {
                 'xgboost': 0.35,
                 'lightgbm': 0.25,
                 'random_forest': 0.15,
@@ -96,25 +101,91 @@ class EuroMillonUltraAdvancedV3:
             self.analyze_co_occurrence()
             self.analyze_sectors()
             self.detect_anomalies()
-            self.optimize_hyperparameters()
+            self.calculate_temperature()  # Agregar esto para inicializar temperature_trends
+            self.analyze_cycles_and_seasonality()  # Agregar esto para inicializar cycles
+            
+            # Solo optimizar si hay suficientes datos
+            if len(self.data) > 50:
+                self.optimize_hyperparameters()
+            
             self.train_ensemble_models()
             self.train_meta_learner()
-            logger.info("Sistema inicializado correctamente ✓")
+            logger.info("Sistema inicializado correctamente")
         except Exception as e:
             logger.error(f"Error en inicialización: {e}")
-            raise
+            # Asegurar que todas las estructuras estén inicializadas incluso en caso de error
+            self._initialize_default_structures()
+    
+    def _initialize_default_structures(self):
+        """Inicializa estructuras por defecto en caso de error"""
+        if self.correlation_matrix is None:
+            self.correlation_matrix = np.eye(50)
+        if self.co_occurrence_matrix is None:
+            self.co_occurrence_matrix = np.zeros((50, 50))
+        if not self.temperature_trends:
+            self.temperature_trends = {i: {'trend': 'stable', 'change_point': 0, 'current_temp': 0} 
+                                     for i in range(1, 51)}
+        if not self.temperature_history:
+            self.temperature_history = {10: {}, 20: {}, 50: {}}
+        if not self.cycles:
+            self.cycles = {}
+        if not self.companion_numbers:
+            self.companion_numbers = defaultdict(list)
+        if not self.high_correlation_pairs:
+            self.high_correlation_pairs = []
+        if not self.sector_patterns:
+            for i in range(5):
+                self.sector_patterns[f'sector_{i+1}'] = {
+                    'mean': 1, 'std': 0.5, 'mode': 1,
+                    'optimal_range': (0, 2)
+                }
     
     def load_and_prepare_data(self):
         """Carga y prepara datos con feature engineering avanzado"""
         try:
-            # Cargar datos históricos
-            self.data = pd.read_csv(self.historical_file, parse_dates=['fecha'])
-            self.data = self.data.sort_values('fecha')
+            # Intentar cargar datos históricos con diferentes nombres de archivo
+            possible_files = [
+                self.historical_file,
+                'DataFrame_Euromillones.csv',
+                'euromillon_historical.csv',
+                '../DataFrame_Euromillones.csv',
+                '../../DataFrame_Euromillones.csv'
+            ]
+            
+            data_loaded = False
+            for file in possible_files:
+                if os.path.exists(file):
+                    try:
+                        self.data = pd.read_csv(file)
+                        # Renombrar columnas si es necesario
+                        if 'Date' in self.data.columns:
+                            self.data.rename(columns={'Date': 'fecha'}, inplace=True)
+                        if 'Num_1' in self.data.columns:
+                            for i in range(1, 6):
+                                self.data.rename(columns={f'Num_{i}': f'n{i}'}, inplace=True)
+                        if 'Start_1' in self.data.columns:
+                            self.data.rename(columns={'Start_1': 'e1', 'Star_2': 'e2'}, inplace=True)
+                        
+                        # Asegurar que fecha sea datetime
+                        if 'fecha' in self.data.columns:
+                            self.data['fecha'] = pd.to_datetime(self.data['fecha'], errors='coerce')
+                        else:
+                            # Crear fecha sintética si no existe
+                            self.data['fecha'] = pd.date_range(end=datetime.now(), periods=len(self.data), freq='3D')
+                        
+                        self.data = self.data.sort_values('fecha')
+                        data_loaded = True
+                        logger.info(f"Datos cargados desde {file}: {len(self.data)} sorteos históricos")
+                        break
+                    except Exception as e:
+                        logger.warning(f"Error cargando {file}: {e}")
+            
+            if not data_loaded:
+                raise FileNotFoundError("No se encontraron datos históricos")
             
             # Feature Engineering Avanzado
             self.create_advanced_features()
             
-            logger.info(f"Datos cargados: {len(self.data)} sorteos históricos")
         except Exception as e:
             logger.error(f"Error cargando datos: {e}")
             # Generar datos sintéticos para pruebas
@@ -126,53 +197,97 @@ class EuroMillonUltraAdvancedV3:
         
         df = self.data.copy()
         
-        # 1. Distancia euclidiana entre sorteos consecutivos
+        # Asegurar que las columnas de números existan
+        number_cols = []
         for i in range(1, 6):
-            df[f'distancia_n{i}'] = df[f'n{i}'].diff()
+            if f'n{i}' in df.columns:
+                number_cols.append(f'n{i}')
+        
+        if not number_cols:
+            logger.warning("No se encontraron columnas de números, usando columnas por defecto")
+            return
+        
+        # Convertir a int y manejar valores faltantes
+        for col in number_cols:
+            df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0).astype(int)
+        
+        # 1. Distancia euclidiana entre sorteos consecutivos
+        for i, col in enumerate(number_cols, 1):
+            df[f'distancia_n{i}'] = df[col].diff().fillna(0)
         
         # 2. Suma y estadísticas de cada sorteo
-        number_cols = [f'n{i}' for i in range(1, 6)]
         df['suma_total'] = df[number_cols].sum(axis=1)
         df['media_numeros'] = df[number_cols].mean(axis=1)
-        df['std_numeros'] = df[number_cols].std(axis=1)
+        df['std_numeros'] = df[number_cols].std(axis=1).fillna(0)
         df['rango'] = df[number_cols].max(axis=1) - df[number_cols].min(axis=1)
         
-        # 3. Entropía de Shannon
+        # 3. Entropía de Shannon (CORREGIDA)
         def calculate_entropy(row):
-            numbers = row[number_cols].values
-            counts = np.bincount(numbers)
-            probabilities = counts[counts > 0] / len(numbers)
-            return entropy(probabilities)
+            try:
+                numbers = row[number_cols].values.astype(float)
+                # Asegurar que los números sean positivos y enteros
+                numbers = np.abs(numbers).astype(int)
+                # Filtrar solo números válidos (1-50)
+                valid_numbers = numbers[(numbers >= 1) & (numbers <= 50)]
+                if len(valid_numbers) == 0:
+                    return 0
+                # Calcular frecuencias
+                unique, counts = np.unique(valid_numbers, return_counts=True)
+                probabilities = counts / len(valid_numbers)
+                # Calcular entropía
+                ent = -np.sum(probabilities * np.log2(probabilities + 1e-10))
+                return ent
+            except Exception as e:
+                logger.debug(f"Error calculando entropía: {e}")
+                return 0
         
         df['entropia'] = df.apply(calculate_entropy, axis=1)
         
         # 4. Índice de dispersión (varianza/media)
-        df['indice_dispersion'] = df['std_numeros']**2 / df['media_numeros']
+        df['indice_dispersion'] = np.where(
+            df['media_numeros'] > 0,
+            df['std_numeros']**2 / df['media_numeros'],
+            0
+        )
         
-        # 5. Coeficiente de Gini
+        # 5. Coeficiente de Gini (CORREGIDO)
         def gini_coefficient(row):
-            numbers = sorted(row[number_cols].values)
-            n = len(numbers)
-            index = np.arange(1, n + 1)
-            return (2 * np.sum(index * numbers)) / (n * np.sum(numbers)) - (n + 1) / n
+            try:
+                numbers = sorted(row[number_cols].values.astype(float))
+                numbers = [n for n in numbers if n > 0]  # Filtrar ceros
+                if not numbers:
+                    return 0
+                n = len(numbers)
+                index = np.arange(1, n + 1)
+                gini = (2 * np.sum(index * numbers)) / (n * np.sum(numbers)) - (n + 1) / n
+                return max(0, min(1, gini))  # Limitar entre 0 y 1
+            except Exception as e:
+                logger.debug(f"Error calculando Gini: {e}")
+                return 0
         
         df['coeficiente_gini'] = df.apply(gini_coefficient, axis=1)
         
-        # 6. Gaps (sorteos sin aparecer cada número)
-        for num in range(1, 51):
-            df[f'gap_{num}'] = 0
+        # 6. Gaps (sorteos sin aparecer cada número) - Simplificado
+        # Evitar crear 50 columnas para reducir memoria
+        gap_features = []
+        for num in [10, 20, 30, 40]:  # Solo algunos números representativos
+            col_name = f'gap_{num}'
+            df[col_name] = 0
             appearances = df[number_cols].eq(num).any(axis=1)
             gap_count = 0
-            for idx in df.index:
-                if appearances[idx]:
-                    df.loc[idx, f'gap_{num}'] = gap_count
+            gap_values = []
+            for appears in appearances:
+                if appears:
+                    gap_values.append(gap_count)
                     gap_count = 0
                 else:
                     gap_count += 1
+                    gap_values.append(gap_count)
+            df[col_name] = gap_values
         
         # 7. Paridad y balance
         df['numeros_pares'] = df[number_cols].apply(lambda x: sum(1 for n in x if n % 2 == 0), axis=1)
-        df['numeros_impares'] = 5 - df['numeros_pares']
+        df['numeros_impares'] = len(number_cols) - df['numeros_pares']
         df['balance_paridad'] = abs(df['numeros_pares'] - df['numeros_impares'])
         
         # 8. Sectores (1-10, 11-20, 21-30, 31-40, 41-50)
@@ -184,16 +299,28 @@ class EuroMillonUltraAdvancedV3:
             )
         
         # 9. Características temporales
-        df['dia_semana'] = df['fecha'].dt.dayofweek
-        df['dia_mes'] = df['fecha'].dt.day
-        df['mes'] = df['fecha'].dt.month
-        df['trimestre'] = df['fecha'].dt.quarter
-        df['año'] = df['fecha'].dt.year
+        if 'fecha' in df.columns and pd.api.types.is_datetime64_any_dtype(df['fecha']):
+            df['dia_semana'] = df['fecha'].dt.dayofweek
+            df['dia_mes'] = df['fecha'].dt.day
+            df['mes'] = df['fecha'].dt.month
+            df['trimestre'] = df['fecha'].dt.quarter
+            df['año'] = df['fecha'].dt.year
+        else:
+            # Valores por defecto si no hay fecha
+            df['dia_semana'] = 0
+            df['dia_mes'] = 1
+            df['mes'] = 1
+            df['trimestre'] = 1
+            df['año'] = 2024
         
         # 10. Tendencias y medias móviles
         for window in [5, 10, 20]:
-            df[f'ma_suma_{window}'] = df['suma_total'].rolling(window=window, min_periods=1).mean()
-            df[f'ma_rango_{window}'] = df['rango'].rolling(window=window, min_periods=1).mean()
+            if len(df) >= window:
+                df[f'ma_suma_{window}'] = df['suma_total'].rolling(window=window, min_periods=1).mean()
+                df[f'ma_rango_{window}'] = df['rango'].rolling(window=window, min_periods=1).mean()
+            else:
+                df[f'ma_suma_{window}'] = df['suma_total']
+                df[f'ma_rango_{window}'] = df['rango']
         
         self.data = df
         logger.info(f"Características creadas: {len(df.columns)} columnas totales")
@@ -202,214 +329,350 @@ class EuroMillonUltraAdvancedV3:
         """Analiza correlaciones avanzadas entre números"""
         logger.info("Analizando correlaciones entre números...")
         
-        # Matriz de correlación Pearson y Spearman
-        number_cols = [f'n{i}' for i in range(1, 6)]
-        numbers_df = self.data[number_cols]
-        
-        # Crear matriz de apariciones por número
-        appearance_matrix = np.zeros((len(self.data), 50))
-        for idx, row in enumerate(numbers_df.values):
-            for num in row:
-                if 1 <= num <= 50:
-                    appearance_matrix[idx, num-1] = 1
-        
-        # Correlación Pearson
-        self.correlation_matrix = np.corrcoef(appearance_matrix.T)
-        
-        # Identificar pares con alta correlación
-        self.high_correlation_pairs = []
-        for i in range(50):
-            for j in range(i+1, 50):
-                corr = self.correlation_matrix[i, j]
-                if abs(corr) > self.config['correlation_threshold']:
-                    self.high_correlation_pairs.append((i+1, j+1, corr))
-        
-        self.high_correlation_pairs.sort(key=lambda x: abs(x[2]), reverse=True)
-        logger.info(f"Pares con alta correlación encontrados: {len(self.high_correlation_pairs)}")
+        try:
+            # Matriz de correlación Pearson y Spearman
+            number_cols = [f'n{i}' for i in range(1, 6) if f'n{i}' in self.data.columns]
+            
+            if not number_cols:
+                logger.warning("No se encontraron columnas de números para correlación")
+                self.correlation_matrix = np.eye(50)
+                self.high_correlation_pairs = []
+                return
+            
+            numbers_df = self.data[number_cols]
+            
+            # Crear matriz de apariciones por número
+            appearance_matrix = np.zeros((len(self.data), 50))
+            for idx, row in enumerate(numbers_df.values):
+                for num in row:
+                    if isinstance(num, (int, float)) and 1 <= num <= 50:
+                        appearance_matrix[idx, int(num)-1] = 1
+            
+            # Correlación Pearson
+            if len(appearance_matrix) > 1:
+                self.correlation_matrix = np.corrcoef(appearance_matrix.T)
+            else:
+                self.correlation_matrix = np.eye(50)
+            
+            # Manejar NaN en la matriz de correlación
+            self.correlation_matrix = np.nan_to_num(self.correlation_matrix, 0)
+            
+            # Identificar pares con alta correlación
+            self.high_correlation_pairs = []
+            for i in range(50):
+                for j in range(i+1, 50):
+                    corr = self.correlation_matrix[i, j]
+                    if abs(corr) > self.config['correlation_threshold']:
+                        self.high_correlation_pairs.append((i+1, j+1, corr))
+            
+            self.high_correlation_pairs.sort(key=lambda x: abs(x[2]), reverse=True)
+            logger.info(f"Pares con alta correlación encontrados: {len(self.high_correlation_pairs)}")
+        except Exception as e:
+            logger.error(f"Error en análisis de correlaciones: {e}")
+            self.correlation_matrix = np.eye(50)
+            self.high_correlation_pairs = []
     
     def analyze_co_occurrence(self):
         """Analiza co-ocurrencia de números (aparecen juntos)"""
         logger.info("Analizando co-ocurrencia de números...")
         
-        # Matriz de co-ocurrencia
-        self.co_occurrence_matrix = np.zeros((50, 50))
-        number_cols = [f'n{i}' for i in range(1, 6)]
-        
-        for _, row in self.data.iterrows():
-            numbers = row[number_cols].values
-            for i, num1 in enumerate(numbers):
-                for j, num2 in enumerate(numbers):
-                    if i != j and 1 <= num1 <= 50 and 1 <= num2 <= 50:
-                        self.co_occurrence_matrix[num1-1, num2-1] += 1
-        
-        # Normalizar por frecuencia
-        total_sorteos = len(self.data)
-        self.co_occurrence_matrix /= total_sorteos
-        
-        # Identificar "números compañeros" frecuentes
-        self.companion_numbers = defaultdict(list)
-        for i in range(50):
-            companions = []
-            for j in range(50):
-                if i != j and self.co_occurrence_matrix[i, j] > 0.05:  # Umbral 5%
-                    companions.append((j+1, self.co_occurrence_matrix[i, j]))
-            companions.sort(key=lambda x: x[1], reverse=True)
-            self.companion_numbers[i+1] = companions[:5]  # Top 5 compañeros
-        
-        logger.info("Análisis de co-ocurrencia completado")
+        try:
+            # Matriz de co-ocurrencia
+            self.co_occurrence_matrix = np.zeros((50, 50))
+            number_cols = [f'n{i}' for i in range(1, 6) if f'n{i}' in self.data.columns]
+            
+            if not number_cols:
+                logger.warning("No se encontraron columnas de números para co-ocurrencia")
+                return
+            
+            for _, row in self.data.iterrows():
+                numbers = []
+                for col in number_cols:
+                    if col in row:
+                        num = row[col]
+                        if isinstance(num, (int, float)) and 1 <= num <= 50:
+                            numbers.append(int(num))
+                
+                for i, num1 in enumerate(numbers):
+                    for j, num2 in enumerate(numbers):
+                        if i != j:
+                            self.co_occurrence_matrix[num1-1, num2-1] += 1
+            
+            # Normalizar por frecuencia
+            total_sorteos = max(len(self.data), 1)
+            self.co_occurrence_matrix /= total_sorteos
+            
+            # Identificar "números compañeros" frecuentes
+            self.companion_numbers = defaultdict(list)
+            for i in range(50):
+                companions = []
+                for j in range(50):
+                    if i != j and self.co_occurrence_matrix[i, j] > 0.05:  # Umbral 5%
+                        companions.append((j+1, self.co_occurrence_matrix[i, j]))
+                companions.sort(key=lambda x: x[1], reverse=True)
+                self.companion_numbers[i+1] = companions[:5]  # Top 5 compañeros
+            
+            logger.info("Análisis de co-ocurrencia completado")
+        except Exception as e:
+            logger.error(f"Error en análisis de co-ocurrencia: {e}")
+            self.co_occurrence_matrix = np.zeros((50, 50))
+            self.companion_numbers = defaultdict(list)
     
     def analyze_sectors(self):
         """Analiza patrones por sectores del bombo"""
         logger.info("Analizando patrones sectoriales...")
         
-        # Análisis de distribución por sectores
-        sector_columns = [f'sector_{i+1}' for i in range(5)]
-        
-        for sector in sector_columns:
-            self.sector_patterns[sector] = {
-                'mean': self.data[sector].mean(),
-                'std': self.data[sector].std(),
-                'mode': self.data[sector].mode().values[0] if len(self.data[sector].mode()) > 0 else 1,
-                'optimal_range': (
-                    max(0, self.data[sector].mean() - self.data[sector].std()),
-                    min(5, self.data[sector].mean() + self.data[sector].std())
-                )
-            }
-        
-        logger.info(f"Patrones sectoriales analizados: {self.sector_patterns}")
+        try:
+            # Análisis de distribución por sectores
+            sector_columns = [f'sector_{i+1}' for i in range(5)]
+            
+            for sector in sector_columns:
+                if sector in self.data.columns:
+                    sector_data = self.data[sector].dropna()
+                    if len(sector_data) > 0:
+                        self.sector_patterns[sector] = {
+                            'mean': sector_data.mean(),
+                            'std': sector_data.std(),
+                            'mode': sector_data.mode().values[0] if len(sector_data.mode()) > 0 else 1,
+                            'optimal_range': (
+                                max(0, sector_data.mean() - sector_data.std()),
+                                min(5, sector_data.mean() + sector_data.std())
+                            )
+                        }
+                    else:
+                        self.sector_patterns[sector] = {
+                            'mean': 1, 'std': 0.5, 'mode': 1, 
+                            'optimal_range': (0, 2)
+                        }
+            
+            logger.info(f"Patrones sectoriales analizados: {len(self.sector_patterns)}")
+        except Exception as e:
+            logger.error(f"Error en análisis sectorial: {e}")
+            for i in range(5):
+                self.sector_patterns[f'sector_{i+1}'] = {
+                    'mean': 1, 'std': 0.5, 'mode': 1,
+                    'optimal_range': (0, 2)
+                }
     
     def detect_anomalies(self):
         """Detecta sorteos anómalos usando Isolation Forest"""
         logger.info("Detectando anomalías en datos históricos...")
         
-        # Preparar características para detección de anomalías
-        feature_cols = ['suma_total', 'rango', 'entropia', 'indice_dispersion', 
-                       'coeficiente_gini', 'balance_paridad']
-        
-        for col in [f'sector_{i+1}' for i in range(5)]:
-            feature_cols.append(col)
-        
-        X_anomaly = self.data[feature_cols].fillna(0)
-        
-        # Entrenar Isolation Forest
-        self.anomaly_detector = IsolationForest(
-            contamination=self.config['anomaly_contamination'],
-            random_state=42
-        )
-        
-        anomaly_labels = self.anomaly_detector.fit_predict(X_anomaly)
-        self.data['is_anomaly'] = anomaly_labels
-        
-        n_anomalies = sum(anomaly_labels == -1)
-        logger.info(f"Anomalías detectadas: {n_anomalies} de {len(self.data)} sorteos")
+        try:
+            # Preparar características para detección de anomalías
+            feature_cols = ['suma_total', 'rango', 'entropia', 'indice_dispersion', 
+                           'coeficiente_gini', 'balance_paridad']
+            
+            for col in [f'sector_{i+1}' for i in range(5)]:
+                if col in self.data.columns:
+                    feature_cols.append(col)
+            
+            # Filtrar solo columnas existentes
+            existing_cols = [col for col in feature_cols if col in self.data.columns]
+            
+            if existing_cols and len(self.data) > 10:
+                X_anomaly = self.data[existing_cols].fillna(0)
+                
+                # Entrenar Isolation Forest
+                self.anomaly_detector = IsolationForest(
+                    contamination=self.config['anomaly_contamination'],
+                    random_state=42
+                )
+                
+                anomaly_labels = self.anomaly_detector.fit_predict(X_anomaly)
+                self.data['is_anomaly'] = anomaly_labels
+                
+                n_anomalies = sum(anomaly_labels == -1)
+                logger.info(f"Anomalías detectadas: {n_anomalies} de {len(self.data)} sorteos")
+            else:
+                logger.warning("Datos insuficientes para detección de anomalías")
+                self.anomaly_detector = None
+        except Exception as e:
+            logger.error(f"Error en detección de anomalías: {e}")
+            self.anomaly_detector = None
     
     def analyze_cycles_and_seasonality(self):
         """Analiza patrones cíclicos y estacionalidad usando FFT"""
         logger.info("Analizando ciclos y estacionalidad...")
         
-        cycles = {}
-        
-        for num in range(1, 51):
-            # Crear serie temporal de apariciones
-            appearances = []
-            number_cols = [f'n{i}' for i in range(1, 6)]
+        try:
+            cycles = {}
+            number_cols = [f'n{i}' for i in range(1, 6) if f'n{i}' in self.data.columns]
             
-            for _, row in self.data.iterrows():
-                appears = 1 if num in row[number_cols].values else 0
-                appearances.append(appears)
+            if not number_cols or len(self.data) < 20:
+                logger.warning("Datos insuficientes para análisis de ciclos")
+                self.cycles = {}
+                return
             
-            # Aplicar FFT
-            if len(appearances) > 10:
-                fft_values = fft(appearances)
-                frequencies = fftfreq(len(appearances))
+            for num in range(1, 51):
+                # Crear serie temporal de apariciones
+                appearances = []
                 
-                # Encontrar frecuencias dominantes
-                magnitude = np.abs(fft_values)
-                dominant_freq_idx = np.argsort(magnitude)[-5:]  # Top 5 frecuencias
+                for _, row in self.data.iterrows():
+                    appears = 0
+                    for col in number_cols:
+                        if col in row and isinstance(row[col], (int, float)):
+                            if int(row[col]) == num:
+                                appears = 1
+                                break
+                    appearances.append(appears)
                 
-                cycles[num] = {
-                    'dominant_frequencies': frequencies[dominant_freq_idx].tolist(),
-                    'magnitudes': magnitude[dominant_freq_idx].tolist()
-                }
-        
-        self.cycles = cycles
-        logger.info("Análisis de ciclos completado")
+                # Aplicar FFT
+                if len(appearances) > 10:
+                    fft_values = fft(appearances)
+                    frequencies = fftfreq(len(appearances))
+                    
+                    # Encontrar frecuencias dominantes
+                    magnitude = np.abs(fft_values)
+                    dominant_freq_idx = np.argsort(magnitude)[-5:]  # Top 5 frecuencias
+                    
+                    cycles[num] = {
+                        'dominant_frequencies': frequencies[dominant_freq_idx].tolist(),
+                        'magnitudes': magnitude[dominant_freq_idx].tolist()
+                    }
+            
+            self.cycles = cycles
+            logger.info("Análisis de ciclos completado")
+        except Exception as e:
+            logger.error(f"Error en análisis de ciclos: {e}")
+            self.cycles = {}
     
-    def calculate_temperature(self, lookback_windows=[10, 20, 50]):
+    def calculate_temperature(self, lookback_windows=None):
         """Calcula temperatura (caliente/frío) con ventanas múltiples"""
         logger.info("Calculando temperaturas dinámicas...")
         
-        self.temperature_history = {window: {} for window in lookback_windows}
-        number_cols = [f'n{i}' for i in range(1, 6)]
+        if lookback_windows is None:
+            lookback_windows = self.config.get('temperature_windows', [10, 20, 50])
         
-        for window in lookback_windows:
+        try:
+            # Ajustar ventanas según cantidad de datos disponibles
+            max_window = min(len(self.data) - 1, 50) if len(self.data) > 1 else 1
+            adjusted_windows = [min(w, max_window) for w in lookback_windows if w <= max_window]
+            
+            if not adjusted_windows:
+                adjusted_windows = [max_window]
+            
+            self.temperature_history = {window: {} for window in adjusted_windows}
+            number_cols = [f'n{i}' for i in range(1, 6) if f'n{i}' in self.data.columns]
+            
+            if not number_cols:
+                logger.warning("No hay columnas de números para análisis de temperatura")
+                # Inicializar con valores por defecto
+                self.temperature_trends = {i: {'trend': 'stable', 'change_point': 0, 'current_temp': 0} 
+                                         for i in range(1, 51)}
+                return
+            
+            for window in adjusted_windows:
+                for num in range(1, 51):
+                    temperatures = []
+                    
+                    for i in range(window, len(self.data)):
+                        recent_data = self.data.iloc[i-window:i]
+                        appearances = 0
+                        for _, row in recent_data.iterrows():
+                            for col in number_cols:
+                                if col in row and isinstance(row[col], (int, float)):
+                                    if int(row[col]) == num:
+                                        appearances += 1
+                        
+                        temperature = appearances / window if window > 0 else 0
+                        temperatures.append(temperature)
+                    
+                    self.temperature_history[window][num] = temperatures
+            
+            # Detectar cambios de tendencia usando CUSUM
+            self.temperature_trends = {}
+            default_window = min(20, max_window) if adjusted_windows else 10
+            
             for num in range(1, 51):
-                temperatures = []
-                
-                for i in range(window, len(self.data)):
-                    recent_data = self.data.iloc[i-window:i]
-                    appearances = sum(1 for _, row in recent_data.iterrows() 
-                                    if num in row[number_cols].values)
-                    temperature = appearances / window
-                    temperatures.append(temperature)
-                
-                self.temperature_history[window][num] = temperatures
-        
-        # Detectar cambios de tendencia usando CUSUM
-        self.temperature_trends = {}
-        for num in range(1, 51):
-            temps = self.temperature_history[20].get(num, [])
-            if len(temps) > 2:
-                # CUSUM para detección de cambio
-                mean_temp = np.mean(temps)
-                cusum = np.cumsum(np.array(temps) - mean_temp)
-                
-                # Detectar punto de cambio
-                change_point = np.argmax(np.abs(cusum))
-                trend = 'heating' if cusum[-1] > cusum[0] else 'cooling'
-                
-                self.temperature_trends[num] = {
-                    'trend': trend,
-                    'change_point': change_point,
-                    'current_temp': temps[-1] if temps else 0
-                }
-        
-        logger.info("Análisis de temperatura completado")
+                temps = self.temperature_history.get(default_window, {}).get(num, [])
+                if len(temps) > 2:
+                    # CUSUM para detección de cambio
+                    mean_temp = np.mean(temps)
+                    cusum = np.cumsum(np.array(temps) - mean_temp)
+                    
+                    # Detectar punto de cambio
+                    change_point = np.argmax(np.abs(cusum))
+                    trend = 'heating' if cusum[-1] > cusum[0] else 'cooling'
+                    
+                    self.temperature_trends[num] = {
+                        'trend': trend,
+                        'change_point': change_point,
+                        'current_temp': temps[-1] if temps else 0
+                    }
+                else:
+                    self.temperature_trends[num] = {
+                        'trend': 'stable',
+                        'change_point': 0,
+                        'current_temp': 0
+                    }
+            
+            logger.info("Análisis de temperatura completado")
+        except Exception as e:
+            logger.error(f"Error en cálculo de temperatura: {e}")
+            # Inicializar con valores por defecto
+            self.temperature_history = {10: {}, 20: {}, 50: {}}
+            self.temperature_trends = {i: {'trend': 'stable', 'change_point': 0, 'current_temp': 0} 
+                                     for i in range(1, 51)}
     
     def optimize_hyperparameters(self):
         """Optimización Bayesiana de hiperparámetros"""
         logger.info("Iniciando optimización Bayesiana de hiperparámetros...")
         
-        def objective(trial):
-            # Hiperparámetros para XGBoost
-            params = {
-                'n_estimators': trial.suggest_int('n_estimators', 50, 300),
-                'max_depth': trial.suggest_int('max_depth', 3, 10),
-                'learning_rate': trial.suggest_float('learning_rate', 0.01, 0.3),
-                'subsample': trial.suggest_float('subsample', 0.6, 1.0),
-                'colsample_bytree': trial.suggest_float('colsample_bytree', 0.6, 1.0),
+        try:
+            # Solo optimizar si hay suficientes datos
+            if len(self.data) < 50:
+                logger.warning("Datos insuficientes para optimización de hiperparámetros")
+                self.optimal_params = {
+                    'n_estimators': 100,
+                    'max_depth': 5,
+                    'learning_rate': 0.1,
+                    'subsample': 0.8,
+                    'colsample_bytree': 0.8
+                }
+                return
+            
+            def objective(trial):
+                # Hiperparámetros para XGBoost
+                params = {
+                    'n_estimators': trial.suggest_int('n_estimators', 50, 200),
+                    'max_depth': trial.suggest_int('max_depth', 3, 8),
+                    'learning_rate': trial.suggest_float('learning_rate', 0.01, 0.2),
+                    'subsample': trial.suggest_float('subsample', 0.6, 1.0),
+                    'colsample_bytree': trial.suggest_float('colsample_bytree', 0.6, 1.0),
+                }
+                
+                # Validación cruzada temporal
+                X, y = self.prepare_ml_data()
+                if X is None or len(X) < 10:
+                    return float('inf')
+                
+                model = xgb.XGBRegressor(**params, random_state=42, verbosity=0)
+                tscv = TimeSeriesSplit(n_splits=min(5, len(X) // 10))
+                
+                try:
+                    scores = cross_val_score(model, X, y, cv=tscv, 
+                                           scoring='neg_mean_squared_error')
+                    return -np.mean(scores)
+                except:
+                    return float('inf')
+            
+            # Optimización con Optuna (reducida para velocidad)
+            study = optuna.create_study(direction='minimize')
+            study.optimize(objective, n_trials=min(self.config['optimization_trials'], 10), 
+                          show_progress_bar=False, n_jobs=1)
+            
+            self.optimal_params = study.best_params
+            logger.info(f"Mejores hiperparámetros encontrados: {self.optimal_params}")
+        except Exception as e:
+            logger.error(f"Error en optimización: {e}")
+            self.optimal_params = {
+                'n_estimators': 100,
+                'max_depth': 5,
+                'learning_rate': 0.1,
+                'subsample': 0.8,
+                'colsample_bytree': 0.8
             }
-            
-            # Validación cruzada temporal
-            X, y = self.prepare_ml_data()
-            if X is None or len(X) < 10:
-                return float('inf')
-            
-            model = xgb.XGBRegressor(**params, random_state=42)
-            tscv = TimeSeriesSplit(n_splits=5)
-            
-            scores = cross_val_score(model, X, y, cv=tscv, 
-                                   scoring='neg_mean_squared_error')
-            
-            return -np.mean(scores)
-        
-        # Optimización con Optuna
-        study = optuna.create_study(direction='minimize')
-        study.optimize(objective, n_trials=min(self.config['optimization_trials'], 20), 
-                      show_progress_bar=False)
-        
-        self.optimal_params = study.best_params
-        logger.info(f"Mejores hiperparámetros encontrados: {self.optimal_params}")
     
     def prepare_ml_data(self):
         """Prepara datos para Machine Learning"""
@@ -672,19 +935,27 @@ class EuroMillonUltraAdvancedV3:
         """Predicción basada en temperatura dinámica"""
         candidates = []
         
+        # Verificar que temperature_history existe y tiene datos
+        if not self.temperature_history:
+            logger.warning("No hay historial de temperatura disponible")
+            return list(np.random.choice(range(1, 51), 10, replace=False))
+        
         # Combinar diferentes ventanas de temperatura
-        for window in self.config['temperature_windows']:
+        for window in self.config.get('temperature_windows', [10, 20, 50]):
+            if window not in self.temperature_history:
+                continue
+                
             hot_numbers = []
-            cold_ready = []  # Números fríos listos para "despertar"
+            cold_ready = []
             
             for num in range(1, 51):
                 temps = self.temperature_history.get(window, {}).get(num, [])
                 if temps:
                     current_temp = temps[-1]
-                    avg_temp = np.mean(temps)
+                    avg_temp = np.mean(temps) if temps else 0
                     
                     # Números calientes
-                    if current_temp > avg_temp * 1.2:
+                    if avg_temp > 0 and current_temp > avg_temp * 1.2:
                         hot_numbers.append((num, current_temp))
                     
                     # Números fríos con tendencia a calentar
@@ -699,6 +970,13 @@ class EuroMillonUltraAdvancedV3:
             
             candidates.extend([n for n, _ in hot_numbers[:3]])
             candidates.extend([n for n, _ in cold_ready[:2]])
+        
+        # Si no hay suficientes candidatos, agregar aleatorios
+        if len(candidates) < 10:
+            remaining = 10 - len(candidates)
+            random_nums = np.random.choice([n for n in range(1, 51) if n not in candidates], 
+                                         min(remaining, 50 - len(candidates)), replace=False)
+            candidates.extend(random_nums)
         
         # Contar y seleccionar más frecuentes
         counter = Counter(candidates)
@@ -729,16 +1007,19 @@ class EuroMillonUltraAdvancedV3:
     
     def predict_by_cycles(self):
         """Predicción basada en ciclos detectados"""
-        if not hasattr(self, 'cycles'):
-            self.analyze_cycles_and_seasonality()
+        if not self.cycles:
+            # Si no hay ciclos analizados, usar predicción aleatoria
+            logger.warning("No hay análisis de ciclos disponible")
+            return list(np.random.choice(range(1, 51), 10, replace=False))
         
         candidates = []
         
         for num, cycle_info in self.cycles.items():
-            if cycle_info['magnitudes']:
+            if 'magnitudes' in cycle_info and cycle_info['magnitudes']:
                 # Usar números con ciclos fuertes
                 max_magnitude = max(cycle_info['magnitudes'])
-                if max_magnitude > np.mean(cycle_info['magnitudes']) * 1.5:
+                mean_magnitude = np.mean(cycle_info['magnitudes']) if cycle_info['magnitudes'] else 0
+                if mean_magnitude > 0 and max_magnitude > mean_magnitude * 1.5:
                     candidates.append(num)
         
         # Completar con números aleatorios si es necesario
@@ -946,7 +1227,6 @@ class EuroMillonUltraAdvancedV3:
             if 0 <= sector < 5:
                 sectors[sector] += 1
         
-        # Penalizar si hay más de 3 números en un sector
         sector_score = 20.0
         for count in sectors:
             if count > 3:
@@ -962,17 +1242,18 @@ class EuroMillonUltraAdvancedV3:
         quality_score += max(0, paridad_score)
         
         # 3. Rango de números (15 puntos)
-        rango = max(numbers) - min(numbers)
-        if 20 <= rango <= 40:
-            quality_score += 15
-        elif 15 <= rango <= 45:
-            quality_score += 10
-        else:
-            quality_score += 5
+        if numbers:
+            rango = max(numbers) - min(numbers)
+            if 20 <= rango <= 40:
+                quality_score += 15
+            elif 15 <= rango <= 45:
+                quality_score += 10
+            else:
+                quality_score += 5
         
         # 4. Suma total (15 puntos)
         suma = sum(numbers)
-        if 95 <= suma <= 160:  # Rango óptimo basado en estadísticas
+        if 95 <= suma <= 160:
             quality_score += 15
         elif 80 <= suma <= 180:
             quality_score += 10
@@ -981,27 +1262,28 @@ class EuroMillonUltraAdvancedV3:
         
         # 5. Basado en correlaciones (10 puntos)
         correlation_score = 0
-        for i, num1 in enumerate(numbers):
-            for j, num2 in enumerate(numbers):
-                if i < j and self.correlation_matrix is not None:
-                    corr = self.correlation_matrix[num1-1, num2-1]
-                    if corr > 0.3:
-                        correlation_score += 2
+        if self.correlation_matrix is not None:
+            for i, num1 in enumerate(numbers):
+                for j, num2 in enumerate(numbers):
+                    if i < j and 1 <= num1 <= 50 and 1 <= num2 <= 50:
+                        corr = self.correlation_matrix[num1-1, num2-1]
+                        if corr > 0.3:
+                            correlation_score += 2
         quality_score += min(10, correlation_score)
         
         # 6. Temperaturas (10 puntos)
         temp_score = 0
-        for num in numbers:
-            if num in self.temperature_trends:
-                trend = self.temperature_trends[num]
-                if trend['trend'] == 'heating':
-                    temp_score += 2
+        if self.temperature_trends:  # Verificar que existe
+            for num in numbers:
+                if num in self.temperature_trends:
+                    trend = self.temperature_trends[num]
+                    if trend.get('trend') == 'heating':
+                        temp_score += 2
         quality_score += min(10, temp_score)
         
         # 7. Evitar anomalías (10 puntos)
         if hasattr(self, 'anomaly_detector') and self.anomaly_detector is not None:
-            # Verificar si la combinación es anómala
-            quality_score += 10  # Asumimos que no es anómala
+            quality_score += 10
         
         # 8. Validación de estrellas (5 puntos)
         if len(stars) == 2 and all(1 <= s <= 12 for s in stars):
@@ -1023,14 +1305,24 @@ class EuroMillonUltraAdvancedV3:
             
             row = {'fecha': date}
             for i, num in enumerate(numbers, 1):
-                row[f'n{i}'] = num
-            row['e1'] = stars[0]
-            row['e2'] = stars[1]
+                row[f'n{i}'] = int(num)
+            row['e1'] = int(stars[0])
+            row['e2'] = int(stars[1])
             
             data.append(row)
         
         self.data = pd.DataFrame(data)
+        
+        # Asegurar tipos de datos correctos
+        for col in ['n1', 'n2', 'n3', 'n4', 'n5', 'e1', 'e2']:
+            if col in self.data.columns:
+                self.data[col] = self.data[col].astype(int)
+        
         self.create_advanced_features()
+        
+        # Inicializar todas las estructuras necesarias
+        self._initialize_default_structures()
+        
         logger.info(f"Datos sintéticos generados: {len(self.data)} sorteos")
     
     def save_model(self, filepath='euromillon_v3_model.pkl'):

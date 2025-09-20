@@ -1,0 +1,11 @@
+# Configuración de crontab para el servidor
+# Para instalar: crontab -e y pegar estas líneas
+
+# Actualizar DataFrames de lotería diariamente a las 3:00 AM
+0 3 * * * cd /var/www/tienda-web-lotoAI-1/scripts && /usr/bin/python3 update_lottery_dataframes.py >> /var/www/tienda-web-lotoAI-1/logs/cron_output.log 2>&1
+
+# Monitorear el estado del cron job 10 minutos después
+10 3 * * * /bin/bash /var/www/tienda-web-lotoAI-1/scripts/monitor_cron.sh >> /var/www/tienda-web-lotoAI-1/logs/cron_monitor.log 2>&1
+
+# Backup semanal de DataFrames (domingos a las 2:00 AM)
+0 2 * * 0 cd /var/www/tienda-web-lotoAI-1/scripts && /usr/bin/python3 backup_dataframes.py >> /var/www/tienda-web-lotoAI-1/logs/backup.log 2>&1

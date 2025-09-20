@@ -1,0 +1,367 @@
+/* Estilos para el componente de predicción de Lotería Nacional */
+
+.page-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 20px;
+}
+
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+  color: white;
+}
+
+.breadcrumb a {
+  color: white;
+  text-decoration: none;
+  opacity: 0.8;
+  transition: opacity 0.3s;
+}
+
+.breadcrumb a:hover {
+  opacity: 1;
+}
+
+.separator {
+  margin: 0 10px;
+  opacity: 0.6;
+}
+
+.current {
+  font-weight: 600;
+}
+
+.content-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.lottery-header {
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 20px;
+  padding: 30px;
+  margin-bottom: 30px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.lottery-logo {
+  margin-right: 30px;
+}
+
+.lottery-image {
+  height: 80px;
+  width: auto;
+}
+
+.lottery-info {
+  flex: 1;
+}
+
+.lottery-title {
+  font-size: 2.5rem;
+  color: #2c3e50;
+  margin: 0 0 15px 0;
+  font-weight: 700;
+}
+
+.jackpot-info, .next-draw {
+  margin-bottom: 10px;
+}
+
+.jackpot-label, .next-draw-label {
+  font-weight: 600;
+  color: #7f8c8d;
+  margin-right: 10px;
+}
+
+.jackpot-amount {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #e74c3c;
+}
+
+.next-draw-date {
+  font-size: 1.1rem;
+  color: #2c3e50;
+  font-weight: 600;
+}
+
+.prediction-container {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 20px;
+  padding: 30px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.prediction-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.prediction-header h2 {
+  font-size: 2rem;
+  color: #2c3e50;
+  margin-bottom: 15px;
+}
+
+.prediction-description {
+  color: #7f8c8d;
+  font-size: 1.1rem;
+  line-height: 1.6;
+}
+
+.loading-container {
+  text-align: center;
+  padding: 40px;
+}
+
+.loading-spinner {
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #3498db;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 20px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.prediction-error {
+  background: #ffe6e6;
+  border: 2px solid #ff9999;
+  border-radius: 10px;
+  padding: 20px;
+  margin: 20px 0;
+  text-align: center;
+  color: #d63031;
+}
+
+.empty-balls-section {
+  margin: 30px 0;
+}
+
+.empty-balls-header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.empty-balls-header h3 {
+  color: #2c3e50;
+  font-size: 1.5rem;
+  margin-bottom: 10px;
+}
+
+.empty-prediction-container {
+  display: flex;
+  justify-content: center;
+}
+
+.empty-prediction-card, .prediction-card {
+  background: linear-gradient(145deg, #ffffff, #f8f9fa);
+  border-radius: 15px;
+  padding: 25px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e9ecef;
+  margin: 10px;
+  min-width: 300px;
+}
+
+.prediction-card-header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.prediction-card-header h3 {
+  color: #2c3e50;
+  font-size: 1.3rem;
+  margin-bottom: 5px;
+}
+
+.prediction-type {
+  background: linear-gradient(45deg, #667eea, #764ba2);
+  color: white;
+  padding: 5px 15px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.prediction-numbers {
+  margin: 20px 0;
+}
+
+.lottery-balls-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.ball-wrapper {
+  margin: 5px;
+}
+
+.lottery-balls-separator {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #7f8c8d;
+  margin: 0 10px;
+}
+
+.prediction-stats {
+  border-top: 1px solid #e9ecef;
+  padding-top: 15px;
+  margin-top: 15px;
+}
+
+.stat-item {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 10px;
+}
+
+.stat-label {
+  font-weight: 600;
+  color: #27ae60;
+  text-align: center;
+}
+
+.stat-value {
+  color: #7f8c8d;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.predictions-section {
+  margin: 30px 0;
+}
+
+.predictions-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.predictions-header h3 {
+  color: #2c3e50;
+  font-size: 1.8rem;
+  margin-bottom: 10px;
+}
+
+.predictions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 20px;
+  justify-items: center;
+}
+
+.generate-more-section {
+  text-align: center;
+  margin-top: 30px;
+}
+
+.btn-primary {
+  background: linear-gradient(45deg, #667eea, #764ba2);
+  color: white;
+  border: none;
+  padding: 15px 30px;
+  border-radius: 25px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .lottery-header {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .lottery-logo {
+    margin-right: 0;
+    margin-bottom: 20px;
+  }
+  
+  .lottery-title {
+    font-size: 2rem;
+  }
+  
+  .predictions-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .prediction-card, .empty-prediction-card {
+    min-width: unset;
+    width: 100%;
+  }
+}
+
+/* Estilos para timestamp de predicción */
+.prediction-timestamp {
+  font-size: 12px;
+  color: #666;
+  margin: 5px 0 15px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+
+.prediction-timestamp i {
+  opacity: 0.7;
+}
+
+/* Estilos para acciones de predicción */
+.prediction-actions {
+  display: flex;
+  justify-content: center;
+  margin: 15px 0 10px 0;
+}
+
+.copy-prediction-btn {
+  background: #007bff;
+  color: white;
+  border: none;
+  padding: 8px 16px !important;
+  border-radius: 20px;
+  font-size: 12px !important;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 !important;
+}
+
+.copy-prediction-btn:hover {
+  background: #0056b3;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
+}
+
+.copy-prediction-btn i {
+  font-size: 11px;
+}

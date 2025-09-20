@@ -1,109 +1,130 @@
 {
   "botes": {
-    "euromillones": "234 MILLONES",
-    "primitiva": "53,5 MILLONES",
-    "bonoloto": "500.000€",
-    "gordo": "9,8 MILLONES",
+    "euromillones": "53 MILLONES",
+    "gordo": "4,9 MILLONES",
     "eurodreams": "20.000€ Al mes durante 30 años",
     "loterianacional": "600.000€ Primer Premio",
-    "lototurf": "1.475.000 €"
+    "lototurf": "1,13 MILLONES"
   },
   "resultados": [
     {
       "game": "euromillones",
       "numbers": [
-        18,
-        28,
-        42,
-        46,
-        48
+        1,
+        9,
+        13,
+        35,
+        40
       ],
-      "date": "martes - mar - 12/08/2025",
+      "date": "martes - mar - 16/09/2025",
       "stars": [
-        3,
-        9
-      ]
+        5,
+        6
+      ],
+      "millon": "TBG54152"
     },
     {
       "game": "primitiva",
       "numbers": [
+        4,
         7,
-        11,
-        12,
-        16,
-        36,
-        43
+        15,
+        17,
+        19,
+        38
       ],
-      "date": "jueves - jue -  14/08/2025",
-      "joker": "8891458"
+      "date": "jueves - jue -  18/09/2025",
+      "complementary": 22,
+      "reintegro": 8,
+      "joker": "0293271"
     },
     {
       "game": "bonoloto",
       "numbers": [
-        3,
-        4,
-        6,
-        14,
-        33,
+        18,
+        24,
+        27,
+        35,
+        36,
         41
       ],
-      "date": "jueves - jue - 14/08/2025"
+      "date": "jueves - jue - 18/09/2025",
+      "complementary": 2,
+      "reintegro": 6
     },
     {
       "game": "elgordo",
       "numbers": [
-        6,
+        1,
+        2,
+        4,
         25,
-        28,
-        34,
-        51
+        30
       ],
-      "date": "domingo - dom - 10/08/2025",
-      "clave": 9
+      "date": "domingo - dom - 14/09/2025",
+      "clave": 8
     },
     {
       "game": "eurodreams",
       "numbers": [
-        14,
-        15,
-        21,
-        22,
+        11,
+        17,
+        26,
         32,
-        38
+        36,
+        37
       ],
-      "date": "jueves - jue - 14/08/2025"
+      "date": "jueves - jue - 18/09/2025",
+      "dream": 1
     },
     {
       "game": "lototurf",
       "numbers": [
-        1,
+        4,
         8,
         9,
-        14,
+        12,
         15,
-        25
+        17
       ],
-      "date": "Jornada 51ª - domingo - dom - 10/08/2025"
+      "date": "Jornada 61ª - domingo - dom - 14/09/2025",
+      "reintegro": 6,
+      "caballo": 6
     },
     {
       "game": "loterianacional",
       "sorteos": [
         {
-          "dia": "jueves -",
-          "fecha": "14/08/2025",
+          "dia": "jueves",
+          "fecha": "18/09/2025",
           "premios": [
-            "25044",
-            "42795"
+            "63611",
+            "72818"
           ],
           "reintegros": [
+            "0",
+            "0",
+            "1",
+            "2"
+          ]
+        },
+        {
+          "dia": "sábado",
+          "fecha": "13/09/2025",
+          "premios": [
+            "68374",
+            "37200"
+          ],
+          "reintegros": [
+            "1",
+            "1",
             "2",
-            "4",
-            "8"
+            "4"
           ]
         }
       ],
-      "date": ""
+      "date": "2025-09-19T18:01:10.121Z"
     }
   ],
-  "timestamp": "2025-08-15T17:23:33.274Z"
+  "timestamp": "2025-09-19T18:01:10.138Z"
 }

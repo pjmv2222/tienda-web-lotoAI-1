@@ -83,9 +83,7 @@ async function scrapeWithoutProxy() {
         '--disable-dev-shm-usage',
         '--disable-accelerated-2d-canvas',
         '--disable-gpu',
-        '--window-size=1920,1080',
-        '--disable-blink-features=AutomationControlled',
-        '--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        '--window-size=1920,1080'
       ]
     };
 
@@ -102,43 +100,13 @@ async function scrapeWithoutProxy() {
 
     // Configurar viewport y user agent
     await page.setViewport({ width: 1920, height: 1080 });
-    
-    // User agent más realista
-    await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+    await page.setUserAgent(randomUseragent.getRandom());
 
     // Configurar headers
     await page.setExtraHTTPHeaders({
       'Accept-Language': 'es-ES,es;q=0.9',
       'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-      'Accept-Encoding': 'gzip, deflate, br',
-      'Cache-Control': 'no-cache',
-      'Pragma': 'no-cache',
-      'Sec-Ch-Ua': '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
-      'Sec-Ch-Ua-Mobile': '?0',
-      'Sec-Ch-Ua-Platform': '"Windows"',
-      'Sec-Fetch-Dest': 'document',
-      'Sec-Fetch-Mode': 'navigate',
-      'Sec-Fetch-Site': 'none',
-      'Sec-Fetch-User': '?1',
-      'Upgrade-Insecure-Requests': '1'
-    });
-
-    // Evadir detección de bot
-    await page.evaluateOnNewDocument(() => {
-      // Ocultar webdriver
-      Object.defineProperty(navigator, 'webdriver', {
-        get: () => undefined
-      });
-      
-      // Ocultar plugins
-      Object.defineProperty(navigator, 'plugins', {
-        get: () => [1, 2, 3, 4, 5]
-      });
-      
-      // Ocultar languages
-      Object.defineProperty(navigator, 'languages', {
-        get: () => ['es-ES', 'es', 'en']
-      });
+      'Referer': 'https://www.google.com/'
     });
 
     // Delay aleatorio antes de navegar
@@ -146,131 +114,50 @@ async function scrapeWithoutProxy() {
 
     // PASO 1: Navegar a la página principal para obtener botes
     console.log('💰 Navegando a la página principal para obtener botes...');
-    
-    try {
-      const response = await page.goto('https://www.loteriasyapuestas.es/es', {
-        waitUntil: ['networkidle0', 'domcontentloaded'],
-        timeout: 60000
-      });
-      
-      if (!response || !response.ok()) {
-        console.log(`⚠️ Respuesta HTTP: ${response?.status()} ${response?.statusText()}`);
-      }
-    } catch (error) {
-      console.log('⚠️ Error navegando a la página principal:', error);
-    }
+    await page.goto('https://www.loteriasyapuestas.es/es', {
+      waitUntil: 'networkidle0',
+      timeout: 60000
+    });
 
-    // Esperar más tiempo para que la página se cargue completamente
-    console.log('⏳ Esperando carga completa de la página...');
-    await delay(5000);
+    await delay(3000);
 
-    // Tomar screenshot para debug
-    if (process.env.DEBUG || __dirname.includes('/var/www')) {
-      await page.screenshot({ 
-        path: path.join(__dirname, 'debug-homepage.png'), 
-        fullPage: true 
-      });
-      console.log('📸 Screenshot guardado: debug-homepage.png');
-    }
-
-    // Verificar si hay algún tipo de bloqueo o captcha
-    const pageContent = await page.content();
-    if (pageContent.includes('captcha') || pageContent.includes('blocked') || pageContent.includes('denied')) {
-      console.log('⚠️ Posible bloqueo o captcha detectado');
-    }
-
-    // Intentar esperar por varios selectores posibles
+    // Esperar a que los elementos de botes estén cargados (¡CRUCIAL!)
     console.log('⏳ Esperando a que los elementos de botes se carguen...');
     try {
-      await Promise.race([
-        page.waitForSelector('.c-parrilla-juegos__elemento_topaz', { timeout: 10000 }),
-        page.waitForSelector('.c-parrilla-juegos', { timeout: 10000 }),
-        page.waitForSelector('[class*="juego"]', { timeout: 10000 }),
-        page.waitForSelector('[class*="bote"]', { timeout: 10000 })
-      ]);
-      console.log('✅ Elementos encontrados');
+      await page.waitForSelector('.c-parrilla-juegos__elemento_topaz', { timeout: 10000 });
+      console.log('✅ Elementos de botes encontrados');
     } catch (error) {
-      console.log('⚠️ No se encontraron elementos inmediatamente, continuando...');
-      
-      // Intentar hacer scroll para cargar contenido dinámico
-      console.log('📜 Intentando scroll para cargar contenido...');
-      await page.evaluate(() => {
-        window.scrollTo(0, document.body.scrollHeight);
-      });
-      await delay(3000);
-      await page.evaluate(() => {
-        window.scrollTo(0, 0);
-      });
-      await delay(2000);
+      console.log('⚠️  No se encontraron elementos de botes inmediatamente, continuando...');
     }
 
-    // Extraer botes con método mejorado
+    // Extraer botes
     console.log('💰 Extrayendo datos de botes...');
     const botes = await page.evaluate(() => {
       const result: { [key: string]: string } = {};
 
       // Debug: verificar elementos en la página
-      console.log(`🔍 Total de elementos en la página: ${document.querySelectorAll('*').length}`);
+      const todosLosElementos = document.querySelectorAll('*');
+      console.log(`🔍 Total de elementos en la página: ${todosLosElementos.length}`);
       
-      // Buscar con selectores más amplios
-      const selectoresPosibles = [
-        '.c-parrilla-juegos__elemento_topaz',
-        '.c-parrilla-juegos__elemento',
-        '[class*="parrilla"]',
-        '[class*="juego"]',
-        '[class*="game"]',
-        '.game-card',
-        '.lottery-game',
-        'article',
-        '.card'
-      ];
+      const elementosParrilla = document.querySelectorAll('.c-parrilla-juegos__elemento_topaz');
+      console.log(`🎯 Elementos .c-parrilla-juegos__elemento_topaz encontrados: ${elementosParrilla.length}`);
       
-      let elementosEncontrados = false;
-      for (const selector of selectoresPosibles) {
-        const elementos = document.querySelectorAll(selector);
-        if (elementos.length > 0) {
-          console.log(`📋 Encontrados ${elementos.length} elementos con selector: ${selector}`);
-          elementosEncontrados = true;
-          
-          // Intentar extraer información de estos elementos
-          elementos.forEach(el => {
-            const texto = el.textContent || '';
-            // Buscar patrones de juegos
-            if (texto.toLowerCase().includes('euromillon')) {
-              const boteMatch = texto.match(/(\d+[.,]?\d*)\s*(MILLONES|millones|€)/);
-              if (boteMatch && !result['euromillones']) {
-                result['euromillones'] = boteMatch[0];
-                console.log(`💰 Euromillones encontrado: ${boteMatch[0]}`);
-              }
-            }
-            if (texto.toLowerCase().includes('primitiva')) {
-              const boteMatch = texto.match(/(\d+[.,]?\d*)\s*(MILLONES|millones|€)/);
-              if (boteMatch && !result['primitiva']) {
-                result['primitiva'] = boteMatch[0];
-                console.log(`💰 Primitiva encontrada: ${boteMatch[0]}`);
-              }
-            }
-            if (texto.toLowerCase().includes('bonoloto')) {
-              const boteMatch = texto.match(/(\d+[.,]?\d*)\s*(€|euros?|MILLONES|millones)/);
-              if (boteMatch && !result['bonoloto']) {
-                result['bonoloto'] = boteMatch[0];
-                console.log(`💰 Bonoloto encontrada: ${boteMatch[0]}`);
-              }
-            }
-            if (texto.toLowerCase().includes('gordo')) {
-              const boteMatch = texto.match(/(\d+[.,]?\d*)\s*(MILLONES|millones|€)/);
-              if (boteMatch && !result['elgordo']) {
-                result['elgordo'] = boteMatch[0];
-                console.log(`💰 El Gordo encontrado: ${boteMatch[0]}`);
-              }
-            }
-          });
-        }
-      }
-      
-      if (!elementosEncontrados) {
-        console.log('❌ No se encontraron elementos con ningún selector conocido');
-        console.log('📄 Primeros 500 caracteres del HTML:', document.body.innerHTML.substring(0, 500));
+      if (elementosParrilla.length === 0) {
+        // Buscar variaciones del selector
+        const variaciones = [
+          '.c-parrilla-juegos__elemento',
+          '.parrilla-juegos__elemento',
+          '[class*="parrilla"]',
+          '[class*="elemento"]',
+          '[class*="topaz"]'
+        ];
+        
+        variaciones.forEach(selector => {
+          const encontrados = document.querySelectorAll(selector);
+          if (encontrados.length > 0) {
+            console.log(`📋 Encontrados ${encontrados.length} elementos con selector: ${selector}`);
+          }
+        });
       }
 
       // Intentar extraer botes desde datos JSON en la página
@@ -457,7 +344,7 @@ async function scrapeWithoutProxy() {
         console.log('📌 Asignado valor por defecto para lototurf basado en HTML real');
       }
 
-      console.log(`📊 Resumen de botes extraídos: ${Object.keys(result).length} de 7`);
+      console.log(`📊 Resumen de botes extraídos: ${Object.keys(result).length} de ${Object.keys(games).length}`);
       return result;
     });
 
@@ -747,4 +634,301 @@ async function scrapeWithoutProxy() {
                   const reintegroElements = sorteo.querySelectorAll('.c-resultado-sorteo__reintegros-li, [class*="reintegro"]');
                   reintegroElements.forEach(r => {
                     const texto = r.textContent?.trim() || '';
-       
+                    const numeroMatch = texto.match(/\d+/);
+                    if (numeroMatch) {
+                      reintegros.push(numeroMatch[0]);
+                    }
+                  });
+                  
+                  // Verificar si es sorteo extraordinario
+                  let extraordinario: string | undefined;
+                  if (dia === 'extraordinario') {
+                    const extraElement = sorteo.querySelector('[class*="extraordinario"]');
+                    if (extraElement) {
+                      extraordinario = extraElement.textContent?.trim();
+                    }
+                  }
+                  
+                  if (fecha && premios.length > 0) {
+                    const sorteoData: any = { dia: dia || 'sin-dia', fecha, premios, reintegros };
+                    if (extraordinario) sorteoData.extraordinario = extraordinario;
+                    sorteos.push(sorteoData);
+                    console.log(`  ✅ Sorteo ${index + 1}: ${dia} - ${fecha} (${premios.length} premios, ${reintegros.length} reintegros)`);
+                  }
+                } catch (error) {
+                  console.log(`  ❌ Error procesando sorteo ${index + 1}:`, error);
+                }
+              });
+              
+              if (sorteos.length > 0) {
+                results.push({
+                  game: config.game,
+                  sorteos,
+                  date: new Date().toISOString()
+                });
+                console.log(`✅ ${config.game}: ${sorteos.length} sorteos extraídos correctamente`);
+              }
+              
+              return;
+            }
+
+            // Procesamiento mejorado para otros juegos
+            const mainNumbers = extractNumbers(
+              config.mainNumbersSelector || '',
+              [
+                `[class*="${config.code}"] [class*="combinacion-li"]`,
+                `#qa_ultResult-combination-mainNumbers-${config.code} li`,
+                `.c-ultimo-resultado__combinacion-li--${config.game}`
+              ]
+            );
+
+            console.log(`  🔢 Números principales: [${mainNumbers.join(', ')}]`);
+
+            if (mainNumbers.length > 0) {
+              const result: any = {
+                game: config.game,
+                numbers: mainNumbers,
+                date: document.querySelector(config.dateSelector)?.textContent?.trim() || ''
+              };
+
+              // Número complementario mejorado - usando ID directo
+              if (config.complementarySelector) {
+                // Si el selector no tiene # al principio, es un ID directo
+                const comp = config.complementarySelector.startsWith('#') 
+                  ? extractSingleNumber(config.complementarySelector, [])
+                  : extractSingleNumberById(config.complementarySelector);
+                  
+                if (comp !== undefined) {
+                  result.complementary = comp;
+                  console.log(`  🎯 Complementario: ${comp}`);
+                } else {
+                  console.log(`  ⚠️ No se pudo extraer complementario para ${config.game}`);
+                }
+              }
+
+              // Estrellas (Euromillones)
+              if (config.starsSelector) {
+                const stars = extractNumbers(
+                  config.starsSelector,
+                  [
+                    `#qa_ultResult-combination-mainNumbers-${config.code}-stars li`,
+                    `.c-ultimo-resultado__estrellas li`
+                  ]
+                );
+                if (stars.length > 0) {
+                  result.stars = stars;
+                  console.log(`  ⭐ Estrellas: [${stars.join(', ')}]`);
+                }
+              }
+
+              // Reintegro mejorado - usando ID directo cuando sea necesario
+              if (config.reintegroSelector) {
+                let reintegro: number | undefined;
+                
+                if (config.reintegroSelector.startsWith('#')) {
+                  // Selector CSS normal
+                  reintegro = extractSingleNumber(
+                    config.reintegroSelector,
+                    [
+                      `${config.reintegroSelector} li`,
+                      `[id*="reintegro"][id*="${config.code}"] li`
+                    ]
+                  );
+                } else {
+                  // ID directo
+                  reintegro = extractSingleNumberById(config.reintegroSelector);
+                }
+                
+                if (reintegro !== undefined) {
+                  result.reintegro = reintegro;
+                  console.log(`  💰 Reintegro: ${reintegro}`);
+                } else {
+                  console.log(`  ⚠️ No se pudo extraer reintegro para ${config.game}`);
+                }
+              }
+
+              // Dream/Sueño (Eurodreams) - usando ID directo
+              if (config.dreamSelector) {
+                const dream = config.dreamSelector.startsWith('#')
+                  ? extractSingleNumber(config.dreamSelector, [])
+                  : extractSingleNumberById(config.dreamSelector);
+                  
+                if (dream !== undefined) {
+                  result.dream = dream;
+                  console.log(`  💭 Sueño/Dream: ${dream}`);
+                } else {
+                  console.log(`  ⚠️ No se pudo extraer sueño para Eurodreams`);
+                }
+              }
+
+              // Caballo (Lototurf)
+              if (config.caballoSelector) {
+                const caballo = extractSingleNumber(
+                  config.caballoSelector,
+                  [
+                    `${config.caballoSelector} li`,
+                    `[id*="complementario"][id*="${config.code}"] li`
+                  ]
+                );
+                if (caballo !== undefined) {
+                  result.caballo = caballo;
+                  console.log(`  🐎 Caballo: ${caballo}`);
+                }
+              }
+
+              // El Millón (Euromillones) - Mejorado
+              if (config.game === 'euromillones') {
+                const millon = extractElMillon();
+                if (millon) {
+                  result.millon = millon;
+                  console.log(`  💎 El Millón: ${millon}`);
+                } else {
+                  console.log(`  ⚠️ No se pudo extraer El Millón`);
+                }
+              }
+
+              // Joker (Primitiva)
+              if (config.jokerSelector) {
+                const jokerElement = document.querySelector(config.jokerSelector);
+                if (jokerElement) {
+                  const jokerText = jokerElement.textContent?.trim().replace(/\s/g, '') || '';
+                  // Validar que tiene el formato correcto (7 dígitos)
+                  if (jokerText.match(/^\d{7}$/)) {
+                    result.joker = jokerText;
+                    console.log(`  🃏 Joker: ${jokerText}`);
+                  }
+                }
+              }
+
+              // Clave (El Gordo)
+              if (config.claveSelector) {
+                const clave = extractSingleNumber(
+                  config.claveSelector,
+                  [`${config.claveSelector} li`]
+                );
+                if (clave !== undefined) {
+                  result.clave = clave;
+                  console.log(`  🔑 Clave: ${clave}`);
+                }
+              }
+
+              results.push(result);
+              console.log(`✅ ${config.game}: Resultado completo extraído`);
+            } else {
+              console.log(`❌ ${config.game}: No se encontraron números principales`);
+            }
+          } catch (error) {
+            console.log(`❌ Error procesando ${config.game}:`, error);
+          }
+        });
+
+        console.log(`\n📊 Resumen final: ${results.length} juegos con resultados extraídos`);
+        return results;
+      } catch (error) {
+        console.log('❌ Error general en extracción:', error);
+        return [];
+      }
+    });
+
+    console.log(`📊 Resumen de resultados extraídos:`);
+    resultados.forEach((resultado, index) => {
+      if (resultado.game === 'loterianacional') {
+        console.log(`  🎟️  ${resultado.game}: ${resultado.sorteos?.length || 0} sorteos`);
+      } else {
+        const extras = [];
+        if (resultado.complementary) extras.push(`C:${resultado.complementary}`);
+        if (resultado.stars?.length) extras.push(`★:${resultado.stars.join(',')}`);
+        if (resultado.reintegro) extras.push(`R:${resultado.reintegro}`);
+        if (resultado.joker) extras.push(`J:${resultado.joker}`);
+        if (resultado.millon) extras.push(`M:${resultado.millon}`);
+        if (resultado.dream) extras.push(`D:${resultado.dream}`);
+        if (resultado.caballo) extras.push(`H:${resultado.caballo}`);
+        
+        const extrasText = extras.length > 0 ? ` (${extras.join(', ')})` : '';
+        console.log(`  🎲 ${resultado.game}: [${resultado.numbers?.join(', ') || 'Sin números'}]${extrasText} - ${resultado.date || 'Sin fecha'}`);
+      }
+    });
+    
+    if (resultados.length === 0) {
+      console.log('⚠️  No se extrajeron resultados');
+    }
+
+    // Crear objeto de datos
+    const lotteryData: LotteryData = {
+      botes: cleanedBotes,
+      resultados: resultados,
+      timestamp: new Date().toISOString()
+    };
+
+    return lotteryData;
+
+  } catch (error) {
+    console.error('❌ Error durante el scraping:', error);
+    throw error;
+  } finally {
+    if (browser) {
+      await browser.close();
+    }
+  }
+}
+
+async function main() {
+  try {
+    console.log('🎲 Iniciando scraper extendido de lotería...');
+
+    let lotteryData: LotteryData;
+
+    // Usar la misma lógica que el scraper original
+    lotteryData = await scrapeWithoutProxy();
+
+    // Guardar datos
+    const outputPath = path.join(__dirname, '..', 'src', 'assets', 'lottery-data.json');
+    const outputDir = path.dirname(outputPath);
+    
+    if (!fs.existsSync(outputDir)) {
+      fs.mkdirSync(outputDir, { recursive: true });
+    }
+
+    fs.writeFileSync(outputPath, JSON.stringify(lotteryData, null, 2));
+    
+    // Obtener información del archivo generado
+    const stats = fs.statSync(outputPath);
+    const fileSizeKB = (stats.size / 1024).toFixed(2);
+    
+    console.log('✅ Datos de lotería guardados en:', outputPath);
+    console.log(`📁 Tamaño del archivo: ${fileSizeKB} KB`);
+    console.log(`📊 Datos guardados: ${Object.keys(lotteryData.botes).length} botes, ${lotteryData.resultados.length} resultados`);
+
+    // También guardar botes separadamente para compatibilidad (como el scraper original)
+    const botesPath = path.join(__dirname, '..', 'src', 'assets', 'botes.json');
+    fs.writeFileSync(botesPath, JSON.stringify(lotteryData.botes, null, 2));
+    console.log('💰 Botes guardados también en:', botesPath);
+
+    // Guardar también en dist si existe (como el scraper original)
+    const distAssetsDir = path.join(__dirname, '..', 'dist', 'tienda-web-loto-ai', 'browser', 'assets');
+    if (fs.existsSync(distAssetsDir)) {
+      const distBotesPath = path.join(distAssetsDir, 'botes.json');
+      fs.writeFileSync(distBotesPath, JSON.stringify(lotteryData.botes, null, 2));
+      console.log('💰 Botes guardados también en dist:', distBotesPath);
+      
+      const distLotteryPath = path.join(distAssetsDir, 'lottery-data.json');
+      fs.writeFileSync(distLotteryPath, JSON.stringify(lotteryData, null, 2));
+      console.log('📊 Datos completos guardados también en dist:', distLotteryPath);
+    } else {
+      console.log('ℹ️  Directorio dist no existe, solo guardando en src/assets');
+    }
+
+    console.log('🎉 Scraping completado exitosamente!');
+    process.exit(0);
+    
+  } catch (error) {
+    console.error('💥 Error fatal en main:', error);
+    process.exit(1);
+  }
+}
+
+// Ejecutar función principal
+main().catch(error => {
+  console.error('Error fatal:', error);
+  process.exit(1);
+});
