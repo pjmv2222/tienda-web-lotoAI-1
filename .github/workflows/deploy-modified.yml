@@ -20,100 +20,100 @@ jobs:
         key: ${{ secrets.SERVER_SSH_KEY }}
         port: 22
         script: |
-          cd /var/www/tienda-web-lotoAI-1
-          git pull origin main
-          npm install
+          echo "=== INICIANDO DESPLIEGUE AUTOMATIZADO ==="
+          
+          # 1. Navegar al directorio
+          cd /var/www/tienda-web-lotoAI-1 || exit 1
+          
+          # 2. Respaldar archivos críticos
+          echo "--- Fase 2: Respaldando archivos críticos ---"
+          mkdir -p .deploy-backups
+          
+          [ -f ".env" ] && cp .env .deploy-backups/.env.backup && echo "✅ .env respaldado"
+          [ -f ".env.production" ] && cp .env.production .deploy-backups/.env.production.backup && echo "✅ .env.production respaldado"
+          [ -f "src/assets/botes.json" ] && cp src/assets/botes.json .deploy-backups/botes.json.backup && echo "✅ botes.json respaldado"
+          [ -f "src/assets/lottery-data.json" ] && cp src/assets/lottery-data.json .deploy-backups/lottery-data.json.backup && echo "✅ lottery-data.json respaldado"
+          
+          # 3. Actualizar desde GitHub
+          echo "--- Fase 3: Actualizando código fuente ---"
+          git fetch origin main
+          git reset --hard origin/main
+          
+          # 4. Restaurar archivos críticos
+          echo "--- Fase 4: Restaurando archivos del servidor ---"
+          [ -f ".deploy-backups/.env.backup" ] && cp .deploy-backups/.env.backup .env && echo "✅ .env restaurado"
+          [ -f ".deploy-backups/.env.production.backup" ] && cp .deploy-backups/.env.production.backup .env.production && echo "✅ .env.production restaurado"
+          [ -f ".deploy-backups/botes.json.backup" ] && cp .deploy-backups/botes.json.backup src/assets/botes.json && echo "✅ botes.json restaurado"
+          [ -f ".deploy-backups/lottery-data.json.backup" ] && cp .deploy-backups/lottery-data.json.backup src/assets/lottery-data.json && echo "✅ lottery-data.json restaurado"
+          
+          # 5. Verificar variables de entorno
+          echo "--- Fase 5: Verificando configuración ---"
+          if [ -f ".env" ] && grep -q "STRIPE_SECRET_KEY" .env; then
+            echo "✅ Configuración verificada"
+          else
+            echo "❌ Error: STRIPE_SECRET_KEY no encontrada"
+            exit 1
+          fi
+          
+          # 6. Instalar dependencias
+          echo "--- Fase 6: Instalando dependencias ---"
+          npm ci --production=false || npm install --production=false
+          
+          # 7. Compilar Backend
+          echo "--- Fase 7: Compilando Backend ---"
+          cd src/backend
+          npm ci || npm install
           npm run build
+          cd /var/www/tienda-web-lotoAI-1
+          [ ! -f "src/backend/dist/index.js" ] && echo "❌ Error: Backend no compilado" && exit 1
+          echo "✅ Backend compilado"
           
-          # Actualizar DataFrames de lotería
-          python3 scripts/update_lottery_dataframes.py
+          # 8. Compilar Frontend
+          echo "--- Fase 8: Compilando Frontend ---"
+          rm -rf dist/
+          NODE_OPTIONS="--max-old-space-size=3072" npx ng build --configuration=production
+          [ $? -ne 0 ] && echo "❌ Error: Frontend no compilado" && exit 1
+          echo "✅ Frontend compilado"
           
-          # Reiniciar servicios si es necesario
-          sudo systemctl restart nginx
-            cd /var/www/tienda-web-lotoAI-1 || exit 1
-            
-            # 2. Respaldar archivos críticos (simplificado)
-            echo "--- Fase 2: Respaldando archivos críticos ---"
-            # Crear directorio de respaldos si no existe
-            mkdir -p .deploy-backups
-            
-            # Respaldar .env
-            [ -f ".env" ] && cp .env .deploy-backups/.env.backup && echo "✅ .env respaldado"
-            [ -f ".env.production" ] && cp .env.production .deploy-backups/.env.production.backup && echo "✅ .env.production respaldado"
-            
-            # Respaldar JSONs del scraper
-            [ -f "src/assets/botes.json" ] && cp src/assets/botes.json .deploy-backups/botes.json.backup && echo "✅ botes.json respaldado"
-            [ -f "src/assets/lottery-data.json" ] && cp src/assets/lottery-data.json .deploy-backups/lottery-data.json.backup && echo "✅ lottery-data.json respaldado"
-            
-            # 3. Actualizar desde GitHub
-            echo "--- Fase 3: Actualizando código fuente ---"
-            git fetch origin main
-            git reset --hard origin/main
-            
-            # 4. Restaurar archivos críticos
-            echo "--- Fase 4: Restaurando archivos del servidor ---"
-            [ -f ".deploy-backups/.env.backup" ] && cp .deploy-backups/.env.backup .env && echo "✅ .env restaurado"
-            [ -f ".deploy-backups/.env.production.backup" ] && cp .deploy-backups/.env.production.backup .env.production && echo "✅ .env.production restaurado"
-            [ -f ".deploy-backups/botes.json.backup" ] && cp .deploy-backups/botes.json.backup src/assets/botes.json && echo "✅ botes.json restaurado"
-            [ -f ".deploy-backups/lottery-data.json.backup" ] && cp .deploy-backups/lottery-data.json.backup src/assets/lottery-data.json && echo "✅ lottery-data.json restaurado"
-            
-            # 5. Verificar variables de entorno
-            echo "--- Fase 5: Verificando configuración ---"
-            if [ -f ".env" ] && grep -q "STRIPE_SECRET_KEY" .env; then
-              echo "✅ Configuración verificada"
-            else
-              echo "❌ Error: STRIPE_SECRET_KEY no encontrada"
-              exit 1
-            fi
-            
-            # 6. Instalar dependencias
-            echo "--- Fase 6: Instalando dependencias ---"
-            npm ci --production=false || npm install --production=false
-            
-            # 7. Compilar Backend
-            echo "--- Fase 7: Compilando Backend ---"
-            cd src/backend
-            npm ci || npm install
-            npm run build
-            cd /var/www/tienda-web-lotoAI-1
-            [ ! -f "src/backend/dist/index.js" ] && echo "❌ Error: Backend no compilado" && exit 1
-            echo "✅ Backend compilado"
-            
-            # 8. Compilar Frontend (con optimización de memoria)
-            echo "--- Fase 8: Compilando Frontend ---"
-            # Limpiar dist anterior
-            rm -rf dist/
-            
-            # Compilar con memoria optimizada
-            NODE_OPTIONS="--max-old-space-size=3072" npx ng build --configuration=production
-            [ $? -ne 0 ] && echo "❌ Error: Frontend no compilado" && exit 1
-            echo "✅ Frontend compilado"
-            
-            # 9. Restaurar JSONs en dist
-            echo "--- Fase 9: Restaurando JSONs en dist ---"
-            mkdir -p dist/tienda-web-loto-ai/browser/assets/
-            [ -f ".deploy-backups/botes.json.backup" ] && cp .deploy-backups/botes.json.backup dist/tienda-web-loto-ai/browser/assets/botes.json
-            [ -f ".deploy-backups/lottery-data.json.backup" ] && cp .deploy-backups/lottery-data.json.backup dist/tienda-web-loto-ai/browser/assets/lottery-data.json
-            
-            # 10. Reiniciar servicios PM2
-            echo "--- Fase 10: Reiniciando servicios ---"
-            pm2 stop all 2>/dev/null || true
-            pm2 delete all 2>/dev/null || true
-            pm2 start ecosystem.config.js --env production
-            pm2 save
-            echo "✅ Servicios PM2 reiniciados"
-            
-            # 11. Verificar servicios
-            echo "--- Fase 11: Verificando servicios ---"
-            sleep 3
-            pm2 list
-            
-            # 12. Actualizar NGINX
-            echo "--- Fase 12: Actualizando NGINX ---"
-            cp nginx.conf /etc/nginx/sites-available/loto-ia.com
-            nginx -t && systemctl reload nginx && echo "✅ NGINX actualizado"
-            
-            # 13. Limpieza
+          # 9. Restaurar JSONs en dist
+          echo "--- Fase 9: Restaurando JSONs en dist ---"
+          mkdir -p dist/tienda-web-loto-ai/browser/assets/
+          [ -f ".deploy-backups/botes.json.backup" ] && cp .deploy-backups/botes.json.backup dist/tienda-web-loto-ai/browser/assets/botes.json
+          [ -f ".deploy-backups/lottery-data.json.backup" ] && cp .deploy-backups/lottery-data.json.backup dist/tienda-web-loto-ai/browser/assets/lottery-data.json
+          
+          # 10. Reiniciar servicios PM2
+          echo "--- Fase 10: Reiniciando servicios ---"
+          pm2 stop all 2>/dev/null || true
+          pm2 delete all 2>/dev/null || true
+          pm2 start ecosystem.config.js --env production
+          pm2 save
+          echo "✅ Servicios PM2 reiniciados"
+          
+          # 11. Verificar servicios
+          echo "--- Fase 11: Verificando servicios ---"
+          sleep 3
+          pm2 list
+          
+          # 12. Actualizar NGINX
+          echo "--- Fase 12: Actualizando NGINX ---"
+          cp nginx.conf /etc/nginx/sites-available/loto-ia.com
+          nginx -t && systemctl reload nginx && echo "✅ NGINX actualizado"
+          
+          # 13. Limpieza
+          echo "--- Fase 13: Limpiando archivos temporales ---"
+          rm -rf .deploy-backups
+          
+          echo "=== ✅ DESPLIEGUE COMPLETADO CON ÉXITO ==="
+
+    - name: Deployment success notification
+      if: success()
+      run: |
+        echo "::notice::✅ Deployment completed successfully!"
+
+    - name: Deployment failure notification
+      if: failure()
+      run: |
+        echo "::error::❌ Deployment failed! Check the logs."
             echo "--- Fase 13: Limpiando archivos temporales ---"
             rm -rf .deploy-backups
             
